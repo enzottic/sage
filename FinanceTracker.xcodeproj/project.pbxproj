@@ -32,8 +32,8 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
-				C66031C82E8073C60078DD15 /* FinanceTracker */,
 				C66031C72E8073C60078DD15 /* Products */,
+				C66031C82E8073C60078DD15 /* FinanceTracker */,
 			);
 			sourceTree = "<group>";
 		};
