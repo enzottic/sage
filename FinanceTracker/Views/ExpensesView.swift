@@ -12,40 +12,21 @@ struct ExpensesView: View {
     @Query private var expenses: [Expense]
     
     @State private var selectedMonth = Date()
-    @State private var month: Date = Date()
+    @State private var expenseToDelete: Expense? = nil
+    @State private var showingDeleteConfirmation: Bool = false
     
     @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Double = 0.0
     @AppStorage("wantsPercent") private var wantsPercent: Double = 0.3
     @AppStorage("needsPercent") private var needsPercent: Double = 0.5
 
-    var formattedMonthYear: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: selectedMonth)
-    }
-
-    var totalSpentThisMonth: Double {
-        expenses.reduce(0) { $0 + $1.amount }
+    var groupedExpenses: [Date: [Expense]] {
+        Dictionary(grouping: expenses) { expense in
+            Calendar.current.startOfDay(for: expense.date)
+        }
     }
     
-    var totalWants: Double {
-        totalMonthlyIncome * wantsPercent
-    }
-    
-    var totalNeeds: Double {
-        totalMonthlyIncome * needsPercent
-    }
-    
-    var wantsSpent: Double {
-        expenses
-            .filter { $0.category == .wants }
-            .reduce(0) { $0 + $1.amount }
-    }
-    
-    var needsSpent: Double {
-        expenses
-            .filter { $0.category == .needs }
-            .reduce(0) { $0 + $1.amount }
+    var sortedDates: [Date] {
+        groupedExpenses.keys.sorted(by: >)
     }
 
     init(month: Date = Date()) {
@@ -63,7 +44,6 @@ struct ExpensesView: View {
         )
     }
     
-    
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading) {
@@ -75,13 +55,10 @@ struct ExpensesView: View {
                     )
                 } else {
                     List {
-                        Section(header:
-                            Text(formattedMonthYear)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .padding(.bottom, 8)
-                        ) {
-                            ExpenseListView(expenses: expenses)
+                        ForEach(sortedDates, id: \.self) { date in
+                            Section(header: Text(date.formatted(date: .abbreviated, time: .omitted))) {
+                                ExpenseListGroup(expenses: groupedExpenses[date] ?? [])
+                            }
                         }
                     }
                 }
@@ -102,6 +79,10 @@ struct ExpensesView: View {
         .padding()
         .background(color.opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+    
+    private func deleteExpense(indexSet: IndexSet) {
+        
     }
 }
 

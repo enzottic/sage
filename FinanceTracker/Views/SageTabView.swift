@@ -8,13 +8,13 @@
 import SwiftUI
 import SwiftData
 
-struct FinanceTrackerTabView: View {
+struct SageTabView: View {
     
     @State private var selectedTab: Int = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            OverviewView()
+            HomeView()
                 .tabItem {
                     Label("Overview", systemImage: "house")
                 }
@@ -36,6 +36,6 @@ struct FinanceTrackerTabView: View {
 }
 
 #Preview {
-    FinanceTrackerTabView()
+    SageTabView()
         .modelContainer(ModelContainer.preview)
 }

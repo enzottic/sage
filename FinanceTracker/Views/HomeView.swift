@@ -9,22 +9,20 @@ import SwiftUI
 import SwiftData
 import FoundationModels
 
-struct OverviewView: View {
+struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Query private var allExpensesThisMonth: [Expense]
     
     @State private var addExpenseSheetIsPresented: Bool = false
-    @State private var newExpenseName: String = ""
-    @State private var newExpenseAmount: String = ""
-    @State private var newExpenseCategory: Expense.ExpenseCategory = .needs
-    @State private var newExpenseDate: Date = Date.now
+    @State private var showingDeleteConfirmation: Bool = false
+    @State private var expenseToDelete: Expense? = nil
     
-    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Int = 0
+    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Int = 7300
     @AppStorage("needsPercent") private var needsPercent: Double = 0.5
     @AppStorage("wantsPercent") private var wantsPercent : Double = 0.3
     @AppStorage("savingsPercent") private var savingsPercent: Double = 0.2
-
+    
     var totalSpentThisMonth: Double {
         allExpensesThisMonth.reduce(0) { $0 + $1.amount }
     }
@@ -61,9 +59,12 @@ struct OverviewView: View {
     var needsUtilization: Double {
         needsTotal == 0 ? 0 : needsUsed / needsTotal
     }
+    
+    var recentPurchases: [Expense] {
+        Array(allExpensesThisMonth.prefix(10))
+    }
 
     init() {
-        
         let calendar = Calendar.current
         let month = Date()
         let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
@@ -73,15 +74,15 @@ struct OverviewView: View {
             filter: #Predicate<Expense> { expense in
                 expense.date >= startOfMonth && expense.date < endOfMonth
             },
-            sort: [SortDescriptor(\Expense.date, order: .reverse)]
+            sort: [SortDescriptor(\Expense.date, order: .reverse)],
         )
     }
     
     var body: some View {
         NavigationStack {
             VStack {
-                List{
-                    Section(header: Text("Total Spent This Month")) {
+                List {
+                    Section(header: Text("Monthly Overview")) {
                         HStack(alignment: .center) {
                             Text(totalSpentThisMonth.formatted(.currency(code: "USD")))
                                 .font(.largeTitle)
@@ -100,7 +101,15 @@ struct OverviewView: View {
                     }
                     
                     Section(header: Text("Recent Purchases")) {
-                        ExpenseListView(expenses: Array(allExpensesThisMonth.prefix(5)))
+                        if (recentPurchases.isEmpty) {
+                            ContentUnavailableView(
+                                "No expenses",
+                                systemImage: "dollarsign",
+                                description: Text("Add expenses to start tracking")
+                            )
+                        } else {
+                            ExpenseListGroup(expenses: recentPurchases)
+                        }
                     }
                 }
             }
@@ -114,53 +123,30 @@ struct OverviewView: View {
                 }
             }
             .sheet(isPresented: $addExpenseSheetIsPresented) {
-                resetForm()
-            } content: {
-                addExpenseSheet()
+                AddExpenseSheet()
             }
-            .navigationTitle("Overview")
+            .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
+                Button("Delete", role: .destructive) {
+                    if let expense = expenseToDelete {
+                        modelContext.delete(expense)
+                    }
+                }
+                
+                Button("Cancel", role: .cancel) {
+                    expenseToDelete = nil
+                }
+            })
+            .navigationTitle("Home")
         }
     }
      
-    private func addExpenseSheet() -> some View {
-        VStack {
-            Form {
-                TextField("Expense Name", text: $newExpenseName)
-                
-                TextField("Amount", text: $newExpenseAmount)
-                    .keyboardType(.decimalPad)
-                
-                PasteButton(payloadType: String.self) { strings in
-                    if let firstString = strings.first {
-                        newExpenseAmount = firstString
-                    }
-                }
-                
-                DatePicker("Date", selection: $newExpenseDate, displayedComponents: .date)
-                
-                Picker("Category", selection: $newExpenseCategory) {
-                    ForEach(Expense.ExpenseCategory.allCases, id: \.self) { option in
-                        Text(option.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                
-                Button("Add Expense") {
-                    addItem()
-                }
-                .buttonStyle(.glass)
-            }
-            
-        }
-    }
-    
     private func utilizationView(_ title: String, utilization: Double, used: Double, total: Double) -> some View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.caption)
             HStack(alignment: .center) {
                 ProgressView(value: utilization)
-                    .tint(.green)
+                    .tint(title == "Wants" ? .green : .red)
                 Text(utilization, format: .percent.precision(.fractionLength(0)))
             }
             Text("\(used.currencyString)/\(total.currencyString)")
@@ -169,34 +155,16 @@ struct OverviewView: View {
         }
     }
     
-    private func resetForm() {
-        newExpenseName = ""
-        newExpenseAmount = ""
-        newExpenseDate = Date.now
-        newExpenseCategory = .needs
-    }
-    
-    private func addItem() {
-        guard !newExpenseName.isEmpty, let amount = Double(newExpenseAmount) else { return }
-        
-        withAnimation {
-            let newItem = Expense(name: newExpenseName, amount: amount, category: newExpenseCategory)
-            modelContext.insert(newItem)
-            
-            do {
-                try modelContext.save()
-            } catch {
-                print("damn son!")
-            }
-            
+    private func deleteExpense(at indexSet: IndexSet) {
+        // ask for confirmation
+        for index in indexSet {
+            modelContext.delete(recentPurchases[index])
         }
-        
-        addExpenseSheetIsPresented = false
     }
 }
 
 
 #Preview {
-    OverviewView()
+    HomeView()
         .modelContainer(ModelContainer.preview)
 }

@@ -26,7 +26,7 @@ struct FinanceTrackerApp: App {
     
     var body: some Scene {
         WindowGroup {
-            FinanceTrackerTabView()
+            SageTabView()
         }
         .modelContainer(sharedModelContainer)
     }

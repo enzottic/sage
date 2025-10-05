@@ -8,7 +8,7 @@ import SwiftUI
 
 struct SettingsView: View {
     
-    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Int = 0
+    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Int = 7300
     @AppStorage("needsPercent") private var needsPercent: Double = 0.5
     @AppStorage("wantsPercent") private var wantsPercent : Double = 0.3
     @AppStorage("savingsPercent") private var savingsPercent: Double = 0.2
