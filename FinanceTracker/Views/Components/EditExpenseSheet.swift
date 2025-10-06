@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct EditExpenseSheet: View {
     @Environment(\.modelContext) private var modelContext
@@ -47,6 +48,7 @@ struct EditExpenseSheet: View {
     
     func saveItem() {
         try! modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
         dismiss()
     }
 }

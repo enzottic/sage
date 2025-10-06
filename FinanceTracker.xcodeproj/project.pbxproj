@@ -6,14 +6,84 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
+		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
+		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C6B09FCF2E92CF5200899162;
+			remoteInfo = FinanceTrackerWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C6B09FE92E92CF5400899162 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		C66031C62E8073C60078DD15 /* Sage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinanceTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6B09FD22E92CF5200899162 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C6B09FD42E92CF5200899162 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinanceTrackerWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
+		C6B09FF22E92D6B400899162 /* Exceptions for "Shared" folder in "FinanceTrackerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ExpenseDataService.swift,
+				Models/Expense.swift,
+				Models/ExpenseCategory.swift,
+				SageAppIntents.swift,
+			);
+			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C66031C82E8073C60078DD15 /* FinanceTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FinanceTracker;
+			sourceTree = "<group>";
+		};
+		C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */,
+			);
+			path = FinanceTrackerWidget;
+			sourceTree = "<group>";
+		};
+		C6B09FEC2E92D69F00899162 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C6B09FF22E92D6B400899162 /* Exceptions for "Shared" folder in "FinanceTrackerWidgetExtension" target */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,12 +96,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6B09FCD2E92CF5200899162 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */,
+				C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
+				C6B09FEC2E92D69F00899162 /* Shared */,
+				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
+				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
+				C6B09FD12E92CF5200899162 /* Frameworks */,
 				C66031C72E8073C60078DD15 /* Products */,
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
 			);
@@ -41,8 +124,18 @@
 			isa = PBXGroup;
 			children = (
 				C66031C62E8073C60078DD15 /* Sage.app */,
+				C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C6B09FD12E92CF5200899162 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C6B09FD22E92CF5200899162 /* WidgetKit.framework */,
+				C6B09FD42E92CF5200899162 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,13 +148,16 @@
 				C66031C22E8073C60078DD15 /* Sources */,
 				C66031C32E8073C60078DD15 /* Frameworks */,
 				C66031C42E8073C60078DD15 /* Resources */,
+				C6B09FE92E92CF5400899162 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C6B09FE32E92CF5400899162 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
+				C6B09FEC2E92D69F00899162 /* Shared */,
 			);
 			name = FinanceTracker;
 			packageProductDependencies = (
@@ -69,6 +165,28 @@
 			productName = FinanceTracker;
 			productReference = C66031C62E8073C60078DD15 /* Sage.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C6B09FE62E92CF5400899162 /* Build configuration list for PBXNativeTarget "FinanceTrackerWidgetExtension" */;
+			buildPhases = (
+				C6B09FCC2E92CF5200899162 /* Sources */,
+				C6B09FCD2E92CF5200899162 /* Frameworks */,
+				C6B09FCE2E92CF5200899162 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
+			);
+			name = FinanceTrackerWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = FinanceTrackerWidgetExtension;
+			productReference = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +199,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					C66031C52E8073C60078DD15 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					C6B09FCF2E92CF5200899162 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -100,12 +221,20 @@
 			projectRoot = "";
 			targets = (
 				C66031C52E8073C60078DD15 /* FinanceTracker */,
+				C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		C66031C42E8073C60078DD15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C6B09FCE2E92CF5200899162 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +251,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6B09FCC2E92CF5200899162 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C6B09FE32E92CF5400899162 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+			targetProxy = C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C66031D12E8073C70078DD15 /* Debug */ = {
@@ -251,6 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = FinanceApp;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FinanceTracker/FinanceTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
@@ -283,6 +428,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = FinanceApp;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FinanceTracker/FinanceTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
@@ -310,6 +456,68 @@
 			};
 			name = Release;
 		};
+		C6B09FE72E92CF5400899162 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker.FinanceTrackerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C6B09FE82E92CF5400899162 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker.FinanceTrackerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +535,15 @@
 			buildConfigurations = (
 				C66031D42E8073C70078DD15 /* Debug */,
 				C66031D52E8073C70078DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C6B09FE62E92CF5400899162 /* Build configuration list for PBXNativeTarget "FinanceTrackerWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C6B09FE72E92CF5400899162 /* Debug */,
+				C6B09FE82E92CF5400899162 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

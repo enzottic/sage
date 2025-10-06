@@ -29,10 +29,18 @@ struct AddExpenseAppIntent: AppIntent {
     }
 }
 
-struct GetLatestExpensesAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Get Latest Expenses"
+struct LatestExpensesAppIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "View Recent Expenses" }
+
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
+}
+
+struct UtilizationAppIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "TotalSpentThisMonth" }
     
-    @Parameter(title: "Latest Expenses")
-    var expenses: [ExpenseEntity]
-    
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
 }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct ExpenseListGroup: View {
     @Environment(\.modelContext) private var modelContext
@@ -35,6 +36,7 @@ struct ExpenseListGroup: View {
             Button("Delete", role: .destructive) {
                 if let expense = expenseToDelete {
                     modelContext.delete(expense)
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
             }
             

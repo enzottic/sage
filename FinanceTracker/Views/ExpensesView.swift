@@ -10,15 +10,10 @@ import SwiftData
 
 struct ExpensesView: View {
     @Query private var expenses: [Expense]
-    
     @State private var selectedMonth = Date()
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
     
-    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Double = 0.0
-    @AppStorage("wantsPercent") private var wantsPercent: Double = 0.3
-    @AppStorage("needsPercent") private var needsPercent: Double = 0.5
-
     var groupedExpenses: [Date: [Expense]] {
         Dictionary(grouping: expenses) { expense in
             Calendar.current.startOfDay(for: expense.date)

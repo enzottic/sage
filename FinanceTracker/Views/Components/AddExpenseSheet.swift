@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct AddExpenseSheet: View {
     @Environment(\.modelContext) private var modelContext
@@ -71,6 +72,22 @@ struct AddExpenseSheet: View {
             } catch {
                 print("damn son!")
             }
+            
+            WidgetCenter.shared.reloadAllTimelines()
+            
+//            WidgetCenter.shared.getCurrentConfigurations { result in
+//                guard case .success(let widgets) = result else { return }
+//
+//                // Iterate over the WidgetInfo elements to find one that matches
+//                // the character from the push notification.
+//                if let widget = widgets.first(
+//                    where: { widget in
+//                        let intent = widget.configuration as? LatestExpensesAppIntent
+//                    }
+//                ) {
+//                    WidgetCenter.shared.reloadTimelines(ofKind: widget.kind)
+//                }
+//            }
             
             dismiss()
         }
