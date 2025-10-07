@@ -20,7 +20,7 @@ struct EditExpenseSheet: View {
             Form {
                 TextField("Expense Name", text: $expense.name)
                 
-                TextField("Amount", value: $expense.amount, format: .currency(code: "USD"))
+                TextField("Amount", value: $expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                     .keyboardType(.decimalPad)
                 
                 DatePicker("Date", selection: $expense.date, displayedComponents: .date)
@@ -31,6 +31,12 @@ struct EditExpenseSheet: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                
+                Picker("Tag", selection: $expense.tag) {
+                    ForEach(ExpenseTag.allCases, id: \.self) { option in
+                        Text(option.rawValue)
+                    }
+                }
             }
             .navigationTitle("Edit Expense")
             .navigationBarTitleDisplayMode(.large)
@@ -41,6 +47,11 @@ struct EditExpenseSheet: View {
                 
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button("Save") { saveItem() }
+                }
+            }
+            .onAppear {
+                if (expense.tag == nil) {
+                    expense.tag = .other
                 }
             }
         }

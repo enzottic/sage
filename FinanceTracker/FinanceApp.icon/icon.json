@@ -6,9 +6,19 @@
     {
       "layers" : [
         {
-          "fill" : {
-            "solid" : "display-p3:0.71031,0.78320,0.59177,1.00000"
-          },
+          "fill-specializations" : [
+            {
+              "value" : {
+                "solid" : "display-p3:0.71031,0.78320,0.59177,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "display-p3:0.61867,0.70843,0.51608,1.00000"
+              }
+            }
+          ],
           "glass" : true,
           "hidden" : false,
           "image-name" : "dollar-sign-svgrepo-com.svg",

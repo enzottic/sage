@@ -8,12 +8,12 @@ import Foundation
 
 extension Double {
     var currencyString: String {
-        return self.formatted(.currency(code: "USD"))
+        return self.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))
     }
 }
 
 extension Int {
     var currencyString: String {
-        return self.formatted(.currency(code: "USD"))
+        return self.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))
     }
 }

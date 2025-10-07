@@ -8,7 +8,7 @@
 import Foundation
 import AppIntents
 
-struct AddExpenseShortcut: AppShortcutsProvider {
+struct SageShortcutsProvider: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] = [
         AppShortcut(
             intent: AddExpenseAppIntent(),
@@ -16,12 +16,6 @@ struct AddExpenseShortcut: AppShortcutsProvider {
             shortTitle: "Add Expense",
             systemImageName: "dollarsign"
         ),
-        AppShortcut(
-            intent: UtilizationAppIntent(),
-            phrases: ["Gets utilization stats for ${applicationName}"],
-            shortTitle: "Get Total Spent",
-            systemImageName: "dollarsign"
-        )
     ]
     
 }

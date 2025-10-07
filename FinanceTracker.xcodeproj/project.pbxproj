@@ -45,6 +45,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
 		C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -56,8 +63,12 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				ExpenseDataService.swift,
+				"Extensions/Color+SageColors.swift",
+				Extensions/CurrencyString.swift,
+				"Extensions/Date+Relative.swift",
 				Models/Expense.swift,
 				Models/ExpenseCategory.swift,
+				Models/ExpenseTag.swift,
 				SageAppIntents.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
@@ -67,6 +78,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C66031C82E8073C60078DD15 /* FinanceTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */,
+			);
 			path = FinanceTracker;
 			sourceTree = "<group>";
 		};

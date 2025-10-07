@@ -14,6 +14,15 @@ struct ExpensesView: View {
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
     
+    var selectableMonths: Set<Date> {
+        let calendar = Calendar.current
+        return Set (
+            expenses.map { expense in
+                calendar.date(from: calendar.dateComponents([.year, .month], from: expense.date))!
+            }
+        )
+    }
+    
     var groupedExpenses: [Date: [Expense]] {
         Dictionary(grouping: expenses) { expense in
             Calendar.current.startOfDay(for: expense.date)
@@ -56,9 +65,14 @@ struct ExpensesView: View {
                             }
                         }
                     }
+                    .scrollContentBackground(.hidden)
                 }
             }
+            .background(Color.ui.background)
             .navigationTitle("Monthly Expenses")
+            .onAppear {
+                print(selectableMonths)
+            }
         }
     }
     
@@ -67,7 +81,7 @@ struct ExpensesView: View {
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.secondary)
-            Text(amount.formatted(.currency(code: "USD")))
+            Text(amount.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD")))
                 .font(.title)
         }
         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)

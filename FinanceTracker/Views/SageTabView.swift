@@ -24,15 +24,17 @@ struct SageTabView: View {
                 .tabItem {
                     Label("Expenses", systemImage: "chart.pie.fill")
                 }
+                .tag(1)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
+                .tag(2)
+            
         }
-        
+        .tint(Color.ui.sageColor)
     }
-
 }
 
 #Preview {

@@ -18,11 +18,11 @@ struct HomeView: View {
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
     
-    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Int = 7300
-    @AppStorage("needsPercent") private var needsPercent: Double = 0.5
-    @AppStorage("wantsPercent") private var wantsPercent : Double = 0.3
-    @AppStorage("savingsPercent") private var savingsPercent: Double = 0.2
-    
+    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var totalMonthlyIncome: Int = 4300
+    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var needsPercent: Double = 0.5
+    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var wantsPercent : Double = 0.3
+    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var savingsPercent: Double = 0.2
+
     var totalSpentThisMonth: Double {
         allExpensesThisMonth.reduce(0) { $0 + $1.amount }
     }
@@ -80,39 +80,47 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
-                List {
-                    Section(header: Text("Monthly Overview")) {
-                        HStack(alignment: .center) {
-                            Text(totalSpentThisMonth.formatted(.currency(code: "USD")))
-                                .font(.largeTitle)
-                            Text("/")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            Text(totalSpendableIncome.currencyString)
-                                .foregroundStyle(.secondary)
+            List {
+                VStack(spacing: 10) {
+                    Section {
+                        VStack(spacing: 15) {
+                            VStack {
+                                Text(totalSpentThisMonth.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD")))
+                                    .font(.largeTitle)
+                                
+                                Text("of \(totalMonthlyIncome.currencyString)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            VStack(spacing: 15) {
+                                utilizationView(for: .wants, utilization: wantsUtilization, used: wantsUsed, total: wantsTotal)
+                                utilizationView(for: .needs, utilization: needsUtilization, used: needsUsed, total: needsTotal)
+                            }
                         }
-                        
-                        HStack {
-                            utilizationView("Wants", utilization: wantsUtilization, used: wantsUsed, total: wantsTotal)
-                            Divider()
-                            utilizationView("Needs", utilization: needsUtilization, used: needsUsed, total: needsTotal)
-                        }
-                    }
-                    
-                    Section(header: Text("Recent Purchases")) {
-                        if (recentPurchases.isEmpty) {
-                            ContentUnavailableView(
-                                "No expenses",
-                                systemImage: "dollarsign",
-                                description: Text("Add expenses to start tracking")
-                            )
-                        } else {
-                            ExpenseListGroup(expenses: recentPurchases)
-                        }
+                    } header: {
+                        Text("This Month")
+                            .foregroundStyle(.secondary)
                     }
                 }
+                
+                Section {
+                    if (recentPurchases.isEmpty) {
+                        ContentUnavailableView(
+                            "No expenses",
+                            systemImage: "dollarsign",
+                            description: Text("Add expenses to start tracking")
+                        )
+                    } else {
+                        ExpenseListGroup(expenses: recentPurchases)
+                    }
+                } header: {
+                    Text("Recent Purchases")
+                        .foregroundStyle(.secondary)
+                }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.ui.background)
             .toolbar {
                 ToolbarItem {
                     Button {
@@ -120,6 +128,8 @@ struct HomeView: View {
                     } label: {
                         Label("Add Item", systemImage: "plus")
                     }
+                    .background(Color.ui.cardBackground)
+                    .tint(Color.ui.sageColor)
                 }
             }
             .sheet(isPresented: $addExpenseSheetIsPresented) {
@@ -140,19 +150,28 @@ struct HomeView: View {
         }
     }
      
-    private func utilizationView(_ title: String, utilization: Double, used: Double, total: Double) -> some View {
+    private func utilizationView(for category: ExpenseCategory, utilization: Double, used: Double, total: Double) -> some View {
         VStack(alignment: .leading) {
-            Text(title)
-                .font(.caption)
+            HStack(alignment: .center) {
+                Text(category.rawValue)
+                    .font(.subheadline)
+                Spacer()
+                VStack(alignment: .trailing) {
+                    Text(used.currencyString)
+                        .font(.subheadline)
+                    Text("of \(total.currencyString)")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+            }
             HStack(alignment: .center) {
                 ProgressView(value: utilization)
-                    .tint(title == "Wants" ? .green : .red)
+                    .tint(category.color)
+                    .scaleEffect(x: 1, y: 2, anchor: .center)
                 Text(utilization, format: .percent.precision(.fractionLength(0)))
             }
-            Text("\(used.currencyString)/\(total.currencyString)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
+        .padding([.horizontal])
     }
     
     private func deleteExpense(at indexSet: IndexSet) {

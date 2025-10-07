@@ -19,11 +19,10 @@ struct ExpenseListGroup: View {
     
     var body: some View {
         ForEach(expenses) { expense in
-            NavigationLink {
-                EditExpenseSheet(expense: expense)
-            } label: {
+            NavigationLink(destination: EditExpenseSheet(expense: expense)) {
                 ExpenseRowItem(expense: expense)
             }
+            .buttonStyle(.plain)
             .swipeActions {
                 Button("Delete") {
                     expenseToDelete = expense
@@ -36,8 +35,10 @@ struct ExpenseListGroup: View {
             Button("Delete", role: .destructive) {
                 if let expense = expenseToDelete {
                     modelContext.delete(expense)
+                    try! modelContext.save()
                     WidgetCenter.shared.reloadAllTimelines()
                 }
+                
             }
             
             Button("Cancel", role: .cancel) {

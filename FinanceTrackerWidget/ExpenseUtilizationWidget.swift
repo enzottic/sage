@@ -26,7 +26,6 @@ struct ExpensesProvider: AppIntentTimelineProvider {
     }
     
     func snapshot(for configuration: UtilizationAppIntent, in context: Context) async -> ExpensesEntry {
-        
         if context.isPreview {
             ExpensesEntry(date: Date(), totalSpent: 3562.23, wantsUtilization: 0.35, needsUtilization: 0.84, expenses: [])
         } else {
@@ -39,6 +38,9 @@ struct ExpensesProvider: AppIntentTimelineProvider {
         let totalSpent = expenses.reduce(0) { $0 + $1.amount }
         let wantsUtilization = data.fetchWantsUtilizationThisMonth()
         let needsUtilization = data.fetchNeedsUtilizationThisMonth()
+        
+        print("total spent: \(totalSpent)")
+        print("Got wants: \(wantsUtilization), and needs: \(needsUtilization)")
 
         let entry = ExpensesEntry(date: .now, totalSpent: totalSpent, wantsUtilization: wantsUtilization, needsUtilization: needsUtilization, expenses: expenses)
         let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(15 * 60)))
@@ -54,7 +56,7 @@ struct FinanceTrackerWidgetEntryView : View {
             Text("Total Spent")
                 .font(.subheadline)
                 .fontWeight(.thin)
-            Text(entry.totalSpent.formatted(.currency(code: "USD")))
+            Text(entry.totalSpent.currencyString)
                 .font(.title2)
                 .bold()
                 .padding([.top], 3)
@@ -62,27 +64,26 @@ struct FinanceTrackerWidgetEntryView : View {
             Spacer()
             
             VStack {
-                utilizationView(title: "Wants", utilization: entry.wantsUtilization)
-                utilizationView(title: "Needs", utilization: entry.needsUtilization)
+                utilizationView(for: .wants, value: entry.wantsUtilization)
+                utilizationView(for: .needs, value: entry.needsUtilization)
             }
             
             Spacer()
         }
     }
     
-    func utilizationView(title: String, utilization: Double) -> some View {
+    func utilizationView(for category: ExpenseCategory, value: Double) -> some View {
         VStack {
-            
             HStack{
-                Text("Wants")
+                Text(category.rawValue)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(utilization, format: .percent.precision(.fractionLength(0)))
+                Text(value, format: .percent.precision(.fractionLength(0)))
             }
             
-            ProgressView(value: utilization)
-                .tint(title == "Wants" ? .green : .red)
+            ProgressView(value: value)
+                .tint(category.color)
         }
     }
 }

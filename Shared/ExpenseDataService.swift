@@ -11,9 +11,17 @@ import SwiftUI
 
 class ExpenseDataService {
     
-    @AppStorage("totalMonthlyIncome") private var totalMonthlyIncome: Double = 7300
-    @AppStorage("wantsPercent") private var wantsPercent: Double = 0.3
-    @AppStorage("needsPercent") private var needsPercent: Double = 0.5
+    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+    private var totalMonthlyIncome: Int = 7300
+    
+    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+    private var needsPercent: Double = 0.5
+    
+    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+    private var wantsPercent : Double = 0.3
+    
+    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+    private var savingsPercent: Double = 0.2
     
     static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -38,21 +46,22 @@ class ExpenseDataService {
     }
     
     func fetchWantsUtilizationThisMonth() -> Double {
-        let wantsAmount = totalMonthlyIncome * wantsPercent
+        let wantsAmount = Double(totalMonthlyIncome) * wantsPercent
         let totalWants = getExpenses(for: .now).filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
+        print("got wants: \(totalWants/wantsAmount)")
         return wantsAmount == 0 ? 0 : totalWants / wantsAmount
     }
     
     func fetchNeedsUtilizationThisMonth() -> Double {
-        let needsAmount = totalMonthlyIncome * needsPercent
+        let needsAmount = Double(totalMonthlyIncome) * needsPercent
         let totalNeeds = getExpenses(for: .now).filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
+        print("got needs: \(totalNeeds/needsAmount)")
         return needsAmount == 0 ? 0 : totalNeeds / needsAmount
     }
 
     private func getExpenses(for month: Date) -> [Expense] {
-        guard let container = try? ModelContainer(for: Expense.self) else { return [] }
-        let context = ModelContext(container)
-
+        let context = ModelContext(ExpenseDataService.sharedModelContainer)
+        
         let calendar = Calendar.current
         let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
         let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
@@ -65,7 +74,6 @@ class ExpenseDataService {
         )
 
         let allItems = try? context.fetch(fetchDescriptor)
-        print(allItems?.count ?? "none")
         return allItems ?? []
     }
     

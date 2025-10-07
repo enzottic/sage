@@ -14,21 +14,37 @@ struct ExpenseRowItem: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
-                Text(expense.name)
-                    .font(.headline)
-                Text(expense.date.relative())
-                    .font(.subheadline)
-                    .foregroundStyle(Color.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing) {
-                Text(expense.amount.currencyString)
-                categoryButton(category: expense.category)
+            Circle()
+                .frame(width: 10, height: 10)
+                .foregroundStyle(expense.category.color)
+            HStack {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(expense.name)
+                        .font(.headline)
+                    Text(expense.date.relative())
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(expense.amount.currencyString)
+                    tagButton(tag: expense.tag)
+                }
             }
         }
     }
     
+    private func tagButton(tag: ExpenseTag) -> some View {
+        ZStack {
+            Text(String(tag.rawValue))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(tag.color))
+                .foregroundStyle(.white)
+                .font(.footnote)
+        }
+    }
+
     private func categoryButton(category: ExpenseCategory) -> some View {
         ZStack {
             Text(String(category.rawValue))
