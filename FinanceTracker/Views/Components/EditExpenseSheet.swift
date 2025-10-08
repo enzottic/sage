@@ -49,11 +49,6 @@ struct EditExpenseSheet: View {
                     Button("Save") { saveItem() }
                 }
             }
-            .onAppear {
-                if (expense.tag == nil) {
-                    expense.tag = .other
-                }
-            }
         }
     }
     

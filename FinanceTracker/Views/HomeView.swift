@@ -8,9 +8,11 @@
 import SwiftUI
 import SwiftData
 import FoundationModels
+import Charts
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    let dataService = ExpenseDataService()
     
     @Query private var allExpensesThisMonth: [Expense]
     
@@ -25,11 +27,6 @@ struct HomeView: View {
 
     var totalSpentThisMonth: Double {
         allExpensesThisMonth.reduce(0) { $0 + $1.amount }
-    }
-    
-    
-    var totalSpendableIncome: Double {
-        Double(totalMonthlyIncome) - (Double(totalMonthlyIncome) * savingsPercent)
     }
     
     var wantsTotal: Double {
@@ -60,10 +57,16 @@ struct HomeView: View {
         needsTotal == 0 ? 0 : needsUsed / needsTotal
     }
     
+    var savingsUsed: Double {
+        allExpensesThisMonth
+            .filter { $0.category == .savings}
+            .reduce(0) { $0 + $1.amount }
+    }
+    
     var recentPurchases: [Expense] {
         Array(allExpensesThisMonth.prefix(10))
     }
-
+    
     init() {
         let calendar = Calendar.current
         let month = Date()
@@ -116,7 +119,6 @@ struct HomeView: View {
                     }
                 } header: {
                     Text("Recent Purchases")
-                        .foregroundStyle(.secondary)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -181,7 +183,6 @@ struct HomeView: View {
         }
     }
 }
-
 
 #Preview {
     HomeView()

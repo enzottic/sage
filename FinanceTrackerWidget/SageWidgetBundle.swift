@@ -9,9 +9,9 @@ import WidgetKit
 import SwiftUI
 
 @main
-struct FinanceTrackerWidgetBundle: WidgetBundle {
+struct SageWidgetBundle: WidgetBundle {
     var body: some Widget {
         ExpenseUtilizationWidget()
-        FinanceTrackerWidgetControl()
+        ExpensePieChartWidget()
     }
 }

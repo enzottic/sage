@@ -68,6 +68,7 @@
 				"Extensions/Date+Relative.swift",
 				Models/Expense.swift,
 				Models/ExpenseCategory.swift,
+				Models/ExpenseEntry.swift,
 				Models/ExpenseTag.swift,
 				SageAppIntents.swift,
 			);

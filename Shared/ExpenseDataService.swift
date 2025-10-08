@@ -35,9 +35,30 @@ class ExpenseDataService {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
-
+    
     func fetchExpenses(for month: Date = .now) -> [Expense] {
         return getExpenses(for: month)
+    }
+    
+    func fetchTimelineEntry() -> SageWidgetTimelineEntry {
+        let expenses = getExpenses(for: .now)
+        let totalSpent = expenses.reduce(0) { $0 + $1.amount }
+        let totalWants = expenses.filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
+        let totalNeeds = expenses.filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
+        let totalSavings = expenses.filter { $0.category == .savings }.reduce(0) { $0 + $1.amount }
+        let wantsUtilization = totalWants / (Double(totalMonthlyIncome) * wantsPercent)
+        let needsUtilization = totalNeeds / (Double(totalMonthlyIncome) * wantsPercent)
+        
+        return SageWidgetTimelineEntry(
+            date: Date.now,
+            totalSpent: totalSpent,
+            totalWants: totalWants,
+            totalNeeds: totalNeeds,
+            totalSavings: totalSavings,
+            wantsUtilization: wantsUtilization,
+            needsUtilization: needsUtilization,
+            latestExpenses: Array(expenses.prefix(3))
+        )
     }
     
     func fetchTotalSpentThisMonth() -> Double {
