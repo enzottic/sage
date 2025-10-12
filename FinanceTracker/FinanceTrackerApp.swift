@@ -14,7 +14,6 @@ struct FinanceTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             SageTabView()
-                .fontDesign(.rounded)
         }
         .modelContainer(ExpenseDataService.sharedModelContainer)
     }

@@ -22,7 +22,7 @@ struct SageTabView: View {
             
             ExpensesView()
                 .tabItem {
-                    Label("Expenses", systemImage: "chart.pie.fill")
+                    Label("Expenses", systemImage: "list.bullet")
                 }
                 .tag(1)
             

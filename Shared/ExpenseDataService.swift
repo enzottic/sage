@@ -40,21 +40,23 @@ class ExpenseDataService {
         return getExpenses(for: month)
     }
     
-    func fetchTimelineEntry() -> SageWidgetTimelineEntry {
+    func fetchTimelineEntry() -> WidgetTimelineEntry {
         let expenses = getExpenses(for: .now)
         let totalSpent = expenses.reduce(0) { $0 + $1.amount }
         let totalWants = expenses.filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
         let totalNeeds = expenses.filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
         let totalSavings = expenses.filter { $0.category == .savings }.reduce(0) { $0 + $1.amount }
+        let totalUnspent = Double(totalMonthlyIncome) - totalSpent
         let wantsUtilization = totalWants / (Double(totalMonthlyIncome) * wantsPercent)
-        let needsUtilization = totalNeeds / (Double(totalMonthlyIncome) * wantsPercent)
+        let needsUtilization = totalNeeds / (Double(totalMonthlyIncome) * needsPercent)
         
-        return SageWidgetTimelineEntry(
+        return WidgetTimelineEntry(
             date: Date.now,
             totalSpent: totalSpent,
             totalWants: totalWants,
             totalNeeds: totalNeeds,
             totalSavings: totalSavings,
+            totalUnspent: totalUnspent,
             wantsUtilization: wantsUtilization,
             needsUtilization: needsUtilization,
             latestExpenses: Array(expenses.prefix(3))

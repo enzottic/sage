@@ -51,7 +51,7 @@ struct ExpenseRowItem: View {
                 .padding(.horizontal, 4)
                 .foregroundStyle(.white)
                 .font(.footnote)
-                .background(Capsule().fill(category.color))
+                .background(Capsule().fill(category.color.opacity(0.5)))
         }
     }
 }

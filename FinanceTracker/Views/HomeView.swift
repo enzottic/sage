@@ -14,7 +14,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     let dataService = ExpenseDataService()
     
-    @Query private var allExpensesThisMonth: [Expense]
+    @Query private var monthlyExpenses: [Expense]
     
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
@@ -25,46 +25,32 @@ struct HomeView: View {
     @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var wantsPercent : Double = 0.3
     @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var savingsPercent: Double = 0.2
 
-    var totalSpentThisMonth: Double {
-        allExpensesThisMonth.reduce(0) { $0 + $1.amount }
-    }
-    
     var wantsTotal: Double {
         Double(totalMonthlyIncome) * wantsPercent
     }
     
-    var wantsUsed: Double {
-        allExpensesThisMonth
-            .filter { $0.category == .wants }
-            .reduce(0) { $0 + $1.amount }
-    }
-    
     var wantsUtilization: Double {
-        wantsTotal == 0 ? 0 : wantsUsed / wantsTotal
+        wantsTotal == 0 ? 0 : monthlyExpenses.wantsUsed / wantsTotal
     }
     
     var needsTotal: Double {
         Double(totalMonthlyIncome) * needsPercent
     }
     
-    var needsUsed: Double {
-        allExpensesThisMonth
-            .filter { $0.category == .needs}
-            .reduce(0) { $0 + $1.amount }
-    }
-    
     var needsUtilization: Double {
-        needsTotal == 0 ? 0 : needsUsed / needsTotal
+        needsTotal == 0 ? 0 : monthlyExpenses.needsUsed / needsTotal
     }
     
-    var savingsUsed: Double {
-        allExpensesThisMonth
-            .filter { $0.category == .savings}
-            .reduce(0) { $0 + $1.amount }
+    var savingsTotal: Double {
+        Double(totalMonthlyIncome) * savingsPercent
     }
     
+    var savingsUtilization: Double {
+        savingsTotal == 0 ? 0 : monthlyExpenses.savingsUsed / savingsTotal
+    }
+
     var recentPurchases: [Expense] {
-        Array(allExpensesThisMonth.prefix(10))
+        Array(monthlyExpenses.prefix(10))
     }
     
     init() {
@@ -73,7 +59,7 @@ struct HomeView: View {
         let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
         let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
         
-        _allExpensesThisMonth = Query(
+        _monthlyExpenses = Query(
             filter: #Predicate<Expense> { expense in
                 expense.date >= startOfMonth && expense.date < endOfMonth
             },
@@ -84,45 +70,15 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             List {
-                VStack(spacing: 10) {
-                    Section {
-                        VStack(spacing: 15) {
-                            VStack {
-                                Text(totalSpentThisMonth.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD")))
-                                    .font(.largeTitle)
-                                
-                                Text("of \(totalMonthlyIncome.currencyString)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            VStack(spacing: 15) {
-                                utilizationView(for: .wants, utilization: wantsUtilization, used: wantsUsed, total: wantsTotal)
-                                utilizationView(for: .needs, utilization: needsUtilization, used: needsUsed, total: needsTotal)
-                            }
-                        }
-                    } header: {
-                        Text("This Month")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Section {
-                    if (recentPurchases.isEmpty) {
-                        ContentUnavailableView(
-                            "No expenses",
-                            systemImage: "dollarsign",
-                            description: Text("Add expenses to start tracking")
-                        )
-                    } else {
-                        ExpenseListGroup(expenses: recentPurchases)
-                    }
-                } header: {
-                    Text("Recent Purchases")
-                }
+                monthlyOverview
+                expensesList
             }
+            .navigationTitle("Home")
             .scrollContentBackground(.hidden)
             .background(Color.ui.background)
+            .sheet(isPresented: $addExpenseSheetIsPresented) {
+                AddExpenseSheet()
+            }
             .toolbar {
                 ToolbarItem {
                     Button {
@@ -134,46 +90,67 @@ struct HomeView: View {
                     .tint(Color.ui.sageColor)
                 }
             }
-            .sheet(isPresented: $addExpenseSheetIsPresented) {
-                AddExpenseSheet()
-            }
-            .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
-                Button("Delete", role: .destructive) {
-                    if let expense = expenseToDelete {
-                        modelContext.delete(expense)
-                    }
-                }
+          
+        }
+    }
+    
+    var monthlyOverview: some View {
+        Section {
+            VStack(spacing: 15) {
+                Text("Spent in \(Date().formatted(.dateTime.month(.wide)))")
+                    .foregroundStyle(.secondary)
+                 Text(monthlyExpenses.total.currencyString)
+                    .font(.largeTitle)
+                    .fontWeight(.black)
+                    .fontWidth(.expanded)
                 
-                Button("Cancel", role: .cancel) {
-                    expenseToDelete = nil
-                }
-            })
-            .navigationTitle("Home")
+                utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: wantsTotal)
+                utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: needsTotal)
+                utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: savingsTotal)
+            }
+        } header: {
+            Text("Monthly Overview")
+        }
+    }
+    
+    var expensesList: some View {
+        Section {
+            if (recentPurchases.isEmpty) {
+                ContentUnavailableView(
+                    "No expenses",
+                    systemImage: "dollarsign",
+                    description: Text("Add expenses to start tracking")
+                )
+            } else {
+                ExpenseListGroup(expenses: recentPurchases)
+            }
+        } header: {
+            Text("Recent Purchases")
         }
     }
      
     private func utilizationView(for category: ExpenseCategory, utilization: Double, used: Double, total: Double) -> some View {
-        VStack(alignment: .leading) {
-            HStack(alignment: .center) {
-                Text(category.rawValue)
-                    .font(.subheadline)
-                Spacer()
-                VStack(alignment: .trailing) {
-                    Text(used.currencyString)
-                        .font(.subheadline)
-                    Text("of \(total.currencyString)")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                }
-            }
-            HStack(alignment: .center) {
-                ProgressView(value: utilization)
-                    .tint(category.color)
-                    .scaleEffect(x: 1, y: 2, anchor: .center)
+        VStack(spacing: 0) {
+            HStack {
+                Text(category.rawValue.uppercased())
                 Text(utilization, format: .percent.precision(.fractionLength(0)))
             }
+            .font(.caption)
+            .fontWidth(.expanded)
+            .foregroundStyle(.secondary)
+            
+            HStack {
+                Text(used.currencyString)
+                ProgressView(value: utilization, total: 1)
+                    .overlay(
+                        LinearGradient(gradient: Gradient(colors: [category.color]), startPoint: .leading, endPoint: .trailing)
+                        .mask(ProgressView(value: utilization, total: 1))
+                      )
+                Text(total.currencyString)
+                    .foregroundStyle(.secondary)
+            }
+            .font(.subheadline)
         }
-        .padding([.horizontal])
     }
     
     private func deleteExpense(at indexSet: IndexSet) {

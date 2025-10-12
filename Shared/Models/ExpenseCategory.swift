@@ -14,9 +14,9 @@ enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
     
     var color: Color {
         switch (self) {
-        case .wants: return Color.ui.wantColor
-        case .needs: return Color.ui.needColor
-        case .savings: return .gray
+        case .wants: return .want
+        case .needs: return .need
+        case .savings: return .teal
         }
     }
 }

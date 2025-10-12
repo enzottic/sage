@@ -68,11 +68,17 @@
 				"Extensions/Date+Relative.swift",
 				Models/Expense.swift,
 				Models/ExpenseCategory.swift,
-				Models/ExpenseEntry.swift,
 				Models/ExpenseTag.swift,
 				SageAppIntents.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
+		C6F7DA3D2E9B5F4500A20A67 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WidgetTimelineEntry.swift,
+			);
+			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -88,6 +94,7 @@
 		C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				C6F7DA3D2E9B5F4500A20A67 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTracker" target */,
 				C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */,
 			);
 			path = FinanceTrackerWidget;
@@ -126,8 +133,8 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
-				C6B09FEC2E92D69F00899162 /* Shared */,
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
+				C6B09FEC2E92D69F00899162 /* Shared */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
 				C6B09FD12E92CF5200899162 /* Frameworks */,
 				C66031C72E8073C60078DD15 /* Products */,
@@ -344,6 +351,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -401,6 +409,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

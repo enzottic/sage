@@ -8,19 +8,19 @@ import Foundation
 import WidgetKit
 
 struct ExpensesProvider: AppIntentTimelineProvider {
-    func placeholder(in context: Context) -> SageWidgetTimelineEntry {
-        return SageWidgetTimelineEntry()
+    func placeholder(in context: Context) -> WidgetTimelineEntry {
+        return WidgetTimelineEntry()
     }
     
-    func snapshot(for configuration: UtilizationAppIntent, in context: Context) async -> SageWidgetTimelineEntry {
+    func snapshot(for configuration: UtilizationAppIntent, in context: Context) async -> WidgetTimelineEntry {
         if context.isPreview {
-            return SageWidgetTimelineEntry(date: Date(), totalSpent: 3562.23, totalWants: 1045.32, totalNeeds: 2016.91, totalSavings: 500.0, wantsUtilization: 0.35, needsUtilization: 0.84, latestExpenses: [])
+            return WidgetTimelineEntry(date: Date(), totalSpent: 3562.23, totalWants: 1045.32, totalNeeds: 2016.91, totalSavings: 500.0, totalUnspent: 3543.54, wantsUtilization: 0.35, needsUtilization: 0.84, latestExpenses: [])
         } else {
-            return SageWidgetTimelineEntry()
+            return WidgetTimelineEntry()
         }
     }
     
-    func timeline(for configuration: UtilizationAppIntent, in context: Context) async -> Timeline<SageWidgetTimelineEntry> {
+    func timeline(for configuration: UtilizationAppIntent, in context: Context) async -> Timeline<WidgetTimelineEntry> {
         let data = ExpenseDataService()
         let entry = data.fetchTimelineEntry()
         let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(15 * 60)))

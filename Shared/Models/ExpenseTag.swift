@@ -12,6 +12,8 @@ enum ExpenseTag: String, Codable, CaseIterable {
     case entertainment = "Entertainment"
     case billsAndUtils = "Bills & Utilities"
     case groceries = "Groceries"
+    case subscription = "Subscriptions"
+    case travel = "Travel"
     case other = "Other"
     
     var color: Color {
@@ -21,6 +23,8 @@ enum ExpenseTag: String, Codable, CaseIterable {
         case .entertainment: .pink
         case .billsAndUtils: .blue
         case .groceries: .green
+        case .subscription: .teal
+        case .travel: .purple
         case .other: .gray
         }
     }

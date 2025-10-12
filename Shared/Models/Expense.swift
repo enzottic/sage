@@ -37,6 +37,29 @@ final class Expense {
 
 extension Expense {
     static var example: Expense {
-        .init(name: "My Expense", amount: 123.45, category: .wants, date: Date.now)
+        .init(name: "My Expense", amount: 123.45, category: .wants, date: Date.now, tag: .dining)
+    }
+}
+
+extension [Expense] {
+    
+    var total: Double {
+        self.reduce(0) { $0 + $1.amount }
+    }
+    
+    var wantsUsed: Double {
+        self.filter { $0.category == .wants }
+            .reduce(0) { $0 + $1.amount }
+    }
+    
+    
+    var needsUsed: Double {
+        self.filter { $0.category == .needs}
+            .reduce(0) { $0 + $1.amount }
+    }
+    
+    var savingsUsed: Double {
+        self.filter { $0.category == .savings}
+            .reduce(0) { $0 + $1.amount }
     }
 }

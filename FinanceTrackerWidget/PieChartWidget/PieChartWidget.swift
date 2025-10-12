@@ -11,16 +11,17 @@ import Charts
 struct ExpensePieChartEntryView: View {
     @Environment(\.widgetFamily) var family
     
-    let entry: SageWidgetTimelineEntry
-    let chartData: [ExpenseData]
+    let entry: WidgetTimelineEntry
+    var chartData: [ExpenseData]
     
-    init(entry: SageWidgetTimelineEntry) {
+    init(entry: WidgetTimelineEntry) {
         self.entry = entry
         
         self.chartData = [
             .init(category: "Wants", count: entry.totalWants),
             .init(category: "Needs", count: entry.totalNeeds),
-            .init(category: "Savings", count: entry.totalSavings)
+            .init(category: "Savings", count: entry.totalSavings),
+            .init(category: "Unspent", count: entry.totalUnspent)
         ]
     }
     
@@ -41,7 +42,7 @@ struct ExpensePieChartWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UtilizationAppIntent.self, provider: ExpensesProvider()) { entry in
             ExpensePieChartEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(Color.ui.background, for: .widget)
         }
         .configurationDisplayName("Expenses Breakdown")
         .description(Text("View expense breakdown as a pie chart"))
@@ -53,5 +54,5 @@ struct ExpensePieChartWidget: Widget {
 #Preview(as: .systemSmall) {
     ExpensePieChartWidget()
 } timeline: {
-    SageWidgetTimelineEntry(date: Date(), totalSpent: 3562.23, totalWants: 1045.32, totalNeeds: 2016.91, totalSavings: 500.0, wantsUtilization: 0.35, needsUtilization: 0.84, latestExpenses: [])
+    WidgetTimelineEntry(date: Date(), totalSpent: 3562.23, totalWants: 1045.32, totalNeeds: 2016.91, totalSavings: 500.0, totalUnspent: 3532.23, wantsUtilization: 0.35, needsUtilization: 0.84, latestExpenses: [])
 }

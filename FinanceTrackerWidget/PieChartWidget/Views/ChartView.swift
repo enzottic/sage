@@ -32,7 +32,7 @@ struct ChartView: View {
         }
         .chartLegend(.hidden)
         .chartForegroundStyleScale([
-            "Wants": ExpenseCategory.wants.color, "Needs": ExpenseCategory.needs.color, "Savings": ExpenseCategory.savings.color
+            "Wants": ExpenseCategory.wants.color, "Needs": ExpenseCategory.needs.color, "Savings": ExpenseCategory.savings.color, "Unspent": .gray
         ])
     }
 }

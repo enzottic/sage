@@ -73,7 +73,7 @@ struct AddExpenseSheet: View {
         guard !name.isEmpty, amount != nil else { return }
         
         withAnimation {
-            let newItem = Expense(name: name, amount: amount!, category: category, date: date)
+            let newItem = Expense(name: name, amount: amount!, category: category, date: date, tag: tag)
             modelContext.insert(newItem)
             
             do {
@@ -83,21 +83,6 @@ struct AddExpenseSheet: View {
             }
             
             WidgetCenter.shared.reloadAllTimelines()
-            
-//            WidgetCenter.shared.getCurrentConfigurations { result in
-//                guard case .success(let widgets) = result else { return }
-//
-//                // Iterate over the WidgetInfo elements to find one that matches
-//                // the character from the push notification.
-//                if let widget = widgets.first(
-//                    where: { widget in
-//                        let intent = widget.configuration as? LatestExpensesAppIntent
-//                    }
-//                ) {
-//                    WidgetCenter.shared.reloadTimelines(ofKind: widget.kind)
-//                }
-//            }
-            
             dismiss()
         }
     }
