@@ -16,6 +16,8 @@ struct HomeView: View {
     
     @Query private var monthlyExpenses: [Expense]
     
+    @State private var selectedExpense: Expense? = nil
+    
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
@@ -79,6 +81,10 @@ struct HomeView: View {
             .sheet(isPresented: $addExpenseSheetIsPresented) {
                 AddExpenseSheet()
             }
+            .sheet(item: $selectedExpense) { expense in
+                ExpenseDetailView(expense: expense)
+                    .presentationDetents([.medium])
+            }
             .toolbar {
                 ToolbarItem {
                     Button {
@@ -122,7 +128,7 @@ struct HomeView: View {
                     description: Text("Add expenses to start tracking")
                 )
             } else {
-                ExpenseListGroup(expenses: recentPurchases)
+                ExpenseListGroup(expenses: recentPurchases, selectedExpense: $selectedExpense)
             }
         } header: {
             Text("Recent Purchases")

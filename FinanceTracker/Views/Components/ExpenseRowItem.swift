@@ -18,17 +18,23 @@ struct ExpenseRowItem: View {
                 .frame(width: 10, height: 10)
                 .foregroundStyle(expense.category.color)
             HStack {
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text(expense.name)
                         .font(.headline)
-                    Text(expense.date.relative())
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondary)
+                    
+                    HStack(alignment: .center) {
+                        Text(expense.date.relative())
+                            .font(.subheadline)
+                            .foregroundStyle(Color.secondary)
+                        Text("•")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.secondary)
+                        TagCapsule(tag: expense.tag)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
                     Text(expense.amount.currencyStringWithFraction)
-                    TagCapsule(tag: expense.tag)
                 }
             }
         }

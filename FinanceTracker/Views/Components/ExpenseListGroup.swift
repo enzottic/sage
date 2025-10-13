@@ -16,8 +16,7 @@ struct ExpenseListGroup: View {
     
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
-    
-    @State private var expenseToView: Expense? = nil
+    @Binding var selectedExpense: Expense?
     
     var body: some View {
         ForEach(expenses) { expense in
@@ -30,20 +29,19 @@ struct ExpenseListGroup: View {
                     }
                     .tint(.red)
                 }
-                .onTapGesture { expenseToView = expense }
+                .contentShape(Rectangle())
+                .onTapGesture { selectedExpense = expense }
         }
-        .sheet(item: $expenseToView) { expense in
-            ExpenseDetailView(expense: expense)
-                .presentationDetents([.medium])
-        }
+
         .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
             Button("Delete", role: .destructive) {
                 if let expense = expenseToDelete {
-                    modelContext.delete(expense)
-                    try! modelContext.save()
-                    WidgetCenter.shared.reloadAllTimelines()
+                    withAnimation {
+                        modelContext.delete(expense)
+                        try! modelContext.save()
+                        WidgetCenter.shared.reloadAllTimelines()
+                    }
                 }
-                
             }
             
             Button("Cancel", role: .cancel) {
@@ -54,6 +52,8 @@ struct ExpenseListGroup: View {
 }
 
 #Preview {
-    ExpenseListGroup(expenses: [Expense.example, Expense.example])
+    @Previewable @State var expenseToView: Expense? = nil
+    
+    ExpenseListGroup(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
         .modelContainer(ModelContainer.preview)
 }

@@ -22,9 +22,10 @@ struct EditExpenseSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var expense: Expense
+    let completion: () -> Void
     @State private var workingExpense: EditableExpense
 
-    init(expense: Expense) {
+    init(expense: Expense, completion: @escaping () -> Void) {
         self.expense = expense
         _workingExpense = State(initialValue: EditableExpense(
             name: expense.name,
@@ -33,6 +34,7 @@ struct EditExpenseSheet: View {
             category: expense.category,
             tag: expense.tag
         ))
+        self.completion = completion
     }
 
     var body: some View {
@@ -58,10 +60,11 @@ struct EditExpenseSheet: View {
             }
         }
         .navigationTitle("Edit Expense")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden)
         .toolbar {
             ToolbarItemGroup(placement: .topBarLeading) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { completion() }
             }
             
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -78,10 +81,10 @@ struct EditExpenseSheet: View {
         expense.tag = workingExpense.tag
         try! modelContext.save()
         WidgetCenter.shared.reloadAllTimelines()
-        dismiss()
+        completion()
     }
 }
 
 #Preview {
-    EditExpenseSheet(expense: Expense.example)
+    EditExpenseSheet(expense: Expense.example, completion: { })
 }

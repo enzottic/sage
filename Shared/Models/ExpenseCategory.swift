@@ -4,8 +4,8 @@
 //
 //  Created by Tyler McCormick on 10/5/25.
 //
-import AppIntents
 import SwiftUI
+import AppIntents
 
 enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
     case wants = "Wants"

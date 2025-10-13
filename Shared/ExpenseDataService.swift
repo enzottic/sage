@@ -24,6 +24,8 @@ class ExpenseDataService {
     private var savingsPercent: Double = 0.2
     
     static var sharedModelContainer: ModelContainer = {
+//        UIColorValueTransformer.register()
+        
         let schema = Schema([
             Expense.self
         ])

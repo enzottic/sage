@@ -11,13 +11,14 @@ struct TagCapsule: View {
     let tag: ExpenseTag
     
     var body: some View {
-        ZStack {
-            Text(String(tag.rawValue))
+        HStack {
+            Text("\(tag.emoji) \(tag.rawValue)")
+                .foregroundStyle(tag.color)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(tag.color))
+                .background(Capsule().fill(tag.color.tertiary).stroke(tag.color))
                 .foregroundStyle(.white)
-                .font(.footnote)
+                .font(.caption)
         }
     }
 }

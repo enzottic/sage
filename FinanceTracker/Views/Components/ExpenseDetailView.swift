@@ -14,37 +14,36 @@ struct ExpenseDetailView: View {
     let expense: Expense
     
     @State private var isEditing: Bool = false
-//    @State private var editedName: String
-//    @State private var editedAmount: Double
-//    @State private var editedDate: Date
-//    @State private var editedCategory: ExpenseCategory
-//    @State private var editedTag: ExpenseTag
-//       
-//    init(expense: Expense) {
-//        self.expense = expense
-//        _editedName = State(initialValue: expense.name)
-//        _editedAmount = State(initialValue: expense.amount)
-//        _editedDate = State(initialValue: expense.date)
-//        _editedCategory = State(initialValue: expense.category)
-//        _editedTag = State(initialValue: expense.tag)
-//    }
     
     var body: some View {
         NavigationStack {
             Group {
                 if isEditing {
-                    EditExpenseSheet(expense: expense)
+                    EditExpenseSheet(expense: expense) {
+                        isEditing = false
+                    }
                 } else {
                     VStack(alignment: .center, spacing: 20) {
+                        Text(expense.date.formatted(date: .complete, time: .omitted))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
                         Text(expense.name)
                             .font(.title)
                             .fontWeight(.heavy)
                         
-                        Text(expense.amount.currencyStringWithFraction)
-                            .font(.title)
-                            .fontWeight(.heavy)
-
-                        TagCapsule(tag: expense.tag)
+                            Text(expense.amount.currencyStringWithFraction)
+                                .font(.title)
+                                .fontWeight(.heavy)
+                        
+                        HStack {
+                            VStack {
+                                Text("TAG")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                TagCapsule(tag: expense.tag)
+                            }
+                        }
                         
                         Spacer()
                     }
@@ -64,9 +63,6 @@ struct ExpenseDetailView: View {
                         Button("Edit") {
                             isEditing = true
                         }
-                        //                        Button("Save") {
-                        //                            save()
-                        //                        }
                     }
                 }
             }

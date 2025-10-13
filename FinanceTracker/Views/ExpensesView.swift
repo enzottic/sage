@@ -10,9 +10,11 @@ import SwiftData
 
 struct ExpensesView: View {
     @Query private var expenses: [Expense]
+    
     @State private var selectedMonth = Date()
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
+    @State private var selectedExpense: Expense? = nil
     
     var selectableMonths: Set<Date> {
         let calendar = Calendar.current
@@ -61,7 +63,7 @@ struct ExpensesView: View {
                     List {
                         ForEach(sortedDates, id: \.self) { date in
                             Section(header: Text(date.formatted(date: .abbreviated, time: .omitted))) {
-                                ExpenseListGroup(expenses: groupedExpenses[date] ?? [])
+                                ExpenseListGroup(expenses: groupedExpenses[date] ?? [], selectedExpense: $selectedExpense)
                             }
                         }
                     }
@@ -70,8 +72,9 @@ struct ExpensesView: View {
             }
             .background(Color.ui.background)
             .navigationTitle("Monthly Expenses")
-            .onAppear {
-                print(selectableMonths)
+            .sheet(item: $selectedExpense) { expense in
+                ExpenseDetailView(expense: expense)
+                    .presentationDetents([.medium])
             }
         }
     }
