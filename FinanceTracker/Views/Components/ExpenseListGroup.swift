@@ -17,19 +17,24 @@ struct ExpenseListGroup: View {
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
     
+    @State private var expenseToView: Expense? = nil
+    
     var body: some View {
         ForEach(expenses) { expense in
-            NavigationLink(destination: EditExpenseSheet(expense: expense)) {
-                ExpenseRowItem(expense: expense)
-            }
-            .buttonStyle(.plain)
-            .swipeActions {
-                Button("Delete") {
-                    expenseToDelete = expense
-                    showingDeleteConfirmation = true
+            ExpenseRowItem(expense: expense)
+                .buttonStyle(.plain)
+                .swipeActions {
+                    Button("Delete") {
+                        expenseToDelete = expense
+                        showingDeleteConfirmation = true
+                    }
+                    .tint(.red)
                 }
-                .tint(.red)
-            }
+                .onTapGesture { expenseToView = expense }
+        }
+        .sheet(item: $expenseToView) { expense in
+            ExpenseDetailView(expense: expense)
+                .presentationDetents([.medium])
         }
         .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
             Button("Delete", role: .destructive) {
@@ -50,4 +55,5 @@ struct ExpenseListGroup: View {
 
 #Preview {
     ExpenseListGroup(expenses: [Expense.example, Expense.example])
+        .modelContainer(ModelContainer.preview)
 }

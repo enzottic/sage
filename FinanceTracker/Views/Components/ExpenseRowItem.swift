@@ -27,31 +27,10 @@ struct ExpenseRowItem: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
-                    Text(expense.amount.currencyString)
-                    tagButton(tag: expense.tag)
+                    Text(expense.amount.currencyStringWithFraction)
+                    TagCapsule(tag: expense.tag)
                 }
             }
-        }
-    }
-    
-    private func tagButton(tag: ExpenseTag) -> some View {
-        ZStack {
-            Text(String(tag.rawValue))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(tag.color))
-                .foregroundStyle(.white)
-                .font(.footnote)
-        }
-    }
-
-    private func categoryButton(category: ExpenseCategory) -> some View {
-        ZStack {
-            Text(String(category.rawValue))
-                .padding(.horizontal, 4)
-                .foregroundStyle(.white)
-                .font(.footnote)
-                .background(Capsule().fill(category.color.opacity(0.5)))
         }
     }
 }

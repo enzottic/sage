@@ -152,13 +152,6 @@ struct HomeView: View {
             .font(.subheadline)
         }
     }
-    
-    private func deleteExpense(at indexSet: IndexSet) {
-        // ask for confirmation
-        for index in indexSet {
-            modelContext.delete(recentPurchases[index])
-        }
-    }
 }
 
 #Preview {

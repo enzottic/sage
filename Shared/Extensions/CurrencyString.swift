@@ -10,6 +10,10 @@ extension Double {
     var currencyString: String {
         return self.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0)))
     }
+    
+    var currencyStringWithFraction: String {
+        return self.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))
+    }
 }
 
 extension Int {
