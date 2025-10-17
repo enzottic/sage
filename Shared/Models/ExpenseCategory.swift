@@ -8,8 +8,8 @@ import SwiftUI
 import AppIntents
 
 enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
-    case wants = "Wants"
     case needs = "Needs"
+    case wants = "Wants"
     case savings = "Savings"
     
     var color: Color {
@@ -17,6 +17,14 @@ enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
         case .wants: return .want
         case .needs: return .need
         case .savings: return .teal
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .needs: "Essentials like bills and groceries."
+        case .wants: "Non-essentials like entertainment, dining-out, etc."
+        case .savings: "Money set aside to save."
         }
     }
 }

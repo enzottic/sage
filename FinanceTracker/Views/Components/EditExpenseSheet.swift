@@ -38,24 +38,40 @@ struct EditExpenseSheet: View {
     }
 
     var body: some View {
-        Form {
-            TextField("Expense Name", text: $workingExpense.name)
-            
-            TextField("Amount", value: $workingExpense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                .keyboardType(.decimalPad)
-            
-            DatePicker("Date", selection: $workingExpense.date, displayedComponents: .date)
-            
-            Picker("Category", selection: $workingExpense.category) {
-                ForEach(ExpenseCategory.allCases, id: \.self) { option in
-                    Text(option.rawValue)
+        ScrollView {
+            VStack(spacing: 10) {
+                HStack {
+                    TextField("Expense Name", text: $workingExpense.name)
+                        .font(.title)
+                        .multilineTextAlignment(.center)
                 }
-            }
-            .pickerStyle(.segmented)
-            
-            Picker("Tag", selection: $workingExpense.tag) {
-                ForEach(ExpenseTag.allCases, id: \.self) { option in
-                    Text(option.rawValue)
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                HStack {
+                    TextField("Amount (\(Locale.current.currency?.identifier ?? "USD"))", value: $workingExpense.amount, format: .number)
+                        .keyboardType(.decimalPad)
+                        .font(.title)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                    
+                DatePicker("Date", selection: $workingExpense.date, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+
+                VStack {
+                    Text("Category")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    CategoryPicker(selectedCategory: $workingExpense.category)
+                }
+                
+                VStack(spacing: 4) {
+                    Text("Tag")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+
+                    TagPicker(selectedTag: $workingExpense.tag)
                 }
             }
         }

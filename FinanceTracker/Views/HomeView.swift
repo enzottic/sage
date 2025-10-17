@@ -12,7 +12,7 @@ import Charts
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    let dataService = ExpenseDataService()
+    @Environment(AppConfiguration.self) private var config
     
     @Query private var monthlyExpenses: [Expense]
     
@@ -22,33 +22,16 @@ struct HomeView: View {
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
     
-    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var totalMonthlyIncome: Int = 4300
-    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var needsPercent: Double = 0.5
-    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var wantsPercent : Double = 0.3
-    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")) private var savingsPercent: Double = 0.2
-
-    var wantsTotal: Double {
-        Double(totalMonthlyIncome) * wantsPercent
-    }
-    
     var wantsUtilization: Double {
-        wantsTotal == 0 ? 0 : monthlyExpenses.wantsUsed / wantsTotal
-    }
-    
-    var needsTotal: Double {
-        Double(totalMonthlyIncome) * needsPercent
+        config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
     }
     
     var needsUtilization: Double {
-        needsTotal == 0 ? 0 : monthlyExpenses.needsUsed / needsTotal
-    }
-    
-    var savingsTotal: Double {
-        Double(totalMonthlyIncome) * savingsPercent
+        config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
     }
     
     var savingsUtilization: Double {
-        savingsTotal == 0 ? 0 : monthlyExpenses.savingsUsed / savingsTotal
+        config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
     }
 
     var recentPurchases: [Expense] {
@@ -80,6 +63,8 @@ struct HomeView: View {
             .background(Color.ui.background)
             .sheet(isPresented: $addExpenseSheetIsPresented) {
                 AddExpenseSheet()
+                    .presentationBackground(Color.ui.background)
+                    .padding()
             }
             .sheet(item: $selectedExpense) { expense in
                 ExpenseDetailView(expense: expense)
@@ -110,9 +95,9 @@ struct HomeView: View {
                     .fontWeight(.black)
                     .fontWidth(.expanded)
                 
-                utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: wantsTotal)
-                utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: needsTotal)
-                utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: savingsTotal)
+                utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: config.wantsBudget)
+                utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: config.needsBudget)
+                utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: config.savingsBudget)
             }
         } header: {
             Text("Monthly Overview")
@@ -161,6 +146,8 @@ struct HomeView: View {
 }
 
 #Preview {
+    @Previewable @State var config = AppConfiguration()
     HomeView()
         .modelContainer(ModelContainer.preview)
+        .environment(config)
 }

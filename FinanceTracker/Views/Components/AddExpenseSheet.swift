@@ -16,47 +16,46 @@ struct AddExpenseSheet: View {
     @State private var name: String = ""
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
-    @State private var category: ExpenseCategory = .wants
+    @State private var category: ExpenseCategory = .needs
     @State private var tag: ExpenseTag = .other
 
     var body: some View {
         NavigationStack {
-            VStack {
-                Form {
+            VStack(spacing: 40) {
+                HStack {
                     TextField("Expense Name", text: $name)
+                        .font(.title)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                HStack {
+                    TextField("Amount (\(Locale.current.currency?.identifier ?? "USD"))", value: $amount, format: .number)
+                        .keyboardType(.decimalPad)
+                        .font(.title)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
                     
-                    HStack {
-                        TextField("Amount (\(Locale.current.currency?.identifier ?? "USD"))", value: $amount, format: .number)
-                            .keyboardType(.decimalPad)
-                        
-                        Button {
-                            if let clipboardString = UIPasteboard.general.string, let amountFromClipboard = Double(clipboardString) {
-                                amount = amountFromClipboard
-                            }
-                            
-                        } label: {
-                            Image(systemName: "doc.on.clipboard")
-                        }
-                    }
-                    
-                    DatePicker("Date", selection: $date, displayedComponents: .date)
-                    
-                    Picker("Category", selection: $category) {
-                        ForEach(ExpenseCategory.allCases, id: \.self) { option in
-                            Text(option.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    Picker("Tag", selection: $tag) {
-                        ForEach(ExpenseTag.allCases, id: \.self) { option in
-                            Text(option.rawValue)
-                        }
-                    }
+                DatePicker("Date", selection: $date, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+
+                VStack {
+                    Text("Category")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    CategoryPicker(selectedCategory: $category)
+                }
+                
+                VStack(spacing: 4) {
+                    Text("Tag")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+
+                    TagPicker(selectedTag: $tag)
                 }
             }
-            .navigationTitle("Create New Expense")
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }

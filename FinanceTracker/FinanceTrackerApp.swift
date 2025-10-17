@@ -10,10 +10,13 @@ import SwiftData
 
 @main
 struct FinanceTrackerApp: App {
+    @State private var appearanceManager = AppConfiguration()
     
     var body: some Scene {
         WindowGroup {
             SageTabView()
+                .environment(appearanceManager)
+                .preferredColorScheme(appearanceManager.selectedMode.colorScheme)
         }
         .modelContainer(ExpenseDataService.sharedModelContainer)
     }

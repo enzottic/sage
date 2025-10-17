@@ -10,7 +10,7 @@ struct SettingsPanel<Content: View>: View {
     let title: String
     let description: String
     @ViewBuilder var content: () -> Content
-
+    
     var body: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading) {

@@ -10,22 +10,25 @@ import SwiftData
 import SwiftUI
 
 class ExpenseDataService {
+    private let config: AppConfiguration
     
-    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-    private var totalMonthlyIncome: Int = 7300
+    init() {
+        self.config = AppConfiguration()
+    }
     
-    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-    private var needsPercent: Double = 0.5
-    
-    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-    private var wantsPercent : Double = 0.3
-    
-    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-    private var savingsPercent: Double = 0.2
+//    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+//    private var totalMonthlyIncome: Int = 7300
+//    
+//    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+//    private var needsPercent: Double = 0.5
+//    
+//    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+//    private var wantsPercent : Double = 0.3
+//    
+//    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
+//    private var savingsPercent: Double = 0.2
     
     static var sharedModelContainer: ModelContainer = {
-//        UIColorValueTransformer.register()
-        
         let schema = Schema([
             Expense.self
         ])
@@ -48,9 +51,9 @@ class ExpenseDataService {
         let totalWants = expenses.filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
         let totalNeeds = expenses.filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
         let totalSavings = expenses.filter { $0.category == .savings }.reduce(0) { $0 + $1.amount }
-        let totalUnspent = Double(totalMonthlyIncome) - totalSpent
-        let wantsUtilization = totalWants / (Double(totalMonthlyIncome) * wantsPercent)
-        let needsUtilization = totalNeeds / (Double(totalMonthlyIncome) * needsPercent)
+        let totalUnspent = Double(config.totalMonthlyIncome) - totalSpent
+        let wantsUtilization = totalWants / config.wantsBudget
+        let needsUtilization = totalNeeds / config.needsBudget
         
         return WidgetTimelineEntry(
             date: Date.now,
@@ -71,17 +74,17 @@ class ExpenseDataService {
     }
     
     func fetchWantsUtilizationThisMonth() -> Double {
-        let wantsAmount = Double(totalMonthlyIncome) * wantsPercent
+        let wantsBudget = config.wantsBudget
         let totalWants = getExpenses(for: .now).filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
-        print("got wants: \(totalWants/wantsAmount)")
-        return wantsAmount == 0 ? 0 : totalWants / wantsAmount
+        print("got wants: \(totalWants/wantsBudget)")
+        return wantsBudget == 0 ? 0 : totalWants / wantsBudget
     }
     
     func fetchNeedsUtilizationThisMonth() -> Double {
-        let needsAmount = Double(totalMonthlyIncome) * needsPercent
+        let needsBudget = config.needsBudget
         let totalNeeds = getExpenses(for: .now).filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
-        print("got needs: \(totalNeeds/needsAmount)")
-        return needsAmount == 0 ? 0 : totalNeeds / needsAmount
+        print("got needs: \(totalNeeds/needsBudget)")
+        return needsBudget == 0 ? 0 : totalNeeds / needsBudget
     }
 
     private func getExpenses(for month: Date) -> [Expense] {
