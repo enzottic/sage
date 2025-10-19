@@ -27,9 +27,9 @@ class AppConfiguration {
     private let defaults: UserDefaults
     private let suite = "group.me.enzottic.SageAppGroup"
     
-    var selectedMode: Appearance {
+    var selectedAppearance: Appearance {
         didSet {
-            UserDefaults.standard.set(selectedMode.rawValue, forKey: "appearance")
+            UserDefaults.standard.set(selectedAppearance.rawValue, forKey: "appearance")
         }
     }
     
@@ -72,11 +72,11 @@ class AppConfiguration {
     init() {
         self.defaults = UserDefaults(suiteName: suite) ?? .standard
         
-        if let savedMode = UserDefaults.standard.string(forKey: "appearance"),
-           let mode = Appearance(rawValue: savedMode) {
-            self.selectedMode = mode
+        if let savedAppearance = UserDefaults.standard.string(forKey: "appearance"),
+           let appearance = Appearance(rawValue: savedAppearance) {
+            self.selectedAppearance = appearance
         } else {
-            self.selectedMode = .system
+            self.selectedAppearance = .system
         }
         
         self.totalMonthlyIncome = defaults.integer(forKey: "totalMonthlyIncome") // 0 if not found

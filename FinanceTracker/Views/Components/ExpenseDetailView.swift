@@ -25,7 +25,8 @@ struct ExpenseDetailView: View {
             amount: expense.amount,
             date: expense.date,
             category: expense.category,
-            tag: expense.tag
+            tag: expense.tag,
+            note: expense.note
         ))
     }
     
@@ -40,6 +41,7 @@ struct ExpenseDetailView: View {
                 date: $workingExpense.date,
                 category: $workingExpense.category,
                 tag: $workingExpense.tag,
+                note: $workingExpense.note,
             )
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -63,6 +65,7 @@ struct ExpenseDetailView: View {
         expense.date = workingExpense.date
         expense.category = workingExpense.category
         expense.tag = workingExpense.tag
+        expense.note = workingExpense.note
         try! modelContext.save()
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -73,7 +76,8 @@ private struct EditableExpense {
     var amount: Double?
     var date: Date
     var category: ExpenseCategory
-    var tag: ExpenseTag
+    var tag: ExpenseTag?
+    var note: String
 }
 
 #Preview {

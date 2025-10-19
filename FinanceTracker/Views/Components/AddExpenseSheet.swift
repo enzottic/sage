@@ -19,11 +19,12 @@ struct AddExpenseSheet: View {
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
     @State private var category: ExpenseCategory = .needs
-    @State private var tag: ExpenseTag = .other
+    @State private var tag: ExpenseTag? = nil
+    @State private var note: String = ""
 
     var body: some View {
         NavigationStack {
-            ExpenseInfoForm(name: $name, amount: $amount, date: $date, category: $category, tag: $tag)
+            ExpenseInfoForm(name: $name, amount: $amount, date: $date, category: $category, tag: $tag, note: $note)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }

@@ -6,17 +6,20 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TagPicker: View {
-    @Binding var selectedTag: ExpenseTag
+    @Binding var selectedTag: ExpenseTag?
     @State private var isExpanded = false
+    
+    @Query var expenseTags: [ExpenseTag]
     
     var body: some View {
         Group {
             if isExpanded {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .center, spacing: 10) {
-                        ForEach(ExpenseTag.allCases, id: \.self) { option in
+                        ForEach(expenseTags, id: \.self) { option in
                             Button {
                                 withAnimation(.easeInOut) {
                                     selectedTag = option
@@ -29,7 +32,6 @@ struct TagPicker: View {
                     }
                     .padding(2)
                 }
-//                .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 Button {
                     withAnimation(.easeInOut) {
@@ -37,7 +39,6 @@ struct TagPicker: View {
                     }
                 } label: {
                     TagCapsule(tag: selectedTag, .medium)
-//                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
         }
@@ -46,6 +47,7 @@ struct TagPicker: View {
 }
 
 #Preview {
-    @Previewable @State var selectedTag: ExpenseTag = .other
+    @Previewable @State var selectedTag: ExpenseTag? = .dining
     TagPicker(selectedTag: $selectedTag)
+        .modelContainer(ModelContainer.preview)
 }

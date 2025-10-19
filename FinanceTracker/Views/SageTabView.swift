@@ -42,4 +42,5 @@ struct SageTabView: View {
     SageTabView()
         .modelContainer(ModelContainer.preview)
         .environment(appConfig)
+        .preferredColorScheme(appConfig.selectedAppearance.colorScheme)
 }

@@ -16,31 +16,6 @@ class ExpenseDataService {
         self.config = AppConfiguration()
     }
     
-//    @AppStorage("totalMonthlyIncome", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-//    private var totalMonthlyIncome: Int = 7300
-//    
-//    @AppStorage("needsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-//    private var needsPercent: Double = 0.5
-//    
-//    @AppStorage("wantsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-//    private var wantsPercent : Double = 0.3
-//    
-//    @AppStorage("savingsPercent", store: UserDefaults(suiteName: "group.me.enzottic.SageAppGroup"))
-//    private var savingsPercent: Double = 0.2
-    
-    static var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Expense.self
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-    
     func fetchExpenses(for month: Date = .now) -> [Expense] {
         return getExpenses(for: month)
     }
@@ -88,21 +63,29 @@ class ExpenseDataService {
     }
 
     private func getExpenses(for month: Date) -> [Expense] {
-        let context = ModelContext(ExpenseDataService.sharedModelContainer)
+        let schema = Schema(versionedSchema: SageSchemaV1.self)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
-        let calendar = Calendar.current
-        let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
-        let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
+        do {
+            let modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let context = ModelContext(modelContainer)
+            
+            let calendar = Calendar.current
+            let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
+            let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
 
-        let fetchDescriptor = FetchDescriptor<Expense>(
-            predicate: #Predicate { expense in
-                startOfMonth <= expense.date && expense.date <= endOfMonth
-            },
-            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
-        )
+            let fetchDescriptor = FetchDescriptor<Expense>(
+                predicate: #Predicate { expense in
+                    startOfMonth <= expense.date && expense.date <= endOfMonth
+                },
+                sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
+            )
 
-        let allItems = try? context.fetch(fetchDescriptor)
-        return allItems ?? []
+            let allItems = try? context.fetch(fetchDescriptor)
+            return allItems ?? []
+        } catch {
+            return []
+        }
     }
     
 }

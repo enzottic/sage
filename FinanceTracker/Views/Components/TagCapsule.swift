@@ -17,8 +17,8 @@ struct TagCapsule: View {
         case medium
     }
     
-    init(tag: ExpenseTag, _ size: TagCapsuleSize = .small) {
-        self.tag = tag
+    init(tag: ExpenseTag?, _ size: TagCapsuleSize = .small) {
+        self.tag = tag ?? ExpenseTag.other
         self.size = size
     }
     
@@ -41,7 +41,7 @@ struct TagCapsule: View {
     
     var body: some View {
         HStack {
-            Text("\(tag.emoji) \(tag.rawValue)")
+            Text("\(tag.emoji) \(tag.name)")
                 .foregroundStyle(tag.color)
                 .padding(padding)
                 .background(Capsule().fill(tag.color.tertiary).stroke(tag.color))
@@ -52,7 +52,7 @@ struct TagCapsule: View {
 }
 
 #Preview {
-    TagCapsule(tag: ExpenseTag.billsAndUtils, .xsmall)
-    TagCapsule(tag: ExpenseTag.billsAndUtils, .small)
-    TagCapsule(tag: ExpenseTag.billsAndUtils, .medium)
+    TagCapsule(tag: ExpenseTag.dining, .xsmall)
+    TagCapsule(tag: ExpenseTag.dining, .small)
+    TagCapsule(tag: ExpenseTag.dining, .medium)
 }

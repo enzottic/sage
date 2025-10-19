@@ -6,9 +6,13 @@
 //
 import SwiftUI
 import WidgetKit
+import SwiftData
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
+    @Environment(\.modelContext) var modelContext
+    
+    @Query var expenseTags: [ExpenseTag]
     
     @FocusState private var needsFocus: Bool
     
@@ -40,13 +44,14 @@ struct SettingsView: View {
         WidgetCenter.shared.reloadAllTimelines()
     }
     
+
     var body: some View {
         @Bindable var config = config
         
         NavigationStack {
             ScrollView {
                 SettingsPanel(title: "Appearance", description: "Choose the default appearance for Sage") {
-                    AppearancePicker(appearance: $config.selectedMode)
+                    AppearancePicker(appearance: $config.selectedAppearance)
                 }
                 
                 SettingsPanel(title: "Monthly Income", description: "Enter your monthly spendable income in \(Locale.current.currency?.identifier ?? "USD")") {
@@ -73,7 +78,7 @@ struct SettingsView: View {
                                     .cornerRadius(15)
                                     .focused($needsFocus)
                             }
-
+                            
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("Needs (%)")
                                     .foregroundStyle(.gray)
@@ -87,6 +92,9 @@ struct SettingsView: View {
                         Text("Savings Percentage: \(Int(config.savingsPercent * 100))")
                             .foregroundStyle(.secondary)
                     }
+                }
+                
+                SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
                 }
             }
             .padding()
@@ -109,6 +117,6 @@ struct SettingsView: View {
     @Previewable @State var appConfig: AppConfiguration = AppConfiguration()
     SettingsView()
         .environment(appConfig)
+        .modelContainer(ModelContainer.preview)
 }
-
 

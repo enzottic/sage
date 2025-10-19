@@ -20,7 +20,7 @@ struct HomeView: View {
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
-    @State private var showingUtilization: Bool = false
+    @State private var showingUtilization: Bool = true
     
     var wantsUtilization: Double {
         config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
@@ -143,13 +143,14 @@ struct HomeView: View {
             
             HStack {
                 Text(used.currencyString)
+                    .foregroundStyle(used > total ? .red : .secondary)
                 ProgressView(value: utilization, total: 1)
                     .overlay(
                         LinearGradient(gradient: Gradient(colors: [category.color]), startPoint: .leading, endPoint: .trailing)
                         .mask(ProgressView(value: utilization, total: 1))
                       )
                 Text(total.currencyString)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(used > total ? .red : .secondary)
             }
             .font(.subheadline)
         }
