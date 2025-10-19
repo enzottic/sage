@@ -11,7 +11,7 @@ struct CustomDatePicker: View {
     @Binding var selectedDate: Date
     
     var body: some View {
-        Text(selectedDate.formatted(date: .long, time: .omitted))
+        Text(selectedDate.formatted(date: .complete, time: .omitted))
             .foregroundStyle(.secondary)
             .fontWeight(.bold)
             .overlay {

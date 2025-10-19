@@ -31,92 +31,26 @@ struct ExpenseDetailView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if isEditing {
-                    ExpenseInfoForm(
-                        name: $workingExpense.name,
-                        amount: Binding<Double?>(
-                            get: { workingExpense.amount },
-                            set: { workingExpense.amount = $0 ?? 0 }
-                        ),
-                        date: $workingExpense.date,
-                        category: $workingExpense.category,
-                        tag: $workingExpense.tag,
-                    )
-                } else {
-                    VStack(spacing: 20) {
-                        Text(expense.date.formatted(date: .long, time: .omitted))
-                            .foregroundStyle(.secondary)
-                            .fontWeight(.bold)
-                        
-                        HStack {
-                            Text(expense.name)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        Spacer()
-                        
-                        HStack {
-                            Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .multilineTextAlignment(.center)
-                        }
-                        
-                        Spacer()
-                        
-                        HStack {
-                            Circle()
-                                .frame(width: 10, height: 10)
-                                .foregroundStyle(expense.category.color)
-                            
-                            Text(expense.category.rawValue)
-                        }
-                        .padding()
-                        .background(Color.ui.cardBackground)
-                        .cornerRadius(15)
-                        .foregroundStyle(.primary)
-
-                        TagCapsule(tag: expense.tag, .medium)
-                    }
-                    .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
-                        Button("Delete", role: .destructive) {
-                            withAnimation {
-                                dismiss()
-                                modelContext.delete(expense)
-                                try! modelContext.save()
-                                WidgetCenter.shared.reloadAllTimelines()
-                            }
-                        }
-                        
-                        Button("Cancel", role: .cancel) {
-                            
-                        }
-                    })
-                }
-            }
+            ExpenseInfoForm(
+                name: $workingExpense.name,
+                amount: Binding<Double?>(
+                    get: { workingExpense.amount },
+                    set: { workingExpense.amount = $0 ?? 0 }
+                ),
+                date: $workingExpense.date,
+                category: $workingExpense.category,
+                tag: $workingExpense.tag,
+            )
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    if !isEditing {
-                        Button("Delete", role: .destructive) {
-                            showingDeleteConfirmation = true
-                        }
-                        .tint(.red)
+                    Button("Cancel") {
+                        dismiss()
                     }
                 }
-                ToolbarItem(placement: .primaryAction) {
-                    if !isEditing {
-                        Button("Edit") {
-                            isEditing = true
-                        }
-                    } else {
-                        Button("Save") {
-                            saveItem()
-                            isEditing = false
-                        }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveItem()
+                        dismiss()
                     }
                 }
             }

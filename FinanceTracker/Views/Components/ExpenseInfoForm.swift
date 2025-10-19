@@ -24,6 +24,8 @@ struct ExpenseInfoForm: View {
                     .font(.title)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .center)
             

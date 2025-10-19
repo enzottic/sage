@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
+    @State private var showingUtilization: Bool = false
     
     var wantsUtilization: Double {
         config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
@@ -55,6 +56,11 @@ struct HomeView: View {
         NavigationStack {
             List {
                 monthlyOverview
+                    .onTapGesture {
+                        withAnimation(.easeInOut) {
+                            showingUtilization.toggle()
+                        }
+                    }
                 expensesList
             }
             .navigationTitle("Home")
@@ -123,8 +129,13 @@ struct HomeView: View {
     private func utilizationView(for category: ExpenseCategory, utilization: Double, used: Double, total: Double) -> some View {
         VStack(spacing: 0) {
             HStack {
-                Text(category.rawValue.uppercased())
-                Text(utilization, format: .percent.precision(.fractionLength(0)))
+                if showingUtilization {
+                    Text(category.rawValue.uppercased())
+                    Text(utilization, format: .percent.precision(.fractionLength(0)))
+                } else {
+                    Text((total - used).currencyString)
+                    Text("REMAINING")
+                }
             }
             .font(.caption)
             .fontWidth(.expanded)
