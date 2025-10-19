@@ -11,8 +11,7 @@ struct CategoryPicker: View {
     @Binding var selectedCategory: ExpenseCategory
     
     var body: some View {
-        VStack(alignment: .leading) {
-            
+        HStack {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
                 Button {
                     selectedCategory = category
@@ -21,26 +20,18 @@ struct CategoryPicker: View {
                         Circle()
                             .frame(width: 10, height: 10)
                             .foregroundStyle(category.color)
-                        VStack(alignment: .leading) {
-                            Text(category.rawValue)
-                            Text(category.description)
-                                .font(.caption)
-                        }
                         
-                        Spacer()
-                        
-                        if selectedCategory == category {
-                            Image(systemName: "checkmark")
-                                .font(.caption)
-                        }
+                        Text(category.rawValue)
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.ui.cardBackground)
+                .background(selectedCategory == category ? Color.secondary : Color.ui.cardBackground)
                 .cornerRadius(15)
                 .foregroundStyle(.primary)
             }
         }
+        .padding(.horizontal)
     }
 }
 

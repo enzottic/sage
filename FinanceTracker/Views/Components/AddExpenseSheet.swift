@@ -13,6 +13,8 @@ struct AddExpenseSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
+    @State private var showDatePopover: Bool = false
+    
     @State private var name: String = ""
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
@@ -21,41 +23,7 @@ struct AddExpenseSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 40) {
-                HStack {
-                    TextField("Expense Name", text: $name)
-                        .font(.title)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                
-                HStack {
-                    TextField("Amount (\(Locale.current.currency?.identifier ?? "USD"))", value: $amount, format: .number)
-                        .keyboardType(.decimalPad)
-                        .font(.title)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                    
-                DatePicker("Date", selection: $date, displayedComponents: .date)
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-
-                VStack {
-                    Text("Category")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    CategoryPicker(selectedCategory: $category)
-                }
-                
-                VStack(spacing: 4) {
-                    Text("Tag")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-
-                    TagPicker(selectedTag: $tag)
-                }
-            }
+            ExpenseInfoForm(name: $name, amount: $amount, date: $date, category: $category, tag: $tag)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }

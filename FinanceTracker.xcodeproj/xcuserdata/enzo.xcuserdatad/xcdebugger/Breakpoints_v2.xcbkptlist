@@ -62,9 +62,9 @@
             filePath = "FinanceTracker/Views/Components/ExpenseDetailView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "72"
-            endingLineNumber = "72"
-            landmarkName = "ExpenseDetailView"
+            startingLineNumber = "136"
+            endingLineNumber = "136"
+            landmarkName = "EditableExpense"
             landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>

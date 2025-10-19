@@ -32,7 +32,6 @@ struct ExpenseListGroup: View {
                 .contentShape(Rectangle())
                 .onTapGesture { selectedExpense = expense }
         }
-
         .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
             Button("Delete", role: .destructive) {
                 if let expense = expenseToDelete {

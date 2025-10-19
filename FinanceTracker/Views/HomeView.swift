@@ -17,7 +17,6 @@ struct HomeView: View {
     @Query private var monthlyExpenses: [Expense]
     
     @State private var selectedExpense: Expense? = nil
-    
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
@@ -63,12 +62,13 @@ struct HomeView: View {
             .background(Color.ui.background)
             .sheet(isPresented: $addExpenseSheetIsPresented) {
                 AddExpenseSheet()
+                    .presentationDetents([.medium])
                     .presentationBackground(Color.ui.background)
-                    .padding()
             }
             .sheet(item: $selectedExpense) { expense in
                 ExpenseDetailView(expense: expense)
                     .presentationDetents([.medium])
+                    .presentationBackground(Color.ui.background)
             }
             .toolbar {
                 ToolbarItem {

@@ -12,6 +12,7 @@ struct TagCapsule: View {
     let size: TagCapsuleSize
     
     enum TagCapsuleSize {
+        case xsmall
         case small
         case medium
     }
@@ -21,19 +22,37 @@ struct TagCapsule: View {
         self.size = size
     }
     
+    var padding: CGFloat {
+        switch size {
+        case .xsmall: 2
+        case .small: 5
+        case .medium: 10
+        }
+    }
+    
+    var font: Font {
+        switch size {
+        case .xsmall: .caption
+        case .small: .footnote
+        case .medium: .subheadline
+        }
+        
+    }
+    
     var body: some View {
         HStack {
             Text("\(tag.emoji) \(tag.rawValue)")
                 .foregroundStyle(tag.color)
-                .padding(size == .small ? 5 : 10)
+                .padding(padding)
                 .background(Capsule().fill(tag.color.tertiary).stroke(tag.color))
                 .foregroundStyle(.white)
-                .font(size == .small ? .caption : .headline)
+                .font(font)
         }
     }
 }
 
 #Preview {
+    TagCapsule(tag: ExpenseTag.billsAndUtils, .xsmall)
     TagCapsule(tag: ExpenseTag.billsAndUtils, .small)
     TagCapsule(tag: ExpenseTag.billsAndUtils, .medium)
 }

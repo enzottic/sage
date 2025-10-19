@@ -38,6 +38,8 @@ struct SageTabView: View {
 }
 
 #Preview {
+    @Previewable @State var appConfig = AppConfiguration()
     SageTabView()
         .modelContainer(ModelContainer.preview)
+        .environment(appConfig)
 }
