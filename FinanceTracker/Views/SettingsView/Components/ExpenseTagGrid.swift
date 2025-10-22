@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ExpenseTagGrid: View {
+    @Environment(\.modelContext) var modelContext
     let expenseTags: [ExpenseTag]
     
     let columns = [
@@ -15,19 +17,31 @@ struct ExpenseTagGrid: View {
         GridItem(.flexible()),
     ]
     
+    @State private var showAddTagSheet: Bool = false
+    
     var body: some View {
         LazyVGrid(columns: columns, spacing: 20) {
             ForEach(expenseTags, id: \.self) { tag in
                 TagCapsule(tag: tag, .medium)
                     .contextMenu {
                         Button("Edit") { }
-                        Button("Delete", role: .destructive) { }
+                        Button("Delete", role: .destructive) {
+                            withAnimation {
+                                modelContext.delete(tag)
+                            }
+                        }
                     }
             }
+            
             Button("Add Tag") {
-                
+                showAddTagSheet = true
             }
-            .buttonStyle(.glassProminent)
+            .buttonStyle(.glass)
+        }
+        .sheet(isPresented: $showAddTagSheet) {
+            AddExpenseTagSheet()
+                .presentationBackground(Color.ui.background)
+                .presentationDetents([.medium])
         }
     }
 }

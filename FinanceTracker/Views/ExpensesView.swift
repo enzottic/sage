@@ -1,5 +1,5 @@
 //
-//  BudgetView.swift
+//  ExpensesScreen.swift
 //  FinanceTracker
 //
 //  Created by Tyler McCormick on 9/21/25.
@@ -17,6 +17,7 @@ struct ExpensesView: View {
     @State private var showingDeleteConfirmation: Bool = false
     @State private var selectedExpense: Expense? = nil
     @State private var transitionDirection: Edge = .leading
+    @State private var showAddExpenseSheet: Bool = false
     
     let calendar = Calendar.current
     let formatter: DateFormatter
@@ -108,6 +109,19 @@ struct ExpensesView: View {
             .sheet(item: $selectedExpense) { expense in
                 ExpenseDetailView(expense: expense)
                     .presentationDetents([.medium])
+                    .presentationBackground(Color.ui.background)
+            }
+            .sheet(isPresented: $showAddExpenseSheet, content: {
+                AddExpenseSheet()
+                    .presentationDetents([.medium])
+                    .presentationBackground(Color.ui.background)
+            })
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Expense", systemImage: "plus") {
+                        showAddExpenseSheet = true
+                    }
+                }
             }
         }
     }

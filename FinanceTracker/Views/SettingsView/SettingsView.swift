@@ -15,7 +15,8 @@ struct SettingsView: View {
     @Query var expenseTags: [ExpenseTag]
     
     @FocusState private var needsFocus: Bool
-    
+    @State private var showAddTagSheet: Bool = false
+
     private func updateNeeds(_ newNeeds: Double) {
         let clampedNeeds = min(max(newNeeds, 0), 1)
         var newWants = config.wantsPercent
@@ -50,51 +51,54 @@ struct SettingsView: View {
         
         NavigationStack {
             ScrollView {
-                SettingsPanel(title: "Appearance", description: "Choose the default appearance for Sage") {
-                    AppearancePicker(appearance: $config.selectedAppearance)
-                }
-                
-                SettingsPanel(title: "Monthly Income", description: "Enter your monthly spendable income in \(Locale.current.currency?.identifier ?? "USD")") {
-                    TextField("Monthly Income", value: $config.totalMonthlyIncome, format: .number)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.ui.cardBackground)
-                        .cornerRadius(15)
-                        .focused($needsFocus)
-                        .onChange(of: config.totalMonthlyIncome) { oldValue, newValue in
-                            WidgetCenter.shared.reloadAllTimelines()
-                        }
-                }
-                
-                SettingsPanel(title: "Budget Allocation", description: "Set percentages for wants and needs.") {
-                    VStack {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("Wants (%)")
-                                    .foregroundStyle(.gray)
-                                TextField("Wants", value: Binding(get: {config.wantsPercent * 100}, set: { updateWants($0 / 100) }), format: .number)
-                                    .padding()
-                                    .background(Color.ui.cardBackground)
-                                    .cornerRadius(15)
-                                    .focused($needsFocus)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("Needs (%)")
-                                    .foregroundStyle(.gray)
-                                TextField("Needs", value: Binding(get: {config.needsPercent * 100}, set: { updateNeeds($0 / 100) }), format: .number)
-                                    .padding()
-                                    .background(Color.ui.cardBackground)
-                                    .cornerRadius(15)
-                                    .focused($needsFocus)
-                            }
-                        }
-                        Text("Savings Percentage: \(Int(config.savingsPercent * 100))")
-                            .foregroundStyle(.secondary)
+                VStack(spacing: 40) {
+                    SettingsPanel(title: "Appearance", description: "Choose the default appearance for Sage") {
+                        AppearancePicker(appearance: $config.selectedAppearance)
                     }
-                }
-                
-                SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
+                    
+                    SettingsPanel(title: "Monthly Income", description: "Enter your monthly spendable income in \(Locale.current.currency?.identifier ?? "USD")") {
+                        TextField("Monthly Income", value: $config.totalMonthlyIncome, format: .number)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.ui.cardBackground)
+                            .cornerRadius(15)
+                            .focused($needsFocus)
+                            .onChange(of: config.totalMonthlyIncome) { oldValue, newValue in
+                                WidgetCenter.shared.reloadAllTimelines()
+                            }
+                    }
+                    
+                    SettingsPanel(title: "Budget Allocation", description: "Set percentages for wants and needs.") {
+                        VStack {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Wants (%)")
+                                        .foregroundStyle(.gray)
+                                    TextField("Wants", value: Binding(get: {config.wantsPercent * 100}, set: { updateWants($0 / 100) }), format: .number)
+                                        .padding()
+                                        .background(Color.ui.cardBackground)
+                                        .cornerRadius(15)
+                                        .focused($needsFocus)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Needs (%)")
+                                        .foregroundStyle(.gray)
+                                    TextField("Needs", value: Binding(get: {config.needsPercent * 100}, set: { updateNeeds($0 / 100) }), format: .number)
+                                        .padding()
+                                        .background(Color.ui.cardBackground)
+                                        .cornerRadius(15)
+                                        .focused($needsFocus)
+                                }
+                            }
+                            Text("Savings Percentage: \(Int(config.savingsPercent * 100))")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
+                            ExpenseTagGrid(expenseTags: expenseTags)
+                    }
                 }
             }
             .padding()

@@ -9,9 +9,11 @@ import SwiftUI
 import SwiftData
 
 @main
-struct FinanceTrackerApp: App {
+struct SageApp: App {
     @State private var appConfiguration = AppConfiguration()
     let modelContainer: ModelContainer
+    
+    @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     
     init() {
         UIColorValueTransformer.register()
@@ -22,10 +24,7 @@ struct FinanceTrackerApp: App {
         do {
             self.modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
-            let fetchDesc = FetchDescriptor<SageSchemaV1.ExpenseTagModel>()
-            let expenseTags = try self.modelContainer.mainContext.fetch(fetchDesc)
-            
-            if expenseTags.isEmpty {
+            if !hasOpenedAppOnce {
                 let builtInTags = [
                     ExpenseTag(name: "Shopping", uiColor: .systemYellow, emoji: "🛍️"),
                     ExpenseTag(name: "Dining", uiColor: .systemOrange, emoji: "🍔"),
@@ -49,9 +48,13 @@ struct FinanceTrackerApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SageTabView()
-                .environment(appConfiguration)
-                .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+            if !hasOpenedAppOnce {
+                WelcomeView()
+            } else {
+                SageTabView()
+                    .environment(appConfiguration)
+                    .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+            }
         }
         .modelContainer(modelContainer)
     }

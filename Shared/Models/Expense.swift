@@ -97,7 +97,10 @@ class SageSchemaV1: VersionedSchema {
         var amount: Double
         var category: ExpenseCategory
         var date: Date
+        
+        @Relationship(deleteRule: .nullify)
         var tag: ExpenseTagModel?
+        
         var note: String = ""
 
         init(
