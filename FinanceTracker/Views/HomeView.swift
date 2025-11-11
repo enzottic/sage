@@ -14,13 +14,26 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppConfiguration.self) private var config
     
-    @Query private var monthlyExpenses: [Expense]
+    let calendar = Calendar.current
     
+    @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
+    private var allExpenses: [Expense]
+    
+    @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var expenseToDelete: Expense? = nil
     @State private var showingUtilization: Bool = true
+    
+    var monthlyExpenses: [Expense] {
+        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
+        let endOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+        
+        return allExpenses.filter { expense in
+            expense.date >= startOfMonth && expense.date < endOfMonth
+        }
+    }
     
     var wantsUtilization: Double {
         config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
@@ -36,20 +49,6 @@ struct HomeView: View {
 
     var recentPurchases: [Expense] {
         Array(monthlyExpenses.prefix(10))
-    }
-    
-    init() {
-        let calendar = Calendar.current
-        let month = Date()
-        let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
-        let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
-        
-        _monthlyExpenses = Query(
-            filter: #Predicate<Expense> { expense in
-                expense.date >= startOfMonth && expense.date < endOfMonth
-            },
-            sort: [SortDescriptor(\Expense.date, order: .reverse)],
-        )
     }
     
     var body: some View {
@@ -77,6 +76,19 @@ struct HomeView: View {
                     .presentationBackground(Color.ui.background)
             }
             .toolbar {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button {
+                        selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
+                    } label: {
+                        Label("Previous Month", systemImage: "chevron.left")
+                    }
+                    
+                    Button {
+                        selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
+                    } label: {
+                        Label("Next Month", systemImage: "chevron.right")
+                    }
+                }
                 ToolbarItem {
                     Button {
                         addExpenseSheetIsPresented = true
@@ -94,7 +106,7 @@ struct HomeView: View {
     var monthlyOverview: some View {
         Section {
             VStack(spacing: 15) {
-                Text("Spent in \(Date().formatted(.dateTime.month(.wide)))")
+                Text("Spent in \(selectedMonth.formatted(.dateTime.month(.wide)))")
                     .foregroundStyle(.secondary)
                  Text(monthlyExpenses.total.currencyString)
                     .font(.largeTitle)

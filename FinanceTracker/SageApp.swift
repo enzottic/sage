@@ -48,14 +48,17 @@ struct SageApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if !hasOpenedAppOnce {
-                WelcomeView()
-            } else {
-                SageTabView()
-                    .environment(appConfiguration)
-                    .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
-            }
+//            if !hasOpenedAppOnce {
+//                WelcomeView()
+//                    .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+//            } else {
+//                SageTabView()
+//                    .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+//            }
+            SageTabView()
+                .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
         }
+        .environment(appConfiguration)
         .modelContainer(modelContainer)
     }
 }
