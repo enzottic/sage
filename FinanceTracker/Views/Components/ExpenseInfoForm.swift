@@ -32,12 +32,9 @@ struct ExpenseInfoForm: View {
             }
 
             Spacer()
-            
-            TextField("$0.00", value: $amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                .keyboardType(.decimalPad)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
+
+            CentsFirstCurrencyField(amount: $amount)
+
             Spacer()
                 
             CategoryPicker(selectedCategory: $category)
