@@ -21,27 +21,27 @@ struct SettingsView: View {
         let clampedNeeds = min(max(newNeeds, 0), 1)
         var newWants = config.wantsPercent
         if clampedNeeds + newWants > 1 {
-            newWants = 1 - clampedNeeds
+            newWants = round((1 - clampedNeeds) / 0.05) * 0.05
         }
         let newSavings = max(1 - (clampedNeeds + newWants), 0)
         config.needsPercent = clampedNeeds
         config.wantsPercent = newWants
         config.savingsPercent = newSavings
-        
+
         WidgetCenter.shared.reloadAllTimelines()
     }
-    
+
     private func updateWants(_ newWants: Double) {
         let clampedWants = min(max(newWants, 0), 1)
         var newNeeds = config.needsPercent
         if newNeeds + clampedWants > 1 {
-            newNeeds = 1 - clampedWants
+            newNeeds = round((1 - clampedWants) / 0.05) * 0.05
         }
         let newSavings = max(1 - (newNeeds + clampedWants), 0)
         config.needsPercent = newNeeds
         config.wantsPercent = clampedWants
         config.savingsPercent = newSavings
-        
+
         WidgetCenter.shared.reloadAllTimelines()
     }
     
@@ -69,30 +69,45 @@ struct SettingsView: View {
                     }
                     
                     SettingsPanel(title: "Budget Allocation", description: "Set percentages for wants and needs.") {
-                        VStack {
+                        VStack(spacing: 20) {
+                            AllocationSlider(
+                                title: "Wants",
+                                percentage: Binding(
+                                    get: { config.wantsPercent * 100 },
+                                    set: { updateWants($0 / 100) }
+                                ),
+                                color: Color.ui.wantColor,
+                                icon: "cart.fill"
+                            )
+
+                            AllocationSlider(
+                                title: "Needs",
+                                percentage: Binding(
+                                    get: { config.needsPercent * 100 },
+                                    set: { updateNeeds($0 / 100) }
+                                ),
+                                color: Color.ui.needColor,
+                                icon: "house.fill"
+                            )
+
                             HStack {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Wants (%)")
-                                        .foregroundStyle(.gray)
-                                    TextField("Wants", value: Binding(get: {config.wantsPercent * 100}, set: { updateWants($0 / 100) }), format: .number)
-                                        .padding()
-                                        .background(Color.ui.cardBackground)
-                                        .cornerRadius(15)
-                                        .focused($needsFocus)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Needs (%)")
-                                        .foregroundStyle(.gray)
-                                    TextField("Needs", value: Binding(get: {config.needsPercent * 100}, set: { updateNeeds($0 / 100) }), format: .number)
-                                        .padding()
-                                        .background(Color.ui.cardBackground)
-                                        .cornerRadius(15)
-                                        .focused($needsFocus)
-                                }
+                                Image(systemName: "banknote.fill")
+                                    .foregroundStyle(.teal)
+                                    .frame(width: 30)
+
+                                Text("Savings")
+                                    .font(.headline)
+
+                                Spacer()
+
+                                Text("\(Int(config.savingsPercent * 100))%")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.teal)
                             }
-                            Text("Savings Percentage: \(Int(config.savingsPercent * 100))")
-                                .foregroundStyle(.secondary)
+                            .padding()
+                            .background(Color.ui.cardBackground)
+                            .cornerRadius(15)
                         }
                     }
                     
