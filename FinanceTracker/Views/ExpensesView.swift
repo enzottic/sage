@@ -59,32 +59,6 @@ struct ExpensesView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                HStack {
-                    Button {
-                        withAnimation(.easeInOut) {
-                            transitionDirection = .trailing
-                            selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
-                        }
-                    } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                    
-                    Spacer()
-                    
-                    Text(formatter.string(from: selectedMonth))
-                    
-                    Spacer()
-                    
-                    Button {
-                        withAnimation(.easeInOut) {
-                            transitionDirection = .leading
-                            selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
-                        }
-                    } label: {
-                        Image(systemName: "chevron.right")
-                    }
-                }
-                    
                 if (expensesForMonth.isEmpty) {
                     ContentUnavailableView(
                         "No expenses for this month",
@@ -105,7 +79,7 @@ struct ExpensesView: View {
             .padding([.horizontal, .top], 10)
             .frame(maxWidth: .infinity)
             .background(Color.ui.background)
-            .navigationTitle("All Expenses")
+            .navigationTitle(formatter.string(from: selectedMonth))
             .sheet(item: $selectedExpense) { expense in
                 ExpenseDetailView(expense: expense)
                     .presentationDetents([.medium])
@@ -117,7 +91,26 @@ struct ExpensesView: View {
                     .presentationBackground(Color.ui.background)
             })
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        withAnimation(.easeInOut) {
+                            transitionDirection = .trailing
+                            selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
+                        }
+                    } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                    
+                    Button {
+                        withAnimation(.easeInOut) {
+                            transitionDirection = .leading
+                            selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
+                        }
+                    } label: {
+                        Image(systemName: "chevron.right")
+                    }
+                }
+                ToolbarItem(placement: .bottomBar) {
                     Button("Add Expense", systemImage: "plus") {
                         showAddExpenseSheet = true
                     }
@@ -152,6 +145,11 @@ struct ExpensesView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         selectedExpense = expense
+                    }
+                    .contextMenu {
+                        Button("Delete", role: .destructive) {
+                            print("Delete")
+                        }
                     }
                 }
             }

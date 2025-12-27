@@ -51,15 +51,19 @@ struct HomeView: View {
         Array(monthlyExpenses.prefix(10))
     }
     
+    var totalRemaining: Double {
+        Double(config.totalMonthlyIncome) - monthlyExpenses.total
+    }
+    
     var body: some View {
         NavigationStack {
             List {
-                monthlyOverview
-                    .onTapGesture {
-                        withAnimation(.easeInOut) {
-                            showingUtilization.toggle()
-                        }
-                    }
+                Group {
+                    monthlyOverview
+                    utilizationSection
+                }
+                .onTapGesture { showingUtilization.toggle() }
+                
                 expensesList
             }
             .navigationTitle("Home")
@@ -105,20 +109,43 @@ struct HomeView: View {
     
     var monthlyOverview: some View {
         Section {
-            VStack(spacing: 15) {
-                Text("Spent in \(selectedMonth.formatted(.dateTime.month(.wide)))")
+            VStack(alignment: .leading, spacing: 15) {
+                Text("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
                     .foregroundStyle(.secondary)
-                 Text(monthlyExpenses.total.currencyString)
-                    .font(.largeTitle)
-                    .fontWeight(.black)
-                    .fontWidth(.expanded)
+                    .font(.title)
                 
-                utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: config.wantsBudget)
-                utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: config.needsBudget)
-                utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: config.savingsBudget)
+                HStack(alignment: .firstTextBaseline) {
+                    if showingUtilization {
+                        Text(monthlyExpenses.total.currencyString)
+                           .font(.largeTitle)
+                           .fontWeight(.black)
+                           .fontWidth(.expanded)
+                        
+                        Text("spent")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(totalRemaining.currencyString)
+                           .font(.largeTitle)
+                           .fontWeight(.black)
+                           .fontWidth(.expanded)
+                        
+                        Text("remaining")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
+        }
+    }
+    
+    var utilizationSection: some View {
+        Section {
+            utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: config.wantsBudget)
+            utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: config.needsBudget)
+            utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: config.savingsBudget)
         } header: {
-            Text("Monthly Overview")
+            Text("Categories")
         }
     }
     
@@ -137,34 +164,28 @@ struct HomeView: View {
             Text("Recent Purchases")
         }
     }
-     
+    
     private func utilizationView(for category: ExpenseCategory, utilization: Double, used: Double, total: Double) -> some View {
-        VStack(spacing: 0) {
-            HStack {
+        HStack(spacing: 10) {
+            CircularProgressView(progress: utilization, tint: category.color)
+            
+            VStack(alignment: .leading) {
+                Text(category.rawValue)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
                 if showingUtilization {
-                    Text(category.rawValue.uppercased())
-                    Text(utilization, format: .percent.precision(.fractionLength(0)))
+                    HStack(spacing: 5) {
+                        Text(used.currencyString)
+                            .fontWeight(.semibold)
+                        Text("of \(total.currencyString)")
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
-                    Text((total - used).currencyString)
-                    Text("REMAINING")
+                    let remaining = total - used
+                    Text("\(remaining.currencyString) remaining")
                 }
             }
-            .font(.caption)
-            .fontWidth(.expanded)
-            .foregroundStyle(.secondary)
-            
-            HStack {
-                Text(used.currencyString)
-                    .foregroundStyle(used > total ? .red : .secondary)
-                ProgressView(value: utilization, total: 1)
-                    .overlay(
-                        LinearGradient(gradient: Gradient(colors: [category.color]), startPoint: .leading, endPoint: .trailing)
-                        .mask(ProgressView(value: utilization, total: 1))
-                      )
-                Text(total.currencyString)
-                    .foregroundStyle(used > total ? .red : .secondary)
-            }
-            .font(.subheadline)
         }
     }
 }

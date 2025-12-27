@@ -14,6 +14,7 @@ struct SageApp: App {
     let modelContainer: ModelContainer
     
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
+    @Query var expenses: [Expense]
     
     init() {
         UIColorValueTransformer.register()
@@ -24,7 +25,7 @@ struct SageApp: App {
         do {
             self.modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
-            if !hasOpenedAppOnce {
+            if !hasOpenedAppOnce && expenses.isEmpty {
                 let builtInTags = [
                     ExpenseTag(name: "Shopping", uiColor: .systemYellow, emoji: "🛍️"),
                     ExpenseTag(name: "Dining", uiColor: .systemOrange, emoji: "🍔"),

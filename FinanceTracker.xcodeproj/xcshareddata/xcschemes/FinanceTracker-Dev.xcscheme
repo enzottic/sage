@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "2600"
-   version = "1.7">
+   version = "2.2">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
       <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <AutocreatedTestPlanReference>
+            </AutocreatedTestPlanReference>
+         </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
             buildForRunning = "YES"
@@ -15,9 +24,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C66031C52E8073C60078DD15"
-               BuildableName = "Sage.app"
-               BlueprintName = "FinanceTracker"
+               BlueprintIdentifier = "C655B39A2EF8E3C000E1F50E"
+               BuildableName = "FinanceTracker-Dev.app"
+               BlueprintName = "FinanceTracker-Dev"
                ReferencedContainer = "container:FinanceTracker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,19 +38,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
-      <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C655B3AB2EF8E4B300E1F50E"
-               BuildableName = "FinanceTrackerUITests.xctest"
-               BlueprintName = "FinanceTrackerUITests"
-               ReferencedContainer = "container:FinanceTracker.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -57,9 +53,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C66031C52E8073C60078DD15"
-            BuildableName = "Sage.app"
-            BlueprintName = "FinanceTracker"
+            BlueprintIdentifier = "C655B39A2EF8E3C000E1F50E"
+            BuildableName = "FinanceTracker-Dev.app"
+            BlueprintName = "FinanceTracker-Dev"
             ReferencedContainer = "container:FinanceTracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -74,9 +70,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C66031C52E8073C60078DD15"
-            BuildableName = "Sage.app"
-            BlueprintName = "FinanceTracker"
+            BlueprintIdentifier = "C655B39A2EF8E3C000E1F50E"
+            BuildableName = "FinanceTracker-Dev.app"
+            BlueprintName = "FinanceTracker-Dev"
             ReferencedContainer = "container:FinanceTracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

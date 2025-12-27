@@ -52,6 +52,7 @@ struct CentsFirstCurrencyField: View {
                         amount = nil
                     }
                 }
+                .accessibilityIdentifier("Expense Amount Field")
 
             // Display text
             Text(displayValue)

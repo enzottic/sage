@@ -40,7 +40,7 @@ struct TagCapsule: View {
     }
     
     var body: some View {
-        HStack {
+        VStack {
             Text("\(tag.emoji) \(tag.name)")
                 .foregroundStyle(tag.color)
                 .padding(padding)

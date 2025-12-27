@@ -13,9 +13,12 @@ struct SettingsView: View {
     @Environment(\.modelContext) var modelContext
     
     @Query var expenseTags: [ExpenseTag]
-    
+    @Query var expenses: [Expense]
+
     @FocusState private var needsFocus: Bool
     @State private var showAddTagSheet: Bool = false
+    
+    let expenseExporter = ExpenseExportService.shared
 
     private func updateNeeds(_ newNeeds: Double) {
         let clampedNeeds = min(max(newNeeds, 0), 1)
@@ -100,7 +103,7 @@ struct SettingsView: View {
 
                                 Spacer()
 
-                                Text("\(Int(config.savingsPercent * 100))%")
+                                Text("\(Int(round(config.savingsPercent * 100)))%")
                                     .font(.title2)
                                     .fontWeight(.bold)
                                     .foregroundStyle(.teal)
@@ -113,6 +116,13 @@ struct SettingsView: View {
                     
                     SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
                             ExpenseTagGrid(expenseTags: expenseTags)
+                    }
+                    
+                    SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
+                        Button("Export") {
+                            expenseExporter.exportExpenses(expenses: expenses)
+                            
+                        }
                     }
                 }
             }
@@ -129,6 +139,33 @@ struct SettingsView: View {
         }
     }
 }
+
+struct SettingsPanel<Content: View>: View {
+    let title: String
+    let description: String
+    @ViewBuilder var content: () -> Content
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            VStack(alignment: .leading) {
+                Text(title)
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding([.bottom], 10)
+            
+            Spacer()
+            
+            VStack(alignment: .leading) {
+                content()
+
+            }
+        }
+        .padding(3)
+    }
+}
+
 
 
 
