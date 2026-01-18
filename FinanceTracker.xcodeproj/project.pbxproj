@@ -53,6 +53,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
+		};
 		C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -73,12 +80,13 @@
 			membershipExceptions = (
 				"Extensions/Color+SageColors.swift",
 				"Extensions/Date+Relative.swift",
+				"Extensions/Date+TextOutputStreamable.swift",
 				"Extensions/Number+CurrencyString.swift",
 				Intents/SageAppIntents.swift,
 				Models/Expense.swift,
 				Models/ExpenseCategory.swift,
+				Services/ExpenseBackupService.swift,
 				Services/ExpenseDataService.swift,
-				Services/ExpenseExportService.swift,
 				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
@@ -101,6 +109,7 @@
 		C66031C82E8073C60078DD15 /* FinanceTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */,
 				C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */,
 			);
 			path = FinanceTracker;
@@ -536,6 +545,7 @@
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTracker/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -573,6 +583,7 @@
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTracker/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

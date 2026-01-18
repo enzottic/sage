@@ -5,6 +5,7 @@
 //  Created by Tyler McCormick on 9/21/25.
 //
 import SwiftUI
+import UniformTypeIdentifiers
 import WidgetKit
 import SwiftData
 
@@ -17,37 +18,10 @@ struct SettingsView: View {
 
     @FocusState private var needsFocus: Bool
     @State private var showAddTagSheet: Bool = false
+    @State private var showFileImporter: Bool = false
     
-    let expenseExporter = ExpenseExportService.shared
+    let expenseExporter = ExpenseBackupService.shared
 
-    private func updateNeeds(_ newNeeds: Double) {
-        let clampedNeeds = min(max(newNeeds, 0), 1)
-        var newWants = config.wantsPercent
-        if clampedNeeds + newWants > 1 {
-            newWants = round((1 - clampedNeeds) / 0.05) * 0.05
-        }
-        let newSavings = max(1 - (clampedNeeds + newWants), 0)
-        config.needsPercent = clampedNeeds
-        config.wantsPercent = newWants
-        config.savingsPercent = newSavings
-
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    private func updateWants(_ newWants: Double) {
-        let clampedWants = min(max(newWants, 0), 1)
-        var newNeeds = config.needsPercent
-        if newNeeds + clampedWants > 1 {
-            newNeeds = round((1 - clampedWants) / 0.05) * 0.05
-        }
-        let newSavings = max(1 - (newNeeds + clampedWants), 0)
-        config.needsPercent = newNeeds
-        config.wantsPercent = clampedWants
-        config.savingsPercent = newSavings
-
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-    
 
     var body: some View {
         @Bindable var config = config
@@ -121,7 +95,10 @@ struct SettingsView: View {
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
                         Button("Export") {
                             expenseExporter.exportExpenses(expenses: expenses)
-                            
+                        }
+                        
+                        Button("Import") {
+                            showFileImporter = true
                         }
                     }
                 }
@@ -136,7 +113,80 @@ struct SettingsView: View {
                     }
                 }
             }
+            .fileImporter(
+                isPresented: $showFileImporter,
+                allowedContentTypes: [UTType.commaSeparatedText],
+                allowsMultipleSelection: false,
+                onCompletion: importExpenses
+            )
         }
+    }
+    
+    private func importExpenses(filePickerResult: Result<[URL], any Error>) {
+        switch (filePickerResult) {
+        case .success(let urls):
+            if let url = urls.first {
+                if url.startAccessingSecurityScopedResource() {
+                    print("Accessing file \(url.lastPathComponent)")
+                    let readFileResult = expenseExporter.readExpenses(from: url)
+                    
+                    switch (readFileResult) {
+                    case .success(let importedExpenses):
+                        toNormalExpenses(importedExpenses) .forEach { modelContext.insert($0) }
+                        save()
+                    case .failure(let error):
+                        print("Failed to read file: \(error.localizedDescription)")
+                    }
+                    
+                }
+            }
+        case .failure(let error):
+            print("Failed yo: \(error.localizedDescription)")
+        }
+    }
+    
+    private func save() {
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save model context: \(error.localizedDescription)")
+        }
+    }
+    
+    private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
+        importedExpenses.map { e in
+            let tag = expenseTags.first { tag in e.tag == tag.name } ?? nil
+            
+            return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tag: tag, note: e.note)
+        }
+    }
+    
+    private func updateNeeds(_ newNeeds: Double) {
+        let clampedNeeds = min(max(newNeeds, 0), 1)
+        var newWants = config.wantsPercent
+        if clampedNeeds + newWants > 1 {
+            newWants = round((1 - clampedNeeds) / 0.05) * 0.05
+        }
+        let newSavings = max(1 - (clampedNeeds + newWants), 0)
+        config.needsPercent = clampedNeeds
+        config.wantsPercent = newWants
+        config.savingsPercent = newSavings
+
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func updateWants(_ newWants: Double) {
+        let clampedWants = min(max(newWants, 0), 1)
+        var newNeeds = config.needsPercent
+        if newNeeds + clampedWants > 1 {
+            newNeeds = round((1 - clampedWants) / 0.05) * 0.05
+        }
+        let newSavings = max(1 - (newNeeds + clampedWants), 0)
+        config.needsPercent = newNeeds
+        config.wantsPercent = clampedWants
+        config.savingsPercent = newSavings
+
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

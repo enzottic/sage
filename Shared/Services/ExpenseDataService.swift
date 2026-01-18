@@ -16,10 +16,6 @@ class ExpenseDataService {
         self.config = AppConfiguration()
     }
     
-    func fetchExpenses(for month: Date = .now) -> [Expense] {
-        return getExpenses(for: month)
-    }
-    
     func fetchTimelineEntry() -> WidgetTimelineEntry {
         let expenses = getExpenses(for: .now)
         let totalSpent = expenses.reduce(0) { $0 + $1.amount }
@@ -43,25 +39,6 @@ class ExpenseDataService {
         )
     }
     
-    func fetchTotalSpentThisMonth() -> Double {
-        let expenses = getExpenses(for: .now)
-        return expenses.reduce(0) { $0 + $1.amount }
-    }
-    
-    func fetchWantsUtilizationThisMonth() -> Double {
-        let wantsBudget = config.wantsBudget
-        let totalWants = getExpenses(for: .now).filter { $0.category == .wants }.reduce(0) { $0 + $1.amount }
-        print("got wants: \(totalWants/wantsBudget)")
-        return wantsBudget == 0 ? 0 : totalWants / wantsBudget
-    }
-    
-    func fetchNeedsUtilizationThisMonth() -> Double {
-        let needsBudget = config.needsBudget
-        let totalNeeds = getExpenses(for: .now).filter { $0.category == .needs }.reduce(0) { $0 + $1.amount }
-        print("got needs: \(totalNeeds/needsBudget)")
-        return needsBudget == 0 ? 0 : totalNeeds / needsBudget
-    }
-
     private func getExpenses(for month: Date) -> [Expense] {
         let schema = Schema(versionedSchema: SageSchemaV1.self)
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
