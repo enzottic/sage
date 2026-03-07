@@ -55,6 +55,13 @@ struct SageApp: App {
             } else {
                 SageTabView()
                     .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+                    .onOpenURL { url in
+                        guard url.scheme == "financetracker",
+                              url.host == "splitwise-callback" else { return }
+                        Task {
+                            try? await SplitwiseService.shared.handleOAuthCallback(url: url)
+                        }
+                    }
             }
         }
         .environment(appConfiguration)
