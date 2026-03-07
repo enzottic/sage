@@ -25,18 +25,12 @@ struct SageTabView: View {
                     Label("Expenses", systemImage: "list.bullet")
                 }
                 .tag(1)
-
-            SplitwiseView()
-                .tabItem {
-                    Label("Splitwise", systemImage: "arrow.triangle.branch")
-                }
-                .tag(2)
-
+            
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(3)
+                .tag(2)
             
         }
         .tint(Color.ui.sageColor)

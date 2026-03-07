@@ -56,17 +56,6 @@
                ReferencedContainer = "container:FinanceTracker.xcodeproj">
             </BuildableReference>
          </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C644FD5D2F4B62B4007474EB"
-               BuildableName = "FinanceTrackerTests.xctest"
-               BlueprintName = "FinanceTrackerTests"
-               ReferencedContainer = "container:FinanceTracker.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
