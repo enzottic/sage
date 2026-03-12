@@ -22,11 +22,19 @@ struct TagCapsule: View {
         self.size = size
     }
     
-    var padding: CGFloat {
+    var verticalPadding: CGFloat {
         switch size {
         case .xsmall: 2
-        case .small: 5
-        case .medium: 10
+        case .small: 4
+        case .medium: 6
+        }
+    }
+    
+    var horizontalPadding: CGFloat {
+        switch size {
+        case .xsmall: 6
+        case .small: 8
+        case .medium: 12
         }
     }
     
@@ -43,10 +51,10 @@ struct TagCapsule: View {
         VStack {
             Text("\(tag.emoji) \(tag.name)")
                 .foregroundStyle(tag.color)
-                .padding(padding)
-                .background(Capsule().fill(tag.color.tertiary).stroke(tag.color))
-                .foregroundStyle(.white)
                 .font(font)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, verticalPadding)
+                .background(Capsule().fill(tag.color.quaternary))
         }
     }
 }

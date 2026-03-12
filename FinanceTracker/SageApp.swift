@@ -25,6 +25,10 @@ struct SageApp: App {
         do {
             self.modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
+            // Generate any due recurring expenses through today
+            let recurringService = RecurringExpenseService(modelContext: self.modelContainer.mainContext)
+            recurringService.generateAllExpenses(through: Date())
+            
             if !hasOpenedAppOnce && expenses.isEmpty {
                 let builtInTags = [
                     ExpenseTag(name: "Shopping", uiColor: .systemYellow, emoji: "🛍️"),

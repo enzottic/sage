@@ -71,7 +71,7 @@ struct HomeView: View {
             .background(Color.ui.background)
             .sheet(isPresented: $addExpenseSheetIsPresented) {
                 AddExpenseSheet()
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
                     .presentationBackground(Color.ui.background)
             }
             .sheet(item: $selectedExpense) { expense in

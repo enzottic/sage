@@ -21,7 +21,7 @@ struct ExpensesProvider: AppIntentTimelineProvider {
     }
     
     func timeline(for configuration: UtilizationAppIntent, in context: Context) async -> Timeline<WidgetTimelineEntry> {
-        let data = ExpenseDataService()
+        let data = WidgetDataService()
         let entry = data.fetchTimelineEntry()
         let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(15 * 60)))
         return timeline

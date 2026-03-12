@@ -22,6 +22,9 @@ struct AddExpenseSheet: View {
     @State private var tag: ExpenseTag? = nil
     @State private var note: String = ""
 
+    @State private var isRecurring: Bool = false
+    @State private var recurrenceFrequency: RecurrenceFrequency = .monthly
+
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var isSaving = false
@@ -29,6 +32,33 @@ struct AddExpenseSheet: View {
     var body: some View {
         NavigationStack {
             ExpenseInfoForm(name: $name, amount: $amount, date: $date, category: $category, tag: $tag, note: $note)
+            
+            Divider()
+                .padding(.horizontal)
+
+            HStack {
+                Toggle("Recurring", isOn: $isRecurring.animation())
+                    .labelsHidden()
+                
+                Text("Recurring")
+                    .font(.subheadline)
+                    .foregroundStyle(isRecurring ? .primary : .secondary)
+
+                if isRecurring {
+                    Spacer()
+
+                    Picker("Frequency", selection: $recurrenceFrequency) {
+                        ForEach(RecurrenceFrequency.allCases, id: \.self) { frequency in
+                            Text(frequency.rawValue).tag(frequency)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.primary)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
@@ -65,13 +95,31 @@ struct AddExpenseSheet: View {
         // Start saving
         isSaving = true
 
+        // Create recurring rule if toggled on
+        var recurringId: UUID? = nil
+        if isRecurring {
+            let rule = RecurringExpenseRule(
+                name: name,
+                amount: expenseAmount,
+                note: note,
+                category: category,
+                tag: tag ?? .other,
+                frequency: recurrenceFrequency,
+                startDate: date,
+                lastGeneratedDate: date
+            )
+            recurringId = rule.id
+            modelContext.insert(rule)
+        }
+
         // Create and save expense
         let newExpense = Expense(
             name: name,
             amount: expenseAmount,
             category: category,
             date: date,
-            tag: tag
+            tag: tag,
+            recurringExpenseId: recurringId
         )
 
         modelContext.insert(newExpense)
@@ -100,3 +148,4 @@ struct AddExpenseSheet: View {
     AddExpenseSheet()
         .modelContainer(ModelContainer.preview)
 }
+

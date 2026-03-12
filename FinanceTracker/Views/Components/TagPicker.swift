@@ -33,12 +33,16 @@ struct TagPicker: View {
                     .padding(2)
                 }
             } else {
-                Button {
-                    withAnimation(.easeInOut) {
-                        isExpanded = true
+                ScrollView(.horizontal, showsIndicators: false) {
+                    Button {
+                        withAnimation(.easeInOut) {
+                            isExpanded = true
+                        }
+                    } label: {
+                        TagCapsule(tag: selectedTag, .medium)
                     }
-                } label: {
-                    TagCapsule(tag: selectedTag, .medium)
+                    .padding(2)
+                    .containerRelativeFrame(.horizontal)
                 }
             }
         }

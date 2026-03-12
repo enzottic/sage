@@ -17,28 +17,30 @@ struct ExpenseInfoForm: View {
     @Binding var note: String
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
+            // Name and date at top
             CustomDatePicker(selectedDate: $date)
 
-            VStack {
-                TextField("Expense Name", text: $name)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                
-                TextField("Add a note", text: $note)
-                    .foregroundStyle(.secondary)
-            }
+            TextField("Expense Name", text: $name)
+                .font(.title)
+                .fontWeight(.bold)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
 
+            TextField("Add a note", text: $note)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            // Amount in the middle
             Spacer()
 
             CentsFirstCurrencyField(amount: $amount)
 
             Spacer()
-                
+
+            // Category and tag at the bottom
             CategoryPicker(selectedCategory: $category)
-            
+
             TagPicker(selectedTag: $tag)
         }
         .multilineTextAlignment(.center)

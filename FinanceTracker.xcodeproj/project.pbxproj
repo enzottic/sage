@@ -83,11 +83,12 @@
 				"Extensions/Date+TextOutputStreamable.swift",
 				"Extensions/Number+CurrencyString.swift",
 				Intents/SageAppIntents.swift,
-				Models/ExpenseCategory.swift,
-				Models/ExpenseTag.swift,
-				Models/SageSchema.swift,
+				Model/ExpenseCategory.swift,
+				Model/ExpenseTag.swift,
+				Model/SageSchema.swift,
 				Services/ExpenseBackupService.swift,
-				Services/ExpenseDataService.swift,
+				Services/ExpenseStore.swift,
+				Services/RecurringExpenseService.swift,
 				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
@@ -621,6 +622,7 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Shared/Services/ExpenseStore.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
@@ -652,6 +654,7 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Shared/Services/ExpenseStore.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;

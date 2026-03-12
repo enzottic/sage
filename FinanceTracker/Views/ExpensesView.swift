@@ -13,8 +13,6 @@ struct ExpensesView: View {
     private var allExpenses: [Expense]
     
     @State private var selectedMonth = Date()
-    @State private var expenseToDelete: Expense? = nil
-    @State private var showingDeleteConfirmation: Bool = false
     @State private var selectedExpense: Expense? = nil
     @State private var transitionDirection: Edge = .leading
     @State private var showAddExpenseSheet: Bool = false
@@ -65,18 +63,16 @@ struct ExpensesView: View {
                         systemImage: "dollarsign",
                     )
                 } else {
-                    ScrollView {
-                        VStack(spacing: 25) {
-                            ForEach(sortedDates, id: \.self) { date in
-                                let expenses = groupedExpenses[date] ?? []
-                                expensesList(in: date, expenses: expenses)
-                            }
+                    List {
+                        ForEach(sortedDates, id: \.self) { date in
+                            let expenses = groupedExpenses[date] ?? []
+                            expensesList(in: date, expenses: expenses)
                         }
                     }
+                    .scrollContentBackground(.hidden)
                     .id(selectedMonth)
                }
             }
-            .padding([.horizontal, .top], 10)
             .frame(maxWidth: .infinity)
             .background(Color.ui.background)
             .navigationTitle(formatter.string(from: selectedMonth))
@@ -87,18 +83,18 @@ struct ExpensesView: View {
             }
             .sheet(isPresented: $showAddExpenseSheet, content: {
                 AddExpenseSheet()
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
                     .presentationBackground(Color.ui.background)
             })
             .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .topBarLeading) {
                     Button {
                         withAnimation(.easeInOut) {
                             transitionDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
                         }
                     } label: {
-                        Image(systemName: "chevron.left")
+                        Label("Previous Month", systemImage: "chevron.left")
                     }
                     
                     Button {
@@ -107,54 +103,30 @@ struct ExpensesView: View {
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         }
                     } label: {
-                        Image(systemName: "chevron.right")
+                        Label("Next Month", systemImage: "chevron.right")
                     }
                 }
-                ToolbarItem(placement: .bottomBar) {
-                    Button("Add Expense", systemImage: "plus") {
+                ToolbarItem {
+                    Button {
                         showAddExpenseSheet = true
+                    } label: {
+                        Label("Add Item", systemImage: "plus")
                     }
+                    .background(Color.ui.cardBackground)
+                    .tint(Color.ui.sageColor)
                 }
             }
         }
     }
     
     func expensesList(in date: Date, expenses: [Expense]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        Section {
+            ExpenseListGroup(expenses: expenses, selectedExpense: $selectedExpense)
+        } header: {
             Text(date.formatted(date: .abbreviated, time: .omitted))
                 .foregroundStyle(.secondary)
                 .font(.caption)
-            
-            Grid(alignment: .leading, horizontalSpacing: 8) {
-                ForEach(expenses) { expense in
-                    GridRow {
-                        Circle()
-                            .fill(expense.category.color)
-                            .frame(width: 10, height: 10)
-                        Text(expense.name)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .frame(maxWidth: 150, alignment: .leading)
-                        
-                        TagCapsule(tag: expense.tag, .small)
-                        
-                        Spacer()
-                        
-                        Text(expense.amount.currencyStringWithFraction)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedExpense = expense
-                    }
-                    .contextMenu {
-                        Button("Delete", role: .destructive) {
-                            print("Delete")
-                        }
-                    }
-                }
-            }
         }
-        .frame(maxWidth: .infinity)
     }
 }
 
