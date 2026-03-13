@@ -57,7 +57,7 @@ struct SageApp: App {
                 WelcomeView()
                     .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
             } else {
-                SageTabView()
+                RootView()
                     .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
             }
         }

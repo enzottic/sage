@@ -47,7 +47,7 @@ struct MonthExpensesList: View {
                     ForEach(sortedDates, id: \.self) { date in
                         let expenses = groupedExpenses[date] ?? []
                         Section {
-                            ExpenseListGroup(expenses: expenses, selectedExpense: $selectedExpense)
+                            ExpenseList(expenses: expenses, selectedExpense: $selectedExpense)
                         } header: {
                             Text(date.formatted(date: .abbreviated, time: .omitted))
                                 .font(.caption)

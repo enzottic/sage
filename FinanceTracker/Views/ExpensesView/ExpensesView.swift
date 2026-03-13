@@ -29,25 +29,26 @@ struct ExpensesView: View {
                 .frame(maxWidth: .infinity)
                 .background(Color.ui.background)
                 .navigationTitle(formatter.string(from: selectedMonth))
-                    .sheet(isPresented: $showAddExpenseSheet, content: {
-                        AddExpenseSheet()
-                            .presentationDetents([.large])
-                            .presentationBackground(Color.ui.background)
-                    })
-                    .toolbar {
-                        SageToolbar(
-                            onPrevious: {
-                                slideDirection = .leading
-                                selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
-                            },
-                            onNext: {
-                                slideDirection = .trailing
-                                selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
-                            },
-                            onAdd: { showAddExpenseSheet = true }
-                        )
-                    }
+                .sheet(isPresented: $showAddExpenseSheet, content: {
+                    AddExpenseSheet()
+                        .presentationDetents([.large])
+                        .presentationBackground(Color.ui.background)
+                })
+                .toolbar {
+                    SageToolbar(
+                        onPrevious: {
+                            slideDirection = .leading
+                            selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
+                        },
+                        onNext: {
+                            slideDirection = .trailing
+                            selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
+                        },
+                        onAdd: { showAddExpenseSheet = true }
+                    )
+                }
         }
+        .gradientBackground()
     }
 }
 

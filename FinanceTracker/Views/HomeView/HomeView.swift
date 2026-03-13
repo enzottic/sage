@@ -14,21 +14,18 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppConfiguration.self) private var config
     
-    let calendar = Calendar.current
-    
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
     
+    @State private var path = NavigationPath()
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
-    @State private var showingDeleteConfirmation: Bool = false
-    @State private var expenseToDelete: Expense? = nil
     @State private var showingUtilization: Bool = true
     
     var monthlyExpenses: [Expense] {
-        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
-        let endOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+        let startOfMonth = Calendar.current.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
+        let endOfMonth = Calendar.current.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
         
         return allExpenses.filter { expense in
             expense.date >= startOfMonth && expense.date < endOfMonth
@@ -56,15 +53,11 @@ struct HomeView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
-                Group {
-                    monthlyOverview
-                    utilizationSection
-                }
-                .onTapGesture { showingUtilization.toggle() }
-                
-                expensesList
+                monthlyOverview
+                utilizationSection
+                recentExpensesList
             }
             .navigationTitle("Home")
             .scrollContentBackground(.hidden)
@@ -82,16 +75,16 @@ struct HomeView: View {
             .toolbar {
                 SageToolbar(
                     onPrevious: {
-                        selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
+                        selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth)!
                     },
                     onNext: {
-                        selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
+                        selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
                     onAdd: { addExpenseSheetIsPresented = true }
                 )
             }
-          
         }
+        .gradientBackground()
     }
     
     var monthlyOverview: some View {
@@ -108,7 +101,7 @@ struct HomeView: View {
                            .fontWeight(.black)
                            .fontWidth(.expanded)
                         
-                        Text("spent")
+                        Text(" spent")
                             .font(.title2)
                             .foregroundStyle(.secondary)
                     } else {
@@ -128,15 +121,20 @@ struct HomeView: View {
     
     var utilizationSection: some View {
         Section {
-            utilizationView(for: .wants, utilization: wantsUtilization, used: monthlyExpenses.wantsUsed, total: config.wantsBudget)
-            utilizationView(for: .needs, utilization: needsUtilization, used: monthlyExpenses.needsUsed, total: config.needsBudget)
-            utilizationView(for: .savings, utilization: savingsUtilization, used: monthlyExpenses.savingsUsed, total: config.savingsBudget)
+            NavigationLink {
+                Text(ExpenseCategory.wants.rawValue)
+            } label: {
+                CategoryUtilizationView(for: .wants, wantsUtilization, monthlyExpenses.wantsUsed, config.wantsBudget)
+            }
+            
+            CategoryUtilizationView(for: .needs,  needsUtilization, monthlyExpenses.needsUsed, config.needsBudget)
+            CategoryUtilizationView(for: .savings, savingsUtilization, monthlyExpenses.savingsUsed, config.savingsBudget)
         } header: {
             Text("Categories")
         }
     }
     
-    var expensesList: some View {
+    var recentExpensesList: some View {
         Section {
             if (recentPurchases.isEmpty) {
                 ContentUnavailableView(
@@ -145,34 +143,10 @@ struct HomeView: View {
                     description: Text("Add expenses to start tracking")
                 )
             } else {
-                ExpenseListGroup(expenses: recentPurchases, selectedExpense: $selectedExpense)
+                ExpenseList(expenses: recentPurchases, selectedExpense: $selectedExpense)
             }
         } header: {
-            Text("Recent Purchases")
-        }
-    }
-    
-    private func utilizationView(for category: ExpenseCategory, utilization: Double, used: Double, total: Double) -> some View {
-        HStack(spacing: 10) {
-            CircularProgressView(progress: utilization, tint: category.color)
-            
-            VStack(alignment: .leading) {
-                Text(category.rawValue)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                if showingUtilization {
-                    HStack(spacing: 5) {
-                        Text(used.currencyString)
-                            .fontWeight(.semibold)
-                        Text("of \(total.currencyString)")
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    let remaining = total - used
-                    Text("\(remaining.currencyString) remaining")
-                }
-            }
+            Text("Recent Expenses")
         }
     }
 }

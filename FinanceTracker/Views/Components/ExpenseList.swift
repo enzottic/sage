@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
-struct ExpenseListGroup: View {
+struct ExpenseList: View {
     @Environment(\.modelContext) private var modelContext
     
     let expenses: [Expense]
@@ -115,6 +115,6 @@ struct ExpenseListGroup: View {
 #Preview {
     @Previewable @State var expenseToView: Expense? = nil
     
-    ExpenseListGroup(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
+    ExpenseList(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
         .modelContainer(ModelContainer.preview)
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct SageTabView: View {
+struct RootView: View {
     
     @State private var selectedTab: Int = 0
 
@@ -25,12 +25,18 @@ struct SageTabView: View {
                     Label("Expenses", systemImage: "list.bullet")
                 }
                 .tag(1)
-            
+
+            StatsView()
+                .tabItem {
+                    Label("Stats", systemImage: "chart.bar")
+                }
+                .tag(2)
+
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(2)
+                .tag(3)
             
         }
         .background(Color.ui.background)
@@ -40,7 +46,7 @@ struct SageTabView: View {
 
 #Preview {
     @Previewable @State var appConfig = AppConfiguration()
-    SageTabView()
+    RootView()
         .modelContainer(ModelContainer.preview)
         .environment(appConfig)
         .preferredColorScheme(appConfig.selectedAppearance.colorScheme)
