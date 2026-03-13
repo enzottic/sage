@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import WidgetKit
 
 enum Appearance: String, CaseIterable {
     case system = "System"
@@ -89,5 +90,33 @@ class AppConfiguration {
         
         let savingsPercent = defaults.double(forKey: "savingsPercent")
         self.savingsPercent = savingsPercent == 0 ? 0.2 : savingsPercent
+    }
+    
+    func updateNeeds(_ newNeeds: Double) {
+        let clampedNeeds = min(max(newNeeds, 0), 1)
+        var newWants = wantsPercent
+        if clampedNeeds + newWants > 1 {
+            newWants = round((1 - clampedNeeds) / 0.05) * 0.05
+        }
+        let newSavings = max(1 - (clampedNeeds + newWants), 0)
+        needsPercent = clampedNeeds
+        wantsPercent = newWants
+        savingsPercent = newSavings
+
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func updateWants(_ newWants: Double) {
+        let clampedWants = min(max(newWants, 0), 1)
+        var newNeeds = needsPercent
+        if newNeeds + clampedWants > 1 {
+            newNeeds = round((1 - clampedWants) / 0.05) * 0.05
+        }
+        let newSavings = max(1 - (newNeeds + clampedWants), 0)
+        needsPercent = newNeeds
+        wantsPercent = clampedWants
+        savingsPercent = newSavings
+
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

@@ -33,6 +33,7 @@ struct SageTabView: View {
                 .tag(2)
             
         }
+        .background(Color.ui.background)
         .tint(Color.ui.sageColor)
     }
 }

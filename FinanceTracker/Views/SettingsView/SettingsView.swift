@@ -34,12 +34,11 @@ struct SettingsView: View {
                     }
                     
                     SettingsPanel(title: "Monthly Income", description: "Enter your monthly spendable income in \(Locale.current.currency?.identifier ?? "USD")") {
-                        TextField("Monthly Income", value: $config.totalMonthlyIncome, format: .number)
+                        WholeNumberCurrencyField(amount: $config.totalMonthlyIncome, isFocused: $needsFocus)
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Color.ui.cardBackground)
                             .cornerRadius(15)
-                            .focused($needsFocus)
                             .onChange(of: config.totalMonthlyIncome) { oldValue, newValue in
                                 WidgetCenter.shared.reloadAllTimelines()
                             }
@@ -51,7 +50,7 @@ struct SettingsView: View {
                                 title: "Wants",
                                 percentage: Binding(
                                     get: { config.wantsPercent * 100 },
-                                    set: { updateWants($0 / 100) }
+                                    set: { config.updateWants($0 / 100) }
                                 ),
                                 color: Color.ui.wantColor,
                                 icon: "cart.fill"
@@ -61,7 +60,7 @@ struct SettingsView: View {
                                 title: "Needs",
                                 percentage: Binding(
                                     get: { config.needsPercent * 100 },
-                                    set: { updateNeeds($0 / 100) }
+                                    set: { config.updateNeeds($0 / 100) }
                                 ),
                                 color: Color.ui.needColor,
                                 icon: "house.fill"
@@ -160,64 +159,7 @@ struct SettingsView: View {
             return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tag: tag, note: e.note)
         }
     }
-    
-    private func updateNeeds(_ newNeeds: Double) {
-        let clampedNeeds = min(max(newNeeds, 0), 1)
-        var newWants = config.wantsPercent
-        if clampedNeeds + newWants > 1 {
-            newWants = round((1 - clampedNeeds) / 0.05) * 0.05
-        }
-        let newSavings = max(1 - (clampedNeeds + newWants), 0)
-        config.needsPercent = clampedNeeds
-        config.wantsPercent = newWants
-        config.savingsPercent = newSavings
-
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    private func updateWants(_ newWants: Double) {
-        let clampedWants = min(max(newWants, 0), 1)
-        var newNeeds = config.needsPercent
-        if newNeeds + clampedWants > 1 {
-            newNeeds = round((1 - clampedWants) / 0.05) * 0.05
-        }
-        let newSavings = max(1 - (newNeeds + clampedWants), 0)
-        config.needsPercent = newNeeds
-        config.wantsPercent = clampedWants
-        config.savingsPercent = newSavings
-
-        WidgetCenter.shared.reloadAllTimelines()
-    }
 }
-
-struct SettingsPanel<Content: View>: View {
-    let title: String
-    let description: String
-    @ViewBuilder var content: () -> Content
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
-                Text(title)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding([.bottom], 10)
-            
-            Spacer()
-            
-            VStack(alignment: .leading) {
-                content()
-
-            }
-        }
-        .padding(3)
-    }
-}
-
-
-
 
 #Preview {
     @Previewable @State var appConfig: AppConfiguration = AppConfiguration()

@@ -80,28 +80,15 @@ struct HomeView: View {
                     .presentationBackground(Color.ui.background)
             }
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    Button {
+                SageToolbar(
+                    onPrevious: {
                         selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
-                    } label: {
-                        Label("Previous Month", systemImage: "chevron.left")
-                    }
-                    
-                    Button {
+                    },
+                    onNext: {
                         selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
-                    } label: {
-                        Label("Next Month", systemImage: "chevron.right")
-                    }
-                }
-                ToolbarItem {
-                    Button {
-                        addExpenseSheetIsPresented = true
-                    } label: {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    .background(Color.ui.cardBackground)
-                    .tint(Color.ui.sageColor)
-                }
+                    },
+                    onAdd: { addExpenseSheetIsPresented = true }
+                )
             }
           
         }
