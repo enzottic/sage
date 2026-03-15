@@ -18,22 +18,28 @@ struct StatsFilterBar: View {
             HStack(spacing: 8) {
                 filterPill("All", tint: Color.ui.sageColor,
                            isActive: selectedCategory == nil && selectedTag == nil) {
-                    selectedCategory = nil
-                    selectedTag = nil
+                    withAnimation {
+                        selectedCategory = nil
+                        selectedTag = nil
+                    }
                 }
 
                 ForEach(ExpenseCategory.allCases, id: \.self) { category in
                     filterPill(category.rawValue, tint: category.color,
                                isActive: selectedCategory == category) {
-                        selectedCategory = category
-                        selectedTag = nil
+                        withAnimation {
+                            selectedCategory = category
+                            selectedTag = nil
+                        }
                     }
                 }
 
                 ForEach(expenseTags, id: \.id) { tag in
                     Button {
-                        selectedTag = tag
-                        selectedCategory = nil
+                        withAnimation {
+                            selectedTag = tag
+                            selectedCategory = nil
+                        }
                     } label: {
                         TagCapsule(tag: tag, .small)
                             .overlay(

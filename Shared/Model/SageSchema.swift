@@ -43,6 +43,10 @@ enum SageSchemaV1: VersionedSchema {
             self.note = note
             self.recurringExpenseId = recurringExpenseId
         }
+        
+        static func expensesOfCategory(_ category: ExpenseCategory) {
+            
+        }
     }
     
     @Model

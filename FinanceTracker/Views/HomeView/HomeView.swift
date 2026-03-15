@@ -17,11 +17,15 @@ struct HomeView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
     
-    @State private var path = NavigationPath()
+    @Bindable var router: HomeRouter
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showingUtilization: Bool = true
+
+    init(router: HomeRouter) {
+        self.router = router
+    }
     
     var monthlyExpenses: [Expense] {
         let startOfMonth = Calendar.current.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
@@ -32,34 +36,60 @@ struct HomeView: View {
         }
     }
     
-    var wantsUtilization: Double {
-        config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
-    }
-    
-    var needsUtilization: Double {
-        config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
-    }
-    
-    var savingsUtilization: Double {
-        config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
-    }
-
     var recentPurchases: [Expense] {
         Array(monthlyExpenses.prefix(10))
+    }
+
+    var totalUtilization: Double {
+        totalSpent / Double(config.totalMonthlyIncome)
+    }
+    
+    var totalSpent: Double {
+        monthlyExpenses.total
     }
     
     var totalRemaining: Double {
         Double(config.totalMonthlyIncome) - monthlyExpenses.total
     }
     
+    func utilization(for category: ExpenseCategory) -> Double {
+        switch category {
+        case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
+        case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
+        case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
+        }
+    }
+    
+    func spent(for category: ExpenseCategory) -> Double {
+        switch category {
+        case .wants: monthlyExpenses.wantsUsed
+        case .needs: monthlyExpenses.needsUsed
+        case .savings: monthlyExpenses.savingsUsed
+        }
+    }
+    
+    func budget(for category: ExpenseCategory) -> Double {
+        switch category {
+        case .wants: config.wantsBudget
+        case .needs: config.needsBudget
+        case .savings: config.savingsBudget
+        }
+    }
+    
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack(path: $router.navigationPath) {
             List {
                 monthlyOverview
                 utilizationSection
                 recentExpensesList
             }
-            .navigationTitle("Home")
+            .navigationDestination(for: HomeRouter.Route.self) { route in
+                switch route {
+                case .categoryDetail(let category):
+                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category),total: budget(for: category), selectedExpense: $selectedExpense)
+                }
+            }
+            .navigationTitle("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
             .scrollContentBackground(.hidden)
             .background(Color.ui.background)
             .sheet(isPresented: $addExpenseSheetIsPresented) {
@@ -83,52 +113,47 @@ struct HomeView: View {
                     onAdd: { addExpenseSheetIsPresented = true }
                 )
             }
+            .gradientBackground()
         }
-        .gradientBackground()
     }
     
     var monthlyOverview: some View {
         Section {
-            VStack(alignment: .leading, spacing: 15) {
-                Text("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
-                    .foregroundStyle(.secondary)
-                    .font(.title)
-                
-                HStack(alignment: .firstTextBaseline) {
-                    if showingUtilization {
-                        Text(monthlyExpenses.total.currencyString)
-                           .font(.largeTitle)
-                           .fontWeight(.black)
-                           .fontWidth(.expanded)
-                        
-                        Text(" spent")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(totalRemaining.currencyString)
-                           .font(.largeTitle)
-                           .fontWeight(.black)
-                           .fontWidth(.expanded)
-                        
-                        Text("remaining")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(spacing: 10) {
+                if showingUtilization {
+                    TotalSpentProgressView(utilization: totalUtilization, used: totalSpent, total: Double(config.totalMonthlyIncome))
+                } else {
+                    Text(totalRemaining.currencyString)
+                       .font(.largeTitle)
+                       .fontWeight(.black)
+                       .fontWidth(.expanded)
+                    
+                    Text("remaining")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
                 }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 20)
         }
+        .listRowBackground(Color.clear)
     }
     
     var utilizationSection: some View {
         Section {
-            NavigationLink {
-                Text(ExpenseCategory.wants.rawValue)
-            } label: {
-                CategoryUtilizationView(for: .wants, wantsUtilization, monthlyExpenses.wantsUsed, config.wantsBudget)
+            ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
+                    CategoryUtilizationView(
+                        for: category,
+                        utilization(for: category),
+                        spent(for: category),
+                        budget(for: category),
+                    )
+                }
+                .tint(.primary)
+                .listRowBackground(category.color.opacity(0.1))
+                .listRowSeparator(.hidden)
             }
-            
-            CategoryUtilizationView(for: .needs,  needsUtilization, monthlyExpenses.needsUsed, config.needsBudget)
-            CategoryUtilizationView(for: .savings, savingsUtilization, monthlyExpenses.savingsUsed, config.savingsBudget)
         } header: {
             Text("Categories")
         }
@@ -153,7 +178,7 @@ struct HomeView: View {
 
 #Preview {
     @Previewable @State var config = AppConfiguration()
-    HomeView()
+    HomeView(router: HomeRouter())
         .modelContainer(ModelContainer.preview)
         .environment(config)
 }

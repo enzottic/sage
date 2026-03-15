@@ -10,37 +10,67 @@ import SwiftData
 
 struct RootView: View {
     
-    @State private var selectedTab: Int = 0
+    @State private var appRouter = AppRouter()
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView()
+        TabView(selection: $appRouter.selectedTab) {
+            HomeView(router: appRouter.homeRouter)
                 .tabItem {
-                    Label("Overview", systemImage: "house")
+                    Label("Home", systemImage: "house")
                 }
-                .tag(0)
+                .tag(Tab.home)
             
             ExpensesView()
                 .tabItem {
                     Label("Expenses", systemImage: "list.bullet")
                 }
-                .tag(1)
+                .tag(Tab.expenses)
 
             StatsView()
                 .tabItem {
                     Label("Stats", systemImage: "chart.bar")
                 }
-                .tag(2)
+                .tag(Tab.stats)
 
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(3)
+                .tag(Tab.settings)
             
         }
         .background(Color.ui.background)
         .tint(Color.ui.sageColor)
+    }
+}
+
+@Observable
+class AppRouter {
+    var homeRouter = HomeRouter()
+    var selectedTab = Tab.home
+    
+    func navigateTo(tab: Tab) {
+        selectedTab = tab
+    }
+}
+
+enum Tab: Int {
+    case home = 0
+    case expenses = 1
+    case stats = 2
+    case settings = 3
+}
+
+@Observable
+class HomeRouter {
+    var navigationPath = NavigationPath()
+    
+    enum Route: Hashable {
+        case categoryDetail(category: ExpenseCategory)
+    }
+    
+    func navigateTo(route: Route) {
+        navigationPath.append(route)
     }
 }
 

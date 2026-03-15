@@ -7,12 +7,18 @@
 import SwiftUI
 
 struct GradientBackgroundModifier: ViewModifier {
+    var color: Color
+    
+    init(_ color: Color) {
+        self.color = color
+    }
+    
     func body(content: Content) -> some View {
         ZStack(alignment: .top) {
             content
             
             LinearGradient(
-                colors: [Color.sage.opacity(0.8), .clear],
+                colors: [color.opacity(0.5), .clear],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -23,7 +29,7 @@ struct GradientBackgroundModifier: ViewModifier {
 }
 
 extension View {
-    func gradientBackground() -> some View {
-        modifier(GradientBackgroundModifier())
+    func gradientBackground(color: Color = .sage) -> some View {
+        modifier(GradientBackgroundModifier(color))
     }
 }

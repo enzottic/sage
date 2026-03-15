@@ -11,7 +11,7 @@ import WidgetKit
 
 struct ExpenseList: View {
     @Environment(\.modelContext) private var modelContext
-    
+
     let expenses: [Expense]
     
     @State private var expenseToDelete: Expense? = nil
@@ -22,24 +22,28 @@ struct ExpenseList: View {
     @Binding var selectedExpense: Expense?
     
     var body: some View {
-        ForEach(expenses) { expense in
-        ExpenseRowItem(expense: expense)
-            .buttonStyle(.plain)
-            .swipeActions {
-                Button("Delete") {
-                    expenseToDelete = expense
-                    recurringIdToDelete = expense.recurringExpenseId
-                    recurringDeleteFromDate = expense.date
-                    if expense.recurringExpenseId != nil {
-                        showingRecurringDeleteConfirmation = true
-                    } else {
-                        showingDeleteConfirmation = true
+        Group {
+            ForEach(expenses) { expense in
+                ExpenseRowItem(expense: expense)
+                    .buttonStyle(.plain)
+                    .swipeActions {
+                        Button("Delete") {
+                            expenseToDelete = expense
+                            recurringIdToDelete = expense.recurringExpenseId
+                            recurringDeleteFromDate = expense.date
+                            if expense.recurringExpenseId != nil {
+                                showingRecurringDeleteConfirmation = true
+                            } else {
+                                showingDeleteConfirmation = true
+                            }
+                        }
+                        .tint(.red)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedExpense = expense
                     }
                 }
-                .tint(.red)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { selectedExpense = expense }
         }
         .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
             Button("Delete", role: .destructive) {
@@ -115,6 +119,8 @@ struct ExpenseList: View {
 #Preview {
     @Previewable @State var expenseToView: Expense? = nil
     
-    ExpenseList(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
+    List {
+        ExpenseList(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
+    }
         .modelContainer(ModelContainer.preview)
 }

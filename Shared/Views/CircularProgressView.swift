@@ -10,12 +10,13 @@ import Charts
 
 struct CircularProgressView: View {
     let progress: Double
-    let lineWidth: CGFloat = 5
+    let lineWidth: CGFloat
     let tint: Color
     
-    init(progress: Double, tint: Color = .blue) {
+    init(progress: Double, tint: Color = .blue, lineWidth: CGFloat = 5) {
         self.progress = progress
         self.tint = tint
+        self.lineWidth = lineWidth
     }
     
     var body: some View {
@@ -31,7 +32,6 @@ struct CircularProgressView: View {
                 .rotationEffect(.degrees(-90)) // Start from top
                 .animation(.easeInOut, value: progress)
         }
-        .frame(width: 50, height: 50)
     }
 }
 

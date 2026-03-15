@@ -10,11 +10,12 @@ import SwiftData
 import Charts
 
 struct MonthlySpendingData: Identifiable {
-    let id = UUID()
     let month: Date
     let monthLabel: String
     let total: Double
     let isCurrent: Bool
+
+    var id: String { monthLabel }
 }
 
 struct StatsView: View {
@@ -23,6 +24,13 @@ struct StatsView: View {
 
     @State private var selectedCategory: ExpenseCategory? = nil
     @State private var selectedTag: ExpenseTag? = nil
+    
+    private var gradientColor: Color {
+        if selectedCategory != nil { return selectedCategory!.color }
+        if selectedTag != nil { return selectedTag!.color }
+        
+        return .sage
+    }
 
     private let calendar = Calendar.current
 
@@ -98,7 +106,7 @@ struct StatsView: View {
             }
             .background(Color.ui.background)
             .navigationTitle("Stats")
-            .gradientBackground()
+            .gradientBackground(color: gradientColor)
         }
     }
 
@@ -143,6 +151,7 @@ struct StatsView: View {
                     AxisGridLine()
                 }
             }
+            .animation(.easeInOut, value: chartData.map(\.total))
             .frame(height: 220)
         }
         .padding()
