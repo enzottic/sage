@@ -21,7 +21,7 @@ struct HomeView: View {
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
-    @State private var showingUtilization: Bool = true
+
 
     init(router: HomeRouter) {
         self.router = router
@@ -40,16 +40,8 @@ struct HomeView: View {
         Array(monthlyExpenses.prefix(10))
     }
 
-    var totalUtilization: Double {
-        totalSpent / Double(config.totalMonthlyIncome)
-    }
-    
     var totalSpent: Double {
         monthlyExpenses.total
-    }
-    
-    var totalRemaining: Double {
-        Double(config.totalMonthlyIncome) - monthlyExpenses.total
     }
     
     func utilization(for category: ExpenseCategory) -> Double {
@@ -119,20 +111,7 @@ struct HomeView: View {
     
     var monthlyOverview: some View {
         Section {
-            VStack(spacing: 10) {
-                if showingUtilization {
-                    TotalSpentProgressView(utilization: totalUtilization, used: totalSpent, total: Double(config.totalMonthlyIncome))
-                } else {
-                    Text(totalRemaining.currencyString)
-                       .font(.largeTitle)
-                       .fontWeight(.black)
-                       .fontWidth(.expanded)
-                    
-                    Text("remaining")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
             .frame(maxWidth: .infinity)
             .padding(.top, 20)
         }

@@ -6,25 +6,70 @@
 //
 
 import SwiftUI
+import Charts
 
 struct TotalSpentProgressView: View {
-    let utilization: Double
-    let used: Double
-    let total: Double
-    
-    let lineWidth: CGFloat = 15
+    let wantsSpent: Double
+    let needsSpent: Double
+    let savingsSpent: Double
+    let totalIncome: Double
+
+    var totalSpent: Double {
+        wantsSpent + needsSpent + savingsSpent
+    }
+
+    var unspent: Double {
+        max(totalIncome - totalSpent, 0)
+    }
+
+    private var chartData: [(category: String, amount: Double)] {
+        var data: [(category: String, amount: Double)] = []
+        if wantsSpent > 0 { data.append(("Wants", wantsSpent)) }
+        if needsSpent > 0 { data.append(("Needs", needsSpent)) }
+        if savingsSpent > 0 { data.append(("Savings", savingsSpent)) }
+        if unspent > 0 { data.append(("Unspent", unspent)) }
+        if data.isEmpty { data.append(("Unspent", 1)) }
+        return data
+    }
 
     var body: some View {
-        ZStack {
-            Text(used.currencyString)
-                .font(.largeTitle)
-                .fontWeight(.black)
-            
-            CircularProgressView(progress: utilization, tint: .sage, lineWidth: lineWidth)
+        Chart(chartData, id: \.category) { item in
+            SectorMark(
+                angle: .value("Amount", item.amount),
+                innerRadius: .ratio(0.75),
+                angularInset: 2
+            )
+            .cornerRadius(5)
+            .foregroundStyle(by: .value("Category", item.category))
         }
+        .chartBackground { chartProxy in
+            GeometryReader { geo in
+                if let anchor = chartProxy.plotFrame {
+                    let frame = geo[anchor]
+                    VStack(spacing: 2) {
+                        Text(totalSpent.currencyString)
+                            .font(.title)
+                            .fontWeight(.black)
+
+                        Text("spent")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .position(x: frame.midX, y: frame.midY)
+                }
+            }
+        }
+        .chartLegend(.hidden)
+        .chartForegroundStyleScale([
+            "Wants": ExpenseCategory.wants.color,
+            "Needs": ExpenseCategory.needs.color,
+            "Savings": ExpenseCategory.savings.color,
+            "Unspent": .gray
+        ])
+        .frame(minHeight: 220)
     }
 }
 
 #Preview {
-    TotalSpentProgressView(utilization: 0.5, used: 500, total: 1000)
+    TotalSpentProgressView(wantsSpent: 300, needsSpent: 400, savingsSpent: 100, totalIncome: 1000)
 }
