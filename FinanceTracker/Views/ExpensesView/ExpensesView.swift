@@ -55,5 +55,5 @@ struct ExpensesView: View {
 
 #Preview {
     ExpensesView()
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

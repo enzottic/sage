@@ -20,7 +20,8 @@ enum SageSchemaV1: VersionedSchema {
         var category: ExpenseCategory
         var date: Date
         var note: String = ""
-        @Relationship(deleteRule: .nullify)
+        
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.expenses)
         var tag: ExpenseTag? = ExpenseTag.other
         
         var recurringExpenseId: UUID? = nil
@@ -43,10 +44,6 @@ enum SageSchemaV1: VersionedSchema {
             self.note = note
             self.recurringExpenseId = recurringExpenseId
         }
-        
-        static func expensesOfCategory(_ category: ExpenseCategory) {
-            
-        }
     }
     
     @Model
@@ -57,6 +54,9 @@ enum SageSchemaV1: VersionedSchema {
         
         @Attribute(.transformable(by: UIColorValueTransformer.self))
         var uiColor: UIColor
+        
+        @Relationship var expenses: [Expense]?
+        @Relationship var recurringRules: [RecurringExpenseRule]?
         
         var color: Color {
             Color(uiColor: uiColor)
@@ -84,7 +84,8 @@ enum SageSchemaV1: VersionedSchema {
         var amount: Double
         var note: String
         var category: ExpenseCategory
-        var tag: ExpenseTag? = ExpenseTag.other
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.recurringRules)
+        var tag: ExpenseTag?
         
         var frequency: RecurrenceFrequency
         var startDate: Date

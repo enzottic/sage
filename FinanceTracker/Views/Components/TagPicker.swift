@@ -39,7 +39,11 @@ struct TagPicker: View {
                             isExpanded = true
                         }
                     } label: {
-                        TagCapsule(tag: selectedTag, .medium)
+                        if selectedTag == nil {
+                            Text("Add a Tag")
+                        } else {
+                            TagCapsule(tag: selectedTag, .medium)
+                        }
                     }
                     .padding(2)
                     .containerRelativeFrame(.horizontal)
@@ -53,5 +57,5 @@ struct TagPicker: View {
 #Preview {
     @Previewable @State var selectedTag: ExpenseTag? = .dining
     TagPicker(selectedTag: $selectedTag)
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

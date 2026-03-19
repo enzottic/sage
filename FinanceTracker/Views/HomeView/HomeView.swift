@@ -158,6 +158,6 @@ struct HomeView: View {
 #Preview {
     @Previewable @State var config = AppConfiguration()
     HomeView(router: HomeRouter())
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
         .environment(config)
 }

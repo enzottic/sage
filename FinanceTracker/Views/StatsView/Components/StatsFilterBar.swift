@@ -35,17 +35,19 @@ struct StatsFilterBar: View {
                 }
 
                 ForEach(expenseTags, id: \.id) { tag in
-                    Button {
-                        withAnimation {
-                            selectedTag = tag
-                            selectedCategory = nil
+                    if !tag.isDeleted {
+                        Button {
+                            withAnimation {
+                                selectedTag = tag
+                                selectedCategory = nil
+                            }
+                        } label: {
+                            TagCapsule(tag: tag, .small)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(tag.color, lineWidth: selectedTag?.id == tag.id ? 2 : 0)
+                                )
                         }
-                    } label: {
-                        TagCapsule(tag: tag, .small)
-                            .overlay(
-                                Capsule()
-                                    .stroke(tag.color, lineWidth: selectedTag?.id == tag.id ? 2 : 0)
-                            )
                     }
                 }
             }
@@ -70,5 +72,5 @@ struct StatsFilterBar: View {
     @Previewable @State var category: ExpenseCategory? = nil
     @Previewable @State var tag: ExpenseTag? = nil
     StatsFilterBar(selectedCategory: $category, selectedTag: $tag)
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

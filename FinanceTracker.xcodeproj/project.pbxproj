@@ -81,6 +81,7 @@
 				"Extensions/Color+SageColors.swift",
 				"Extensions/Date+Relative.swift",
 				"Extensions/Date+TextOutputStreamable.swift",
+				"Extensions/ExpenseTag+BuiltInTags.swift",
 				"Extensions/Number+CurrencyString.swift",
 				Intents/SageAppIntents.swift,
 				Model/ExpenseCategory.swift,

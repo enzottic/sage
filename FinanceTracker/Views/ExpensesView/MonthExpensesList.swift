@@ -70,5 +70,5 @@ struct MonthExpensesList: View {
     @Previewable @State var selectedExpense: Expense? = nil
     
     MonthExpensesList(month: month, selectedExpense: $selectedExpense)
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

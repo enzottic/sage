@@ -122,5 +122,5 @@ struct ExpenseList: View {
     List {
         ExpenseList(expenses: [Expense.example, Expense.example], selectedExpense: $expenseToView)
     }
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

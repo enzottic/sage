@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TagCapsule: View {
-    let tag: ExpenseTag
+    let tag: ExpenseTag?
     let size: TagCapsuleSize
     
     enum TagCapsuleSize {
@@ -18,7 +19,7 @@ struct TagCapsule: View {
     }
     
     init(tag: ExpenseTag?, _ size: TagCapsuleSize = .small) {
-        self.tag = tag ?? ExpenseTag.other
+        self.tag = tag
         self.size = size
     }
     
@@ -48,13 +49,15 @@ struct TagCapsule: View {
     }
     
     var body: some View {
-        VStack {
-            Text("\(tag.emoji) \(tag.name)")
-                .foregroundStyle(tag.color)
-                .font(font)
-                .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, verticalPadding)
-                .background(Capsule().fill(tag.color.quaternary))
+        if let tag, !tag.isDeleted {
+            VStack {
+                Text("\(tag.emoji) \(tag.name)")
+                    .foregroundStyle(tag.color)
+                    .font(font)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.vertical, verticalPadding)
+                    .background(Capsule().fill(tag.color.quaternary))
+            }
         }
     }
 }

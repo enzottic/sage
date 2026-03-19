@@ -43,5 +43,5 @@ struct CategoryDetailView: View {
     NavigationStack {
         CategoryDetailView(category: ExpenseCategory.wants, utilization: 0.3, used: 100, total: 300, selectedExpense: $expenseToView)
     }
-    .modelContainer(ModelContainer.preview)
+    .modelContainer(previewAppContainer)
 }

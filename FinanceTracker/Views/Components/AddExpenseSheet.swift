@@ -4,7 +4,6 @@
 //
 //  Created by Tyler McCormick on 10/4/25.
 //
-
 import SwiftUI
 import SwiftData
 import WidgetKit
@@ -14,17 +13,14 @@ struct AddExpenseSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showDatePopover: Bool = false
-
     @State private var name: String = ""
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
     @State private var category: ExpenseCategory = .needs
     @State private var tag: ExpenseTag? = nil
     @State private var note: String = ""
-
     @State private var isRecurring: Bool = false
     @State private var recurrenceFrequency: RecurrenceFrequency = .monthly
-
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var isSaving = false
@@ -58,7 +54,9 @@ struct AddExpenseSheet: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
-            
+            .onChange(of: name) {
+                print("Name: \(name)")
+            }
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
@@ -146,6 +144,6 @@ struct AddExpenseSheet: View {
 
 #Preview {
     AddExpenseSheet()
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }
 

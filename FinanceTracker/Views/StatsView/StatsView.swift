@@ -27,7 +27,7 @@ struct StatsView: View {
     
     private var gradientColor: Color {
         if selectedCategory != nil { return selectedCategory!.color }
-        if selectedTag != nil { return selectedTag!.color }
+        if let tag = selectedTag, !tag.isDeleted { return tag.color }
         
         return .sage
     }
@@ -37,7 +37,7 @@ struct StatsView: View {
     var filteredExpenses: [Expense] {
         allExpenses.filter { expense in
             let matchesCategory = selectedCategory == nil || expense.category == selectedCategory
-            let matchesTag = selectedTag == nil || expense.tag?.id == selectedTag?.id
+            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || expense.tag?.id == selectedTag?.id
             return matchesCategory && matchesTag
         }
     }
@@ -113,7 +113,7 @@ struct StatsView: View {
     private var barColor: Color {
         if let category = selectedCategory {
             return category.color
-        } else if let tag = selectedTag {
+        } else if let tag = selectedTag, !tag.isDeleted {
             return tag.color
         } else {
             return Color.ui.sageColor
@@ -162,6 +162,6 @@ struct StatsView: View {
 #Preview {
     @Previewable @State var config = AppConfiguration()
     StatsView()
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
         .environment(config)
 }

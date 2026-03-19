@@ -83,5 +83,5 @@ private struct EditableExpense {
 #Preview {
     @Previewable @State var expense = Expense.example
     ExpenseDetailView(expense: expense)
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }

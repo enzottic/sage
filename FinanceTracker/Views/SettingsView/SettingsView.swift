@@ -88,7 +88,7 @@ struct SettingsView: View {
                     }
                     
                     SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
-                            ExpenseTagGrid(expenseTags: expenseTags)
+                        ExpenseTagGrid(expenseTags: expenseTags)
                     }
                     
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
@@ -165,6 +165,6 @@ struct SettingsView: View {
     @Previewable @State var appConfig: AppConfiguration = AppConfiguration()
     SettingsView()
         .environment(appConfig)
-        .modelContainer(ModelContainer.preview)
+        .modelContainer(previewAppContainer)
 }
 
