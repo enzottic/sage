@@ -24,21 +24,18 @@ struct SpendingComparisonCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
                         .foregroundStyle(isSpendingMore ? .red : .green)
-
+                    
                     Text("\(abs(percentageChange), specifier: "%.0f")%")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(isSpendingMore ? .red : .green)
-
+                    
                     Text(isSpendingMore ? "more than last month" : "less than last month")
                 }
-
+                
                 let dayOfMonth = Calendar.current.component(.day, from: Date())
                 Text("Through day \(dayOfMonth): \(currentMonthPartialTotal.currencyString) vs \(lastMonthPartialTotal.currencyString)")
                     .font(.caption)
-            } else {
-                Text("No spending data from last month")
-                    .foregroundStyle(.secondary)
             }
         }
         .padding()

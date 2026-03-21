@@ -21,15 +21,16 @@ struct HomeView: View {
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
-
-
+    
+    let calendar = Calendar.current
+    
     init(router: HomeRouter) {
         self.router = router
     }
     
     var monthlyExpenses: [Expense] {
-        let startOfMonth = Calendar.current.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
-        let endOfMonth = Calendar.current.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
+        let endOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
         
         return allExpenses.filter { expense in
             expense.date >= startOfMonth && expense.date < endOfMonth
@@ -39,7 +40,7 @@ struct HomeView: View {
     var recentPurchases: [Expense] {
         Array(monthlyExpenses.prefix(10))
     }
-
+    
     var totalSpent: Double {
         monthlyExpenses.total
     }
@@ -67,6 +68,31 @@ struct HomeView: View {
         case .savings: config.savingsBudget
         }
     }
+    
+    var currentMonthPartialTotal: Double {
+        let now = Date()
+        let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
+        return allExpenses.filter {
+            $0.date >= startOfMonth && $0.date <= now
+        }.total
+    }
+    
+    var lastMonthPartialTotal: Double {
+        let now = Date()
+        let dayOfMonth = calendar.component(.day, from: now)
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: now)!
+        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
+        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
+        
+        var components = calendar.dateComponents([.year, .month], from: lastMonth)
+        components.day = dayOfMonth
+        let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
+        
+        return allExpenses.filter {
+            $0.date >= startOfLastMonth && $0.date <= cutoffDate
+        }.total
+    }
+    
     
     var body: some View {
         NavigationStack(path: $router.navigationPath) {
@@ -109,11 +135,34 @@ struct HomeView: View {
         }
     }
     
+    private var percentageChange: Double {
+        guard lastMonthPartialTotal > 0 else { return 0 }
+        return ((currentMonthPartialTotal - lastMonthPartialTotal) / lastMonthPartialTotal) * 100
+    }
+    
+    private var isSpendingMore: Bool { percentageChange > 0 }
+    
     var monthlyOverview: some View {
         Section {
-            TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
+            VStack(spacing: 20) {
+                TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
+                
+                if lastMonthPartialTotal > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
+                            .foregroundStyle(isSpendingMore ? .red : .green)
+                        
+                        Text("\(abs(percentageChange), specifier: "%.0f")%")
+                        
+                        Text("from last month")
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(isSpendingMore ? Color.red.tertiary : Color.green.tertiary)
+                    .clipShape(Capsule())
+                }
+            }
             .frame(maxWidth: .infinity)
-            .padding(.top, 20)
         }
         .listRowBackground(Color.clear)
     }

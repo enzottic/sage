@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C617CD532F6BAD210022F7B1 /* MCEmojiPicker in Frameworks */ = {isa = PBXBuildFile; productRef = C617CD522F6BAD210022F7B1 /* MCEmojiPicker */; };
+		C617CD552F6BAD210022F7B1 /* MCEmojiPickerJSON in Frameworks */ = {isa = PBXBuildFile; productRef = C617CD542F6BAD210022F7B1 /* MCEmojiPickerJSON */; };
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
 		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -149,6 +151,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C617CD532F6BAD210022F7B1 /* MCEmojiPicker in Frameworks */,
+				C617CD552F6BAD210022F7B1 /* MCEmojiPickerJSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +246,8 @@
 			);
 			name = FinanceTracker;
 			packageProductDependencies = (
+				C617CD522F6BAD210022F7B1 /* MCEmojiPicker */,
+				C617CD542F6BAD210022F7B1 /* MCEmojiPickerJSON */,
 			);
 			productName = FinanceTracker;
 			productReference = C66031C62E8073C60078DD15 /* Sage.app */;
@@ -300,6 +306,9 @@
 			);
 			mainGroup = C66031BD2E8073C60078DD15;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C617CD512F6BAD210022F7B1 /* XCRemoteSwiftPackageReference "MCEmojiPicker" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C66031C72E8073C60078DD15 /* Products */;
 			projectDirPath = "";
@@ -719,6 +728,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C617CD512F6BAD210022F7B1 /* XCRemoteSwiftPackageReference "MCEmojiPicker" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/izyumkin/MCEmojiPicker";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C617CD522F6BAD210022F7B1 /* MCEmojiPicker */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C617CD512F6BAD210022F7B1 /* XCRemoteSwiftPackageReference "MCEmojiPicker" */;
+			productName = MCEmojiPicker;
+		};
+		C617CD542F6BAD210022F7B1 /* MCEmojiPickerJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C617CD512F6BAD210022F7B1 /* XCRemoteSwiftPackageReference "MCEmojiPicker" */;
+			productName = MCEmojiPickerJSON;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C66031BE2E8073C60078DD15 /* Project object */;
 }
