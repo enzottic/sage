@@ -16,7 +16,7 @@ enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
         switch (self) {
         case .wants: return .want
         case .needs: return .need
-        case .savings: return .teal
+        case .savings: return .saving
         }
     }
     

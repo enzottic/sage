@@ -206,6 +206,9 @@ struct HomeView: View {
 
 #Preview {
     @Previewable @State var config = AppConfiguration()
+    
+    var _ = UserDefaults.standard.set(7300, forKey:"totalMonthlyIncome")
+    
     HomeView(router: HomeRouter())
         .modelContainer(previewAppContainer)
         .environment(config)

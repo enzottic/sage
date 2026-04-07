@@ -52,7 +52,7 @@ struct SettingsView: View {
                                     get: { config.wantsPercent * 100 },
                                     set: { config.updateWants($0 / 100) }
                                 ),
-                                color: Color.ui.wantColor,
+                                color: Color.ui.want,
                                 icon: "cart.fill"
                             )
 
@@ -62,7 +62,7 @@ struct SettingsView: View {
                                     get: { config.needsPercent * 100 },
                                     set: { config.updateNeeds($0 / 100) }
                                 ),
-                                color: Color.ui.needColor,
+                                color: Color.ui.need,
                                 icon: "house.fill"
                             )
 

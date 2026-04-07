@@ -75,7 +75,7 @@ struct WelcomeView: View {
         HStack(spacing: 8) {
             ForEach([OnboardingStep.welcome, .budget, .allocation, .complete], id: \.self) { step in
                 Capsule()
-                    .fill(currentStep == step || stepIndex(step) < stepIndex(currentStep) ? Color.ui.sageColor : Color.gray.opacity(0.3))
+                    .fill(currentStep == step || stepIndex(step) < stepIndex(currentStep) ? Color.ui.sage : Color.gray.opacity(0.3))
                     .frame(height: 4)
             }
         }
@@ -113,15 +113,10 @@ struct WelcomeView: View {
                 Text("Welcome to Sage")
                     .font(.system(size: 36, weight: .bold))
                     .multilineTextAlignment(.center)
-
-                Text("Your Smart Budgeting Companion")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
             }
 
             VStack(alignment: .leading, spacing: 20) {
-                FeatureRow(icon: "chart.bar.fill", title: "Track Expenses", description: "Monitor spending across wants, needs, and savings")
+                FeatureRow(icon: "chart.bar.fill", title: "Track Expenses", description: "Monitor spending across three basic categories:wants, needs, and savings")
                 FeatureRow(icon: "percent", title: "Smart Allocation", description: "Set custom budget percentages that work for you")
                 FeatureRow(icon: "eye.fill", title: "Visual Insights", description: "See your budget utilization at a glance")
             }
@@ -140,7 +135,7 @@ struct WelcomeView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.ui.sageColor)
+                    .background(Color.ui.sage)
                     .cornerRadius(15)
             }
             .padding(.horizontal, 40)
@@ -157,7 +152,7 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 Image(systemName: "dollarsign.circle.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(Color.ui.sageColor)
+                    .foregroundStyle(Color.ui.sage)
 
                 Text("Set Your Monthly Budget")
                     .font(.system(size: 28, weight: .bold))
@@ -215,7 +210,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Int(monthlyIncome) ?? 0 > 0 ? Color.ui.sageColor : Color.gray)
+                        .background(Int(monthlyIncome) ?? 0 > 0 ? Color.ui.sage : Color.gray)
                         .cornerRadius(15)
                 }
                 .disabled((Int(monthlyIncome) ?? 0) <= 0)
@@ -234,7 +229,7 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 60))
-                    .foregroundStyle(Color.ui.sageColor)
+                    .foregroundStyle(Color.ui.sage)
 
                 Text("Budget Allocation")
                     .font(.system(size: 28, weight: .bold))
@@ -251,14 +246,14 @@ struct WelcomeView: View {
                 AllocationSlider(
                     title: "Wants",
                     percentage: $wantsPercent,
-                    color: Color.ui.wantColor,
+                    color: Color.ui.want,
                     icon: "cart.fill"
                 )
 
                 AllocationSlider(
                     title: "Needs",
                     percentage: $needsPercent,
-                    color: Color.ui.needColor,
+                    color: Color.ui.need,
                     icon: "house.fill"
                 )
 
@@ -316,7 +311,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(needsPercent + wantsPercent <= 100 ? Color.ui.sageColor : Color.gray)
+                        .background(needsPercent + wantsPercent <= 100 ? Color.ui.sage : Color.gray)
                         .cornerRadius(15)
                 }
                 .disabled(needsPercent + wantsPercent > 100)
@@ -375,14 +370,14 @@ struct WelcomeView: View {
                 BudgetSummaryRow(
                     title: "Wants (\(Int(wantsPercent))%)",
                     amount: Double(Int(monthlyIncome) ?? 0) * (wantsPercent / 100),
-                    color: Color.ui.wantColor,
+                    color: Color.ui.want,
                     icon: "cart.fill"
                 )
 
                 BudgetSummaryRow(
                     title: "Needs (\(Int(needsPercent))%)",
                     amount: Double(Int(monthlyIncome) ?? 0) * (needsPercent / 100),
-                    color: Color.ui.needColor,
+                    color: Color.ui.need,
                     icon: "house.fill"
                 )
 
@@ -423,7 +418,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.sageColor)
+                        .background(Color.ui.sage)
                         .cornerRadius(15)
                 }
             }
@@ -462,7 +457,7 @@ struct FeatureRow: View {
         HStack(alignment: .top, spacing: 15) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(Color.ui.sageColor)
+                .foregroundStyle(Color.ui.sage)
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 4) {

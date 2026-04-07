@@ -60,6 +60,27 @@ final class FinanceTrackerUITests: XCTestCase {
     }
     
     @MainActor
+    func testCanAddExpenseAndPersists() {
+        let app = XCUIApplication()
+        
+        app.activate()
+        app.buttons["Add Item"].firstMatch.tap()
+        app.textFields["Expense Name"].firstMatch.tap()
+        app.textFields["Expense Name"].firstMatch.typeText("test")
+        app.staticTexts["$0.00"].firstMatch.tap()
+        app.textFields["Expense Amount Field"].firstMatch.typeText("test123123")
+        app.buttons["Wants"].firstMatch.tap()
+        app.buttons["Add a Tag"].firstMatch.tap()
+        app.buttons["✈️ Travel"].firstMatch.tap()
+        app.buttons["Save"].firstMatch.tap()
+        app.buttons["Needs, $0, of $3,650"].firstMatch.swipeUp()
+        
+        let text = app.staticTexts["test"]
+        XCTAssertTrue(text.exists, "Could not find Test text")
+        
+    }
+    
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

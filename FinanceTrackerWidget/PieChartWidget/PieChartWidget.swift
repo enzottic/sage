@@ -42,7 +42,7 @@ struct ExpensePieChartWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UtilizationAppIntent.self, provider: ExpensesProvider()) { entry in
             ExpensePieChartEntryView(entry: entry)
-                .containerBackground(Color.ui.background, for: .widget)
+                .containerBackground(Color(.background), for: .widget)
         }
         .configurationDisplayName("Expenses Breakdown")
         .description(Text("View expense breakdown as a pie chart"))

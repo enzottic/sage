@@ -47,8 +47,8 @@ struct ExpensesView: View {
                         onAdd: { showAddExpenseSheet = true }
                     )
                 }
+                .gradientBackground()
         }
-        .gradientBackground()
     }
 }
 

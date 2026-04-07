@@ -24,6 +24,7 @@ struct GradientBackgroundModifier: ViewModifier {
             )
             .frame(height: 200)
             .ignoresSafeArea()
+            .allowsHitTesting(false)
         }
     }
 }

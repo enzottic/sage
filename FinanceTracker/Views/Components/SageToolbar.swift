@@ -28,7 +28,7 @@ struct SageToolbar: ToolbarContent {
                 Label("Add Item", systemImage: "plus")
             }
             .background(Color.ui.cardBackground)
-            .tint(Color.ui.sageColor)
+            .tint(Color.ui.sage)
         }
     }
 }

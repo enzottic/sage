@@ -16,7 +16,7 @@ struct StatsFilterBar: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                filterPill("All", tint: Color.ui.sageColor,
+                filterPill("All", tint: Color.ui.sage,
                            isActive: selectedCategory == nil && selectedTag == nil) {
                     withAnimation {
                         selectedCategory = nil

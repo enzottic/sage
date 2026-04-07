@@ -40,7 +40,7 @@ struct RootTabView: View {
             
         }
         .background(Color.ui.background)
-        .tint(Color.ui.sageColor)
+        .tint(Color.ui.sage)
     }
 }
 

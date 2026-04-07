@@ -11,11 +11,12 @@ extension Color {
     static let ui = Color.UI()
     
     struct UI {
-        let sageColor = Color("Sage")
+        let sage = Color("Sage")
         let background = Color("Background")
         let cardBackground = Color("CardBackground")
-        let wantColor = Color("WantColor")
-        let needColor = Color("NeedColor")
+        let want = Color("WantColor")
+        let need = Color("NeedColor")
+        let saving = Color("SavingColor")
         let selectedWant = Color("SelectedWant")
         let selectedNeed = Color("SelectedNeed")
     }

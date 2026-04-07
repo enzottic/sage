@@ -116,7 +116,7 @@ struct StatsView: View {
         } else if let tag = selectedTag, !tag.isDeleted {
             return tag.color
         } else {
-            return Color.ui.sageColor
+            return Color.ui.sage
         }
     }
 
