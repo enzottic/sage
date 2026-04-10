@@ -182,7 +182,6 @@ struct HomeView: View {
                     )
                 }
                 .tint(.primary)
-                .listRowBackground(category.color.opacity(0.1))
                 .listRowSeparator(.hidden)
             }
         } header: {

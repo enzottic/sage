@@ -14,7 +14,7 @@ struct TagPicker: View {
     
     @State private var newTagSheetIsPresented: Bool = false
     
-    @Query var expenseTags: [ExpenseTag]
+    @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
     
     var body: some View {
         Group {
@@ -40,6 +40,7 @@ struct TagPicker: View {
                         }
                     }
                     .padding(2)
+                    .padding(.horizontal, 8)
                 }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
