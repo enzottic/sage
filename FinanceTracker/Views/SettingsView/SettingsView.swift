@@ -19,6 +19,10 @@ struct SettingsView: View {
     @FocusState private var needsFocus: Bool
     @State private var showAddTagSheet: Bool = false
     @State private var showFileImporter: Bool = false
+    @State private var showExportConfirmation: Bool = false
+    @State private var showImportConfirmation: Bool = false
+    @State private var showImportSuccess: Bool = false
+    @State private var pendingImportExpenses: [ExportableExpense] = []
     
     let expenseExporter = ExpenseBackupService.shared
 
@@ -92,12 +96,33 @@ struct SettingsView: View {
                     }
                     
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
-                        Button("Export") {
-                            expenseExporter.exportExpenses(expenses: expenses)
-                        }
-                        
-                        Button("Import") {
-                            showFileImporter = true
+                        HStack(spacing: 15) {
+                            Button {
+                                showFileImporter = true
+                            } label: {
+                                Text("Import")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.ui.cardBackground)
+                                    .cornerRadius(15)
+                            }
+
+                            Button {
+                                let result = expenseExporter.exportExpenses(expenses: expenses)
+                                if case .success = result {
+                                    showExportConfirmation = true
+                                }
+                            } label: {
+                                Text("Export")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.ui.sage)
+                                    .cornerRadius(15)
+                            }
                         }
                     }
                 }
@@ -118,6 +143,29 @@ struct SettingsView: View {
                 allowsMultipleSelection: false,
                 onCompletion: importExpenses
             )
+            .alert("Export Saved", isPresented: $showExportConfirmation) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your expenses have been exported to the Files app as sage-export.csv.")
+            }
+            .alert("Import Expenses", isPresented: $showImportConfirmation) {
+                Button("Import") {
+                    toNormalExpenses(pendingImportExpenses).forEach { modelContext.insert($0) }
+                    save()
+                    showImportSuccess = true
+                    pendingImportExpenses = []
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingImportExpenses = []
+                }
+            } message: {
+                Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
+            }
+            .alert("Import Complete", isPresented: $showImportSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your expenses have been imported successfully.")
+            }
         }
     }
     
@@ -131,8 +179,8 @@ struct SettingsView: View {
                     
                     switch (readFileResult) {
                     case .success(let importedExpenses):
-                        toNormalExpenses(importedExpenses) .forEach { modelContext.insert($0) }
-                        save()
+                        pendingImportExpenses = importedExpenses
+                        showImportConfirmation = true
                     case .failure(let error):
                         print("Failed to read file: \(error.localizedDescription)")
                     }
