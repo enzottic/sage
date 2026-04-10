@@ -11,14 +11,17 @@ import SwiftData
 struct AddExpenseTagSheet: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
-    
+
+    var tagToEdit: ExpenseTag? = nil
     var onTagAdded: ((ExpenseTag) -> Void)? = nil
-    
+
     @State private var name: String = ""
     @State private var color: Color = .gray
     @State private var emoji: String = "💰"
-    
+
     @State private var emojiPickerPresented: Bool = false
+
+    private var isEditing: Bool { tagToEdit != nil }
     
     private let presetColors: [Color] = [
         .red, .orange, .yellow, .green, .mint, .teal, .blue, .indigo, .purple, .pink
@@ -35,7 +38,7 @@ struct AddExpenseTagSheet: View {
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            
+
             // Form fields
             VStack(spacing: 16) {
                 // Emoji + Name row
@@ -104,15 +107,22 @@ struct AddExpenseTagSheet: View {
             
             Spacer()
             
-            // Add button
+            // Add / Save button
             Button {
-                let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: emoji)
-                modelContext.insert(newExpenseTag)
-                try? modelContext.save()
-                onTagAdded?(newExpenseTag)
+                if let tag = tagToEdit {
+                    tag.name = name
+                    tag.uiColor = UIColor(color)
+                    tag.emoji = emoji
+                    try? modelContext.save()
+                } else {
+                    let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: emoji)
+                    modelContext.insert(newExpenseTag)
+                    try? modelContext.save()
+                    onTagAdded?(newExpenseTag)
+                }
                 dismiss()
             } label: {
-                Text("Add Tag")
+                Text(isEditing ? "Save Tag" : "Add Tag")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -122,6 +132,13 @@ struct AddExpenseTagSheet: View {
             .disabled(!canSave)
             .padding(.horizontal)
             .padding(.bottom, 8)
+        }
+        .onAppear {
+            if let tag = tagToEdit {
+                name = tag.name
+                emoji = tag.emoji
+                color = Color(tag.uiColor)
+            }
         }
     }
 }

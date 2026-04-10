@@ -18,13 +18,16 @@ struct ExpenseTagGrid: View {
     ]
     
     @State private var showAddTagSheet: Bool = false
-    
+    @State private var tagToEdit: ExpenseTag? = nil
+
     var body: some View {
         LazyVGrid(columns: columns, spacing: 20) {
             ForEach(expenseTags.filter { !$0.isDeleted }, id: \.self) { tag in
                 TagCapsule(tag: tag, .medium)
                     .contextMenu {
-                        Button("Edit") { }
+                        Button("Edit") {
+                            tagToEdit = tag
+                        }
                         Button("Delete", role: .destructive) {
                             withAnimation {
                                 modelContext.delete(tag)
@@ -32,7 +35,7 @@ struct ExpenseTagGrid: View {
                         }
                     }
             }
-            
+
             Button("Add Tag") {
                 showAddTagSheet = true
             }
@@ -40,6 +43,11 @@ struct ExpenseTagGrid: View {
         }
         .sheet(isPresented: $showAddTagSheet) {
             AddExpenseTagSheet()
+                .presentationBackground(Color.ui.background)
+                .presentationDetents([.medium])
+        }
+        .sheet(item: $tagToEdit) { tag in
+            AddExpenseTagSheet(tagToEdit: tag)
                 .presentationBackground(Color.ui.background)
                 .presentationDetents([.medium])
         }
