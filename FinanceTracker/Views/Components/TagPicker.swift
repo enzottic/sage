@@ -12,6 +12,8 @@ struct TagPicker: View {
     @Binding var selectedTag: ExpenseTag?
     @State private var isExpanded = false
     
+    @State private var newTagSheetIsPresented: Bool = false
+    
     @Query var expenseTags: [ExpenseTag]
     
     var body: some View {
@@ -28,6 +30,13 @@ struct TagPicker: View {
                             } label: {
                                 TagCapsule(tag: option, .medium)
                             }
+                        }
+                        
+                        Button {
+                            newTagSheetIsPresented.toggle()
+                        } label: {
+                            Image(systemName: "plus")
+                                .accessibilityLabel(Text("Add new tag"))
                         }
                     }
                     .padding(2)
@@ -51,6 +60,13 @@ struct TagPicker: View {
             }
         }
         .animation(.easeInOut, value: isExpanded)
+        .sheet(isPresented: $newTagSheetIsPresented) {
+            AddExpenseTagSheet { newTag in
+                selectedTag = newTag
+                isExpanded = false
+            }
+        }
+
     }
 }
 

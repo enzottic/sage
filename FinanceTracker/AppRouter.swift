@@ -6,19 +6,20 @@
 //
 import SwiftUI
 
-enum Tab: Int {
-    case home = 0
-    case expenses = 1
-    case stats = 2
-    case settings = 3
+enum SageTab: Equatable, Hashable {
+    case home
+    case expenses
+    case stats
+    case settings
+    case search
 }
 
 @Observable
 class AppRouter {
     var homeRouter = HomeRouter()
-    var selectedTab = Tab.home
+    var selectedTab: SageTab = .home
     
-    func navigateTo(tab: Tab) {
+    func navigateTo(tab: SageTab) {
         selectedTab = tab
     }
 }

@@ -13,6 +13,7 @@ struct ExpensesView: View {
     @State private var selectedExpense: Expense? = nil
     @State private var showAddExpenseSheet: Bool = false
     @State private var slideDirection: Edge = .leading
+    @State private var searchText: String = ""
     
     let calendar = Calendar.current
     let formatter: DateFormatter
@@ -25,10 +26,11 @@ struct ExpensesView: View {
 
     var body: some View {
         NavigationStack {
-            MonthExpensesList(month: selectedMonth, selectedExpense: $selectedExpense)
+            MonthExpensesList(month: selectedMonth, selectedExpense: $selectedExpense, searchText: searchText)
                 .frame(maxWidth: .infinity)
                 .background(Color.ui.background)
                 .navigationTitle(formatter.string(from: selectedMonth))
+                .searchable(text: $searchText, prompt: "Search expenses")
                 .sheet(isPresented: $showAddExpenseSheet, content: {
                     AddExpenseSheet()
                         .presentationDetents([.large])

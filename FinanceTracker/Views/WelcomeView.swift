@@ -38,10 +38,6 @@ struct WelcomeView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Progress indicator
-                    progressIndicator
-                        .padding(.top, 20)
-
                     TabView(selection: $currentStep) {
                         welcomePage
                             .tag(OnboardingStep.welcome)
@@ -69,29 +65,6 @@ struct WelcomeView: View {
         }
     }
 
-    // MARK: - Progress Indicator
-
-    var progressIndicator: some View {
-        HStack(spacing: 8) {
-            ForEach([OnboardingStep.welcome, .budget, .allocation, .complete], id: \.self) { step in
-                Capsule()
-                    .fill(currentStep == step || stepIndex(step) < stepIndex(currentStep) ? Color.ui.sage : Color.gray.opacity(0.3))
-                    .frame(height: 4)
-            }
-        }
-        .padding(.horizontal, 40)
-        .padding(.bottom, 20)
-    }
-
-    func stepIndex(_ step: OnboardingStep) -> Int {
-        switch step {
-        case .welcome: return 0
-        case .budget: return 1
-        case .allocation: return 2
-        case .complete: return 3
-        }
-    }
-
     // MARK: - Welcome Page
 
     var welcomePage: some View {
@@ -102,7 +75,7 @@ struct WelcomeView: View {
                 .font(.system(size: 80))
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [.green, .blue, .purple],
+                        colors: [Color.ui.want, Color.ui.need, Color.ui.saving],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )

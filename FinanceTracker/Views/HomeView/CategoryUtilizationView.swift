@@ -32,6 +32,7 @@ struct CategoryUtilizationView: View {
                 HStack(spacing: 5) {
                     Text(used.currencyString)
                         .fontWeight(.semibold)
+                        .foregroundStyle(utilization > 1 ? .red : .primary)
                     Text("of \(total.currencyString)")
                         .foregroundStyle(.secondary)
                 }

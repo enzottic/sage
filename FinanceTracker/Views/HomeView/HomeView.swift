@@ -11,7 +11,6 @@ import FoundationModels
 import Charts
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(AppConfiguration.self) private var config
     
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
@@ -68,37 +67,12 @@ struct HomeView: View {
         case .savings: config.savingsBudget
         }
     }
-    
-    var currentMonthPartialTotal: Double {
-        let now = Date()
-        let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
-        return allExpenses.filter {
-            $0.date >= startOfMonth && $0.date <= now
-        }.total
-    }
-    
-    var lastMonthPartialTotal: Double {
-        let now = Date()
-        let dayOfMonth = calendar.component(.day, from: now)
-        let lastMonth = calendar.date(byAdding: .month, value: -1, to: now)!
-        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
-        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
-        
-        var components = calendar.dateComponents([.year, .month], from: lastMonth)
-        components.day = dayOfMonth
-        let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
-        
-        return allExpenses.filter {
-            $0.date >= startOfLastMonth && $0.date <= cutoffDate
-        }.total
-    }
-    
-    
+
     var body: some View {
         NavigationStack(path: $router.navigationPath) {
             List {
                 monthlyOverview
-                utilizationSection
+                categoryUtilization
                 recentExpensesList
             }
             .navigationDestination(for: HomeRouter.Route.self) { route in
@@ -135,6 +109,33 @@ struct HomeView: View {
         }
     }
     
+
+    // MARK: - Monthly Overview
+    
+    var lastMonthPartialTotal: Double {
+        let now = Date()
+        let dayOfMonth = calendar.component(.day, from: now)
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: now)!
+        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
+        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
+        
+        var components = calendar.dateComponents([.year, .month], from: lastMonth)
+        components.day = dayOfMonth
+        let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
+        
+        return allExpenses.filter {
+            $0.date >= startOfLastMonth && $0.date <= cutoffDate
+        }.total
+    }
+        
+    var currentMonthPartialTotal: Double {
+        let now = Date()
+        let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
+        return allExpenses.filter {
+            $0.date >= startOfMonth && $0.date <= now
+        }.total
+    }
+    
     private var percentageChange: Double {
         guard lastMonthPartialTotal > 0 else { return 0 }
         return ((currentMonthPartialTotal - lastMonthPartialTotal) / lastMonthPartialTotal) * 100
@@ -167,7 +168,9 @@ struct HomeView: View {
         .listRowBackground(Color.clear)
     }
     
-    var utilizationSection: some View {
+    // MARK: - Category Utilization
+    
+    var categoryUtilization: some View {
         Section {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
                 NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
@@ -186,6 +189,8 @@ struct HomeView: View {
             Text("Categories")
         }
     }
+    
+    // MARK: - Recent Expenses List
     
     var recentExpensesList: some View {
         Section {

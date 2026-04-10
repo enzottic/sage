@@ -10,8 +10,9 @@ import SwiftData
 struct MonthExpensesList: View {
     @Query private var expenses: [Expense]
     @Binding var selectedExpense: Expense?
+    var searchText: String
     
-    init(month: Date, selectedExpense: Binding<Expense?>) {
+    init(month: Date, selectedExpense: Binding<Expense?>, searchText: String = "") {
         let calendar = Calendar.current
         let start = calendar.dateInterval(of: .month, for: month)?.start ?? month
         let end = calendar.dateInterval(of: .month, for: month)?.end ?? month
@@ -23,10 +24,20 @@ struct MonthExpensesList: View {
            sort: [SortDescriptor(\Expense.date, order: .reverse)]
        )
        _selectedExpense = selectedExpense
+       self.searchText = searchText
+    }
+    
+    var filteredExpenses: [Expense] {
+        if searchText.isEmpty { return expenses }
+        return expenses.filter { expense in
+            expense.name.localizedCaseInsensitiveContains(searchText)
+            || expense.note.localizedCaseInsensitiveContains(searchText)
+            || (expense.tag?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
     }
     
     var groupedExpenses: [Date: [Expense]] {
-        Dictionary(grouping: expenses) { expense in
+        Dictionary(grouping: filteredExpenses) { expense in
             Calendar.current.startOfDay(for: expense.date)
         }
     }
@@ -37,10 +48,10 @@ struct MonthExpensesList: View {
 
     var body: some View {
         VStack {
-            if (expenses.isEmpty) {
+            if (filteredExpenses.isEmpty) {
                 ContentUnavailableView(
-                    "No expenses for this month",
-                    systemImage: "dollarsign",
+                    searchText.isEmpty ? "No expenses for this month" : "No matching expenses",
+                    systemImage: searchText.isEmpty ? "dollarsign" : "magnifyingglass",
                 )
             } else {
                 List {

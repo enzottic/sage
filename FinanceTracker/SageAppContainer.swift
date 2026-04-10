@@ -10,10 +10,10 @@ import SwiftData
 @MainActor
 let appContainer: ModelContainer = {
     do {
-        let schema = Schema(versionedSchema: SageSchemaV1.self)
+        let schema = Schema(versionedSchema: SageSchemaV2.self)
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
-        let modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        let modelContainer = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [modelConfiguration])
         
         // Generate any due recurring expenses through today
         let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
@@ -38,8 +38,8 @@ let appContainer: ModelContainer = {
 @MainActor
 let previewAppContainer: ModelContainer = {
     do {
-        let schema = Schema(versionedSchema: SageSchemaV1.self)
-        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let schema = Schema(versionedSchema: SageSchemaV2.self)
+        let container = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self ,configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         
         let expenseTags: [String: ExpenseTag] = [
             "Other" : .other,

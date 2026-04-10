@@ -12,6 +12,8 @@ struct AddExpenseTagSheet: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     
+    var onTagAdded: ((ExpenseTag) -> Void)? = nil
+    
     @State private var name: String = ""
     @State private var color: Color = .gray
     @State private var emoji: String = "💰"
@@ -107,6 +109,7 @@ struct AddExpenseTagSheet: View {
                 let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: emoji)
                 modelContext.insert(newExpenseTag)
                 try? modelContext.save()
+                onTagAdded?(newExpenseTag)
                 dismiss()
             } label: {
                 Text("Add Tag")

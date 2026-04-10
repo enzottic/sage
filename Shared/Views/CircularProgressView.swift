@@ -31,9 +31,14 @@ struct CircularProgressView: View {
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90)) // Start from top
                 .animation(.easeInOut, value: progress)
+            
+            Text(progress.formatted(.percent.precision(.fractionLength(0))))
+                .font(.caption)
         }
     }
 }
+
+
 
 
 #Preview {

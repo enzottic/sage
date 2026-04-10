@@ -14,29 +14,26 @@ struct RootTabView: View {
     
     var body: some View {
         TabView(selection: $appRouter.selectedTab) {
-            HomeView(router: appRouter.homeRouter)
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-                .tag(Tab.home)
             
-            ExpensesView()
-                .tabItem {
-                    Label("Expenses", systemImage: "list.bullet")
-                }
-                .tag(Tab.expenses)
+            Tab("Home", systemImage: "house", value: .home) {
+                HomeView(router: appRouter.homeRouter)
+            }
+            
+            Tab("Expenses", systemImage: "list.bullet", value: .expenses) {
+                ExpensesView()
+            }
 
-            StatsView()
-                .tabItem {
-                    Label("Stats", systemImage: "chart.bar")
-                }
-                .tag(Tab.stats)
-
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(Tab.settings)
+            Tab("Stats", systemImage: "chart.bar", value: .stats) {
+                StatsView()
+            }
+            
+            Tab("Settings", systemImage: "gear", value: .settings) {
+                SettingsView()
+            }
+            
+            Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
+                SearchExpensesView()
+            }
             
         }
         .background(Color.ui.background)
