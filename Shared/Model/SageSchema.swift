@@ -10,15 +10,15 @@ import SwiftUI
 
 enum SageSchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
-    static var models: [any PersistentModel.Type] = [Expense.self, ExpenseTag.self, RecurringExpenseRule.self]
+    static var models: [any PersistentModel.Type] = [SageSchemaV1.Expense.self, SageSchemaV1.ExpenseTag.self, SageSchemaV1.RecurringExpenseRule.self]
     
     @Model
     final class Expense {
-        var id: UUID
-        var name: String
-        var amount: Double
-        var category: ExpenseCategory
-        var date: Date
+        var id: UUID = UUID()
+        var name: String = "New Expense"
+        var amount: Double = 0.0
+        var category: ExpenseCategory = ExpenseCategory.needs
+        var date: Date = Date.now
         var note: String = ""
         
         @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.expenses)
@@ -48,12 +48,12 @@ enum SageSchemaV1: VersionedSchema {
     
     @Model
     final class ExpenseTag: Identifiable {
-        var id: UUID
-        var name: String
-        var emoji: String
+        var id: UUID = UUID()
+        var name: String = "Tag"
+        var emoji: String = "💰"
         
         @Attribute(.transformable(by: UIColorValueTransformer.self))
-        var uiColor: UIColor
+        var uiColor: UIColor = UIColor.blue
         
         @Relationship var expenses: [Expense]?
         @Relationship var recurringRules: [RecurringExpenseRule]?
@@ -79,16 +79,16 @@ enum SageSchemaV1: VersionedSchema {
 
     @Model
     final class RecurringExpenseRule: Identifiable {
-        var id: UUID
-        var name: String
-        var amount: Double
-        var note: String
-        var category: ExpenseCategory
+        var id: UUID = UUID()
+        var name: String = "My Expense"
+        var amount: Double = 0.0
+        var note: String = ""
+        var category: ExpenseCategory = ExpenseCategory.wants
         @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.recurringRules)
         var tag: ExpenseTag?
         
-        var frequency: RecurrenceFrequency
-        var startDate: Date
+        var frequency: RecurrenceFrequency = RecurrenceFrequency.monthly
+        var startDate: Date = Date.now
         var endDate: Date?
         var lastGeneratedDate: Date?
         
@@ -110,15 +110,15 @@ enum SageSchemaV1: VersionedSchema {
 
 enum SageSchemaV2: VersionedSchema {
     static var versionIdentifier = Schema.Version(2, 0, 0)
-    static var models: [any PersistentModel.Type] = [Expense.self, ExpenseTag.self, RecurringExpenseRule.self, ]
+    static var models: [any PersistentModel.Type] = [SageSchemaV2.Expense.self, SageSchemaV2.ExpenseTag.self, SageSchemaV2.RecurringExpenseRule.self, SageSchemaV2.ExpenseAccount.self]
     
     @Model
     final class Expense {
-        var id: UUID
-        var name: String
-        var amount: Double
-        var category: ExpenseCategory
-        var date: Date
+        var id: UUID = UUID()
+        var name: String = "New Expense"
+        var amount: Double = 0.0
+        var category: ExpenseCategory = ExpenseCategory.needs
+        var date: Date = Date.now
         var note: String = ""
         
         @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.expenses)
@@ -153,12 +153,12 @@ enum SageSchemaV2: VersionedSchema {
     
     @Model
     final class ExpenseTag: Identifiable {
-        var id: UUID
-        var name: String
-        var emoji: String
+        var id: UUID = UUID()
+        var name: String = "Tag"
+        var emoji: String = "💰"
         
         @Attribute(.transformable(by: UIColorValueTransformer.self))
-        var uiColor: UIColor
+        var uiColor: UIColor = UIColor.blue
         
         @Relationship var expenses: [Expense]?
         @Relationship var recurringRules: [RecurringExpenseRule]?
@@ -184,20 +184,22 @@ enum SageSchemaV2: VersionedSchema {
 
     @Model
     final class RecurringExpenseRule: Identifiable {
-        var id: UUID
+        var id: UUID = UUID()
         
         // Fields gathered from the original expense to be copied to the new expense
-        var name: String
-        var amount: Double
-        var note: String
-        var category: ExpenseCategory
+        var name: String = "New Expense"
+        var amount: Double = 0.0
+        var note: String = ""
+        var category: ExpenseCategory = ExpenseCategory.needs
         @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.recurringRules)
         var tag: ExpenseTag?
+        
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseAccount.recurringRules)
         var account: ExpenseAccount?
         
         // Recurrance configuration
-        var frequency: RecurrenceFrequency
-        var startDate: Date
+        var frequency: RecurrenceFrequency = RecurrenceFrequency.monthly
+        var startDate: Date = Date.now
         var endDate: Date?
         var lastGeneratedDate: Date?
         
@@ -217,12 +219,13 @@ enum SageSchemaV2: VersionedSchema {
     
     @Model
     final class ExpenseAccount: Identifiable {
-        var id: UUID
-        var name: String
-        var type: AccountType
+        var id: UUID = UUID()
+        var name: String = "Account"
+        var type: AccountType = AccountType.bankAccount
         
         @Relationship var expenses: [Expense]?
-        
+        @Relationship var recurringRules: [RecurringExpenseRule]?
+
         enum AccountType: String, Codable {
             case bankAccount = "Bank Account"
             case creditCard = "Credit Card"
