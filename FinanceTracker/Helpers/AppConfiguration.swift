@@ -26,35 +26,65 @@ enum Appearance: String, CaseIterable {
 @Observable
 class AppConfiguration {
     private let defaults: UserDefaults
+    private let cloudKVS = NSUbiquitousKeyValueStore.default
     private let suite = "group.me.enzottic.SageAppGroup"
+    
+    // Keys used in both UserDefaults and iCloud KVS
+    private enum Keys {
+        static let appearance = "appearance"
+        static let totalMonthlyIncome = "totalMonthlyIncome"
+        static let needsPercent = "needsPercent"
+        static let wantsPercent = "wantsPercent"
+        static let savingsPercent = "savingsPercent"
+        static let isCloudSyncEnabled = "isCloudSyncEnabled"
+        static let hasCompletedSetup = "hasCompletedSetup"
+    }
     
     var selectedAppearance: Appearance {
         didSet {
-            UserDefaults.standard.set(selectedAppearance.rawValue, forKey: "appearance")
+            defaults.set(selectedAppearance.rawValue, forKey: Keys.appearance)
+            cloudKVS.set(selectedAppearance.rawValue, forKey: Keys.appearance)
+            cloudKVS.synchronize()
         }
     }
     
     var totalMonthlyIncome: Int {
         didSet {
-            defaults.set(totalMonthlyIncome, forKey: "totalMonthlyIncome")
+            defaults.set(totalMonthlyIncome, forKey: Keys.totalMonthlyIncome)
+            cloudKVS.set(Int64(totalMonthlyIncome), forKey: Keys.totalMonthlyIncome)
+            cloudKVS.synchronize()
         }
     }
     
     var needsPercent: Double {
         didSet {
-            defaults.set(needsPercent, forKey: "needsPercent")
+            defaults.set(needsPercent, forKey: Keys.needsPercent)
+            cloudKVS.set(needsPercent, forKey: Keys.needsPercent)
+            cloudKVS.synchronize()
         }
     }
     
     var wantsPercent: Double {
         didSet {
-            defaults.set(wantsPercent, forKey: "wantsPercent")
+            defaults.set(wantsPercent, forKey: Keys.wantsPercent)
+            cloudKVS.set(wantsPercent, forKey: Keys.wantsPercent)
+            cloudKVS.synchronize()
         }
     }
     
     var savingsPercent: Double {
         didSet {
-            defaults.set(savingsPercent, forKey: "savingsPercent")
+            defaults.set(savingsPercent, forKey: Keys.savingsPercent)
+            cloudKVS.set(savingsPercent, forKey: Keys.savingsPercent)
+            cloudKVS.synchronize()
+        }
+    }
+    
+    var isCloudSyncEnabled: Bool {
+        didSet {
+            defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+            cloudKVS.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+            cloudKVS.synchronize()
         }
     }
     
@@ -73,23 +103,106 @@ class AppConfiguration {
     init() {
         self.defaults = UserDefaults(suiteName: suite) ?? .standard
         
-        if let savedAppearance = UserDefaults.standard.string(forKey: "appearance"),
-           let appearance = Appearance(rawValue: savedAppearance) {
+        // iCloud KVS is the source of truth for all settings.
+        // Fall back to local UserDefaults if iCloud KVS hasn't synced yet.
+        
+        // Appearance
+        if let cloudAppearance = cloudKVS.string(forKey: Keys.appearance),
+           let appearance = Appearance(rawValue: cloudAppearance) {
+            self.selectedAppearance = appearance
+        } else if let localAppearance = defaults.string(forKey: Keys.appearance),
+                  let appearance = Appearance(rawValue: localAppearance) {
             self.selectedAppearance = appearance
         } else {
             self.selectedAppearance = .system
         }
         
-        self.totalMonthlyIncome = defaults.integer(forKey: "totalMonthlyIncome") // 0 if not found
-       
-        let needsPercent = defaults.double(forKey: "needsPercent")
-        self.needsPercent = needsPercent == 0 ? 0.5 : needsPercent
-       
-        let wantsPercent = defaults.double(forKey: "wantsPercent")
-        self.wantsPercent = wantsPercent == 0 ? 0.3 : wantsPercent
+        // Monthly income
+        let cloudIncome = cloudKVS.object(forKey: Keys.totalMonthlyIncome) as? Int
+        let localIncome = defaults.object(forKey: Keys.totalMonthlyIncome) as? Int
+        self.totalMonthlyIncome = cloudIncome ?? localIncome ?? 0
         
-        let savingsPercent = defaults.double(forKey: "savingsPercent")
-        self.savingsPercent = savingsPercent == 0 ? 0.2 : savingsPercent
+        // Budget percentages — use iCloud KVS if available, else local defaults, else 50/30/20
+        let cloudNeeds = cloudKVS.object(forKey: Keys.needsPercent) as? Double
+        let localNeeds = defaults.object(forKey: Keys.needsPercent) as? Double
+        self.needsPercent = cloudNeeds ?? localNeeds ?? 0.5
+        
+        let cloudWants = cloudKVS.object(forKey: Keys.wantsPercent) as? Double
+        let localWants = defaults.object(forKey: Keys.wantsPercent) as? Double
+        self.wantsPercent = cloudWants ?? localWants ?? 0.3
+        
+        let cloudSavings = cloudKVS.object(forKey: Keys.savingsPercent) as? Double
+        let localSavings = defaults.object(forKey: Keys.savingsPercent) as? Double
+        self.savingsPercent = cloudSavings ?? localSavings ?? 0.2
+        
+        // Cloud sync toggle — iCloud KVS is authoritative
+        if cloudKVS.object(forKey: Keys.isCloudSyncEnabled) != nil {
+            self.isCloudSyncEnabled = cloudKVS.bool(forKey: Keys.isCloudSyncEnabled)
+        } else {
+            self.isCloudSyncEnabled = defaults.bool(forKey: Keys.isCloudSyncEnabled)
+        }
+        
+        // Push current values to local defaults so widgets stay in sync
+        syncToLocalDefaults()
+        
+        // Listen for changes from other devices
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudKVSDidChange(_:)),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: cloudKVS
+        )
+    }
+    
+    @objc private func iCloudKVSDidChange(_ notification: Notification) {
+        DispatchQueue.main.async { [self] in
+            // Update local properties from iCloud KVS when another device pushes changes
+            if let cloudAppearance = cloudKVS.string(forKey: Keys.appearance),
+               let appearance = Appearance(rawValue: cloudAppearance) {
+                selectedAppearance = appearance
+            }
+            
+            if cloudKVS.object(forKey: Keys.totalMonthlyIncome) != nil {
+                totalMonthlyIncome = Int(cloudKVS.longLong(forKey: Keys.totalMonthlyIncome))
+            }
+            
+            if cloudKVS.object(forKey: Keys.needsPercent) != nil {
+                needsPercent = cloudKVS.double(forKey: Keys.needsPercent)
+            }
+            
+            if cloudKVS.object(forKey: Keys.wantsPercent) != nil {
+                wantsPercent = cloudKVS.double(forKey: Keys.wantsPercent)
+            }
+            
+            if cloudKVS.object(forKey: Keys.savingsPercent) != nil {
+                savingsPercent = cloudKVS.double(forKey: Keys.savingsPercent)
+            }
+            
+            if cloudKVS.object(forKey: Keys.isCloudSyncEnabled) != nil {
+                isCloudSyncEnabled = cloudKVS.bool(forKey: Keys.isCloudSyncEnabled)
+            }
+            
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+    
+    /// Push current values to local UserDefaults (for widget access via app group)
+    private func syncToLocalDefaults() {
+        defaults.set(selectedAppearance.rawValue, forKey: Keys.appearance)
+        defaults.set(totalMonthlyIncome, forKey: Keys.totalMonthlyIncome)
+        defaults.set(needsPercent, forKey: Keys.needsPercent)
+        defaults.set(wantsPercent, forKey: Keys.wantsPercent)
+        defaults.set(savingsPercent, forKey: Keys.savingsPercent)
+        defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+    }
+    
+    func markSetupComplete() {
+        cloudKVS.set(true, forKey: Keys.hasCompletedSetup)
+        cloudKVS.synchronize()
+    }
+    
+    static var hasCompletedSetupOnAnotherDevice: Bool {
+        NSUbiquitousKeyValueStore.default.bool(forKey: "hasCompletedSetup")
     }
     
     func updateNeeds(_ newNeeds: Double) {

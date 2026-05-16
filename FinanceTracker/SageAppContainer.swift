@@ -11,23 +11,28 @@ import SwiftData
 let appContainer: ModelContainer = {
     do {
         let schema = Schema(versionedSchema: SageSchemaV2.self)
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        // iCloud KVS is authoritative for the sync preference
+        let cloudKVS = NSUbiquitousKeyValueStore.default
+        let cloudSyncEnabled: Bool
+        if cloudKVS.object(forKey: "isCloudSyncEnabled") != nil {
+            cloudSyncEnabled = cloudKVS.bool(forKey: "isCloudSyncEnabled")
+        } else {
+            let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")
+            cloudSyncEnabled = defaults?.bool(forKey: "isCloudSyncEnabled") ?? false
+        }
+        
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: cloudSyncEnabled ? .automatic : .none
+        )
         
         let modelContainer = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [modelConfiguration])
         
         // Generate any due recurring expenses through today
         let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
         recurringService.generateAllExpenses(through: Date())
-        
-        var expenseFetchDescriptor = FetchDescriptor<ExpenseTag>()
-        expenseFetchDescriptor.fetchLimit = 1
-        
-        guard try modelContainer.mainContext.fetch(expenseFetchDescriptor).count == 0 else { return modelContainer }
-        
-        ExpenseTag.builtInTags.forEach { tag in
-            modelContainer.mainContext.insert(tag)
-        }
-        try modelContainer.mainContext.save()
         
         return modelContainer
     } catch {

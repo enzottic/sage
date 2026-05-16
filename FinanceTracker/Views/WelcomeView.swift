@@ -7,9 +7,11 @@
 
 import SwiftUI
 import WidgetKit
+import SwiftData
 
 struct WelcomeView: View {
     @Environment(AppConfiguration.self) var config
+    @Environment(\.modelContext) private var modelContext
 
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
 
@@ -17,12 +19,14 @@ struct WelcomeView: View {
     @State private var monthlyIncome: String = ""
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
+    @State private var cloudSyncEnabled: Bool = false
     @FocusState private var isInputFocused: Bool
 
     enum OnboardingStep {
         case welcome
         case budget
         case allocation
+        case sync
         case complete
     }
 
@@ -48,6 +52,9 @@ struct WelcomeView: View {
                         allocationPage
                             .tag(OnboardingStep.allocation)
 
+                        syncPage
+                            .tag(OnboardingStep.sync)
+
                         completePage
                             .tag(OnboardingStep.complete)
                     }
@@ -62,6 +69,7 @@ struct WelcomeView: View {
                     }
                 }
             }
+
         }
     }
 
@@ -276,7 +284,7 @@ struct WelcomeView: View {
 
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .complete
+                        currentStep = .sync
                     }
                 } label: {
                     Text("Continue")
@@ -305,6 +313,91 @@ struct WelcomeView: View {
                 let newNeeds = max(0, 100 - wantsPercent)
                 needsPercent = round(newNeeds / 5) * 5
             }
+        }
+    }
+
+    // MARK: - Sync Page
+
+    var syncPage: some View {
+        VStack(spacing: 30) {
+            Spacer()
+
+            VStack(spacing: 12) {
+                Image(systemName: "icloud.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(Color.ui.sage)
+
+                Text("iCloud Sync")
+                    .font(.system(size: 28, weight: .bold))
+                    .multilineTextAlignment(.center)
+
+                Text("Sync your expenses across all your devices using iCloud")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+
+            Toggle(isOn: $cloudSyncEnabled) {
+                HStack {
+                    Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
+                        .foregroundStyle(Color.ui.sage)
+                        .frame(width: 30)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Enable iCloud Sync")
+                            .font(.headline)
+                        Text("You can change this later in Settings")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color.ui.cardBackground)
+            .cornerRadius(15)
+            .padding(.horizontal, 40)
+
+            if cloudSyncEnabled {
+                Label("Sync will activate the next time you open the app.", systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 40)
+            }
+
+            Spacer()
+
+            HStack(spacing: 15) {
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        currentStep = .allocation
+                    }
+                } label: {
+                    Text("Back")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.ui.cardBackground)
+                        .cornerRadius(15)
+                }
+
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        currentStep = .complete
+                    }
+                } label: {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.ui.sage)
+                        .cornerRadius(15)
+                }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 40)
         }
     }
 
@@ -371,7 +464,7 @@ struct WelcomeView: View {
             HStack(spacing: 15) {
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .allocation
+                        currentStep = .sync
                     }
                 } label: {
                     Text("Back")
@@ -408,6 +501,8 @@ struct WelcomeView: View {
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
         config.savingsPercent = savingsPercent / 100
+        config.isCloudSyncEnabled = cloudSyncEnabled
+        config.markSetupComplete()
 
         // Reload widgets
         WidgetCenter.shared.reloadAllTimelines()
@@ -417,6 +512,7 @@ struct WelcomeView: View {
             hasOpenedAppOnce = true
         }
     }
+
 }
 
 // MARK: - Supporting Views

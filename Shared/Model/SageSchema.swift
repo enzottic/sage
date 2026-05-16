@@ -62,8 +62,8 @@ enum SageSchemaV1: VersionedSchema {
             Color(uiColor: uiColor)
         }
         
-        init(name: String, uiColor: UIColor, emoji: String) {
-            self.id = UUID()
+        init(id: UUID = UUID(), name: String, uiColor: UIColor, emoji: String) {
+            self.id = id
             self.name = name
             self.uiColor = uiColor
             self.emoji = emoji
@@ -167,8 +167,8 @@ enum SageSchemaV2: VersionedSchema {
             Color(uiColor: uiColor)
         }
         
-        init(name: String, uiColor: UIColor, emoji: String) {
-            self.id = UUID()
+        init(id: UUID = UUID(), name: String, uiColor: UIColor, emoji: String) {
+            self.id = id
             self.name = name
             self.uiColor = uiColor
             self.emoji = emoji

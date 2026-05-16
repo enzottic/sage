@@ -83,7 +83,6 @@
 				"Extensions/Color+SageColors.swift",
 				"Extensions/Date+Relative.swift",
 				"Extensions/Date+TextOutputStreamable.swift",
-				"Extensions/ExpenseTag+BuiltInTags.swift",
 				"Extensions/Number+CurrencyString.swift",
 				Intents/SageAppIntents.swift,
 				Model/ExpenseCategory.swift,
@@ -92,6 +91,7 @@
 				Services/ExpenseBackupService.swift,
 				Services/ExpenseStore.swift,
 				Services/RecurringExpenseService.swift,
+				Services/TagDeduplicationService.swift,
 				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;

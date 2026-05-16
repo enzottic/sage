@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var showExportConfirmation: Bool = false
     @State private var showImportConfirmation: Bool = false
     @State private var showImportSuccess: Bool = false
+    @State private var showSyncRestartAlert: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
     
     let expenseExporter = ExpenseBackupService.shared
@@ -88,6 +89,24 @@ struct SettingsView: View {
                             .padding()
                             .background(Color.ui.cardBackground)
                             .cornerRadius(15)
+                        }
+                    }
+                    
+                    SettingsPanel(title: "iCloud Sync", description: "Sync your expenses across all your devices") {
+                        Toggle(isOn: $config.isCloudSyncEnabled) {
+                            HStack {
+                                Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
+                                    .foregroundStyle(Color.ui.sage)
+                                    .frame(width: 30)
+                                Text("Enable iCloud Sync")
+                                    .font(.headline)
+                            }
+                        }
+                        .padding()
+                        .background(Color.ui.cardBackground)
+                        .cornerRadius(15)
+                        .onChange(of: config.isCloudSyncEnabled) { _, _ in
+                            showSyncRestartAlert = true
                         }
                     }
                     
@@ -165,6 +184,11 @@ struct SettingsView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Your expenses have been imported successfully.")
+            }
+            .alert("Restart Required", isPresented: $showSyncRestartAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please restart the app for iCloud sync changes to take effect.")
             }
         }
     }
