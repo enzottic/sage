@@ -113,7 +113,11 @@ struct SettingsView: View {
                     SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
                         ExpenseTagGrid(expenseTags: expenseTags)
                     }
-                    
+
+                    SettingsPanel(title: "Recurring Expenses", description: "View and manage your recurring expense rules") {
+                        RecurringRulesSection()
+                    }
+
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
                         HStack(spacing: 15) {
                             Button {

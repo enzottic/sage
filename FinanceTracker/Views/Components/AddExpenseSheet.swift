@@ -101,7 +101,7 @@ struct AddExpenseSheet: View {
                 amount: expenseAmount,
                 note: note,
                 category: category,
-                tag: tag ?? .other,
+                tag: tag,
                 frequency: recurrenceFrequency,
                 startDate: date,
                 lastGeneratedDate: date

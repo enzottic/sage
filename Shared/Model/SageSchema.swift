@@ -203,7 +203,7 @@ enum SageSchemaV2: VersionedSchema {
         var endDate: Date?
         var lastGeneratedDate: Date?
         
-        init(name: String, amount: Double, note: String, category: ExpenseCategory, tag: ExpenseTag, frequency: RecurrenceFrequency, startDate: Date, endDate: Date? = nil, lastGeneratedDate: Date? = nil) {
+        init(name: String, amount: Double, note: String, category: ExpenseCategory, tag: ExpenseTag? = nil, frequency: RecurrenceFrequency, startDate: Date, endDate: Date? = nil, lastGeneratedDate: Date? = nil) {
             self.id = UUID()
             self.name = name
             self.amount = amount
