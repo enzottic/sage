@@ -95,6 +95,7 @@ private struct SplitwiseExpenseRow: View {
     let isImported: Bool
 
     var owedAmount: Double { expense.owedAmount(forUserId: userId) }
+    var totalAmount: Double { Double(expense.cost) ?? 0 }
 
     var body: some View {
         HStack {
@@ -116,9 +117,16 @@ private struct SplitwiseExpenseRow: View {
                     .labelStyle(.iconOnly)
                     .imageScale(.large)
             } else {
-                Text(owedAmount, format: .currency(code: expense.currencyCode))
-                    .font(.headline)
-                    .foregroundStyle(Color.ui.sage)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(owedAmount, format: .currency(code: expense.currencyCode))
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.ui.sage)
+
+                    Text("of \(totalAmount.formatted(.currency(code: expense.currencyCode)))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 4)

@@ -142,5 +142,7 @@ struct AddExpenseSheet: View {
 #Preview {
     AddExpenseSheet()
         .modelContainer(previewAppContainer)
+        .environment(SplitwiseService())
+        .environment(AppConfiguration())
 }
 

@@ -5,37 +5,21 @@
 //  Created by Tyler McCormick on 5/16/26.
 //
 import SwiftUI
+import AuthenticationServices
 
 struct SplitwiseSettingsSection: View {
     @Environment(SplitwiseService.self) private var splitwise
-    @State private var showConnectSheet = false
 
     var body: some View {
-        if splitwise.isConfigured {
+        if splitwise.isConnected {
             ConnectedView(splitwise: splitwise)
         } else {
-            Button {
-                showConnectSheet = true
-            } label: {
-                HStack {
-                    Image(systemName: "link")
-                    Text("Connect to Splitwise")
-                        .fontWeight(.medium)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.ui.sage)
-                .foregroundStyle(.white)
-                .cornerRadius(15)
-            }
-            .sheet(isPresented: $showConnectSheet) {
-                SplitwiseConnectSheet()
-            }
+            DisconnectedView(splitwise: splitwise)
         }
     }
 }
 
-// MARK: - Connected state
+// MARK: - Connected
 
 private struct ConnectedView: View {
     let splitwise: SplitwiseService
@@ -79,80 +63,43 @@ private struct ConnectedView: View {
     }
 }
 
-// MARK: - Connect sheet
+// MARK: - Disconnected
 
-private struct SplitwiseConnectSheet: View {
-    @Environment(SplitwiseService.self) private var splitwise
-    @Environment(\.dismiss) private var dismiss
+private struct DisconnectedView: View {
+    let splitwise: SplitwiseService
 
-    @State private var apiKeyInput = ""
     @State private var isConnecting = false
     @State private var errorMessage: String?
 
     var body: some View {
-        @Bindable var splitwise = splitwise
-
-        NavigationStack {
-            VStack(spacing: 24) {
-                VStack(spacing: 10) {
-                    Image(systemName: "person.2.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(Color.ui.sage)
-
-                    Text("Connect Splitwise")
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    Text("Paste your Splitwise API key below to import shared expenses into Sage.")
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-                }
-                .padding(.top, 12)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    TextField("API Key", text: $apiKeyInput)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .font(.system(.body, design: .monospaced))
-                        .padding()
-                        .background(Color.ui.cardBackground)
-                        .cornerRadius(12)
-
-                    Link("Get your API key at secure.splitwise.com/apps →",
-                         destination: URL(string: "https://secure.splitwise.com/apps")!)
-                        .font(.caption)
-                        .padding(.horizontal, 4)
-                }
-
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                Spacer()
-            }
-            .padding()
-            .background(Color.ui.background)
-            .navigationTitle("Connect Splitwise")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                Task { await connect() }
+            } label: {
+                Group {
                     if isConnecting {
-                        ProgressView()
+                        ProgressView().tint(.white)
                     } else {
-                        Button("Connect") {
-                            Task { await connect() }
+                        HStack {
+                            Image(systemName: "link")
+                            Text("Connect to Splitwise")
+                                .fontWeight(.medium)
                         }
-                        .fontWeight(.semibold)
-                        .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.ui.sage)
+                .foregroundStyle(.white)
+                .cornerRadius(15)
+            }
+            .disabled(isConnecting)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 4)
             }
         }
     }
@@ -160,13 +107,14 @@ private struct SplitwiseConnectSheet: View {
     private func connect() async {
         isConnecting = true
         errorMessage = nil
-        splitwise.apiKey = apiKeyInput.trimmingCharacters(in: .whitespaces)
         do {
-            try await splitwise.fetchCurrentUser()
-            dismiss()
+            try await splitwise.connect()
         } catch {
-            splitwise.disconnect()
-            errorMessage = error.localizedDescription
+            // Swallow the cancellation — user just closed the browser
+            let asError = error as? ASWebAuthenticationSessionError
+            if asError?.code != .canceledLogin {
+                errorMessage = error.localizedDescription
+            }
         }
         isConnecting = false
     }
