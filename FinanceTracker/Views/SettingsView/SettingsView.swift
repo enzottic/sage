@@ -5,28 +5,18 @@
 //  Created by Tyler McCormick on 9/21/25.
 //
 import SwiftUI
-import UniformTypeIdentifiers
 import WidgetKit
 import SwiftData
+import FoundationModels
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
-    @Environment(\.modelContext) var modelContext
     
     @Query var expenseTags: [ExpenseTag]
-    @Query var expenses: [Expense]
 
     @FocusState private var needsFocus: Bool
     @State private var showAddTagSheet: Bool = false
-    @State private var showFileImporter: Bool = false
-    @State private var showExportConfirmation: Bool = false
-    @State private var showImportConfirmation: Bool = false
-    @State private var showImportSuccess: Bool = false
     @State private var showSyncRestartAlert: Bool = false
-    @State private var pendingImportExpenses: [ExportableExpense] = []
-    
-    let expenseExporter = ExpenseBackupService.shared
-
 
     var body: some View {
         @Bindable var config = config
@@ -110,6 +100,19 @@ struct SettingsView: View {
                         }
                     }
                     
+                    SettingsPanel(title: "Smart Tagging", description: "Select the mode of smart tagging to use. Smart tagging automatically picks a tag for each expense based on the name.") {
+                            Picker("Smart Tagging", selection: $config.smartTaggingMode) {
+                                ForEach(SmartTaggingMode.allCases, id: \.self) {
+                                    Text($0.rawValue)
+                                }
+                        }
+                        .pickerStyle(.menu)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.ui.cardBackground)
+                        .cornerRadius(15)
+                    }
+
                     SettingsPanel(title: "Expense Tags", description: "Add or remove tags for expenses") {
                         ExpenseTagGrid(expenseTags: expenseTags)
                     }
@@ -119,34 +122,7 @@ struct SettingsView: View {
                     }
 
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
-                        HStack(spacing: 15) {
-                            Button {
-                                showFileImporter = true
-                            } label: {
-                                Text("Import")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.ui.cardBackground)
-                                    .cornerRadius(15)
-                            }
-
-                            Button {
-                                let result = expenseExporter.exportExpenses(expenses: expenses)
-                                if case .success = result {
-                                    showExportConfirmation = true
-                                }
-                            } label: {
-                                Text("Export")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.ui.sage)
-                                    .cornerRadius(15)
-                            }
-                        }
+                        ExpenseImportExportSection()
                     }
                 }
             }
@@ -160,35 +136,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            .fileImporter(
-                isPresented: $showFileImporter,
-                allowedContentTypes: [UTType.commaSeparatedText],
-                allowsMultipleSelection: false,
-                onCompletion: importExpenses
-            )
-            .alert("Export Saved", isPresented: $showExportConfirmation) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Your expenses have been exported to the Files app as sage-export.csv.")
-            }
-            .alert("Import Expenses", isPresented: $showImportConfirmation) {
-                Button("Import") {
-                    toNormalExpenses(pendingImportExpenses).forEach { modelContext.insert($0) }
-                    save()
-                    showImportSuccess = true
-                    pendingImportExpenses = []
-                }
-                Button("Cancel", role: .cancel) {
-                    pendingImportExpenses = []
-                }
-            } message: {
-                Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
-            }
-            .alert("Import Complete", isPresented: $showImportSuccess) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Your expenses have been imported successfully.")
-            }
             .alert("Restart Required", isPresented: $showSyncRestartAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -196,45 +143,7 @@ struct SettingsView: View {
             }
         }
     }
-    
-    private func importExpenses(filePickerResult: Result<[URL], any Error>) {
-        switch (filePickerResult) {
-        case .success(let urls):
-            if let url = urls.first {
-                if url.startAccessingSecurityScopedResource() {
-                    print("Accessing file \(url.lastPathComponent)")
-                    let readFileResult = expenseExporter.readExpenses(from: url)
-                    
-                    switch (readFileResult) {
-                    case .success(let importedExpenses):
-                        pendingImportExpenses = importedExpenses
-                        showImportConfirmation = true
-                    case .failure(let error):
-                        print("Failed to read file: \(error.localizedDescription)")
-                    }
-                    
-                }
-            }
-        case .failure(let error):
-            print("Failed yo: \(error.localizedDescription)")
-        }
-    }
-    
-    private func save() {
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save model context: \(error.localizedDescription)")
-        }
-    }
-    
-    private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
-        importedExpenses.map { e in
-            let tag = expenseTags.first { tag in e.tag == tag.name } ?? nil
-            
-            return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tag: tag, note: e.note)
-        }
-    }
+
 }
 
 #Preview {

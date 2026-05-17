@@ -22,7 +22,7 @@ struct ExpenseTagGrid: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 20) {
-            ForEach(expenseTags.filter { !$0.isDeleted }, id: \.self) { tag in
+            ForEach(expenseTags.filter { !$0.isDeleted }.sorted { $0.name < $1.name }, id: \.self) { tag in
                 TagCapsule(tag: tag, .medium)
                     .contextMenu {
                         Button("Edit") {

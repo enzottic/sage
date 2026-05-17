@@ -23,6 +23,13 @@ enum Appearance: String, CaseIterable {
     }
 }
 
+enum SmartTaggingMode: String, CaseIterable {
+    case history = "Expense History"
+    case ai = "AI"
+    case both = "Expense History, AI Fallback"
+    case none = "None"
+}
+
 @Observable
 class AppConfiguration {
     private let defaults: UserDefaults
@@ -37,7 +44,8 @@ class AppConfiguration {
         static let wantsPercent = "wantsPercent"
         static let savingsPercent = "savingsPercent"
         static let isCloudSyncEnabled = "isCloudSyncEnabled"
-        static let hasCompletedSetup = "hasCompletedSetup"
+        static let hasCompletedSetup = "hasCompletedetup"
+        static let smartTaggingMode = "smartTaggingMode"
     }
     
     var selectedAppearance: Appearance {
@@ -84,6 +92,14 @@ class AppConfiguration {
         didSet {
             defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
             cloudKVS.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+            cloudKVS.synchronize()
+        }
+    }
+
+    var smartTaggingMode: SmartTaggingMode {
+        didSet {
+            defaults.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
+            cloudKVS.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
             cloudKVS.synchronize()
         }
     }
@@ -141,6 +157,17 @@ class AppConfiguration {
         } else {
             self.isCloudSyncEnabled = defaults.bool(forKey: Keys.isCloudSyncEnabled)
         }
+
+        // Auto tagging mode - default expense history and AI
+        if let smartTaggingModeString = cloudKVS.string(forKey: Keys.smartTaggingMode),
+           let mode = SmartTaggingMode(rawValue: smartTaggingModeString) {
+            self.smartTaggingMode = mode
+        } else if let localAutoTaggingModeString = defaults.string(forKey: Keys.smartTaggingMode),
+                  let mode = SmartTaggingMode(rawValue: localAutoTaggingModeString) {
+            self.smartTaggingMode = mode
+        } else {
+            self.smartTaggingMode = .both
+        }
         
         // Push current values to local defaults so widgets stay in sync
         syncToLocalDefaults()
@@ -181,6 +208,11 @@ class AppConfiguration {
             if cloudKVS.object(forKey: Keys.isCloudSyncEnabled) != nil {
                 isCloudSyncEnabled = cloudKVS.bool(forKey: Keys.isCloudSyncEnabled)
             }
+
+            if let cloudAutoTaggingMode = cloudKVS.string(forKey: Keys.smartTaggingMode),
+               let mode = SmartTaggingMode(rawValue: cloudAutoTaggingMode) {
+                smartTaggingMode = mode
+            }
             
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -194,6 +226,7 @@ class AppConfiguration {
         defaults.set(wantsPercent, forKey: Keys.wantsPercent)
         defaults.set(savingsPercent, forKey: Keys.savingsPercent)
         defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+        defaults.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
     }
     
     func markSetupComplete() {

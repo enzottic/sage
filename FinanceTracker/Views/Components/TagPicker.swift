@@ -10,8 +10,10 @@ import SwiftData
 
 struct TagPicker: View {
     @Binding var selectedTag: ExpenseTag?
+    /// Whether the currently selected tag was suggested by the AI (shows rainbow border).
+    var tagIsAISuggested: Bool = false
+
     @State private var isExpanded = false
-    
     @State private var newTagSheetIsPresented: Bool = false
     
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
@@ -44,15 +46,29 @@ struct TagPicker: View {
                 }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    Button {
-                        withAnimation(.easeInOut) {
-                            isExpanded = true
+                    HStack(spacing: 6) {
+                        Button {
+                            withAnimation(.easeInOut) {
+                                isExpanded = true
+                            }
+                        } label: {
+                            if selectedTag == nil {
+                                Text("Add a Tag")
+                            } else {
+                                TagCapsule(tag: selectedTag, .medium, aiSuggested: tagIsAISuggested)
+                            }
                         }
-                    } label: {
-                        if selectedTag == nil {
-                            Text("Add a Tag")
-                        } else {
-                            TagCapsule(tag: selectedTag, .medium)
+
+                        if selectedTag != nil {
+                            Button {
+                                withAnimation(.easeInOut) {
+                                    selectedTag = nil
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                                    .accessibilityLabel(Text("Remove tag"))
+                            }
                         }
                     }
                     .padding(2)
@@ -67,12 +83,14 @@ struct TagPicker: View {
                 isExpanded = false
             }
         }
-
     }
 }
 
 #Preview {
     @Previewable @State var selectedTag: ExpenseTag? = .dining
-    TagPicker(selectedTag: $selectedTag)
-        .modelContainer(previewAppContainer)
+    VStack(spacing: 20) {
+        TagPicker(selectedTag: $selectedTag)
+        TagPicker(selectedTag: $selectedTag, tagIsAISuggested: true)
+    }
+    .modelContainer(previewAppContainer)
 }

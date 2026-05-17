@@ -54,9 +54,6 @@ struct AddExpenseSheet: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
-            .onChange(of: name) {
-                print("Name: \(name)")
-            }
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }

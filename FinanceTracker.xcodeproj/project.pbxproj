@@ -92,6 +92,7 @@
 				Services/ExpenseStore.swift,
 				Services/RecurringExpenseService.swift,
 				Services/TagDeduplicationService.swift,
+				Services/TagSuggestionService.swift,
 				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
