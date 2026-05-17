@@ -66,8 +66,10 @@ struct SplitwiseFetchedExpense: Identifiable, Codable {
 struct SplitwiseGroup: Identifiable, Codable {
     let id: Int
     let name: String
-    let groupType: String
-    let updatedAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name
+    }
 }
 
 struct CreateSplitwiseExpenseRequest: Codable {
@@ -75,6 +77,12 @@ struct CreateSplitwiseExpenseRequest: Codable {
     let description: String
     let groupId: Int
     let splitEqually: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case cost, description
+        case groupId = "group_id"
+        case splitEqually = "split_equally"
+    }
 }
 
 // MARK: - Errors
@@ -256,6 +264,7 @@ final class SplitwiseService {
         )!
         let data = try await request(url: components.url!)
         let response = try Self.decoder.decode(GroupsResponse.self, from: data)
+        print(response)
         return response.groups
     }
     
@@ -344,8 +353,12 @@ final class SplitwiseService {
         guard let token = accessToken else { throw SplitwiseError.notAuthenticated }
 
         var req = URLRequest(url: url)
+        req.httpMethod = body != nil ? "POST" : "GET"
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.httpBody = body
+        if let body {
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = body
+        }
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw SplitwiseError.invalidResponse(0) }
@@ -355,7 +368,9 @@ final class SplitwiseService {
             if refreshToken != nil {
                 try await refreshAccessToken()
                 var retryReq = URLRequest(url: url)
+                retryReq.httpMethod = req.httpMethod
                 retryReq.setValue("Bearer \(accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                retryReq.httpBody = body
                 let (retryData, retryResponse) = try await URLSession.shared.data(for: retryReq)
                 if let http2 = retryResponse as? HTTPURLResponse, http2.statusCode == 200 { return retryData }
             }
