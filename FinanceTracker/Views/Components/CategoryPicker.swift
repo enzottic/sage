@@ -27,7 +27,7 @@ struct CategoryPicker: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(selectedCategory == category ? Color.secondary : Color.ui.cardBackground)
-                .cornerRadius(15)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
                 .foregroundStyle(.primary)
             }
         }

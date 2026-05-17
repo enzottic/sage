@@ -25,8 +25,6 @@ struct AddExpenseSheet: View {
     @State private var showError = false
     @State private var isSaving = false
 
-    // Splitwise
-    @State private var splitwiseEnabled: Bool = false
     @State private var selectedGroupId: Int? = nil
     @State private var availableGroups: [SplitwiseGroup] = []
     @State private var isLoadingGroups: Bool = false
@@ -41,87 +39,38 @@ struct AddExpenseSheet: View {
 
     var body: some View {
         NavigationStack {
-            ExpenseInfoForm(name: $name, amount: $amount, date: $date, category: $category, tag: $tag, note: $note)
-
-            Divider()
-                .padding(.horizontal)
-
-            VStack(spacing: 0) {
-                optionRow(
-                    isOn: $isRecurring.animation(),
-                    label: "Recurring",
-                    trailing: {
-                        if isRecurring {
-                            Picker("Frequency", selection: $recurrenceFrequency) {
-                                ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
-                                    Text(freq.rawValue).tag(freq)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .tint(.primary)
-                        }
-                    }
-                )
-
-                if splitwise.isConnected {
-                    Divider()
-                        .padding(.leading)
-
-                    optionRow(
-                        isOn: $splitwiseEnabled.animation(),
-                        label: "Split with Splitwise",
-                        trailing: {
-                            if splitwiseEnabled {
-                                if isLoadingGroups {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Picker("Group", selection: $selectedGroupId) {
-                                        Text("Select group").tag(Optional<Int>.none)
-                                        ForEach(availableGroups) { group in
-                                            Text(group.name).tag(Optional(group.id))
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .tint(.primary)
-                                }
-                            }
-                        }
+            ScrollView {
+                VStack(spacing: 24) {
+                    ExpenseInfoForm(
+                        name: $name,
+                        amount: $amount,
+                        date: $date,
+                        category: $category,
+                        tag: $tag,
+                        note: $note,
+                        autoFocusAmount: true
                     )
 
-                    if splitwiseEnabled, let total = amount {
-                        HStack {
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("Total  \(total.formatted(.currency(code: currencyCode)))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("Your share  \((total / 2).formatted(.currency(code: currencyCode)))")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(Color.ui.sage)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 4)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
+                    optionsCard
                 }
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
-            .padding(.bottom, 8)
-            .onChange(of: splitwiseEnabled) { _, enabled in
-                if enabled && availableGroups.isEmpty {
-                    Task { await loadGroups() }
-                }
-            }
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("New Expense")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                         .disabled(isSaving)
                 }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button("Save") { Task { await saveItem() } }
-                        .disabled(isSaving)
+                ToolbarItem(placement: .topBarTrailing) {
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") { Task { await saveItem() } }
+                            .fontWeight(.semibold)
+                    }
                 }
             }
             .alert("Error", isPresented: $showError) {
@@ -129,30 +78,109 @@ struct AddExpenseSheet: View {
             } message: {
                 Text(errorMessage ?? "An unexpected error occurred")
             }
+            .task {
+                if splitwise.isConnected {
+                    await loadGroups()
+                }
+            }
         }
     }
 
-    @ViewBuilder
-    private func optionRow<Trailing: View>(
-        isOn: Binding<Bool>,
-        label: String,
-        @ViewBuilder trailing: () -> Trailing
-    ) -> some View {
-        HStack {
-            Toggle(label, isOn: isOn)
-                .labelsHidden()
+    // MARK: - Options card
 
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(isOn.wrappedValue ? .primary : .secondary)
+    private var optionsCard: some View {
+        VStack(spacing: 0) {
+            // Recurring row
+            HStack(spacing: 12) {
+                Toggle("Recurring", isOn: $isRecurring.animation())
+                    .labelsHidden()
+                Text("Recurring")
+                    .font(.subheadline)
+                    .foregroundStyle(isRecurring ? .primary : .secondary)
+                Spacer()
+                if isRecurring {
+                    Picker("", selection: $recurrenceFrequency) {
+                        ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
+                            Text(freq.rawValue).tag(freq)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.primary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
 
-            Spacer()
+            if splitwise.isConnected {
+                Divider()
+                    .padding(.leading, 56)
 
-            trailing()
+                // Splitwise row
+                HStack {
+                    Text("Splitwise")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if isLoadingGroups {
+                        ProgressView().scaleEffect(0.8)
+                    } else {
+                        Picker("Splitwise", selection: $selectedGroupId) {
+                            Text("No split").tag(Optional<Int>.none)
+                            ForEach(availableGroups) { group in
+                                Text(group.name).tag(Optional(group.id))
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(selectedGroupId == nil ? .secondary : .primary)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                // Split summary
+                if selectedGroupId != nil, let total = amount {
+                    Divider()
+                        .padding(.leading, 16)
+
+                    HStack(spacing: 24) {
+                        Spacer()
+                        VStack(spacing: 2) {
+                            Text("Total")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Text(total.formatted(.currency(code: currencyCode)))
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .strikethrough()
+                        }
+                        Image(systemName: "arrow.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                        VStack(spacing: 2) {
+                            Text("Your share")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Text((total / 2).formatted(.currency(code: currencyCode)))
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.ui.sage)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
         }
+        .background(Color.ui.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .animation(.spring(duration: 0.3), value: selectedGroupId)
+        .animation(.spring(duration: 0.3), value: amount)
     }
+
+    // MARK: - Logic
 
     private func loadGroups() async {
         isLoadingGroups = true
@@ -161,7 +189,6 @@ struct AddExpenseSheet: View {
         } catch {
             errorMessage = "Couldn't load Splitwise groups: \(error.localizedDescription)"
             showError = true
-            splitwiseEnabled = false
         }
         isLoadingGroups = false
     }
@@ -179,12 +206,11 @@ struct AddExpenseSheet: View {
             return
         }
 
-        let saveAmount = (splitwiseEnabled && selectedGroup != nil) ? total / 2 : total
+        let saveAmount = selectedGroup != nil ? total / 2 : total
 
         isSaving = true
 
-        // Post to Splitwise before saving locally so any auth errors surface first
-        if splitwiseEnabled, let group = selectedGroup {
+        if let group = selectedGroup {
             do {
                 let req = CreateSplitwiseExpenseRequest(
                     cost: String(format: "%.2f", total),
@@ -223,6 +249,7 @@ struct AddExpenseSheet: View {
             category: category,
             date: date,
             tag: tag,
+            note: note,
             recurringExpenseId: recurringId
         )
 

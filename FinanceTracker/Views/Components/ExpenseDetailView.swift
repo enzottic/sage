@@ -32,17 +32,22 @@ struct ExpenseDetailView: View {
     
     var body: some View {
         NavigationStack {
-            ExpenseInfoForm(
-                name: $workingExpense.name,
-                amount: Binding<Double?>(
-                    get: { workingExpense.amount },
-                    set: { workingExpense.amount = $0 ?? 0 }
-                ),
-                date: $workingExpense.date,
-                category: $workingExpense.category,
-                tag: $workingExpense.tag,
-                note: $workingExpense.note,
-            )
+            ScrollView {
+                ExpenseInfoForm(
+                    name: $workingExpense.name,
+                    amount: Binding<Double?>(
+                        get: { workingExpense.amount },
+                        set: { workingExpense.amount = $0 ?? 0 }
+                    ),
+                    date: $workingExpense.date,
+                    category: $workingExpense.category,
+                    tag: $workingExpense.tag,
+                    note: $workingExpense.note
+                )
+                .padding(.vertical, 20)
+                .padding(.bottom, 20)
+            }
+            .scrollDismissesKeyboard(.interactively)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {

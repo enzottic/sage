@@ -7,9 +7,8 @@
 import SwiftUI
 
 struct CustomDatePicker: View {
-    @State private var showPicker = true
     @Binding var selectedDate: Date
-    
+
     var body: some View {
         Text(selectedDate.formatted(date: .complete, time: .omitted))
             .foregroundStyle(.secondary)
@@ -20,7 +19,7 @@ struct CustomDatePicker: View {
                         .labelsHidden()
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         .contentShape(Rectangle())
-                        .colorMultiply(showPicker ? .clear : .white)
+                        .colorMultiply(.clear)
                 }
             }
     }
@@ -30,4 +29,3 @@ struct CustomDatePicker: View {
     @Previewable @State var date: Date = .now
     CustomDatePicker(selectedDate: $date)
 }
-

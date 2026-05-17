@@ -8,7 +8,7 @@
 import SwiftUI
 import Charts
 
-struct CircularProgressView: View {
+struct CircularProgressBar: View {
     let progress: Double
     let lineWidth: CGFloat
     let tint: Color
@@ -42,5 +42,5 @@ struct CircularProgressView: View {
 
 
 #Preview {
-    CircularProgressView(progress: 0.7)
+    CircularProgressBar(progress: 0.7)
 }

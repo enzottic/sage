@@ -21,7 +21,7 @@ struct CategoryUtilizationView: View {
     
     var body: some View {
         HStack(spacing: 10) {
-            CircularProgressView(progress: utilization, tint: category.color)
+            CircularProgressBar(progress: utilization, tint: category.color)
                 .frame(width: 50, height: 50)
             
             VStack(alignment: .leading) {

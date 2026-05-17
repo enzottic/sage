@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CentsFirstCurrencyField: View {
     @Binding var amount: Double?
+    var autoFocus: Bool = false
     @State private var centsValue: String = "0"
     @FocusState private var isFocused: Bool
 
@@ -64,10 +65,15 @@ struct CentsFirstCurrencyField: View {
                 }
         }
         .onAppear {
-            // Initialize from existing amount
             if let amount = amount {
                 let cents = Int(amount * 100)
                 centsValue = String(cents)
+            }
+            if autoFocus {
+                Task {
+                    try? await Task.sleep(for: .seconds(0.6))
+                    isFocused = true
+                }
             }
         }
     }
