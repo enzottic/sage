@@ -124,6 +124,10 @@ struct SettingsView: View {
                     SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
                         ExpenseImportExportSection()
                     }
+
+                    SettingsPanel(title: "Splitwise", description: "Connect your Splitwise account to import shared expenses into Sage") {
+                        SplitwiseSettingsSection()
+                    }
                 }
             }
             .padding()

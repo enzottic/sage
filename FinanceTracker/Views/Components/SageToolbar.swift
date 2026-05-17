@@ -11,6 +11,7 @@ struct SageToolbar: ToolbarContent {
     var onPrevious: () -> Void
     var onNext: () -> Void
     var onAdd: () -> Void
+    var onImportFromSplitwise: (() -> Void)? = nil
 
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarLeading) {
@@ -24,11 +25,29 @@ struct SageToolbar: ToolbarContent {
         }
 
         ToolbarItem {
-            Button(action: onAdd) {
-                Label("Add Item", systemImage: "plus")
+            if let onImportFromSplitwise {
+                Menu {
+                    Button {
+                        onAdd()
+                    } label: {
+                        Label("Add Expense", systemImage: "plus")
+                    }
+                    Button {
+                        onImportFromSplitwise()
+                    } label: {
+                        Label("Import from Splitwise", systemImage: "square.and.arrow.down")
+                    }
+                } label: {
+                    Label("Add", systemImage: "plus")
+                }
+                .tint(Color.ui.sage)
+            } else {
+                Button(action: onAdd) {
+                    Label("Add Item", systemImage: "plus")
+                }
+                .background(Color.ui.cardBackground)
+                .tint(Color.ui.sage)
             }
-            .background(Color.ui.cardBackground)
-            .tint(Color.ui.sage)
         }
     }
 }

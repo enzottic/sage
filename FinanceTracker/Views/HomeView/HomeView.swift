@@ -12,14 +12,16 @@ import Charts
 
 struct HomeView: View {
     @Environment(AppConfiguration.self) private var config
-    
+    @Environment(SplitwiseService.self) private var splitwiseService
+
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
-    
+
     @Bindable var router: HomeRouter
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
+    @State private var showSplitwiseImport: Bool = false
     
     let calendar = Calendar.current
     
@@ -94,6 +96,9 @@ struct HomeView: View {
                     .presentationDetents([.medium])
                     .presentationBackground(Color.ui.background)
             }
+            .sheet(isPresented: $showSplitwiseImport) {
+                SplitwiseImportView()
+            }
             .toolbar {
                 SageToolbar(
                     onPrevious: {
@@ -102,7 +107,10 @@ struct HomeView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
-                    onAdd: { addExpenseSheetIsPresented = true }
+                    onAdd: { addExpenseSheetIsPresented = true },
+                    onImportFromSplitwise: splitwiseService.isConfigured
+                        ? { showSplitwiseImport = true }
+                        : nil
                 )
             }
             .gradientBackground()

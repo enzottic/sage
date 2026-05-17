@@ -9,9 +9,12 @@ import SwiftUI
 import SwiftData
 
 struct ExpensesView: View {
+    @Environment(SplitwiseService.self) private var splitwiseService
+
     @State private var selectedMonth: Date
     @State private var selectedExpense: Expense? = nil
     @State private var showAddExpenseSheet: Bool = false
+    @State private var showSplitwiseImport: Bool = false
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
     
@@ -36,6 +39,9 @@ struct ExpensesView: View {
                         .presentationDetents([.large])
                         .presentationBackground(Color.ui.background)
                 })
+                .sheet(isPresented: $showSplitwiseImport) {
+                    SplitwiseImportView()
+                }
                 .toolbar {
                     SageToolbar(
                         onPrevious: {
@@ -46,7 +52,10 @@ struct ExpensesView: View {
                             slideDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { showAddExpenseSheet = true }
+                        onAdd: { showAddExpenseSheet = true },
+                        onImportFromSplitwise: splitwiseService.isConfigured
+                            ? { showSplitwiseImport = true }
+                            : nil
                     )
                 }
                 .gradientBackground()
