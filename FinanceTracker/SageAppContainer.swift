@@ -22,11 +22,20 @@ let appContainer: ModelContainer = {
             cloudSyncEnabled = defaults?.bool(forKey: "isCloudSyncEnabled") ?? false
         }
         
+        #if DEBUG
+        let modelConfiguration = ModelConfiguration(
+            "SageDev",
+            schema: schema,
+            url: URL.applicationSupportDirectory.appending(path: "SageDev.sqlite"),
+            cloudKitDatabase: .none
+        )
+        #else
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: cloudSyncEnabled ? .automatic : .none
         )
+        #endif
         
         let modelContainer = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [modelConfiguration])
         

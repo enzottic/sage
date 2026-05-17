@@ -39,7 +39,6 @@ struct ExpenseTagGrid: View {
             Button("Add Tag") {
                 showAddTagSheet = true
             }
-            .buttonStyle(.glass)
         }
         .sheet(isPresented: $showAddTagSheet) {
             AddExpenseTagSheet()

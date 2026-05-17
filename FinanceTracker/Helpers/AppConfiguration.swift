@@ -166,7 +166,7 @@ class AppConfiguration {
                   let mode = SmartTaggingMode(rawValue: localAutoTaggingModeString) {
             self.smartTaggingMode = mode
         } else {
-            self.smartTaggingMode = .both
+            self.smartTaggingMode = .history
         }
         
         // Push current values to local defaults so widgets stay in sync

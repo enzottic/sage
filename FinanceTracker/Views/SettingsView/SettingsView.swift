@@ -7,8 +7,6 @@
 import SwiftUI
 import WidgetKit
 import SwiftData
-import FoundationModels
-
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     
@@ -17,6 +15,16 @@ struct SettingsView: View {
     @FocusState private var needsFocus: Bool
     @State private var showAddTagSheet: Bool = false
     @State private var showSyncRestartAlert: Bool = false
+
+    private var availableTaggingModes: [SmartTaggingMode] {
+        let aiAvailable = TagSuggestionService.isAIAvailable
+        return SmartTaggingMode.allCases.filter { mode in
+            switch mode {
+            case .ai, .both: return aiAvailable
+            case .history, .none: return true
+            }
+        }
+    }
 
     var body: some View {
         @Bindable var config = config
@@ -100,11 +108,11 @@ struct SettingsView: View {
                         }
                     }
                     
-                    SettingsPanel(title: "Smart Tagging", description: "Select the mode of smart tagging to use. Smart tagging automatically picks a tag for each expense based on the name.") {
-                            Picker("Smart Tagging", selection: $config.smartTaggingMode) {
-                                ForEach(SmartTaggingMode.allCases, id: \.self) {
-                                    Text($0.rawValue)
-                                }
+                    SettingsPanel(title: "Smart Tagging", description: "Smart tagging automatically picks a tag for each expense based on its name. AI options require iOS 26 and Apple Intelligence.") {
+                        Picker("Smart Tagging", selection: $config.smartTaggingMode) {
+                            ForEach(availableTaggingModes, id: \.self) {
+                                Text($0.rawValue)
+                            }
                         }
                         .pickerStyle(.menu)
                         .padding()
@@ -121,7 +129,7 @@ struct SettingsView: View {
                         RecurringRulesSection()
                     }
 
-                    SettingsPanel(title: "Export Expenses", description: "Export your expenses as a CSV") {
+                    SettingsPanel(title: "Backup Expenses", description: "Backup your expenses as a CSV file, or import them from CSV") {
                         ExpenseImportExportSection()
                     }
 

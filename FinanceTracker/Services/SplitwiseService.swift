@@ -258,7 +258,7 @@ final class SplitwiseService {
     
     func fetchGroups() async throws -> [SplitwiseGroup] {
         if currentUserId == nil { try await fetchCurrentUser() }
-        var components = URLComponents(
+        let components = URLComponents(
             url: baseURL.appendingPathComponent("get_groups"),
             resolvingAgainstBaseURL: false
         )!
@@ -270,12 +270,12 @@ final class SplitwiseService {
     
     func createExpense(req: CreateSplitwiseExpenseRequest) async throws {
         if currentUserId == nil { try await fetchCurrentUser() }
-        var components = URLComponents(
+        let components = URLComponents(
             url: baseURL.appendingPathComponent("create_expense"),
             resolvingAgainstBaseURL: false
         )!
         let body = try JSONEncoder().encode(req)
-        let data = try await request(url: components.url!, body: body)
+        _ = try await request(url: components.url!, body: body)
     }
 
     // MARK: - Token Exchange & Refresh
