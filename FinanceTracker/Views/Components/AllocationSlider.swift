@@ -39,6 +39,9 @@ struct AllocationSlider: View {
             ), in: 0...100, step: 5)
                 .tint(color)
         }
+        .onChange(of: percentage) {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
         .padding()
         .background(Color.ui.cardBackground)
         .cornerRadius(15)
