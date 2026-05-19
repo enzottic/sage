@@ -156,13 +156,11 @@ struct RecurringRulesSection: View {
     var body: some View {
         Group {
             if rules.isEmpty {
-                Text("No recurring expenses yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-                    .background(Color.ui.cardBackground)
-                    .cornerRadius(15)
+                ContentUnavailableView(
+                    "No Recurring Expense Rules",
+                    systemImage: "arrow.trianglehead.clockwise",
+                    description: Text("When you create a recurring expense, you can edit them here.")
+                )
             } else {
                 VStack(spacing: 1) {
                     ForEach(rules) { rule in
@@ -186,6 +184,8 @@ struct RecurringRulesSection: View {
                 .presentationBackground(Color.ui.background)
                 .presentationDetents([.large])
         }
+        .navigationTitle("Recurring Expenses")
+        .navigationBarTitleDisplayMode(.inline)
         .alert("Delete Recurring Rule?", isPresented: $showDeleteConfirmation, presenting: ruleToDelete) { rule in
             Button("Delete Rule", role: .destructive) {
                 modelContext.delete(rule)

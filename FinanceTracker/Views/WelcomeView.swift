@@ -253,9 +253,6 @@ struct WelcomeView: View {
                         .fontWeight(.bold)
                         .foregroundStyle(.teal)
                 }
-                .padding()
-                .background(Color.ui.cardBackground)
-                .cornerRadius(15)
             }
             .padding(.horizontal, 40)
 

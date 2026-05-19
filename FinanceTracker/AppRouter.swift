@@ -23,6 +23,7 @@ struct SageToast {
 @Observable
 class AppRouter {
     var homeRouter = HomeRouter()
+    var settingsRouter = SettingsRouter()
     var selectedTab: SageTab = .home
     var toast: SageToast? = nil
 
@@ -46,12 +47,25 @@ class AppRouter {
 @Observable
 class HomeRouter {
     var navigationPath = NavigationPath()
-    
+
     enum Route: Hashable {
         case categoryDetail(category: ExpenseCategory)
     }
-    
+
     func navigateTo(route: Route) {
         navigationPath.append(route)
+    }
+}
+
+@Observable
+class SettingsRouter {
+    var navigationPath: [SettingsPage] = []
+
+    func navigate(to page: SettingsPage) {
+        navigationPath = [page]
+    }
+
+    func popToRoot() {
+        navigationPath = []
     }
 }

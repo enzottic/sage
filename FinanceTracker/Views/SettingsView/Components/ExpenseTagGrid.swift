@@ -35,16 +35,8 @@ struct ExpenseTagGrid: View {
                         }
                     }
             }
+        }
 
-            Button("Add Tag") {
-                showAddTagSheet = true
-            }
-        }
-        .sheet(isPresented: $showAddTagSheet) {
-            AddExpenseTagSheet()
-                .presentationBackground(Color.ui.background)
-                .presentationDetents([.medium])
-        }
         .sheet(item: $tagToEdit) { tag in
             AddExpenseTagSheet(tagToEdit: tag)
                 .presentationBackground(Color.ui.background)

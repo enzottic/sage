@@ -11,11 +11,15 @@ struct SplitwiseSettingsSection: View {
     @Environment(SplitwiseService.self) private var splitwise
 
     var body: some View {
-        if splitwise.isConnected {
-            ConnectedView(splitwise: splitwise)
-        } else {
-            DisconnectedView(splitwise: splitwise)
+        List {
+            if splitwise.isConnected {
+                ConnectedView(splitwise: splitwise)
+            } else {
+                DisconnectedView(splitwise: splitwise)
+            }
         }
+        .navigationTitle("Splitwise")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -25,12 +29,12 @@ private struct ConnectedView: View {
     let splitwise: SplitwiseService
 
     var body: some View {
-        VStack(spacing: 12) {
+        Section {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.title2)
-
+                
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Connected")
                         .font(.headline)
@@ -40,24 +44,18 @@ private struct ConnectedView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-
+                
                 Spacer()
             }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.ui.cardBackground)
-            .cornerRadius(15)
-
+        } header: {
+            Text("Connect to Splitwise")
+        }
+            
+        Section {
             Button(role: .destructive) {
                 splitwise.disconnect()
             } label: {
                 Text("Disconnect")
-                    .fontWeight(.medium)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.ui.cardBackground)
-                    .foregroundStyle(.red)
-                    .cornerRadius(15)
             }
         }
     }
@@ -72,7 +70,7 @@ private struct DisconnectedView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        Section {
             Button {
                 Task { await connect() }
             } label: {
@@ -82,28 +80,18 @@ private struct DisconnectedView: View {
                     } else {
                         HStack {
                             Image(systemName: "link")
-                            Text("Connect to Splitwise")
-                                .fontWeight(.medium)
+                            Text("Connect")
                         }
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.ui.sage)
-                .foregroundStyle(.white)
-                .cornerRadius(15)
             }
-            .disabled(isConnecting)
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .padding(.horizontal, 4)
-            }
+        } header: {
+            Text("Connect to Splitwise")
+        } footer: {
+            Text("Connect your Splitwise account with Sage to import any shared expenses. You can also export expenses from Sage to a Splitwise group.")
         }
     }
-
+    
     private func connect() async {
         isConnecting = true
         errorMessage = nil
@@ -118,4 +106,10 @@ private struct DisconnectedView: View {
         }
         isConnecting = false
     }
+
+}
+
+#Preview {
+    SplitwiseSettingsSection()
+        .environment(SplitwiseService())
 }

@@ -9,8 +9,10 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-struct ExpenseImportExportSection: View {
+struct ExpenseBackupSettingsSection: View {
     @Environment(\.modelContext) var modelContext
+    @Environment(AppConfiguration.self) var config
+    @Environment(AppRouter.self) var appRouter
     
     @Query var expenses: [Expense]
     @Query var expenseTags: [ExpenseTag]
@@ -24,50 +26,67 @@ struct ExpenseImportExportSection: View {
     let expenseExporter = ExpenseBackupService.shared
 
     var body: some View {
-        HStack(spacing: 15) {
-            Button {
-                showFileImporter = true
-            } label: {
-                Text("Import")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.ui.cardBackground)
-                    .cornerRadius(15)
+        @Bindable var config = config
+        List {
+            Section {
+                Toggle(isOn: $config.isCloudSyncEnabled) {
+                    HStack {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .frame(width: 35, height: 35)
+                                .foregroundStyle(.blue)
+                            Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
+                                .frame(width: 35)
+                                .foregroundStyle(.white)
+                        }
+                        VStack(alignment: .leading) {
+                            Text("Enable iCloud Sync")
+                        }
+                    }
+                }
+            } header: {
+                Text("iCloud Sync")
+            } footer: {
+                Text("Sync your expenses across all your Apple devices.")
             }
 
-            Button {
-                let result = expenseExporter.exportExpenses(expenses: expenses)
-                if case .success = result {
-                    showExportConfirmation = true
+            Section {
+                Button {
+                    showFileImporter = true
+                } label: {
+                    SettingsListItem(text: "Import from CSV", icon: "square.and.arrow.down", color: .green)
                 }
-            } label: {
-                Text("Export")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.ui.sage)
-                    .cornerRadius(15)
+
+                Button {
+                    let result = expenseExporter.exportExpenses(expenses: expenses)
+                    switch (result) {
+                    case .success:
+                        appRouter.showToast(SageToast(message: "Expenses saved to Files app.", kind: .success))
+                    case .failure(let error):
+                        appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
+                    }
+                } label: {
+                    SettingsListItem(text: "Export to CSV", icon: "square.and.arrow.up", color: .orange)
+                }
+            } header: {
+                Text("CSV Backup")
+            } footer: {
+                Text("Export your expenses as a CSV list. Recurring expense rules are not exported.")
             }
         }
+        .navigationTitle("Backup")
+        .navigationBarTitleDisplayMode(.inline)
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [UTType.commaSeparatedText],
             allowsMultipleSelection: false,
             onCompletion: importExpenses
         )
-        .alert("Export Saved", isPresented: $showExportConfirmation) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Your expenses have been exported to the Files app as sage-export.csv.")
-        }
         .alert("Import Expenses", isPresented: $showImportConfirmation) {
             Button("Import") {
                 toNormalExpenses(pendingImportExpenses).forEach { modelContext.insert($0) }
                 save()
-                showImportSuccess = true
+                appRouter.showToast(SageToast(message: "Successfully imported expenses", kind: .success))
                 pendingImportExpenses = []
             }
             Button("Cancel", role: .cancel) {
@@ -75,11 +94,6 @@ struct ExpenseImportExportSection: View {
             }
         } message: {
             Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
-        }
-        .alert("Import Complete", isPresented: $showImportSuccess) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Your expenses have been imported successfully.")
         }
     }
     
@@ -124,5 +138,9 @@ struct ExpenseImportExportSection: View {
 }
 
 #Preview {
-    ExpenseImportExportSection()
+    @Previewable @State var config = AppConfiguration()
+    @Previewable @State var router = AppRouter()
+    ExpenseBackupSettingsSection()
+        .environment(config)
+        .environment(router)
 }

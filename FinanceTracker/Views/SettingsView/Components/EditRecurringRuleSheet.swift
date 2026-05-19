@@ -111,7 +111,6 @@ struct EditRecurringRuleSheet: View {
             return
         }
 
-        // Apply edits — only affects future generation
         rule.name = name
         rule.amount = expenseAmount
         rule.note = note

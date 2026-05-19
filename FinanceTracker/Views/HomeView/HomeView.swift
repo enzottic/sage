@@ -17,17 +17,13 @@ struct HomeView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
-    @Bindable var router: HomeRouter
+    @Environment(AppRouter.self) private var appRouter
     @State private var selectedMonth: Date = .now
     @State private var selectedExpense: Expense? = nil
     @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showSplitwiseImport: Bool = false
-    
+
     let calendar = Calendar.current
-    
-    init(router: HomeRouter) {
-        self.router = router
-    }
     
     var monthlyExpenses: [Expense] {
         let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
@@ -71,7 +67,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $router.navigationPath) {
+        NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
             List {
                 monthlyOverview
                 categoryUtilization
@@ -220,7 +216,8 @@ struct HomeView: View {
     
     var _ = UserDefaults.standard.set(7300, forKey:"totalMonthlyIncome")
     
-    HomeView(router: HomeRouter())
+    HomeView()
         .modelContainer(previewAppContainer)
         .environment(config)
+        .environment(AppRouter())
 }

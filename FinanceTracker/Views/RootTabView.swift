@@ -16,7 +16,7 @@ struct RootTabView: View {
         TabView(selection: $appRouter.selectedTab) {
 
             Tab("Home", systemImage: "house", value: .home) {
-                HomeView(router: appRouter.homeRouter)
+                HomeView()
             }
 
             Tab("Expenses", systemImage: "list.bullet", value: .expenses) {
@@ -28,7 +28,7 @@ struct RootTabView: View {
             }
 
             Tab("Settings", systemImage: "gear", value: .settings) {
-                SettingsView()
+                SettingsViewNew()
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
