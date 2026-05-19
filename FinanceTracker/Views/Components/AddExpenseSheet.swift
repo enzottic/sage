@@ -42,7 +42,7 @@ struct AddExpenseSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    ExpenseInfoForm(
+                    ExpenseInfoFormNew(
                         name: $name,
                         amount: $amount,
                         date: $date,
@@ -93,13 +93,33 @@ struct AddExpenseSheet: View {
         VStack(spacing: 0) {
             // Recurring row
             HStack(spacing: 12) {
-                Toggle("Recurring", isOn: $isRecurring.animation())
-                    .labelsHidden()
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24)
                 Text("Recurring")
                     .font(.subheadline)
-                    .foregroundStyle(isRecurring ? .primary : .secondary)
+                    .foregroundStyle(.primary)
                 Spacer()
-                if isRecurring {
+                Toggle("", isOn: $isRecurring.animation(.spring(duration: 0.3)))
+                    .labelsHidden()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+
+            if isRecurring {
+                Divider()
+                    .padding(.leading, 52)
+
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24)
+                    Text("Frequency")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
                     Picker("", selection: $recurrenceFrequency) {
                         ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
                             Text(freq.rawValue).tag(freq)
@@ -108,9 +128,10 @@ struct AddExpenseSheet: View {
                     .pickerStyle(.menu)
                     .tint(.primary)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
 
             if splitwise.isConnected {
                 Divider()
@@ -179,6 +200,7 @@ struct AddExpenseSheet: View {
         .padding(.horizontal)
         .animation(.spring(duration: 0.3), value: selectedGroupId)
         .animation(.spring(duration: 0.3), value: amount)
+        .animation(.spring(duration: 0.3), value: isRecurring)
     }
 
     // MARK: - Logic

@@ -16,16 +16,39 @@ struct CentsFirstCurrencyField: View {
     private var displayValue: String {
         let cents = Int(centsValue) ?? 0
         let dollars = Double(cents) / 100.0
-
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = Locale.current.currency?.identifier ?? "USD"
-
         return formatter.string(from: NSNumber(value: dollars)) ?? "$0.00"
     }
 
+    private var isEmptyState: Bool {
+        (Int(centsValue) ?? 0) == 0
+    }
+
+    // Attributed string splitting the integer and decimal parts at different sizes.
+    private var emptyAttributedDisplay: AttributedString {
+        let full = displayValue
+        let separator = Locale.current.decimalSeparator ?? "."
+        if let range = full.range(of: separator) {
+            var main = AttributedString(String(full[..<range.lowerBound]))
+            main.font = .system(size: 52, weight: .bold)
+            main.foregroundColor = isFocused ? .primary : .secondary
+
+            var cents = AttributedString(String(full[range.lowerBound...]))
+            cents.font = .system(size: 34, weight: .bold)
+            cents.foregroundColor = isFocused ? Color.secondary : Color.secondary.opacity(0.5)
+
+            return main + cents
+        }
+        var fallback = AttributedString(full)
+        fallback.font = .system(size: 52, weight: .bold)
+        fallback.foregroundColor = isFocused ? .primary : .secondary
+        return fallback
+    }
+
     var body: some View {
-        ZStack {
+        ZStack(alignment: .trailing) {
             // Hidden text field for keyboard input
             TextField("", text: $centsValue)
                 .keyboardType(.numberPad)
@@ -33,20 +56,15 @@ struct CentsFirstCurrencyField: View {
                 .frame(width: 0, height: 0)
                 .focused($isFocused)
                 .onChange(of: centsValue) { oldValue, newValue in
-                    // Remove any non-digit characters
                     let filtered = newValue.filter { $0.isNumber }
-
-                    // Prevent leading zeros and limit to reasonable amount
                     if filtered.isEmpty {
                         centsValue = "0"
                         amount = nil
-                    } else if filtered.count > 10 { // Max $99,999,999.99
+                    } else if filtered.count > 10 {
                         centsValue = String(filtered.prefix(10))
                     } else {
                         centsValue = filtered
                     }
-
-                    // Update the binding
                     if let cents = Int(centsValue), cents > 0 {
                         amount = Double(cents) / 100.0
                     } else {
@@ -55,14 +73,17 @@ struct CentsFirstCurrencyField: View {
                 }
                 .accessibilityIdentifier("Expense Amount Field")
 
-            // Display text
-            Text(displayValue)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(isFocused ? .primary : .secondary)
-                .onTapGesture {
-                    isFocused = true
-                }
+            if isEmptyState {
+                Text(emptyAttributedDisplay)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .onTapGesture { isFocused = true }
+            } else {
+                Text(displayValue)
+                    .font(.system(size: 52, weight: .bold))
+                    .foregroundStyle(isFocused ? Color.primary : Color.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .onTapGesture { isFocused = true }
+            }
         }
         .onAppear {
             if let amount = amount {

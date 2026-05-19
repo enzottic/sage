@@ -16,6 +16,8 @@ struct ExpenseInfoForm: View {
     @Binding var category: ExpenseCategory
     @Binding var tag: ExpenseTag?
     @Binding var note: String
+    
+    var isEditing: Bool = false
     var autoFocusAmount: Bool = false
 
     private let tagSuggestionService = TagSuggestionService()
@@ -28,14 +30,29 @@ struct ExpenseInfoForm: View {
     private enum Field: Hashable { case name, note }
 
     var body: some View {
-        VStack(spacing: 24) {
-            CentsFirstCurrencyField(amount: $amount, autoFocus: autoFocusAmount)
+        VStack(spacing: 12) {
+            VStack(alignment: .leading) {
+                CentsFirstCurrencyField(amount: $amount, autoFocus: autoFocusAmount)
+                Text(isEditing ? "Tap to edit amount" : "Enter amount")
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
 
             basicInfoCard
 
-            CategoryPicker(selectedCategory: $category)
+            Section {
+                CategoryPicker(selectedCategory: $category)
+            } header: {
+                Text("Category")
+            }
 
-            TagPicker(selectedTag: $tag, tagIsAISuggested: tagIsAISuggested)
+            Section {
+                TagPicker(selectedTag: $tag, tagIsAISuggested: tagIsAISuggested)
+            } header: {
+                Text("Tag")
+            }
         }
         .onChange(of: tag) { _, _ in tagIsAISuggested = false }
     }
@@ -121,7 +138,8 @@ struct ExpenseInfoForm: View {
             date: $date,
             category: $category,
             tag: $tag,
-            note: $note
+            note: $note,
+            isEditing: true,
         )
         .padding(.vertical, 20)
     }
