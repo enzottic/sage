@@ -24,9 +24,9 @@ enum Appearance: String, CaseIterable {
 }
 
 enum SmartTaggingMode: String, CaseIterable {
-    case history = "Expense History"
+    case history = "History"
     case ai = "AI"
-    case both = "Expense History, AI Fallback"
+    case both = "History + AI"
     case none = "None"
 }
 

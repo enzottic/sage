@@ -106,6 +106,15 @@ let previewAppContainer: ModelContainer = {
             container.mainContext.insert(expense)
         }
         
+        let recurringExpenseRules = [
+            RecurringExpenseRule(name: "Rent", amount: 1500, note: "", category: .needs, tag: expenseTags["Bills"], frequency: .monthly, startDate: .now),
+            RecurringExpenseRule(name: "Car Insurance", amount: 150, note: "", category: .needs, tag: expenseTags["Bills"], frequency: .monthly, startDate: .now),
+        ]
+        
+        recurringExpenseRules.forEach { rule in
+            container.mainContext.insert(rule)
+        }
+        
         return container
         
     } catch {

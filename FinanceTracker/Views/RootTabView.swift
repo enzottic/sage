@@ -28,7 +28,7 @@ struct RootTabView: View {
             }
 
             Tab("Settings", systemImage: "gear", value: .settings) {
-                SettingsViewNew()
+                SettingsView()
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
