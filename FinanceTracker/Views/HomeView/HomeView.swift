@@ -173,7 +173,6 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .listRowBackground(Color.clear)
     }
     
     // MARK: - Category Utilization

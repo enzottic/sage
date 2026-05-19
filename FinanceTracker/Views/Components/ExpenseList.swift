@@ -11,6 +11,8 @@ import WidgetKit
 
 struct ExpenseList: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppRouter.self) private var appRouter
+
 
     let expenses: [Expense]
     
@@ -53,6 +55,7 @@ struct ExpenseList: View {
             modelContext.delete(expense)
             try! modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
+            appRouter.showToast(SageToast(message: "Expense deleted", kind: .success))
         }
     }
 }

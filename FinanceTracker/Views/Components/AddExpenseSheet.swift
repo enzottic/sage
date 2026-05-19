@@ -12,6 +12,7 @@ struct AddExpenseSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(SplitwiseService.self) private var splitwise
+    @Environment(AppRouter.self) private var appRouter
 
     @State private var name: String = ""
     @State private var amount: Double? = nil
@@ -259,6 +260,7 @@ struct AddExpenseSheet: View {
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
+            appRouter.showToast(SageToast(message: "Expense saved", kind: .success))
         } catch {
             isSaving = false
             errorMessage = "Failed to save expense: \(error.localizedDescription)"
@@ -272,4 +274,5 @@ struct AddExpenseSheet: View {
         .modelContainer(previewAppContainer)
         .environment(SplitwiseService())
         .environment(AppConfiguration())
+        .environment(AppRouter())
 }
