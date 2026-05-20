@@ -88,6 +88,7 @@ struct TagPicker: View {
 
 #Preview {
     @Previewable @State var selectedTag: ExpenseTag? = .dining
+    @Previewable @State var noTag: ExpenseTag? = nil
     VStack(spacing: 20) {
         TagPicker(selectedTag: $selectedTag)
         TagPicker(selectedTag: $selectedTag, tagIsAISuggested: true)

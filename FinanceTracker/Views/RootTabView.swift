@@ -41,6 +41,11 @@ struct RootTabView: View {
                 ToastPill(toast: toast)
                     .padding(.top, 60)
                     .transition(.move(edge: .top).combined(with: .opacity))
+                    .task {
+                        try? await Task.sleep(for: .milliseconds(700))
+                        let prefix = toast.kind == .success ? "Success" : "Error"
+                        AccessibilityNotification.Announcement("\(prefix): \(toast.message)").post()
+                    }
             }
         }
         .sensoryFeedback(.success, trigger: appRouter.toast?.message) { _, newValue in newValue != nil }

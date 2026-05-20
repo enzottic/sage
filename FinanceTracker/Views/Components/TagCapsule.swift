@@ -68,6 +68,7 @@ struct TagCapsule: View {
                 .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, verticalPadding)
                 .background(Capsule().fill(tag.color.quaternary))
+                .accessibilityLabel("Tag: \(tag.name)")
                 .overlay {
                     if aiSuggested {
                         Capsule()

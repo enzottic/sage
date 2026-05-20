@@ -12,15 +12,14 @@ struct ExpensesView: View {
     @Environment(SplitwiseService.self) private var splitwiseService
 
     @State private var selectedMonth: Date
-    @State private var selectedExpense: Expense? = nil
-    @State private var showAddExpenseSheet: Bool = false
     @State private var showSplitwiseImport: Bool = false
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
-    
+    @State private var navigationPath = NavigationPath()
+
     let calendar = Calendar.current
     let formatter: DateFormatter
-    
+
     init(month: Date = Date()) {
         _selectedMonth = State(initialValue: Date())
         formatter = DateFormatter()
@@ -28,17 +27,18 @@ struct ExpensesView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            MonthExpensesList(month: selectedMonth, selectedExpense: $selectedExpense, searchText: searchText)
+        NavigationStack(path: $navigationPath) {
+            MonthExpensesList(month: selectedMonth, searchText: searchText)
                 .frame(maxWidth: .infinity)
                 .background(Color.ui.background)
                 .navigationTitle(formatter.string(from: selectedMonth))
                 .searchable(text: $searchText, prompt: "Search expenses")
-                .sheet(isPresented: $showAddExpenseSheet, content: {
-                    AddExpenseSheet()
-                        .presentationDetents([.large])
-                        .presentationBackground(Color.ui.background)
-                })
+                .navigationDestination(for: Expense.self) { expense in
+                    ExpenseDetailView(expense: expense)
+                }
+                .navigationDestination(for: AddExpenseRoute.self) { _ in
+                    AddExpenseView()
+                }
                 .sheet(isPresented: $showSplitwiseImport) {
                     SplitwiseImportView()
                 }
@@ -52,10 +52,10 @@ struct ExpensesView: View {
                             slideDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { showAddExpenseSheet = true },
+                        onAdd: { navigationPath.append(AddExpenseRoute()) },
                         onImportFromSplitwise: splitwiseService.isConfigured
                             ? { showSplitwiseImport = true }
-                            : nil
+                            : nil,
                     )
                 }
                 .gradientBackground()

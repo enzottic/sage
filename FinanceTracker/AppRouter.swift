@@ -14,6 +14,9 @@ enum SageTab: Equatable, Hashable {
     case search
 }
 
+/// Push value for the "add expense" flow when used as a navigation destination.
+struct AddExpenseRoute: Hashable {}
+
 struct SageToast {
     enum Kind { case success, error }
     let message: String

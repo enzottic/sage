@@ -226,16 +226,16 @@ struct WelcomeView: View {
             VStack(spacing: 25) {
                 AllocationSlider(
                     title: "Wants",
-                    percentage: $wantsPercent,
                     color: Color.ui.want,
-                    icon: "cart.fill"
+                    icon: "cart.fill",
+                    percentage: $wantsPercent
                 )
 
                 AllocationSlider(
                     title: "Needs",
-                    percentage: $needsPercent,
                     color: Color.ui.need,
-                    icon: "house.fill"
+                    icon: "house.fill",
+                    percentage: $needsPercent
                 )
 
                 HStack {
@@ -566,7 +566,6 @@ struct BudgetSummaryRow: View {
 }
 
 #Preview {
-    @Previewable @State var appConfig = AppConfiguration()
     WelcomeView()
-        .environment(appConfig)
+        .environmentInjection()
 }

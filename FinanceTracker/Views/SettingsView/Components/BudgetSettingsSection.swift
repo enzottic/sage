@@ -28,22 +28,22 @@ struct BudgetSettingsSection: View {
             Section {
                     AllocationSlider(
                         title: "Wants",
+                        color: Color.ui.want,
+                        icon: "cart.fill",
                         percentage: Binding(
                             get: { config.wantsPercent * 100 },
                             set: { config.updateWants($0 / 100) }
-                        ),
-                        color: Color.ui.want,
-                        icon: "cart.fill"
+                        )
                     )
 
                     AllocationSlider(
                         title: "Needs",
+                        color: Color.ui.need,
+                        icon: "house.fill",
                         percentage: Binding(
                             get: { config.needsPercent * 100 },
                             set: { config.updateNeeds($0 / 100) }
-                        ),
-                        color: Color.ui.need,
-                        icon: "house.fill"
+                        )
                     )
 
                     HStack {
@@ -78,7 +78,6 @@ struct BudgetSettingsSection: View {
 }
 
 #Preview {
-    @Previewable @State var config = AppConfiguration()
     BudgetSettingsSection()
-        .environment(config)
+        .environmentInjection()
 }

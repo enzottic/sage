@@ -9,9 +9,9 @@ import SwiftUI
 
 struct AllocationSlider: View {
     let title: String
-    @Binding var percentage: Double
     let color: Color
     let icon: String
+    @Binding var percentage: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -42,8 +42,5 @@ struct AllocationSlider: View {
         .onChange(of: percentage) {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
-//        .padding()
-//        .background(Color.ui.cardBackground)
-//        .cornerRadius(15)
     }
 }

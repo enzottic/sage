@@ -13,20 +13,18 @@ struct CategoryDetailView: View {
     let utilization: Double
     let used: Double
     let total: Double
-    
+
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
-    
-    @Binding var selectedExpense: Expense?
-    
+
     var expenses: [Expense] {
         allExpenses.filter { $0.category == category }
     }
-    
+
     var body: some View {
         List {
             Section {
-                ExpenseList(expenses: expenses, selectedExpense: $selectedExpense)
+                ExpenseList(expenses: expenses)
             } header: {
                 Text("Recent Purchases")
             }
@@ -38,10 +36,9 @@ struct CategoryDetailView: View {
 }
 
 #Preview {
-    @Previewable @State var expenseToView: Expense? = nil
-
     NavigationStack {
-        CategoryDetailView(category: ExpenseCategory.wants, utilization: 0.3, used: 100, total: 300, selectedExpense: $expenseToView)
+        CategoryDetailView(category: ExpenseCategory.wants, utilization: 0.3, used: 100, total: 300)
     }
     .modelContainer(previewAppContainer)
+    .environment(AppRouter())
 }

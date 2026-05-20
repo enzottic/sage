@@ -13,14 +13,12 @@ import Charts
 struct HomeView: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(SplitwiseService.self) private var splitwiseService
+    @Environment(AppRouter.self) private var appRouter
 
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
-    @Environment(AppRouter.self) private var appRouter
     @State private var selectedMonth: Date = .now
-    @State private var selectedExpense: Expense? = nil
-    @State private var addExpenseSheetIsPresented: Bool = false
     @State private var showSplitwiseImport: Bool = false
 
     let calendar = Calendar.current
@@ -76,22 +74,18 @@ struct HomeView: View {
             .navigationDestination(for: HomeRouter.Route.self) { route in
                 switch route {
                 case .categoryDetail(let category):
-                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category),total: budget(for: category), selectedExpense: $selectedExpense)
+                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category),total: budget(for: category))
                 }
+            }
+            .navigationDestination(for: Expense.self) { expense in
+                ExpenseDetailView(expense: expense)
+            }
+            .navigationDestination(for: AddExpenseRoute.self) { _ in
+                AddExpenseView()
             }
             .navigationTitle("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
             .scrollContentBackground(.hidden)
             .background(Color.ui.background)
-            .sheet(isPresented: $addExpenseSheetIsPresented) {
-                AddExpenseSheet()
-                    .presentationDetents([.large])
-                    .presentationBackground(Color.ui.background)
-            }
-            .sheet(item: $selectedExpense) { expense in
-                ExpenseDetailView(expense: expense)
-                    .presentationDetents([.medium])
-                    .presentationBackground(Color.ui.background)
-            }
             .sheet(isPresented: $showSplitwiseImport) {
                 SplitwiseImportView()
             }
@@ -103,10 +97,10 @@ struct HomeView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
-                    onAdd: { addExpenseSheetIsPresented = true },
+                    onAdd: { appRouter.homeRouter.navigationPath.append(AddExpenseRoute()) },
                     onImportFromSplitwise: splitwiseService.isConfigured
                         ? { showSplitwiseImport = true }
-                        : nil
+                        : nil,
                 )
             }
             .gradientBackground()
@@ -203,7 +197,7 @@ struct HomeView: View {
                     description: Text("Add expenses to start tracking")
                 )
             } else {
-                ExpenseList(expenses: recentPurchases, selectedExpense: $selectedExpense)
+                ExpenseList(expenses: recentPurchases)
             }
         } header: {
             Text("Recent Expenses")
@@ -212,12 +206,6 @@ struct HomeView: View {
 }
 
 #Preview {
-    @Previewable @State var config = AppConfiguration()
-    
-    var _ = UserDefaults.standard.set(7300, forKey:"totalMonthlyIncome")
-    
     HomeView()
-        .modelContainer(previewAppContainer)
-        .environment(config)
-        .environment(AppRouter())
+        .environmentInjection()
 }

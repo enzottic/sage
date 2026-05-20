@@ -10,7 +10,6 @@ import SwiftData
 
 struct SearchExpensesView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var expenses: [Expense]
-    @State private var selectedExpense: Expense? = nil
     @State private var searchText: String = ""
     
     var filteredExpenses: [Expense] {
@@ -51,7 +50,7 @@ struct SearchExpensesView: View {
                         ForEach(sortedDates, id: \.self) { date in
                             let expenses = groupedExpenses[date] ?? []
                             Section {
-                                ExpenseList(expenses: expenses, selectedExpense: $selectedExpense)
+                                ExpenseList(expenses: expenses)
                             } header: {
                                 Text(date.formatted(date: .abbreviated, time: .omitted))
                                     .font(.caption)
@@ -59,17 +58,15 @@ struct SearchExpensesView: View {
                         }
                     }
                     .scrollContentBackground(.hidden)
-                    .sheet(item: $selectedExpense) { expense in
-                        ExpenseDetailView(expense: expense)
-                            .presentationDetents([.medium])
-                            .presentationBackground(Color.ui.background)
-                    }
                 }
             }
             .frame(maxWidth: .infinity)
             .background(Color.ui.background)
             .navigationTitle("Search")
             .searchable(text: $searchText, prompt: "Search expenses")
+            .navigationDestination(for: Expense.self) { expense in
+                ExpenseDetailView(expense: expense)
+            }
             .gradientBackground()
         }
     }

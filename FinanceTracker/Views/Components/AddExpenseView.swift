@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
-struct AddExpenseSheet: View {
+struct AddExpenseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(SplitwiseService.self) private var splitwise
@@ -39,52 +39,48 @@ struct AddExpenseSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    ExpenseInfoFormNew(
-                        name: $name,
-                        amount: $amount,
-                        date: $date,
-                        category: $category,
-                        tag: $tag,
-                        note: $note,
-                        autoFocusAmount: true
-                    )
+        ScrollView {
+            VStack(spacing: 24) {
+                ExpenseInfoForm(
+                    name: $name,
+                    amount: $amount,
+                    date: $date,
+                    category: $category,
+                    tag: $tag,
+                    note: $note
+                )
 
-                    optionsCard
-                }
-                .padding(.top, 20)
-                .padding(.bottom, 40)
+                optionsCard
             }
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle("New Expense")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .disabled(isSaving)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if isSaving {
-                        ProgressView()
-                    } else {
-                        Button("Save") { Task { await saveItem() } }
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage ?? "An unexpected error occurred")
-            }
-            .task {
-                if splitwise.isConnected {
-                    await loadGroups()
+            .padding(.top, 20)
+            .padding(.bottom, 40)
+        }
+        .background(Color.ui.background)
+        .scrollDismissesKeyboard(.immediately)
+        .navigationTitle("New Expense")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if isSaving {
+                    ProgressView()
+                } else {
+                    Button("Save") { Task { await saveItem() } }
+                        .fontWeight(.semibold)
+                        .tint(Color(red: 108 / 255, green: 138 / 255, blue: 78 / 255))
                 }
             }
         }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage ?? "An unexpected error occurred")
+        }
+        .task {
+            if splitwise.isConnected {
+                await loadGroups()
+            }
+        }
+        .gradientBackground()
     }
 
     // MARK: - Options card
@@ -292,9 +288,6 @@ struct AddExpenseSheet: View {
 }
 
 #Preview {
-    AddExpenseSheet()
-        .modelContainer(previewAppContainer)
-        .environment(SplitwiseService())
-        .environment(AppConfiguration())
-        .environment(AppRouter())
+    AddExpenseView()
+        .environmentInjection()
 }

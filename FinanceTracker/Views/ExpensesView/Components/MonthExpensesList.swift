@@ -9,10 +9,9 @@ import SwiftData
 
 struct MonthExpensesList: View {
     @Query private var expenses: [Expense]
-    @Binding var selectedExpense: Expense?
     var searchText: String
-    
-    init(month: Date, selectedExpense: Binding<Expense?>, searchText: String = "") {
+
+    init(month: Date, searchText: String = "") {
         let calendar = Calendar.current
         let start = calendar.dateInterval(of: .month, for: month)?.start ?? month
         let end = calendar.dateInterval(of: .month, for: month)?.end ?? month
@@ -23,7 +22,6 @@ struct MonthExpensesList: View {
            },
            sort: [SortDescriptor(\Expense.date, order: .reverse)]
        )
-       _selectedExpense = selectedExpense
        self.searchText = searchText
     }
     
@@ -58,7 +56,7 @@ struct MonthExpensesList: View {
                     ForEach(sortedDates, id: \.self) { date in
                         let expenses = groupedExpenses[date] ?? []
                         Section {
-                            ExpenseList(expenses: expenses, selectedExpense: $selectedExpense)
+                            ExpenseList(expenses: expenses)
                         } header: {
                             Text(date.formatted(date: .abbreviated, time: .omitted))
                                 .font(.caption)
@@ -66,11 +64,6 @@ struct MonthExpensesList: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
-                .sheet(item: $selectedExpense) { expense in
-                    ExpenseDetailView(expense: expense)
-                        .presentationDetents([.medium])
-                        .presentationBackground(Color.ui.background)
-                }
            }
         }
     }
@@ -78,8 +71,10 @@ struct MonthExpensesList: View {
 
 #Preview {
     @Previewable @State var month = Date()
-    @Previewable @State var selectedExpense: Expense? = nil
-    
-    MonthExpensesList(month: month, selectedExpense: $selectedExpense)
-        .modelContainer(previewAppContainer)
+
+    NavigationStack {
+        MonthExpensesList(month: month)
+    }
+    .modelContainer(previewAppContainer)
+    .environment(AppRouter())
 }

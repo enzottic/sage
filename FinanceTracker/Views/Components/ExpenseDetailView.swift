@@ -31,35 +31,30 @@ struct ExpenseDetailView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                ExpenseInfoForm(
-                    name: $workingExpense.name,
-                    amount: Binding<Double?>(
-                        get: { workingExpense.amount },
-                        set: { workingExpense.amount = $0 ?? 0 }
-                    ),
-                    date: $workingExpense.date,
-                    category: $workingExpense.category,
-                    tag: $workingExpense.tag,
-                    note: $workingExpense.note
-                )
-                .padding(.vertical, 20)
-                .padding(.bottom, 20)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+        ScrollView {
+            ExpenseInfoForm(
+                name: $workingExpense.name,
+                amount: Binding<Double?>(
+                    get: { workingExpense.amount },
+                    set: { workingExpense.amount = $0 ?? 0 }
+                ),
+                date: $workingExpense.date,
+                category: $workingExpense.category,
+                tag: $workingExpense.tag,
+                note: $workingExpense.note,
+                isEditing: true
+            )
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle("Edit Expense")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    saveItem()
+                    dismiss()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveItem()
-                        dismiss()
-                    }
-                }
+                .tint(Color.sageAccent)
             }
         }
     }
@@ -88,5 +83,5 @@ private struct EditableExpense {
 #Preview {
     @Previewable @State var expense = Expense.example
     ExpenseDetailView(expense: expense)
-        .modelContainer(previewAppContainer)
+        .environmentInjection()
 }
