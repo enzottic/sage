@@ -13,74 +13,70 @@ struct TagPicker: View {
     /// Whether the currently selected tag was suggested by the AI (shows rainbow border).
     var tagIsAISuggested: Bool = false
 
-    @State private var isExpanded = false
     @State private var newTagSheetIsPresented: Bool = false
-    
+
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
-    
+
     var body: some View {
         Group {
-            if isExpanded {
+            if let selectedTag {
+                // A tag is selected — show just that tag with a deselect button
+                HStack(spacing: 6) {
+                    TagCapsule(tag: selectedTag, .medium, aiSuggested: tagIsAISuggested)
+                    Button {
+                        withAnimation(.easeInOut) {
+                            self.selectedTag = nil
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel(Text("Remove tag"))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10)
+            } else {
+                // No tag selected — show all tags
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .center, spacing: 10) {
                         ForEach(expenseTags, id: \.self) { option in
                             Button {
                                 withAnimation(.easeInOut) {
                                     selectedTag = option
-                                    isExpanded = false
                                 }
                             } label: {
                                 TagCapsule(tag: option, .medium)
                             }
+                            .buttonStyle(.plain)
                         }
-                        
+
                         Button {
                             newTagSheetIsPresented.toggle()
                         } label: {
-                            Image(systemName: "plus")
-                                .accessibilityLabel(Text("Add new tag"))
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                Text("Add")
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.sageAccent))
+                            .accessibilityLabel(Text("Add new tag"))
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(2)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 10)
                 }
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        Button {
-                            withAnimation(.easeInOut) {
-                                isExpanded = true
-                            }
-                        } label: {
-                            if selectedTag == nil {
-                                Text("Add a Tag")
-                            } else {
-                                TagCapsule(tag: selectedTag, .medium, aiSuggested: tagIsAISuggested)
-                            }
-                        }
-
-                        if selectedTag != nil {
-                            Button {
-                                withAnimation(.easeInOut) {
-                                    selectedTag = nil
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityLabel(Text("Remove tag"))
-                            }
-                        }
-                    }
-                    .padding(2)
-                    .containerRelativeFrame(.horizontal)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .animation(.easeInOut, value: isExpanded)
+        .padding(.vertical, 2)
+        .animation(.easeInOut, value: selectedTag == nil)
         .sheet(isPresented: $newTagSheetIsPresented) {
             AddExpenseTagSheet { newTag in
                 selectedTag = newTag
-                isExpanded = false
             }
         }
     }
@@ -88,10 +84,9 @@ struct TagPicker: View {
 
 #Preview {
     @Previewable @State var selectedTag: ExpenseTag? = .dining
-    @Previewable @State var noTag: ExpenseTag? = nil
     VStack(spacing: 20) {
         TagPicker(selectedTag: $selectedTag)
-        TagPicker(selectedTag: $selectedTag, tagIsAISuggested: true)
+        Text("Item down here)")
     }
-    .modelContainer(previewAppContainer)
+    .environmentInjection()
 }
