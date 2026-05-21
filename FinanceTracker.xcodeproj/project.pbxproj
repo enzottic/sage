@@ -80,22 +80,6 @@
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 		};
-		C6B09FF22E92D6B400899162 /* Exceptions for "Shared" folder in "FinanceTrackerWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Extensions/Color+SageColors.swift",
-				"Extensions/Date+Relative.swift",
-				"Extensions/Date+TextOutputStreamable.swift",
-				"Extensions/Number+CurrencyString.swift",
-				Intents/SageAppIntents.swift,
-				Model/ExpenseCategory.swift,
-				Model/ExpenseTag.swift,
-				Model/SageSchema.swift,
-				Services/ExpenseStore.swift,
-				Utilities/UIColorValueTransformer.swift,
-			);
-			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
-		};
 		C6F7DA3D2E9B5F4500A20A67 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -131,9 +115,6 @@
 		};
 		C6B09FEC2E92D69F00899162 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C6B09FF22E92D6B400899162 /* Exceptions for "Shared" folder in "FinanceTrackerWidgetExtension" target */,
-			);
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -263,6 +244,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
+				C6B09FEC2E92D69F00899162 /* Shared */,
 			);
 			name = FinanceTrackerWidgetExtension;
 			packageProductDependencies = (
@@ -558,6 +540,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Shared/Services/SageModelContainer.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -606,6 +589,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Shared/Services/SageModelContainer.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -653,7 +637,7 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = Shared/Services/ExpenseStore.swift;
+				DEVELOPMENT_ASSET_PATHS = "Shared/Services/ExpenseStore.swift Shared/Services/SageModelContainer.swift";
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
@@ -689,7 +673,7 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = Shared/Services/ExpenseStore.swift;
+				DEVELOPMENT_ASSET_PATHS = "Shared/Services/ExpenseStore.swift Shared/Services/SageModelContainer.swift";
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;

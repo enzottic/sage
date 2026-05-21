@@ -15,11 +15,9 @@ class ExpenseStore {
         self.context = context
     }
 
-    /// Convenience initializer that creates its own ModelContainer (for widget/intent contexts)
+    /// Convenience initializer for widget/intent contexts — opens the shared app group store.
     convenience init() throws {
-        let schema = Schema(versionedSchema: SageSchemaV1.self)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        let container = try ModelContainer(for: schema, configurations: [config])
+        let container = try SageModelContainer.make()
         self.init(context: ModelContext(container))
     }
 

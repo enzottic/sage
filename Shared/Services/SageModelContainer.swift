@@ -1,0 +1,38 @@
+//
+//  SageModelContainer.swift
+//  FinanceTracker
+//
+//  Created by Tyler McCormick on 5/21/26.
+//
+
+import Foundation
+import SwiftData
+
+enum SageModelContainer {
+    static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
+
+    static func make(cloudKitEnabled: Bool = false) throws -> ModelContainer {
+        UIColorValueTransformer.register()
+
+        let schema = Schema(versionedSchema: SageSchemaV2.self)
+        let groupURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)!
+
+        #if DEBUG
+        let config = ModelConfiguration(
+            "SageDev",
+            schema: schema,
+            url: groupURL.appending(path: "SageDev.sqlite"),
+            cloudKitDatabase: .none
+        )
+        #else
+        let config = ModelConfiguration(
+            schema: schema,
+            url: groupURL.appending(path: "Sage.sqlite"),
+            cloudKitDatabase: cloudKitEnabled ? .automatic : .none
+        )
+        #endif
+
+        return try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [config])
+    }
+}

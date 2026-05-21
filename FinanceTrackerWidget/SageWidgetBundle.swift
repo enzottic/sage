@@ -13,5 +13,9 @@ struct SageWidgetBundle: WidgetBundle {
     var body: some Widget {
         ExpenseUtilizationWidget()
         ExpensePieChartWidget()
+        RecentExpensesWidget()
+        BudgetRemainingWidget()
+        CategorySpotlightWidget()
+        MonthlySummaryWidget()
     }
 }

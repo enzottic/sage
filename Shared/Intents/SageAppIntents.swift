@@ -39,7 +39,19 @@ struct LatestExpensesAppIntent: WidgetConfigurationIntent {
 
 struct UtilizationAppIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource { "TotalSpentThisMonth" }
-    
+
+    func perform() async throws -> some IntentResult {
+        .result()
+    }
+}
+
+struct CategorySpotlightAppIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Category Spotlight" }
+    static var description = IntentDescription("Choose a budget category to spotlight.")
+
+    @Parameter(title: "Category", default: .needs)
+    var category: ExpenseCategory
+
     func perform() async throws -> some IntentResult {
         .result()
     }
