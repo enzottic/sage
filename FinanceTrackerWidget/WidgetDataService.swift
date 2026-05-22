@@ -82,7 +82,8 @@ class WidgetDataService {
             totalSpent: raw.totalSpent, totalIncome: raw.totalIncome,
             wantsSpent: raw.wantsSpent, wantsBudget: raw.wantsBudget,
             needsSpent: raw.needsSpent, needsBudget: raw.needsBudget,
-            savingsSpent: raw.savingsSpent, savingsBudget: raw.savingsBudget
+            savingsSpent: raw.savingsSpent, savingsBudget: raw.savingsBudget,
+            recentExpenses: raw.recentExpenses
         )
     }
 

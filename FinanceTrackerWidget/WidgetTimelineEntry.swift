@@ -93,17 +93,32 @@ struct MonthlySummaryEntry: TimelineEntry {
     let needsBudget: Double
     let savingsSpent: Double
     let savingsBudget: Double
+    let recentExpenses: [ExpenseSnapshot]
 
     static let placeholder = MonthlySummaryEntry(
         date: .now, totalSpent: 0, totalIncome: 0,
         wantsSpent: 0, wantsBudget: 0,
         needsSpent: 0, needsBudget: 0,
-        savingsSpent: 0, savingsBudget: 0
+        savingsSpent: 0, savingsBudget: 0,
+        recentExpenses: [
+            ExpenseSnapshot(id: UUID(), name: "Groceries", amount: 87.43, category: .needs, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Netflix", amount: 15.99, category: .wants, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Savings Transfer", amount: 200.0, category: .savings, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Electric Bill", amount: 94.00, category: .needs, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Dinner Out", amount: 62.15, category: .wants, date: .now),
+        ]
     )
     static let preview = MonthlySummaryEntry(
         date: .now, totalSpent: 3562.23, totalIncome: 7000,
         wantsSpent: 1045.32, wantsBudget: 2100,
         needsSpent: 2016.91, needsBudget: 3500,
-        savingsSpent: 500.0, savingsBudget: 1400
+        savingsSpent: 500.0, savingsBudget: 1400,
+        recentExpenses: [
+            ExpenseSnapshot(id: UUID(), name: "Groceries", amount: 87.43, category: .needs, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Netflix", amount: 15.99, category: .wants, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Savings Transfer", amount: 200.0, category: .savings, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Electric Bill", amount: 94.00, category: .needs, date: .now),
+            ExpenseSnapshot(id: UUID(), name: "Dinner Out", amount: 62.15, category: .wants, date: .now),
+        ]
     )
 }
