@@ -73,6 +73,16 @@ struct CentsFirstCurrencyField: View {
                 centsValue = String(cents)
             }
         }
+        .onChange(of: amount) { _, newAmount in
+            let currentCents = Int(centsValue) ?? 0
+            let currentAmount = currentCents > 0 ? Double(currentCents) / 100.0 : nil
+            guard currentAmount != newAmount else { return }
+            if let newAmount {
+                centsValue = String(Int((newAmount * 100).rounded()))
+            } else {
+                centsValue = "0"
+            }
+        }
     }
 }
 

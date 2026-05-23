@@ -67,6 +67,7 @@
 				Helpers/AppConfiguration.swift,
 				Resources/Assets.xcassets,
 				Services/ExpenseBackupService.swift,
+				Services/ReceiptParserService.swift,
 				Services/RecurringExpenseService.swift,
 				Services/TagDeduplicationService.swift,
 				Services/TagSuggestionService.swift,
