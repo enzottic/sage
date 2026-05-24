@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct CategoryPicker: View {
+    @Environment(\.categoryColors) private var categoryColors
     @Binding var selectedCategory: ExpenseCategory
-    
+
     var body: some View {
         HStack {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
@@ -19,7 +20,7 @@ struct CategoryPicker: View {
                     HStack {
                         Circle()
                             .frame(width: 10, height: 10)
-                            .foregroundStyle(category.color)
+                            .foregroundStyle(category.color(in: categoryColors))
                         
                         Text(category.rawValue)
                     }

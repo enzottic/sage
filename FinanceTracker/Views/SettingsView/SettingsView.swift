@@ -10,18 +10,18 @@ import SwiftData
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
-    
+
     var body: some View {
         NavigationStack(path: Bindable(router.settingsRouter).navigationPath) {
             List {
-                
+
                 Section {
                     let page = SettingsPage.appearance
                     NavigationLink(value: page) {
                         SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                     }
                 }
-                
+
                 Section {
                     ForEach([SettingsPage.budget, .recurringExpenses, .tags], id: \.self) { page in
                         NavigationLink(value: page) {
@@ -29,7 +29,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
                 Section {
                     ForEach([SettingsPage.backup, .splitwise], id: \.self) { page in
                         NavigationLink(value: page) {
@@ -72,7 +72,7 @@ struct SettingsListItem: View {
     let text: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         HStack {
             ZStack {
@@ -98,7 +98,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
     case splitwise = "Splitwise"
     case privacy = "Privacy"
     case termsOfUse = "Terms of Use"
-    
+
     var icon: String {
         switch self {
         case .appearance: "paintpalette.fill"
@@ -111,10 +111,10 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .termsOfUse: "iphone.gen1"
         }
     }
-    
+
     var color: Color {
         switch self {
-        case .appearance:.sage
+        case .appearance: .sage
         case .budget: .green
         case .tags: .purple
         case .recurringExpenses: .orange

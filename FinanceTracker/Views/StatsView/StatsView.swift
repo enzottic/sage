@@ -19,16 +19,16 @@ struct MonthlySpendingData: Identifiable {
 }
 
 struct StatsView: View {
+    @Environment(\.categoryColors) private var categoryColors
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
     @State private var selectedCategory: ExpenseCategory? = nil
     @State private var selectedTag: ExpenseTag? = nil
-    
+
     private var gradientColor: Color {
-        if selectedCategory != nil { return selectedCategory!.color }
+        if let category = selectedCategory { return category.color(in: categoryColors) }
         if let tag = selectedTag, !tag.isDeleted { return tag.color }
-        
         return .sage
     }
 
@@ -112,7 +112,7 @@ struct StatsView: View {
 
     private var barColor: Color {
         if let category = selectedCategory {
-            return category.color
+            return category.color(in: categoryColors)
         } else if let tag = selectedTag, !tag.isDeleted {
             return tag.color
         } else {

@@ -7,21 +7,22 @@
 import SwiftUI
 
 struct CategoryUtilizationView: View {
+    @Environment(\.categoryColors) private var categoryColors
     let category: ExpenseCategory
     let utilization: Double
     let used: Double
     let total: Double
-    
+
     init(for category: ExpenseCategory, _ utilization: Double, _ used: Double, _ total: Double) {
         self.category = category
         self.utilization = utilization
         self.used = used
         self.total = total
     }
-    
+
     var body: some View {
         HStack(spacing: 10) {
-            CircularProgressBar(progress: utilization, tint: category.color)
+            CircularProgressBar(progress: utilization, tint: category.color(in: categoryColors))
                 .frame(width: 50, height: 50)
             
             VStack(alignment: .leading) {

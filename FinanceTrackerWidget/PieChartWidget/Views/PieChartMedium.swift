@@ -8,11 +8,12 @@
 import SwiftUI
 
 struct PieChartMedium: View {
+    @Environment(\.categoryColors) private var categoryColors
     let chartData: [ExpenseData]
-    
+
     var body: some View {
         HStack(spacing: 20) {
-           ChartView(chartData: chartData)
+            ChartView(chartData: chartData)
                 .scaledToFit()
             VStack(alignment: .leading, spacing: 10) {
                 categoryLabel(for: .wants)
@@ -21,12 +22,12 @@ struct PieChartMedium: View {
             }
         }
     }
-        
+
     func categoryLabel(for category: ExpenseCategory) -> some View {
         HStack {
             Circle()
                 .frame(width: 10, height: 10)
-                .foregroundStyle(category.color)
+                .foregroundStyle(category.color(in: categoryColors))
             Text(category.rawValue)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

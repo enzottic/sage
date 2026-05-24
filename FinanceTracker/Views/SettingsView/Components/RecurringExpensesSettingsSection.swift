@@ -69,13 +69,14 @@ struct RecurringExpensesSettingsSection: View {
 }
 
 private struct RecurringRuleRow: View {
+    @Environment(\.categoryColors) private var categoryColors
     let rule: RecurringExpenseRule
 
     var body: some View {
         HStack(spacing: 12) {
             // Category color accent
             RoundedRectangle(cornerRadius: 3)
-                .fill(categoryColor)
+                .fill(rule.category.color(in: categoryColors))
                 .frame(width: 4, height: 40)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -111,14 +112,6 @@ private struct RecurringRuleRow: View {
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-        }
-    }
-
-    private var categoryColor: Color {
-        switch rule.category {
-        case .needs: return Color.ui.need
-        case .wants: return Color.ui.want
-        case .savings: return .teal
         }
     }
 

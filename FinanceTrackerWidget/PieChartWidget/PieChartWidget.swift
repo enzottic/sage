@@ -36,6 +36,7 @@ struct ExpensePieChartWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PieChartProvider()) { entry in
             ExpensePieChartEntryView(entry: entry)
+                .environment(\.categoryColors, CategoryColors.load())
                 .containerBackground(Color("Background"), for: .widget)
         }
         .configurationDisplayName("Expenses Breakdown")

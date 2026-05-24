@@ -9,6 +9,7 @@ import SwiftUI
 import Charts
 
 struct TotalSpentProgressView: View {
+    @Environment(\.categoryColors) private var categoryColors
     let wantsSpent: Double
     let needsSpent: Double
     let savingsSpent: Double
@@ -61,10 +62,10 @@ struct TotalSpentProgressView: View {
         }
         .chartLegend(.hidden)
         .chartForegroundStyleScale([
-            "Wants": ExpenseCategory.wants.color,
-            "Needs": ExpenseCategory.needs.color,
-            "Savings": ExpenseCategory.savings.color,
-            "Unspent": .gray
+            "Wants": categoryColors.wants,
+            "Needs": categoryColors.needs,
+            "Savings": categoryColors.savings,
+            "Unspent": Color.gray
         ])
         .frame(minHeight: 220)
     }

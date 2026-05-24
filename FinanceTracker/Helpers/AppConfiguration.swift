@@ -46,6 +46,9 @@ class AppConfiguration {
         static let isCloudSyncEnabled = "isCloudSyncEnabled"
         static let hasCompletedSetup = "hasCompletedetup"
         static let smartTaggingMode = "smartTaggingMode"
+        static let needsColor = "categoryColorNeeds"
+        static let wantsColor = "categoryColorWants"
+        static let savingsColor = "categoryColorSavings"
     }
     
     var selectedAppearance: Appearance {
@@ -102,6 +105,41 @@ class AppConfiguration {
             cloudKVS.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
             cloudKVS.synchronize()
         }
+    }
+
+    var needsColor: Color {
+        didSet {
+            defaults.setSageColor(needsColor, forKey: Keys.needsColor)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    var wantsColor: Color {
+        didSet {
+            defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    var savingsColor: Color {
+        didSet {
+            defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    var categoryColors: CategoryColors {
+        CategoryColors(needs: needsColor, wants: wantsColor, savings: savingsColor)
+    }
+
+    func resetCategoryColors() {
+        needsColor = Color("NeedColor")
+        wantsColor = Color("WantColor")
+        savingsColor = Color("SavingColor")
+        // Remove persisted values so widgets fall back to asset catalog defaults on next load
+        defaults.removeObject(forKey: Keys.needsColor)
+        defaults.removeObject(forKey: Keys.wantsColor)
+        defaults.removeObject(forKey: Keys.savingsColor)
     }
     
     var needsBudget: Double {
@@ -168,7 +206,12 @@ class AppConfiguration {
         } else {
             self.smartTaggingMode = .history
         }
-        
+
+        // Category colors — stored locally only (not synced to iCloud KVS)
+        self.needsColor = defaults.sageColor(forKey: Keys.needsColor) ?? Color("NeedColor")
+        self.wantsColor = defaults.sageColor(forKey: Keys.wantsColor) ?? Color("WantColor")
+        self.savingsColor = defaults.sageColor(forKey: Keys.savingsColor) ?? Color("SavingColor")
+
         // Push current values to local defaults so widgets stay in sync
         syncToLocalDefaults()
         
@@ -227,6 +270,9 @@ class AppConfiguration {
         defaults.set(savingsPercent, forKey: Keys.savingsPercent)
         defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
         defaults.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
+        defaults.setSageColor(needsColor, forKey: Keys.needsColor)
+        defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
+        defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
     }
     
     func markSetupComplete() {

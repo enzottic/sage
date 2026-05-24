@@ -10,6 +10,7 @@ import WidgetKit
 
 struct RecentExpensesEntryView: View {
     @Environment(\.widgetFamily) var family
+    @Environment(\.categoryColors) private var categoryColors
 
     let entry: RecentExpensesEntry
 
@@ -33,7 +34,7 @@ struct RecentExpensesEntryView: View {
                     HStack(spacing: 6) {
                         Circle()
                             .frame(width: 8, height: 8)
-                            .foregroundStyle(expense.category.color)
+                            .foregroundStyle(expense.category.color(in: categoryColors))
                         Text(expense.name)
                             .font(.caption)
                             .lineLimit(1)
@@ -55,6 +56,7 @@ struct RecentExpensesWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: RecentExpensesProvider()) { entry in
             RecentExpensesEntryView(entry: entry)
+                .environment(\.categoryColors, CategoryColors.load())
                 .containerBackground(Color("Background"), for: .widget)
         }
         .configurationDisplayName("Recent Expenses")

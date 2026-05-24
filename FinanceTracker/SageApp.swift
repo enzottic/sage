@@ -55,6 +55,7 @@ struct SageApp: App {
             }
         }
         .environment(appConfiguration)
+        .environment(\.categoryColors, appConfiguration.categoryColors)
         .environment(splitwiseService)
         .modelContainer(appContainer)
     }

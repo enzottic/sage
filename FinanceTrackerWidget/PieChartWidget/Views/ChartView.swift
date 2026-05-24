@@ -8,8 +8,9 @@ import SwiftUI
 import Charts
 
 struct ChartView: View {
+    @Environment(\.categoryColors) private var categoryColors
     let chartData: [ExpenseData]
-    
+
     var body: some View {
         Chart(chartData, id: \.category) { item in
             SectorMark(
@@ -32,7 +33,10 @@ struct ChartView: View {
         }
         .chartLegend(.hidden)
         .chartForegroundStyleScale([
-            "Wants": ExpenseCategory.wants.color, "Needs": ExpenseCategory.needs.color, "Savings": ExpenseCategory.savings.color, "Unspent": .gray
+            "Wants": categoryColors.wants,
+            "Needs": categoryColors.needs,
+            "Savings": categoryColors.savings,
+            "Unspent": Color.gray
         ])
     }
 }

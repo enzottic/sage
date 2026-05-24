@@ -33,12 +33,12 @@ struct AppearanceSettingsSection: View {
                                     .fill(Color(uiColor: appearanceFill(appearance)))
                                     .frame(width: 50, height: 50)
                                     .cornerRadius(10)
-                                
+
                                 Text("Aa")
                                     .font(.title3)
                                     .foregroundStyle(appearance == .light ? .black : .white)
                             }
-                            
+
                             VStack(alignment: .leading) {
                                 Text(appearance.rawValue).tag(appearance)
                                     .font(.title2)
@@ -49,9 +49,9 @@ struct AppearanceSettingsSection: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             }
-                            
+
                             Spacer()
-                            
+
                             if config.selectedAppearance == appearance {
                                 Image(systemName: "checkmark")
                                     .font(.caption)
@@ -63,6 +63,40 @@ struct AppearanceSettingsSection: View {
                 }
             } header: {
                 Text("App Theme")
+            }
+
+            Section {
+                ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                    HStack {
+                        Circle()
+                            .fill(category.color(in: config.categoryColors))
+                            .frame(width: 14, height: 14)
+                        Text(category.rawValue)
+                        Spacer()
+                        switch category {
+                        case .needs:
+                            ColorPicker("", selection: $config.needsColor, supportsOpacity: false)
+                                .labelsHidden()
+                        case .wants:
+                            ColorPicker("", selection: $config.wantsColor, supportsOpacity: false)
+                                .labelsHidden()
+                        case .savings:
+                            ColorPicker("", selection: $config.savingsColor, supportsOpacity: false)
+                                .labelsHidden()
+                        }
+                    }
+                }
+            } header: {
+                Text("Category Colors")
+            }
+
+            Section {
+                Button("Reset Category Colors") {
+                    withAnimation {
+                        config.resetCategoryColors()
+                    }
+                }
+                .foregroundStyle(.red)
             }
         }
         .navigationTitle("Appearance")

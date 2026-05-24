@@ -10,6 +10,7 @@ import WidgetKit
 
 struct MonthlySummaryEntryView: View {
     @Environment(\.widgetFamily) var family
+    @Environment(\.categoryColors) private var categoryColors
     let entry: MonthlySummaryEntry
 
     var remaining: Double { Double(entry.totalIncome) - entry.totalSpent }
@@ -44,9 +45,9 @@ struct MonthlySummaryEntryView: View {
             Divider()
 
             VStack(spacing: 6) {
-                compactCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: ExpenseCategory.needs.color)
-                compactCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: ExpenseCategory.wants.color)
-                compactCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: ExpenseCategory.savings.color)
+                compactCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: categoryColors.needs)
+                compactCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: categoryColors.wants)
+                compactCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: categoryColors.savings)
             }
         }
     }
@@ -103,13 +104,13 @@ struct MonthlySummaryEntryView: View {
             Divider()
 
             VStack(spacing: 10) {
-                fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: ExpenseCategory.needs.color)
-                fullCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: ExpenseCategory.wants.color)
-                fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: ExpenseCategory.savings.color)
+                fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: categoryColors.needs)
+                fullCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: categoryColors.wants)
+                fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: categoryColors.savings)
             }
         }
     }
-    
+
     var largeBody: some View {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
@@ -123,9 +124,9 @@ struct MonthlySummaryEntryView: View {
             }
 
             VStack(spacing: 10) {
-                fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: ExpenseCategory.needs.color)
-                fullCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: ExpenseCategory.wants.color)
-                fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: ExpenseCategory.savings.color)
+                fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: categoryColors.needs)
+                fullCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: categoryColors.wants)
+                fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: categoryColors.savings)
             }
             
             Divider()
@@ -138,7 +139,7 @@ struct MonthlySummaryEntryView: View {
                     HStack(spacing: 6) {
                         Circle()
                             .frame(width: 8, height: 8)
-                            .foregroundStyle(expense.category.color)
+                            .foregroundStyle(expense.category.color(in: categoryColors))
                         Text(expense.name)
                             .font(.caption)
                             .lineLimit(1)
@@ -183,6 +184,7 @@ struct MonthlySummaryWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthlySummaryProvider()) { entry in
             MonthlySummaryEntryView(entry: entry)
+                .environment(\.categoryColors, CategoryColors.load())
                 .containerBackground(Color("Background"), for: .widget)
         }
         .configurationDisplayName("Monthly Summary")

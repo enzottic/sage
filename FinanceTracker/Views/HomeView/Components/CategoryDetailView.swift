@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct CategoryDetailView: View {
+    @Environment(\.categoryColors) private var categoryColors
     let category: ExpenseCategory
     let utilization: Double
     let used: Double
@@ -31,7 +32,7 @@ struct CategoryDetailView: View {
         }
         .navigationTitle(category.rawValue)
         .navigationBarTitleDisplayMode(.large)
-        .gradientBackground(color: category.color)
+        .gradientBackground(color: category.color(in: categoryColors))
     }
 }
 

@@ -9,6 +9,7 @@ import SwiftUI
 import WidgetKit
 
 struct CategorySpotlightEntryView: View {
+    @Environment(\.categoryColors) private var categoryColors
     let entry: CategorySpotlightEntry
 
     var isOverBudget: Bool { entry.utilization > 1 }
@@ -19,7 +20,7 @@ struct CategorySpotlightEntryView: View {
                 Text(entry.category.rawValue.uppercased())
                     .font(.caption2)
                     .fontWeight(.semibold)
-                    .foregroundStyle(entry.category.color)
+                    .foregroundStyle(entry.category.color(in: categoryColors))
                 Spacer()
                 Text(entry.utilization, format: .percent.precision(.fractionLength(0)))
                     .font(.caption2)
@@ -35,7 +36,7 @@ struct CategorySpotlightEntryView: View {
             VStack(spacing: 3) {
                 ProgressView(value: min(entry.utilization, 1), total: 1)
                     .overlay(
-                        LinearGradient(colors: [entry.category.color], startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(colors: [entry.category.color(in: categoryColors)], startPoint: .leading, endPoint: .trailing)
                             .mask(ProgressView(value: min(entry.utilization, 1), total: 1))
                     )
                 HStack {
@@ -65,6 +66,7 @@ struct CategorySpotlightWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: CategorySpotlightAppIntent.self, provider: CategorySpotlightProvider()) { entry in
             CategorySpotlightEntryView(entry: entry)
+                .environment(\.categoryColors, CategoryColors.load())
                 .containerBackground(Color("Background"), for: .widget)
         }
         .configurationDisplayName("Category Spotlight")

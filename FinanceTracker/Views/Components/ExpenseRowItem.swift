@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct ExpenseRowItem: View {
+    @Environment(\.categoryColors) private var categoryColors
     let expense: Expense
 
     var body: some View {
         HStack(spacing: 12) {
             // Category color accent bar
             RoundedRectangle(cornerRadius: 3)
-                .fill(expense.category.color)
+                .fill(expense.category.color(in: categoryColors))
                 .frame(width: 4, height: 40)
 
             // Name and date on the left

@@ -10,6 +10,7 @@ import SwiftUI
 
 struct UtilizationEntryView: View {
     @Environment(\.widgetFamily) var family
+    @Environment(\.categoryColors) private var categoryColors
 
     var entry: UtilizationEntry
 
@@ -43,7 +44,7 @@ struct UtilizationEntryView: View {
 
             ProgressView(value: value, total: 1)
                 .overlay(
-                    LinearGradient(gradient: Gradient(colors: [category.color]), startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(gradient: Gradient(colors: [category.color(in: categoryColors)]), startPoint: .leading, endPoint: .trailing)
                         .mask(ProgressView(value: value, total: 1))
                 )
         }
@@ -57,6 +58,7 @@ struct ExpenseUtilizationWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: UtilizationAppIntent.self, provider: UtilizationProvider()) { entry in
             UtilizationEntryView(entry: entry)
+                .environment(\.categoryColors, CategoryColors.load())
                 .containerBackground(Color("Background"), for: .widget)
         }
         .configurationDisplayName("View Expense Utilization")

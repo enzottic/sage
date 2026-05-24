@@ -12,6 +12,7 @@ import PhotosUI
 struct ExpenseInfoForm: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(AppRouter.self) private var router
+    @Environment(\.categoryColors) private var categoryColors
     @Query(sort: \ExpenseTag.name) private var expenseTags: [ExpenseTag]
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
 
@@ -224,7 +225,7 @@ struct ExpenseInfoForm: View {
                 } label: {
                     HStack(spacing: 8) {
                         Circle()
-                            .fill(cat.color)
+                            .fill(cat.color(in: categoryColors))
                             .frame(width: 10, height: 10)
                         Text(cat.rawValue)
                             .font(.subheadline)
@@ -234,12 +235,12 @@ struct ExpenseInfoForm: View {
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(isSelected ? cat.color.opacity(0.18) : Color.ui.cardBackground)
+                            .fill(isSelected ? cat.color(in: categoryColors).opacity(0.18) : Color.ui.cardBackground)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .strokeBorder(
-                                isSelected ? cat.color.opacity(0.6) : Color.clear,
+                                isSelected ? cat.color(in: categoryColors).opacity(0.6) : Color.clear,
                                 lineWidth: 1.5
                             )
                     )

@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct StatsFilterBar: View {
+    @Environment(\.categoryColors) private var categoryColors
     @Binding var selectedCategory: ExpenseCategory?
     @Binding var selectedTag: ExpenseTag?
     @Query var expenseTags: [ExpenseTag]
@@ -25,7 +26,7 @@ struct StatsFilterBar: View {
                 }
 
                 ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                    filterPill(category.rawValue, tint: category.color,
+                    filterPill(category.rawValue, tint: category.color(in: categoryColors),
                                isActive: selectedCategory == category) {
                         withAnimation {
                             selectedCategory = category
