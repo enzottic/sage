@@ -29,6 +29,9 @@ struct AddExpenseView: View {
     @State private var selectedGroupId: Int? = nil
     @State private var availableGroups: [SplitwiseGroup] = []
     @State private var isLoadingGroups: Bool = false
+    @State private var isParsingReceipt: Bool = false
+
+    @Query private var allTags: [ExpenseTag]
 
     private var selectedGroup: SplitwiseGroup? {
         availableGroups.first { $0.id == selectedGroupId }
@@ -78,6 +81,24 @@ struct AddExpenseView: View {
         .task {
             if splitwise.isConnected {
                 await loadGroups()
+            }
+            await parseReceiptIfNeeded()
+        }
+        .overlay {
+            if isParsingReceipt {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Reading receipt…")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
             }
         }
         .gradientBackground()
@@ -200,6 +221,32 @@ struct AddExpenseView: View {
     }
 
     // MARK: - Logic
+
+    private func parseReceiptIfNeeded() async {
+        guard let image = ReceiptHandoffService.consumePendingImage() else { return }
+        isParsingReceipt = true
+        defer { isParsingReceipt = false }
+
+        if #available(iOS 26.0, *) {
+            let service = ReceiptParserService()
+            guard let parsed = await service.parseReceipt(image: image, tags: allTags) else { return }
+
+            name = parsed.name
+            amount = parsed.price
+
+            if let dateStr = parsed.date {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                date = formatter.date(from: dateStr) ?? .now
+            }
+
+            category = parsed.category.lowercased() == "needs" ? .needs : .wants
+
+            if let tagName = parsed.tag {
+                tag = allTags.first { $0.name == tagName }
+            }
+        }
+    }
 
     private func loadGroups() async {
         isLoadingGroups = true

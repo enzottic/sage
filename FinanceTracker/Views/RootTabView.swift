@@ -53,6 +53,14 @@ struct RootTabView: View {
         .environment(appRouter)
         .background(Color.ui.background)
         .tint(Color.ui.sage)
+        .onOpenURL { url in handleDeepLink(url) }
+    }
+    
+    @MainActor
+    private func handleDeepLink(_ url: URL) {
+        guard (url.scheme == "sage" || url.scheme == "sage-dev"), url.host == "add-expense" else { return }
+        appRouter.selectedTab = .home
+        appRouter.homeRouter.navigateTo(route: .addExpense)
     }
 }
 

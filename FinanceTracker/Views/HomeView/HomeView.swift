@@ -75,13 +75,12 @@ struct HomeView: View {
                 switch route {
                 case .categoryDetail(let category):
                     CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category),total: budget(for: category))
+                case .addExpense:
+                    AddExpenseView()
                 }
             }
             .navigationDestination(for: Expense.self) { expense in
                 ExpenseDetailView(expense: expense)
-            }
-            .navigationDestination(for: AddExpenseRoute.self) { _ in
-                AddExpenseView()
             }
             .navigationTitle("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
             .scrollContentBackground(.hidden)
@@ -97,7 +96,7 @@ struct HomeView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
-                    onAdd: { appRouter.homeRouter.navigationPath.append(AddExpenseRoute()) },
+                    onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense) },
                     onImportFromSplitwise: splitwiseService.isConfigured
                         ? { showSplitwiseImport = true }
                         : nil,

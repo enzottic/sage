@@ -53,6 +53,7 @@ class HomeRouter {
 
     enum Route: Hashable {
         case categoryDetail(category: ExpenseCategory)
+        case addExpense
     }
 
     func navigateTo(route: Route) {

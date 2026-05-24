@@ -2,8 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key>
-	<string>$(APP_NAME)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(URL_SCHEME)</string>
+			</array>
+		</dict>
+	</array>
+	<key>SplitwiseConsumerKey</key>
+	<string>$(SPLITWISE_CONSUMER_KEY)</string>
+	<key>SplitwiseConsumerSecret</key>
+	<string>$(SPLITWISE_CONSUMER_SECRET)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -12,22 +27,5 @@
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
-	<key>SplitwiseConsumerKey</key>
-	<string>$(SPLITWISE_CONSUMER_KEY)</string>
-	<key>SplitwiseConsumerSecret</key>
-	<string>$(SPLITWISE_CONSUMER_SECRET)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>me.enzottic.FinanceTracker.splitwise</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>sage</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>
