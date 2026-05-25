@@ -63,7 +63,7 @@ struct HomeView: View {
         case .savings: config.savingsBudget
         }
     }
-
+    
     var body: some View {
         NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
             List {
@@ -82,7 +82,7 @@ struct HomeView: View {
             .navigationDestination(for: Expense.self) { expense in
                 ExpenseDetailView(expense: expense)
             }
-            .navigationTitle("\(selectedMonth.formatted(.dateTime.month(.wide).year()))")
+            .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
             .scrollContentBackground(.hidden)
             .background(Color.ui.background)
             .sheet(isPresented: $showSplitwiseImport) {
@@ -163,7 +163,7 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
     }
-    
+
     // MARK: - Category Utilization
     
     var categoryUtilization: some View {
@@ -181,7 +181,12 @@ struct HomeView: View {
                 .listRowSeparator(.hidden)
             }
         } header: {
-            Text("Categories")
+            Text("CATEGORIES")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .tracking(0.6)
+                .padding(.horizontal)
         }
     }
     
@@ -197,6 +202,9 @@ struct HomeView: View {
                 )
             } else {
                 ExpenseList(expenses: recentPurchases)
+                Button("Show More") {
+                    appRouter.selectedTab = .expenses
+                }
             }
         } header: {
             Text("Recent Expenses")

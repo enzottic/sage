@@ -126,7 +126,9 @@ struct ExpenseInfoForm: View {
                     .font(.subheadline)
             }
             Spacer(minLength: 0)
-            receiptButton
+            if !isEditing {
+                receiptButton
+            }
         }
         .padding(.horizontal)
     }

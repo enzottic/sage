@@ -33,41 +33,70 @@ struct TotalSpentProgressView: View {
         return data
     }
 
-    var body: some View {
-        Chart(chartData, id: \.category) { item in
-            SectorMark(
-                angle: .value("Amount", item.amount),
-                innerRadius: .ratio(0.75),
-                angularInset: 2
-            )
-            .cornerRadius(5)
-            .foregroundStyle(by: .value("Category", item.category))
+    private func color(for category: String) -> Color {
+        switch category {
+        case "Wants": categoryColors.wants
+        case "Needs": categoryColors.needs
+        case "Savings": categoryColors.savings
+        default: .gray
         }
-        .chartBackground { chartProxy in
-            GeometryReader { geo in
-                if let anchor = chartProxy.plotFrame {
-                    let frame = geo[anchor]
-                    VStack(spacing: 2) {
-                        Text(totalSpent.currencyString)
-                            .font(.title)
-                            .fontWeight(.black)
+    }
 
-                        Text("spent")
-                            .font(.subheadline)
+    var body: some View {
+        VStack(spacing: 12) {
+            Chart(chartData, id: \.category) { item in
+                SectorMark(
+                    angle: .value("Amount", item.amount),
+                    innerRadius: .ratio(0.75),
+                    angularInset: 2
+                )
+                .cornerRadius(5)
+                .foregroundStyle(by: .value("Category", item.category))
+            }
+            .chartBackground { chartProxy in
+                GeometryReader { geo in
+                    if let anchor = chartProxy.plotFrame {
+                        let frame = geo[anchor]
+                        VStack(spacing: 2) {
+                            Text("SPENT")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Text(totalSpent.currencyString)
+                                .font(.title)
+                                .fontWeight(.black)
+
+                            Text("\(unspent.currencyString) left of \(totalIncome.currencyString)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                        }
+                        .position(x: frame.midX, y: frame.midY)
+                    }
+                }
+            }
+            .chartLegend(.hidden)
+            .chartForegroundStyleScale([
+                "Wants": categoryColors.wants,
+                "Needs": categoryColors.needs,
+                "Savings": categoryColors.savings,
+                "Unspent": Color.gray
+            ])
+            .frame(minHeight: 220)
+
+            HStack(spacing: 16) {
+                ForEach(chartData, id: \.category) { item in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(color(for: item.category))
+                            .frame(width: 10, height: 10)
+                        Text(item.category)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .position(x: frame.midX, y: frame.midY)
                 }
             }
         }
-        .chartLegend(.hidden)
-        .chartForegroundStyleScale([
-            "Wants": categoryColors.wants,
-            "Needs": categoryColors.needs,
-            "Savings": categoryColors.savings,
-            "Unspent": Color.gray
-        ])
-        .frame(minHeight: 220)
     }
 }
 

@@ -14,17 +14,19 @@ struct TagPicker: View {
     var tagIsAISuggested: Bool = false
 
     @State private var newTagSheetIsPresented: Bool = false
+    @Namespace private var tagNamespace
 
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
 
     var body: some View {
-        Group {
+        ZStack(alignment: .leading) {
             if let selectedTag {
                 // A tag is selected — show just that tag with a deselect button
                 HStack(spacing: 6) {
                     TagCapsule(tag: selectedTag, .medium, aiSuggested: tagIsAISuggested)
+                        .matchedGeometryEffect(id: selectedTag.persistentModelID, in: tagNamespace)
                     Button {
-                        withAnimation(.easeInOut) {
+                        withAnimation(.spring(duration: 0.35)) {
                             self.selectedTag = nil
                         }
                     } label: {
@@ -42,11 +44,12 @@ struct TagPicker: View {
                     HStack(alignment: .center, spacing: 10) {
                         ForEach(expenseTags, id: \.self) { option in
                             Button {
-                                withAnimation(.easeInOut) {
+                                withAnimation(.spring(duration: 0.35)) {
                                     selectedTag = option
                                 }
                             } label: {
                                 TagCapsule(tag: option, .medium)
+                                    .matchedGeometryEffect(id: option.persistentModelID, in: tagNamespace)
                             }
                             .buttonStyle(.plain)
                         }
@@ -72,8 +75,9 @@ struct TagPicker: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .clipped()
         .padding(.vertical, 2)
-        .animation(.easeInOut, value: selectedTag == nil)
+        .animation(.spring(duration: 0.35), value: selectedTag == nil)
         .sheet(isPresented: $newTagSheetIsPresented) {
             AddExpenseTagSheet { newTag in
                 selectedTag = newTag

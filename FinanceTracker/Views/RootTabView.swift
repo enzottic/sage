@@ -66,9 +66,6 @@ struct RootTabView: View {
 
 
 #Preview {
-    @Previewable @State var appConfig = AppConfiguration()
     RootTabView()
-        .modelContainer(previewAppContainer)
-        .environment(appConfig)
-        .preferredColorScheme(appConfig.selectedAppearance.colorScheme)
+        .environmentInjection()
 }

@@ -19,6 +19,7 @@ struct SageApp: App {
     
     init() {
         UIColorValueTransformer.register()
+        configureNavigationBarAppearance()
         
         // Pull latest iCloud KVS values before checking setup state
         NSUbiquitousKeyValueStore.default.synchronize()
@@ -101,6 +102,15 @@ struct SageApp: App {
         try? context.save()
     }
     
+    private func configureNavigationBarAppearance() {
+        if let largeDescriptor = UIFont.systemFont(ofSize: 34, weight: .bold).fontDescriptor.withDesign(.rounded) {
+            UINavigationBar.appearance().largeTitleTextAttributes = [.font: UIFont(descriptor: largeDescriptor, size: 34)]
+        }
+        if let inlineDescriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
+            UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(descriptor: inlineDescriptor, size: 17)]
+        }
+    }
+
     private func deduplicateTags() {
         let service = TagDeduplicationService(modelContext: appContainer.mainContext)
         let removed = service.deduplicateTags()
