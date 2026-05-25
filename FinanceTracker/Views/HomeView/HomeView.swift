@@ -66,15 +66,22 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
-            List {
-                monthlyOverview
-                categoryUtilization
-                recentExpensesList
+            ScrollView {
+                LazyVStack(spacing: 20) {
+                    monthlyOverview
+                    categoryUtilization
+                    recentExpensesList
+                    Button("Show More") {
+                        appRouter.selectedTab = .expenses
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
             }
             .navigationDestination(for: HomeRouter.Route.self) { route in
                 switch route {
                 case .categoryDetail(let category):
-                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category),total: budget(for: category))
+                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category), total: budget(for: category))
                 case .addExpense:
                     AddExpenseView()
                 }
@@ -83,7 +90,6 @@ struct HomeView: View {
                 ExpenseDetailView(expense: expense)
             }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
-            .scrollContentBackground(.hidden)
             .background(Color.ui.background)
             .sheet(isPresented: $showSplitwiseImport) {
                 SplitwiseImportView()
@@ -141,73 +147,80 @@ struct HomeView: View {
     private var isSpendingMore: Bool { percentageChange > 0 }
     
     var monthlyOverview: some View {
-        Section {
-            VStack(spacing: 20) {
-                TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
-                
-                if lastMonthPartialTotal > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
-                            .foregroundStyle(isSpendingMore ? .red : .green)
-                        
-                        Text("\(abs(percentageChange), specifier: "%.0f")%")
-                        
-                        Text("from last month")
-                    }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
-                    .background(isSpendingMore ? Color.red.tertiary : Color.green.tertiary)
-                    .clipShape(Capsule())
+        VStack(spacing: 20) {
+            TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
+
+            if lastMonthPartialTotal > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
+                        .foregroundStyle(isSpendingMore ? .red : .green)
+
+                    Text("\(abs(percentageChange), specifier: "%.0f")%")
+
+                    Text("from last month")
                 }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(isSpendingMore ? Color.red.tertiary : Color.green.tertiary)
+                .clipShape(Capsule())
             }
-            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.ui.cardBackground)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        )
     }
 
     // MARK: - Category Utilization
     
     var categoryUtilization: some View {
-        Section {
-            ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
-                    CategoryUtilizationView(
-                        for: category,
-                        utilization(for: category),
-                        spent(for: category),
-                        budget(for: category),
-                    )
-                }
-                .tint(.primary)
-                .listRowSeparator(.hidden)
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 8) {
             Text("CATEGORIES")
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .tracking(0.6)
-                .padding(.horizontal)
+                .padding(.horizontal, 4)
+
+            CardRowList(
+                items: ExpenseCategory.allCases,
+                navigationValue: { HomeRouter.Route.categoryDetail(category: $0) }
+            ) { category in
+                CategoryUtilizationView(
+                    for: category,
+                    utilization(for: category),
+                    spent(for: category),
+                    budget(for: category),
+                )
+            }
         }
     }
-    
+
     // MARK: - Recent Expenses List
-    
+
     var recentExpensesList: some View {
-        Section {
-            if (recentPurchases.isEmpty) {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("RECENT EXPENSES")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .tracking(0.6)
+                .padding(.horizontal, 4)
+
+            if recentPurchases.isEmpty {
                 ContentUnavailableView(
                     "No expenses",
                     systemImage: "dollarsign",
                     description: Text("Add expenses to start tracking")
                 )
             } else {
-                ExpenseList(expenses: recentPurchases)
-                Button("Show More") {
-                    appRouter.selectedTab = .expenses
+                CardRowList(items: recentPurchases, navigationValue: { $0 }) { expense in
+                    ExpenseRowItem(expense: expense)
                 }
             }
-        } header: {
-            Text("Recent Expenses")
         }
     }
 }
