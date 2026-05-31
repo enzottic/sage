@@ -28,6 +28,7 @@ class AppRouter {
     var homeRouter = HomeRouter()
     var settingsRouter = SettingsRouter()
     var selectedTab: SageTab = .home
+    var expensesMonth: Date = .now
     var toast: SageToast? = nil
 
     private var dismissTask: Task<Void, Never>?

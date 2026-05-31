@@ -14,9 +14,14 @@ struct ExpenseRowItem: View {
     var body: some View {
         HStack(spacing: 12) {
             // Category color accent bar
-            RoundedRectangle(cornerRadius: 3)
-                .fill(expense.category.color(in: categoryColors))
-                .frame(width: 4, height: 40)
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(expense.category.color(in: categoryColors).secondary)
+                    .frame(width: 40, height: 40)
+                if let tagEmoji = expense.tag?.emoji {
+                    Text(tagEmoji)
+                }
+            }
 
             // Name and date on the left
             VStack(alignment: .leading, spacing: 3) {
@@ -26,9 +31,11 @@ struct ExpenseRowItem: View {
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
-                    Text(expense.date.relative())
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if let tagName = expense.tag?.name {
+                        Text(tagName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
                     if expense.recurringExpenseId != nil {
                         Image(systemName: "arrow.trianglehead.2.clockwise")
@@ -40,14 +47,9 @@ struct ExpenseRowItem: View {
 
             Spacer()
 
-            // Tag and amount on the right
-            VStack(alignment: .trailing, spacing: 3) {
-                Text(expense.amount.currencyStringWithFraction)
-                    .font(.body)
-                    .fontWeight(.medium)
-
-                TagCapsule(tag: expense.tag, .xsmall)
-            }
+            Text("-\(expense.amount.currencyStringWithFraction)")
+                .font(.body)
+                .fontWeight(.medium)
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)

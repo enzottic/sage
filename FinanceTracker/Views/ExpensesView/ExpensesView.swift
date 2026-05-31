@@ -10,6 +10,7 @@ import SwiftData
 
 struct ExpensesView: View {
     @Environment(SplitwiseService.self) private var splitwiseService
+    @Environment(AppRouter.self) private var appRouter
 
     @State private var selectedMonth: Date
     @State private var showSplitwiseImport: Bool = false
@@ -59,6 +60,9 @@ struct ExpensesView: View {
                     )
                 }
                 .gradientBackground()
+                .onChange(of: appRouter.expensesMonth) { _, month in
+                    selectedMonth = month
+                }
         }
     }
 }

@@ -1,53 +1,58 @@
 //
-//  ExpensesView.swift
+//  HomeViewNew.swift
 //  FinanceTracker
 //
-//  Created by Tyler McCormick on 9/21/25.
+//  Created by Tyler McCormick on 5/24/26.
 //
 
 import SwiftUI
 import SwiftData
-import FoundationModels
+import WidgetKit
 import Charts
 
-struct HomeView: View {
+struct HomeViewNew: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(SplitwiseService.self) private var splitwiseService
     @Environment(AppRouter.self) private var appRouter
+    @Environment(\.modelContext) private var modelContext
 
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
     @State private var selectedMonth: Date = .now
     @State private var showSplitwiseImport: Bool = false
+    @State private var expenseToDelete: Expense? = nil
+    @State private var showingDeleteConfirmation: Bool = false
 
     let calendar = Calendar.current
+
+    // Estimated heights for the non-scrolling List frame calculation.
+    // Adjust if row or header content changes significantly.
+    private let listRowHeight: CGFloat = 60
+    private let listHeaderHeight: CGFloat = 44
 
     var monthlyExpenses: [Expense] {
         let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
         let endOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+        return allExpenses.filter { $0.date >= startOfMonth && $0.date < endOfMonth }
+    }
 
-        return allExpenses.filter { expense in
-            expense.date >= startOfMonth && expense.date < endOfMonth
-        }
+    var recentPurchases: [Expense] {
+        Array(monthlyExpenses.prefix(10))
     }
 
     var recentExpensesByDay: [(day: Date, expenses: [Expense])] {
-        let grouped = Dictionary(grouping: monthlyExpenses) {
+        let grouped = Dictionary(grouping: recentPurchases) {
             calendar.startOfDay(for: $0.date)
         }
         return grouped
             .sorted { $0.key > $1.key }
-            .prefix(7)
             .map { (day: $0.key, expenses: $0.value) }
     }
 
-    var recentPurchases: [Expense] {
-        recentExpensesByDay.flatMap { $0.expenses }
-    }
-
-    var totalSpent: Double {
-        monthlyExpenses.total
+    var estimatedRecentListHeight: CGFloat {
+        CGFloat(recentExpensesByDay.count) * listHeaderHeight
+            + CGFloat(recentPurchases.count) * listRowHeight
     }
 
     func utilization(for category: ExpenseCategory) -> Double {
@@ -76,10 +81,14 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
-            List {
-                monthlyOverview
-                categoryUtilization
-                recentExpensesList
+            ScrollView {
+                LazyVStack(spacing: 20) {
+                    monthlyOverview
+                    categoryUtilization
+                    recentExpensesList
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
             }
             .navigationDestination(for: HomeRouter.Route.self) { route in
                 switch route {
@@ -93,7 +102,6 @@ struct HomeView: View {
                 ExpenseDetailView(expense: expense)
             }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
-            .scrollContentBackground(.hidden)
             .background(Color.ui.background)
             .sheet(isPresented: $showSplitwiseImport) {
                 SplitwiseImportView()
@@ -150,89 +158,135 @@ struct HomeView: View {
     private var isSpendingMore: Bool { percentageChange > 0 }
 
     var monthlyOverview: some View {
-        Section {
+        VStack(spacing: 20) {
             TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
-        } footer: {
+
             if lastMonthPartialTotal > 0 {
                 HStack(spacing: 4) {
                     Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
                         .foregroundStyle(isSpendingMore ? .red : .green)
+
                     Text("\(abs(percentageChange), specifier: "%.0f")%")
+
                     Text("from last month")
                 }
-                .foregroundStyle(isSpendingMore ? Color.red : Color.green)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(isSpendingMore ? Color.red.tertiary : Color.green.tertiary)
+                .clipShape(Capsule())
             }
         }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.ui.cardBackground)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        )
     }
 
     // MARK: - Category Utilization
 
     var categoryUtilization: some View {
-        Section {
-            ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
-                    CategoryUtilizationView(
-                        for: category,
-                        utilization(for: category),
-                        spent(for: category),
-                        budget(for: category),
-                    )
-                }
-                .tint(.primary)
-                .listRowSeparator(.hidden)
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 8) {
             Text("CATEGORIES")
-                .font(.subheadline)
+                .font(.caption)
                 .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
                 .tracking(0.6)
+                .padding(.horizontal, 4)
+
+            CardRowList(
+                items: ExpenseCategory.allCases,
+                navigationValue: { HomeRouter.Route.categoryDetail(category: $0) }
+            ) { category in
+                CategoryUtilizationView(
+                    for: category,
+                    utilization(for: category),
+                    spent(for: category),
+                    budget(for: category),
+                )
+            }
         }
     }
 
     // MARK: - Recent Expenses List
 
-    @ViewBuilder
     var recentExpensesList: some View {
-        if !recentPurchases.isEmpty {
-            Section {
-            } footer: {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("RECENT EXPENSES")
-                    Spacer()
-                    Button("Show More") {
-                        appRouter.expensesMonth = selectedMonth
-                        appRouter.selectedTab = .expenses
-                    }
-                }
-                .font(.subheadline)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("RECENT EXPENSES")
+                .font(.caption)
                 .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
                 .tracking(0.6)
-            }
+                .padding(.horizontal, 4)
 
-            ForEach(recentExpensesByDay, id: \.day) { group in
-                Section {
-                    ExpenseList(expenses: group.expenses)
-                } header: {
-                    HStack {
-                        Text(group.day.relative().uppercased())
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                            .tracking(0.6)
-                        Spacer()
-                        Text(group.expenses.total.currencyString)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                            .tracking(0.6)
+            if recentPurchases.isEmpty {
+                ContentUnavailableView(
+                    "No expenses",
+                    systemImage: "dollarsign",
+                    description: Text("Add expenses to start tracking")
+                )
+            } else {
+                List {
+                    ForEach(recentExpensesByDay, id: \.day) { group in
+                        Section {
+                            ForEach(group.expenses) { expense in
+                                NavigationLink(value: expense) {
+                                    ExpenseRowItem(expense: expense)
+                                }
+                                .tint(.primary)
+                                .swipeActions {
+                                    Button("Delete") {
+                                        expenseToDelete = expense
+                                        showingDeleteConfirmation = true
+                                    }
+                                    .tint(.red)
+                                }
+                            }
+                        } header: {
+                            HStack {
+                                Text(group.day.relative())
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Text(group.expenses.total.currencyString)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .textCase(nil)
+                        }
                     }
                 }
+                .listStyle(.plain)
+                .scrollDisabled(true)
+                .scrollContentBackground(.hidden)
+                .background(Color.ui.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                .frame(height: estimatedRecentListHeight)
+                .alert("Delete Expense?", isPresented: $showingDeleteConfirmation) {
+                    Button("Delete", role: .destructive) {
+                        if let expense = expenseToDelete { deleteExpense(expense) }
+                    }
+                    Button("Cancel", role: .cancel) { expenseToDelete = nil }
+                }
             }
+        }
+    }
+
+    private func deleteExpense(_ expense: Expense) {
+        withAnimation {
+            modelContext.delete(expense)
+            try! modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
+            appRouter.showToast(SageToast(message: "Expense deleted", kind: .success))
         }
     }
 }
 
 #Preview {
-    HomeView()
+    HomeViewNew()
         .environmentInjection()
 }

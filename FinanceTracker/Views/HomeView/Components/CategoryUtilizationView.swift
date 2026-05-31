@@ -20,23 +20,35 @@ struct CategoryUtilizationView: View {
         self.total = total
     }
 
+    var remaining: Double { max(total - used, 0) }
+    var isOverBudget: Bool { used > total + 0.001 }
+
     var body: some View {
         HStack(spacing: 10) {
             CircularProgressBar(progress: utilization, tint: category.color(in: categoryColors))
                 .frame(width: 50, height: 50)
-            
+
             VStack(alignment: .leading) {
                 Text(category.rawValue)
                     .font(.title2)
                     .fontWeight(.bold)
-                
+
                 HStack(spacing: 5) {
                     Text(used.currencyString)
                         .fontWeight(.semibold)
-                        .foregroundStyle(utilization > 1.0 ? .red : .primary)
+                        .foregroundStyle(isOverBudget ? .red : .primary)
                     Text("of \(total.currencyString)")
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(isOverBudget ? "Over budget" : "\(remaining.currencyString) left")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(isOverBudget ? .red : .secondary)
             }
         }
     }
