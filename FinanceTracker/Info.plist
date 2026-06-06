@@ -19,6 +19,10 @@
 	<string>$(SPLITWISE_CONSUMER_KEY)</string>
 	<key>SplitwiseConsumerSecret</key>
 	<string>$(SPLITWISE_CONSUMER_SECRET)</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>me.enzottic.sage.recurringRefresh</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

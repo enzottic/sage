@@ -20,10 +20,13 @@ struct SageApp: App {
     init() {
         UIColorValueTransformer.register()
         configureNavigationBarAppearance()
-        
+
         // Pull latest iCloud KVS values before checking setup state
         NSUbiquitousKeyValueStore.default.synchronize()
-        
+
+        // Register before the app finishes launching (BGTaskScheduler requirement)
+        RecurringNotificationService.registerBackgroundTask()
+
         // If onboarding was completed on another device, skip it here
         if !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
            AppConfiguration.hasCompletedSetupOnAnotherDevice {
@@ -44,6 +47,8 @@ struct SageApp: App {
             .task {
                 await seedBuiltInTagsIfNeeded()
                 deduplicateTags()
+                await scheduleRecurringNotifications()
+                RecurringNotificationService.scheduleNextBackgroundRefresh()
             }
             .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: DispatchQueue.main)) { _ in
                 deduplicateTags()
@@ -109,6 +114,12 @@ struct SageApp: App {
         if let inlineDescriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
             UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(descriptor: inlineDescriptor, size: 17)]
         }
+    }
+
+    @MainActor
+    private func scheduleRecurringNotifications() async {
+        let rules = (try? appContainer.mainContext.fetch(FetchDescriptor<RecurringExpenseRule>())) ?? []
+        await RecurringNotificationService.scheduleAll(rules: rules, enabled: appConfiguration.billRemindersEnabled)
     }
 
     private func deduplicateTags() {
