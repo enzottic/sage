@@ -13,6 +13,7 @@ import SwiftData
 enum RecurringNotificationService {
     static let bgTaskIdentifier = "me.enzottic.sage.recurringRefresh"
     private static let center = UNUserNotificationCenter.current()
+    private static let notificationIDPrefix = "recurring-day-"
 
     // MARK: - Authorization
 
@@ -26,25 +27,31 @@ enum RecurringNotificationService {
 
     // MARK: - Scheduling
 
-    /// Cancels all pending recurring notifications and re-schedules one per active rule.
-    /// Using one slot per rule keeps total pending notifications well under the 64-notification system cap.
+    /// Cancels all pending day-grouped notifications and re-schedules one per unique due date.
+    /// Grouping by day means multiple bills landing on the same date produce a single notification,
+    /// and slot usage is bounded by due dates rather than rule count.
     static func scheduleAll(rules: [RecurringExpenseRule], enabled: Bool) async {
-        let ids = rules.map { notificationID(for: $0) }
-        center.removePendingNotificationRequests(withIdentifiers: ids)
+        // Remove every previously scheduled recurring-day notification
+        let pending = await center.pendingNotificationRequests()
+        let staleIDs = pending.map(\.identifier).filter { $0.hasPrefix(notificationIDPrefix) }
+        center.removePendingNotificationRequests(withIdentifiers: staleIDs)
 
         guard enabled else { return }
 
         let status = await authorizationStatus()
         guard status == .authorized || status == .provisional else { return }
 
+        // Group rules by the calendar day of their next occurrence
+        var byDay: [Date: [RecurringExpenseRule]] = [:]
         for rule in rules {
-            await scheduleNext(for: rule)
+            guard let next = nextOccurrence(for: rule) else { continue }
+            let day = Calendar.current.startOfDay(for: next)
+            byDay[day, default: []].append(rule)
         }
-    }
 
-    /// Cancels the pending notification for a specific rule. Call when a rule is deleted.
-    static func cancel(for rule: RecurringExpenseRule) {
-        center.removePendingNotificationRequests(withIdentifiers: [notificationID(for: rule)])
+        for (day, dayRules) in byDay {
+            await scheduleNotification(dueDate: day, rules: dayRules)
+        }
     }
 
     // MARK: - Background Task
@@ -84,17 +91,21 @@ enum RecurringNotificationService {
 
     // MARK: - Private
 
-    private static func scheduleNext(for rule: RecurringExpenseRule) async {
-        guard let nextDate = nextOccurrence(for: rule) else { return }
-
-        // Notify at 9 AM the day before the due date
-        guard let notifyDay = Calendar.current.date(byAdding: .day, value: -1, to: nextDate),
+    private static func scheduleNotification(dueDate: Date, rules: [RecurringExpenseRule]) async {
+        guard let notifyDay = Calendar.current.date(byAdding: .day, value: -1, to: dueDate),
               notifyDay > Date() else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Bill Due Tomorrow"
-        content.body = "\(rule.name) (\(rule.amount.currencyStringWithFraction)) is due tomorrow."
         content.sound = .default
+
+        if rules.count == 1, let rule = rules.first {
+            content.title = "Bill Due Tomorrow"
+            content.body = "\(rule.name) (\(rule.amount.currencyStringWithFraction)) is due tomorrow."
+        } else {
+            let names = rules.map(\.name).joined(separator: ", ")
+            content.title = "\(rules.count) Bills Due Tomorrow"
+            content.body = names
+        }
 
         var components = Calendar.current.dateComponents([.year, .month, .day], from: notifyDay)
         components.hour = 9
@@ -102,15 +113,17 @@ enum RecurringNotificationService {
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let request = UNNotificationRequest(
-            identifier: notificationID(for: rule),
+            identifier: notificationID(for: dueDate),
             content: content,
             trigger: trigger
         )
         try? await center.add(request)
     }
 
-    private static func notificationID(for rule: RecurringExpenseRule) -> String {
-        "recurring-\(rule.id.uuidString)"
+    private static func notificationID(for day: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return "\(notificationIDPrefix)\(formatter.string(from: day))"
     }
 
     private static func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {

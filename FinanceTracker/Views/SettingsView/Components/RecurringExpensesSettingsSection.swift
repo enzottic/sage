@@ -98,7 +98,10 @@ struct RecurringExpensesSettingsSection: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("Delete Recurring Rule?", isPresented: $showDeleteConfirmation, presenting: ruleToDelete) { rule in
             Button("Delete Rule", role: .destructive) {
-                RecurringNotificationService.cancel(for: rule)
+                let remaining = rules.filter { $0.id != rule.id }
+                Task {
+                    await RecurringNotificationService.scheduleAll(rules: remaining, enabled: config.billRemindersEnabled)
+                }
                 modelContext.delete(rule)
                 try? modelContext.save()
                 router.showToast(SageToast(message: "Expense Recurrence Rule Deleted", kind: .success))
