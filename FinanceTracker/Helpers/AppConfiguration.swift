@@ -49,6 +49,8 @@ class AppConfiguration {
         static let needsColor = "categoryColorNeeds"
         static let wantsColor = "categoryColorWants"
         static let savingsColor = "categoryColorSavings"
+        // Stored locally only — notifications are per-device and don't sync to iCloud KVS
+        static let billRemindersEnabled = "billRemindersEnabled"
     }
     
     var selectedAppearance: Appearance {
@@ -125,6 +127,12 @@ class AppConfiguration {
         didSet {
             defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
             WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    var billRemindersEnabled: Bool {
+        didSet {
+            defaults.set(billRemindersEnabled, forKey: Keys.billRemindersEnabled)
         }
     }
 
@@ -211,6 +219,9 @@ class AppConfiguration {
         self.needsColor = defaults.sageColor(forKey: Keys.needsColor) ?? Color("NeedColor")
         self.wantsColor = defaults.sageColor(forKey: Keys.wantsColor) ?? Color("WantColor")
         self.savingsColor = defaults.sageColor(forKey: Keys.savingsColor) ?? Color("SavingColor")
+
+        // Bill reminders — stored locally only (not synced to iCloud KVS)
+        self.billRemindersEnabled = defaults.bool(forKey: Keys.billRemindersEnabled)
 
         // Push current values to local defaults so widgets stay in sync
         syncToLocalDefaults()
