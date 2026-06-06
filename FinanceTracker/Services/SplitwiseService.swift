@@ -386,9 +386,12 @@ final class SplitwiseService {
 
     @MainActor
     private var presentationAnchor: ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.keyWindow ?? UIWindow()
+        guard let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first else {
+            return UIWindow(frame: .zero)
+        }
+        return windowScene.keyWindow ?? UIWindow(windowScene: windowScene)
     }
 
     private static let decoder: JSONDecoder = {

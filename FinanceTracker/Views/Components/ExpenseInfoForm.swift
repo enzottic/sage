@@ -23,7 +23,6 @@ struct ExpenseInfoForm: View {
     @Binding var tag: ExpenseTag?
     @Binding var note: String
     var isEditing: Bool
-    let receiptParser: ReceiptParserService
 
     private let tagSuggestionService = TagSuggestionService()
     @FocusState private var focusedField: Field?
@@ -52,7 +51,6 @@ struct ExpenseInfoForm: View {
         self._tag = tag
         self._note = note
         self.isEditing = isEditing
-        self.receiptParser = ReceiptParserService()
     }
 
     var body: some View {
@@ -95,7 +93,8 @@ struct ExpenseInfoForm: View {
         let tags = expenseTags
         Task {
             if #available(iOS 26.0, *) {
-                let result = await receiptParser.parseReceipt(image: image, tags: tags)
+                let parser = ReceiptParserService()
+                let result = await parser.parseReceipt(image: image, tags: tags)
                 
                 if let result = result {
                     print(result)
@@ -127,7 +126,9 @@ struct ExpenseInfoForm: View {
             }
             Spacer(minLength: 0)
             if !isEditing {
-                receiptButton
+                if #available(iOS 26.0, *) {
+                    receiptButton
+                }
             }
         }
         .padding(.horizontal)

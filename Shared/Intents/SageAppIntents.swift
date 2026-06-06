@@ -24,7 +24,7 @@ struct AddExpenseAppIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let container = try await SageModelContainer.make()
+        let container = try SageModelContainer.make()
         let context = ModelContext(container)
 
         let expense = Expense(name: name, amount: amount, category: category)

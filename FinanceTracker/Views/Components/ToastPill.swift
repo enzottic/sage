@@ -18,7 +18,7 @@ struct ToastPill: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .glassEffect(.regular, in: .capsule)
+        .optionalGlassEffect(in: .capsule)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(toast.kind == .success ? "Success" : "Error"): \(toast.message)")
     }

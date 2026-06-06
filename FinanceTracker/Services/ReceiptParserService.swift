@@ -66,6 +66,7 @@ an receipt. You are to determine the following information from the text:
 }
 
     
+@available(iOS 26.0, *)
 @Generable(description: "A collection of details for an expense parsed from a receipt")
 struct ParsedExpense {
     @Guide(description: "A short description of the expense, or where the expense came from. You should try to be as descriptive as possible in as little words as possible. For example, if the receipt seems to be a grocery receipt and is from the store 'Safeway', you would respond with 'Safeway'.")

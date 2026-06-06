@@ -75,15 +75,26 @@ struct SettingsListItem: View {
 
     var body: some View {
         HStack {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .frame(width: 35, height: 35)
-                    .foregroundStyle(color)
-                Image(systemName: icon)
-                    .foregroundStyle(.white)
-                    .fontWeight(.black)
+            if #available(iOS 26.0, *) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(width: 35, height: 35)
+                        .foregroundStyle(color)
+                    Image(systemName: icon)
+                        .foregroundStyle(.white)
+                        .fontWeight(.black)
+                }
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 10))
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(width: 35, height: 35)
+                        .foregroundStyle(color)
+                    Image(systemName: icon)
+                        .foregroundStyle(.white)
+                        .fontWeight(.black)
+                }
             }
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 10))
             Text(text)
         }
     }
