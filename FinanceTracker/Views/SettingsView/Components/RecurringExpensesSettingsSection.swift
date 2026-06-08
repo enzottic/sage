@@ -11,7 +11,29 @@ struct RecurringExpensesSettingsSection: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: \RecurringExpenseRule.name) private var rules: [RecurringExpenseRule]
+    @Query private var rules: [RecurringExpenseRule]
+
+    private var sortedRules: [RecurringExpenseRule] {
+        rules.sorted {
+            let a = nextOccurrence(for: $0) ?? .distantFuture
+            let b = nextOccurrence(for: $1) ?? .distantFuture
+            return a < b
+        }
+    }
+
+    private func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {
+        let calendar = Calendar.current
+        let after = rule.lastGeneratedDate ?? rule.startDate
+        let next: Date?
+        switch rule.frequency {
+        case .daily:    next = calendar.date(byAdding: .day, value: 1, to: after)
+        case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
+        case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
+        case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
+        }
+        if let next, let endDate = rule.endDate, next > endDate { return nil }
+        return next
+    }
 
     @State private var ruleToEdit: RecurringExpenseRule? = nil
     @State private var ruleToDelete: RecurringExpenseRule? = nil
@@ -60,8 +82,8 @@ struct RecurringExpensesSettingsSection: View {
                 )
             } else {
                 Section {
-                    ForEach(rules) { rule in
-                        RecurringRuleRow(rule: rule)
+                    ForEach(sortedRules) { rule in
+                        RecurringRuleRow(rule: rule, nextOccurrence: nextOccurrence(for: rule))
                             .contentShape(Rectangle())
                             .onTapGesture { ruleToEdit = rule }
                             .contextMenu {
@@ -73,7 +95,7 @@ struct RecurringExpensesSettingsSection: View {
                             }
                     }
                     .onDelete { indexSet in
-                        ruleToDelete = rules[indexSet.first!]
+                        ruleToDelete = sortedRules[indexSet.first!]
                         showDeleteConfirmation = true
                     }
                 } header: {
@@ -137,10 +159,10 @@ struct RecurringExpensesSettingsSection: View {
 private struct RecurringRuleRow: View {
     @Environment(\.categoryColors) private var categoryColors
     let rule: RecurringExpenseRule
+    let nextOccurrence: Date?
 
     var body: some View {
         HStack(spacing: 12) {
-            // Category color accent
             RoundedRectangle(cornerRadius: 3)
                 .fill(rule.category.color(in: categoryColors))
                 .frame(width: 4, height: 40)
@@ -157,9 +179,9 @@ private struct RecurringRuleRow: View {
                         Text("·")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text("next \(next.formatted(date: .abbreviated, time: .omitted))")
+                        Text(daysLabel(for: next))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(isImminent(next) ? .orange : .secondary)
                     }
                     if let endDate = rule.endDate {
                         Text("· ends \(endDate.formatted(date: .abbreviated, time: .omitted))")
@@ -181,19 +203,16 @@ private struct RecurringRuleRow: View {
         }
     }
 
-    /// The next date this rule will generate an expense, or nil if it has expired.
-    private var nextOccurrence: Date? {
-        let calendar = Calendar.current
-        let after = rule.lastGeneratedDate ?? rule.startDate
-        let next: Date?
-        switch rule.frequency {
-        case .daily:    next = calendar.date(byAdding: .day, value: 1, to: after)
-        case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
-        case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
-        case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
-        }
-        if let next, let endDate = rule.endDate, next > endDate { return nil }
-        return next
+    private func daysLabel(for date: Date) -> String {
+        let days = max(0, Calendar.current.dateComponents([.day], from: .now, to: date).day ?? 0)
+        if days == 0 { return "today" }
+        if days == 1 { return "in 1 day" }
+        return "in \(days) days"
+    }
+
+    private func isImminent(_ date: Date) -> Bool {
+        let days = Calendar.current.dateComponents([.day], from: .now, to: date).day ?? 0
+        return days <= 3
     }
 }
 

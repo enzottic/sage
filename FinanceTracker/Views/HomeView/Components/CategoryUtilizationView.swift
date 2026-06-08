@@ -45,7 +45,7 @@ struct CategoryUtilizationView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(isOverBudget ? "Over budget" : "\(remaining.currencyString) left")
+                Text(isOverBudget ? "-\((used - total).currencyString)" : "\(remaining.currencyString) left")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(isOverBudget ? .red : .secondary)

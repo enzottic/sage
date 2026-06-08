@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C673106B2FD4932500A4C432 /* AppIntents.framework */; };
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
 		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -55,6 +56,7 @@
 /* Begin PBXFileReference section */
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C66031C62E8073C60078DD15 /* Sage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C673106B2FD4932500A4C432 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinanceTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6B09FD22E92CF5200899162 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		C6B09FD42E92CF5200899162 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -164,6 +166,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */,
 				C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */,
 				C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */,
 			);
@@ -207,6 +210,7 @@
 		C6B09FD12E92CF5200899162 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C673106B2FD4932500A4C432 /* AppIntents.framework */,
 				C6B09FD22E92CF5200899162 /* WidgetKit.framework */,
 				C6B09FD42E92CF5200899162 /* SwiftUI.framework */,
 			);
@@ -620,7 +624,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = Shared/Services/SageModelContainer.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -640,7 +643,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "me.enzottic.FinanceTracker-debug";
 				PRODUCT_NAME = Sage;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -670,7 +673,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = Shared/Services/SageModelContainer.swift;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -690,7 +692,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker;
 				PRODUCT_NAME = Sage;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -719,7 +721,6 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "Shared/Services/ExpenseStore.swift Shared/Services/SageModelContainer.swift";
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
@@ -755,7 +756,6 @@
 				CODE_SIGN_ENTITLEMENTS = FinanceTrackerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "Shared/Services/ExpenseStore.swift Shared/Services/SageModelContainer.swift";
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;

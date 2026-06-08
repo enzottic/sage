@@ -6,10 +6,39 @@
 //
 import SwiftUI
 import SwiftData
+import WebKit
+import Darwin
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
+
+    private var feedbackURL: URL {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let ios = UIDevice.current.systemVersion
+        let body = "\n\n\n--- Please do not remove the info below ---\nSage \(version) (\(build)) · iOS \(ios) · \(Self.deviceModel)"
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "hi@enzottic.me"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "Sage Feedback"),
+            URLQueryItem(name: "body", value: body)
+        ]
+        return components.url!
+    }
+
+    private static var deviceModel: String {
+        #if targetEnvironment(simulator)
+        return ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? "Simulator"
+        #else
+        var size = 0
+        sysctlbyname("hw.machine", nil, &size, nil, 0)
+        var machine = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.machine", &machine, &size, nil, 0)
+        return String(cString: machine)
+        #endif
+    }
 
     var body: some View {
         NavigationStack(path: Bindable(router.settingsRouter).navigationPath) {
@@ -39,10 +68,12 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach([SettingsPage.privacy, .termsOfUse], id: \.self) { page in
-                        NavigationLink(value: page) {
-                            SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
-                        }
+                    Link(destination: feedbackURL) {
+                        SettingsListItem(text: "Feedback", icon: "envelope.fill", color: .yellow)
+                    }
+                    let page = SettingsPage.privacy
+                    NavigationLink(value: page) {
+                        SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                     }
                 }
             }
@@ -61,7 +92,8 @@ struct SettingsView: View {
                     ExpenseBackupSettingsSection()
                 case .splitwise:
                     SplitwiseSettingsSection()
-                default: Text(page.rawValue)
+                case .privacy:
+                    PrivacyWebView()
                 }
             }
         }
@@ -108,7 +140,6 @@ enum SettingsPage: String, Hashable, CaseIterable {
     case backup = "Backup"
     case splitwise = "Splitwise"
     case privacy = "Privacy"
-    case termsOfUse = "Terms of Use"
 
     var icon: String {
         switch self {
@@ -119,7 +150,6 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .backup: "cloud.fill"
         case .splitwise: "arrow.trianglehead.branch"
         case .privacy: "hand.raised.fill"
-        case .termsOfUse: "iphone.gen1"
         }
     }
 
@@ -132,9 +162,62 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .backup: .blue
         case .splitwise: .green
         case .privacy: .red
-        case .termsOfUse: .yellow
         }
     }
+}
+
+private struct PrivacyWebView: View {
+    @State private var isReaderMode = false
+
+    var body: some View {
+        WebView(url: URL(string: "https://enzottic.me/sage/privacy")!, isReaderMode: isReaderMode)
+            .ignoresSafeArea()
+            .navigationTitle("Privacy")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isReaderMode.toggle()
+                    } label: {
+                        Image(systemName: isReaderMode ? "doc.plaintext.fill" : "doc.plaintext")
+                    }
+                }
+            }
+    }
+}
+
+private struct WebView: UIViewRepresentable {
+    let url: URL
+    let isReaderMode: Bool
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.load(URLRequest(url: url))
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let js = isReaderMode ? Self.enableReaderModeJS : Self.disableReaderModeJS
+        webView.evaluateJavaScript(js)
+    }
+
+    private static let enableReaderModeJS = """
+    (function() {
+        var s = document.getElementById('sage-reader');
+        if (!s) { s = document.createElement('style'); s.id = 'sage-reader'; document.head.appendChild(s); }
+        s.textContent = `
+            header, footer, nav, aside, .sidebar, .menu, .ad, [class*="cookie"], [class*="banner"] { display: none !important; }
+            body { max-width: 660px !important; margin: 0 auto !important; padding: 24px 20px !important;
+                   font-family: -apple-system, Georgia, serif !important; font-size: 17px !important;
+                   line-height: 1.75 !important; color: #1c1c1e !important; background: #fff !important; }
+            img { max-width: 100% !important; }
+        `;
+    })();
+    """
+
+    private static let disableReaderModeJS = """
+    (function() { var s = document.getElementById('sage-reader'); if (s) s.remove(); })();
+    """
 }
 
 #Preview {

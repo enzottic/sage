@@ -18,6 +18,33 @@ struct HomeView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
+    @Query private var recurringRules: [RecurringExpenseRule]
+
+    private var upcomingRules: [RecurringExpenseRule] {
+        recurringRules
+            .compactMap { rule -> (rule: RecurringExpenseRule, next: Date)? in
+                guard let next = nextOccurrence(for: rule) else { return nil }
+                return (rule, next)
+            }
+            .sorted { $0.next < $1.next }
+            .prefix(5)
+            .map { $0.rule }
+    }
+
+    private func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {
+        let calendar = Calendar.current
+        let after = rule.lastGeneratedDate ?? rule.startDate
+        let next: Date?
+        switch rule.frequency {
+        case .daily:    next = calendar.date(byAdding: .day, value: 1, to: after)
+        case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
+        case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
+        case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
+        }
+        if let next, let endDate = rule.endDate, next > endDate { return nil }
+        return next
+    }
+
     @State private var selectedMonth: Date = .now
     @State private var showSplitwiseImport: Bool = false
 
@@ -79,6 +106,7 @@ struct HomeView: View {
             List {
                 monthlyOverview
                 categoryUtilization
+                upcomingRecurringSection
                 recentExpensesList
             }
             .navigationDestination(for: HomeRouter.Route.self) { route in
@@ -182,10 +210,36 @@ struct HomeView: View {
                 .listRowSeparator(.hidden)
             }
         } header: {
-            Text("CATEGORIES")
+            Text("Categories")
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .tracking(0.6)
+        }
+    }
+
+    // MARK: - Upcoming Recurring
+
+    @ViewBuilder
+    var upcomingRecurringSection: some View {
+        if !upcomingRules.isEmpty {
+            Section {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(upcomingRules) { rule in
+                            if let next = nextOccurrence(for: rule) {
+                                UpcomingRecurringCard(rule: rule, nextDate: next)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+            } header: {
+                Text("Upcoming Expenses")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
         }
     }
 
@@ -197,16 +251,15 @@ struct HomeView: View {
             Section {
             } footer: {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("RECENT EXPENSES")
+                    Text("Recent Expenses")
                     Spacer()
-                    Button("Show More") {
+                    Button("Show All") {
                         appRouter.expensesMonth = selectedMonth
                         appRouter.selectedTab = .expenses
                     }
                 }
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .tracking(0.6)
             }
 
             ForEach(recentExpensesByDay, id: \.day) { group in
@@ -214,21 +267,64 @@ struct HomeView: View {
                     ExpenseList(expenses: group.expenses)
                 } header: {
                     HStack {
-                        Text(group.day.relative().uppercased())
+                        Text(group.day.relative())
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
-                            .tracking(0.6)
                         Spacer()
                         Text(group.expenses.total.currencyString)
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
-                            .tracking(0.6)
                     }
                 }
             }
         }
+    }
+}
+
+private struct UpcomingRecurringCard: View {
+    @Environment(\.categoryColors) private var categoryColors
+    let rule: RecurringExpenseRule
+    let nextDate: Date
+
+    private var daysAway: Int {
+        max(0, Calendar.current.dateComponents([.day], from: .now, to: nextDate).day ?? 0)
+    }
+
+    private var isImminent: Bool { daysAway <= 3 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                if let emoji = rule.tag?.emoji {
+                    Text(emoji)
+                        .font(.title2)
+                }
+                Spacer()
+                Text(daysAway == 0 ? "today" : daysAway == 1 ? "1 day" : "\(daysAway)d")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(isImminent ? .white : .secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(isImminent ? Color.orange : Color.secondary.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+
+            Text(rule.name)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .lineLimit(1)
+
+            Text(rule.amount.currencyStringWithFraction)
+                .font(.headline)
+                .fontWeight(.bold)
+        }
+        .padding(14)
+        .frame(width: 150)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 
