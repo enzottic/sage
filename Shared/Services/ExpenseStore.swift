@@ -51,6 +51,52 @@ class ExpenseStore {
         return (try? context.fetch(fetchDescriptor)) ?? []
     }
 
+    func fetchTag(id: UUID) -> ExpenseTag? {
+        let descriptor = FetchDescriptor<ExpenseTag>(
+            predicate: #Predicate { $0.id == id }
+        )
+        return try? context.fetch(descriptor).first
+    }
+
+    func monthlyTotal(for month: Date = .now) -> Double {
+        fetchExpenses(for: month).total
+    }
+
+    func monthlyTotal(category: ExpenseCategory, month: Date = .now) -> Double {
+        fetchExpenses(for: month).filter { $0.category == category }.total
+    }
+
+    func monthlyTotal(tagId: UUID, month: Date = .now) -> Double {
+        fetchExpenses(for: month).filter { $0.tag?.id == tagId }.total
+    }
+
+    // MARK: - Budget
+
+    func budget(for category: ExpenseCategory) -> Double {
+        let defaults = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier) ?? .standard
+        let income = Double(defaults.integer(forKey: "totalMonthlyIncome"))
+        switch category {
+        case .needs:
+            return income * (defaults.object(forKey: "needsPercent") as? Double ?? 0.5)
+        case .wants:
+            return income * (defaults.object(forKey: "wantsPercent") as? Double ?? 0.3)
+        case .savings:
+            return income * (defaults.object(forKey: "savingsPercent") as? Double ?? 0.2)
+        }
+    }
+
+    func totalBudget() -> Double {
+        ExpenseCategory.allCases.map { budget(for: $0) }.reduce(0, +)
+    }
+
+    func remainingBudget(for category: ExpenseCategory, month: Date = .now) -> Double {
+        budget(for: category) - monthlyTotal(category: category, month: month)
+    }
+
+    func totalRemainingBudget(month: Date = .now) -> Double {
+        totalBudget() - monthlyTotal(for: month)
+    }
+
     // MARK: - Delete
 
     func deleteExpense(_ expense: Expense) {

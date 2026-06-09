@@ -10,6 +10,7 @@ import SwiftData
 import CloudKit
 import Combine
 import CoreData
+import AppIntents
 
 @main
 struct SageApp: App {
@@ -26,6 +27,9 @@ struct SageApp: App {
 
         // Register before the app finishes launching (BGTaskScheduler requirement)
         RecurringNotificationService.registerBackgroundTask()
+
+        // Register App Shortcuts phrases with Siri
+        SageShortcutsProvider.updateAppShortcutParameters()
 
         // If onboarding was completed on another device, skip it here
         if !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),

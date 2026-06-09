@@ -15,26 +15,27 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $appRouter.selectedTab) {
 
-            Tab("Home", systemImage: "house", value: .home) {
+            Tab("Home", systemImage: "house", value: SageTab.home) {
                 HomeView()
             }
 
-            Tab("Expenses", systemImage: "list.bullet", value: .expenses) {
+            Tab("Expenses", systemImage: "list.bullet", value: SageTab.expenses) {
                 ExpensesView()
             }
 
-            Tab("Stats", systemImage: "chart.bar", value: .stats) {
+            Tab("Stats", systemImage: "chart.bar", value: SageTab.stats) {
                 StatsView()
             }
 
-            Tab("Settings", systemImage: "gear", value: .settings) {
+            Tab("Settings", systemImage: "gear", value: SageTab.settings) {
                 SettingsView()
             }
-
-            Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
-                SearchExpensesView()
+            
+            if #available(anyAppleOS 27.0, *) {
+                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
+                    AddExpenseView()
+                }
             }
-
         }
         .overlay(alignment: .top) {
             if let toast = appRouter.toast {

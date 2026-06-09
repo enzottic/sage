@@ -22,7 +22,7 @@ struct ExpenseTagEntity: AppEntity {
 
 struct ExpenseTagEntityQuery: EntityQuery {
     func entities(for identifiers: [UUID]) async throws -> [ExpenseTagEntity] {
-        let container = try await SageModelContainer.make()
+        let container = try SageModelContainer.make()
         let context = ModelContext(container)
         let all = try context.fetch(FetchDescriptor<ExpenseTag>())
         return all
@@ -31,7 +31,7 @@ struct ExpenseTagEntityQuery: EntityQuery {
     }
 
     func suggestedEntities() async throws -> [ExpenseTagEntity] {
-        let container = try await SageModelContainer.make()
+        let container = try SageModelContainer.make()
         let context = ModelContext(container)
         let all = try context.fetch(FetchDescriptor<ExpenseTag>(sortBy: [SortDescriptor(\.name)]))
         return all.map { ExpenseTagEntity(id: $0.id, name: $0.name, emoji: $0.emoji) }

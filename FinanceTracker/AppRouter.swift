@@ -12,6 +12,7 @@ enum SageTab: Equatable, Hashable {
     case stats
     case settings
     case search
+    case addExpense
 }
 
 /// Push value for the "add expense" flow when used as a navigation destination.
