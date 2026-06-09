@@ -41,5 +41,16 @@ struct SageShortcutsProvider: AppShortcutsProvider {
             shortTitle: "Budget Remaining",
             systemImageName: "creditcard"
         ),
+        AppShortcut(
+            intent: FindExpensesIntent(),
+            phrases: [
+                "How much did I spend \(\.$timePeriod) in ${applicationName}",
+                "What did I pay for \(\.$tag) in ${applicationName}",
+                "How much did I spend on \(\.$category) in ${applicationName}",
+                "Find my expenses in ${applicationName}",
+            ],
+            shortTitle: "Find Expenses",
+            systemImageName: "magnifyingglass"
+        ),
     ]
 }

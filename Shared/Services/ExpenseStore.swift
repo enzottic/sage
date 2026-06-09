@@ -58,6 +58,16 @@ class ExpenseStore {
         return try? context.fetch(descriptor).first
     }
 
+    func fetchExpenses(from startDate: Date, to endDate: Date) -> [Expense] {
+        let fetchDescriptor = FetchDescriptor<Expense>(
+            predicate: #Predicate { expense in
+                startDate <= expense.date && expense.date < endDate
+            },
+            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
+        )
+        return (try? context.fetch(fetchDescriptor)) ?? []
+    }
+
     func monthlyTotal(for month: Date = .now) -> Double {
         fetchExpenses(for: month).total
     }
