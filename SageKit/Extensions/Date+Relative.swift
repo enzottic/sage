@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Date {
+public extension Date {
     func relative() -> String {
         let calendar = Calendar.current
         let now = Date()

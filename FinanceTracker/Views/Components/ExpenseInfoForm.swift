@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import SageKit
 
 struct ExpenseInfoForm: View {
     @Environment(AppConfiguration.self) private var config

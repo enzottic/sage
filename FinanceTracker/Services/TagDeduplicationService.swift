@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+import SageKit
 
 @MainActor
 class TagDeduplicationService {

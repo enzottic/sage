@@ -7,9 +7,9 @@ import Foundation
 import AppIntents
 import SwiftData
 
-struct ExpenseEntity: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Expense"
-    static var defaultQuery = ExpenseEntityQuery()
+public struct ExpenseEntity: AppEntity {
+    public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Expense"
+    public static var defaultQuery = ExpenseEntityQuery()
 
     public let id: UUID
     let name: String
@@ -44,21 +44,21 @@ extension ExpenseEntity {
     }
 }
 
-struct ExpenseEntityQuery: EntityQuery, EntityStringQuery {
-    func entities(for identifiers: [UUID]) async throws -> [ExpenseEntity] {
+public struct ExpenseEntityQuery: EntityQuery, EntityStringQuery {
+    public func entities(for identifiers: [UUID]) async throws -> [ExpenseEntity] {
         let store = try ExpenseStore()
         return store.fetchAllExpenses()
             .filter { identifiers.contains($0.id) }
             .map { ExpenseEntity(from: $0) }
     }
 
-    func suggestedEntities() async throws -> [ExpenseEntity] {
+    public func suggestedEntities() async throws -> [ExpenseEntity] {
         let store = try ExpenseStore()
         return Array(store.fetchExpenses(for: .now).prefix(20))
             .map { ExpenseEntity(from: $0) }
     }
 
-    func entities(matching string: String) async throws -> [ExpenseEntity] {
+    public func entities(matching string: String) async throws -> [ExpenseEntity] {
         let store = try ExpenseStore()
         let lowercased = string.lowercased()
         return store.fetchAllExpenses()
@@ -68,4 +68,6 @@ struct ExpenseEntityQuery: EntityQuery, EntityStringQuery {
             }
             .map { ExpenseEntity(from: $0) }
     }
+    
+    public init() { }
 }

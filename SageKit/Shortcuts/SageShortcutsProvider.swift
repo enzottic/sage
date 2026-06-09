@@ -8,13 +8,16 @@
 import Foundation
 import AppIntents
 
-struct SageShortcutsProvider: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] = [
+public struct SageShortcutsProvider: AppShortcutsProvider {
+    public static var appShortcuts: [AppShortcut] = [
         AppShortcut(
             intent: AddExpenseAppIntent(),
             phrases: [
                 "Add a new expense to ${applicationName}",
+                "Add an expense to ${applicationName}",
                 "Create a new ${applicationName} expense",
+                "Add expense in ${applicationName}",
+                "Create a new expense in ${applicationName}"
             ],
             shortTitle: "Add Expense",
             systemImageName: "dollarsign"

@@ -8,7 +8,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-extension ExpenseTag {
+public extension ExpenseTag {
     // Stable UUIDs for built-in tags — must never change, used to
     // detect whether seeding has already occurred (e.g. via CloudKit sync).
     enum BuiltInID {

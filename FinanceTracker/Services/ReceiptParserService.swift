@@ -8,6 +8,7 @@ import Foundation
 import UIKit
 import Vision
 import FoundationModels
+import SageKit
 
 @available(iOS 26.0, *)
 class ReceiptParserService {

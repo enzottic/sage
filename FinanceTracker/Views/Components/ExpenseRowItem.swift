@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SageKit
 
 struct ExpenseRowItem: View {
     @Environment(\.categoryColors) private var categoryColors

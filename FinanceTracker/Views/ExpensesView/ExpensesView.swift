@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct ExpensesView: View {
     @Environment(SplitwiseService.self) private var splitwiseService

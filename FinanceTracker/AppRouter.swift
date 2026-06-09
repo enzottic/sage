@@ -5,6 +5,7 @@
 //  Created by Tyler McCormick on 3/17/26.
 //
 import SwiftUI
+import SageKit
 
 enum SageTab: Equatable, Hashable {
     case home

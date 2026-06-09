@@ -7,19 +7,21 @@ import Foundation
 import AppIntents
 import SwiftData
 
-struct GetBudgetRemainingIntent: AppIntent {
-    static var title: LocalizedStringResource = "Check Budget Remaining"
+public struct GetBudgetRemainingIntent: AppIntent {
+    public static var title: LocalizedStringResource = "Check Budget Remaining"
 
     @Parameter(title: "Category") var category: ExpenseCategory?
 
-    static var parameterSummary: some ParameterSummary {
+    public static var parameterSummary: some ParameterSummary {
         Summary("How much budget do I have left?") {
             \.$category
         }
     }
+    
+    public init() { }
 
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    public func perform() async throws -> some IntentResult & ProvidesDialog {
         let store = try ExpenseStore()
         if let category {
             let remaining = store.remainingBudget(for: category)

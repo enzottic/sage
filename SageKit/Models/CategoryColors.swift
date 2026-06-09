@@ -5,18 +5,24 @@
 
 import SwiftUI
 
-struct CategoryColors: Equatable {
-    var needs: Color
-    var wants: Color
-    var savings: Color
+public struct CategoryColors: Equatable {
+    public var needs: Color
+    public var wants: Color
+    public var savings: Color
+    
+    public init(needs: Color, wants: Color, savings: Color) {
+        self.needs = needs
+        self.wants = wants
+        self.savings = savings
+    }
 
-    static let `default` = CategoryColors(
+    public static let `default` = CategoryColors(
         needs: Color("NeedColor"),
         wants: Color("WantColor"),
         savings: Color("SavingColor")
     )
 
-    static func load() -> CategoryColors {
+    public static func load() -> CategoryColors {
         let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup") ?? .standard
         return CategoryColors(
             needs: defaults.sageColor(forKey: "categoryColorNeeds") ?? Color("NeedColor"),
@@ -25,7 +31,7 @@ struct CategoryColors: Equatable {
         )
     }
 
-    func color(for category: ExpenseCategory) -> Color {
+    public func color(for category: ExpenseCategory) -> Color {
         switch category {
         case .needs: return needs
         case .wants: return wants
@@ -38,7 +44,7 @@ private struct CategoryColorsKey: EnvironmentKey {
     static let defaultValue = CategoryColors.default
 }
 
-extension EnvironmentValues {
+public extension EnvironmentValues {
     var categoryColors: CategoryColors {
         get { self[CategoryColorsKey.self] }
         set { self[CategoryColorsKey.self] = newValue }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct CategoryDetailView: View {
     @Environment(\.categoryColors) private var categoryColors

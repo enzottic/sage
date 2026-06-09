@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import Charts
+import SageKit
 
 struct ChartView: View {
     @Environment(\.categoryColors) private var categoryColors

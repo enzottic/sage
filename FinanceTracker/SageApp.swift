@@ -11,6 +11,7 @@ import CloudKit
 import Combine
 import CoreData
 import AppIntents
+import SageKit
 
 @main
 struct SageApp: App {
@@ -132,5 +133,12 @@ struct SageApp: App {
         if removed > 0 {
             print("Deduplicated \(removed) tag(s)")
         }
+    }
+    
+}
+
+struct MainAppPackage: AppIntentsPackage {
+    static var includedPackages: [any AppIntentsPackage.Type] {
+        [SageKitPackage.self]
     }
 }

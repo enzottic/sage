@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct AddExpenseTagSheet: View {
     @Environment(\.modelContext) var modelContext

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct StatsFilterBar: View {
     @Environment(\.categoryColors) private var categoryColors

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct TagCapsule: View {
     let tag: ExpenseTag?

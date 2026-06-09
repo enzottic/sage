@@ -7,6 +7,7 @@
 import SwiftUI
 import WidgetKit
 import Charts
+import SageKit
 
 struct ExpensePieChartEntryView: View {
     @Environment(\.widgetFamily) var family

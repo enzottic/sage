@@ -129,83 +129,16 @@
 		C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppIntents/Entities/ExpenseEntity.swift,
-				AppIntents/Entities/ExpenseTagEntity.swift,
-				AppIntents/Intents/AddExpenseIntent.swift,
-				AppIntents/Intents/FindExpensesIntent.swift,
-				AppIntents/Intents/GetBudgetRemainingIntent.swift,
-				AppIntents/Intents/GetMonthlySpendingIntent.swift,
-				AppIntents/Intents/WidgetConfigurationIntents.swift,
 				Assets.xcassets,
-				"Extensions/Date+Relative.swift",
-				"Extensions/Date+TextOutputStreamable.swift",
-				"Extensions/Number+CurrencyString.swift",
-				"Extensions/UserDefaults+SageColor.swift",
-				Models/CategoryColors.swift,
-				Models/ExpenseCategory.swift,
-				Models/ExpenseTag.swift,
-				Models/SageSchema.swift,
-				Services/ExpenseStore.swift,
-				Services/ReceiptHandoffService.swift,
-				Services/SageModelContainer.swift,
-				Shortcuts/SageShortcutsProvider.swift,
-				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
 		};
 		C68EEE1D2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTrackerWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppIntents/Entities/ExpenseEntity.swift,
-				AppIntents/Entities/ExpenseTagEntity.swift,
-				AppIntents/Intents/AddExpenseIntent.swift,
-				AppIntents/Intents/FindExpensesIntent.swift,
-				AppIntents/Intents/GetBudgetRemainingIntent.swift,
-				AppIntents/Intents/GetMonthlySpendingIntent.swift,
-				AppIntents/Intents/WidgetConfigurationIntents.swift,
 				Assets.xcassets,
-				"Extensions/Date+Relative.swift",
-				"Extensions/Date+TextOutputStreamable.swift",
-				"Extensions/Number+CurrencyString.swift",
-				"Extensions/UserDefaults+SageColor.swift",
-				Models/CategoryColors.swift,
-				Models/ExpenseCategory.swift,
-				Models/ExpenseTag.swift,
-				Models/SageSchema.swift,
-				Services/ExpenseStore.swift,
-				Services/ReceiptHandoffService.swift,
-				Services/SageModelContainer.swift,
-				Shortcuts/SageShortcutsProvider.swift,
-				Utilities/UIColorValueTransformer.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
-		};
-		C68EEE1E2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "SageKit" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AppIntents/Entities/ExpenseEntity.swift,
-				AppIntents/Entities/ExpenseTagEntity.swift,
-				AppIntents/Intents/AddExpenseIntent.swift,
-				AppIntents/Intents/FindExpensesIntent.swift,
-				AppIntents/Intents/GetBudgetRemainingIntent.swift,
-				AppIntents/Intents/GetMonthlySpendingIntent.swift,
-				AppIntents/Intents/WidgetConfigurationIntents.swift,
-				Assets.xcassets,
-				"Extensions/Date+Relative.swift",
-				"Extensions/Date+TextOutputStreamable.swift",
-				"Extensions/Number+CurrencyString.swift",
-				"Extensions/UserDefaults+SageColor.swift",
-				Models/CategoryColors.swift,
-				Models/ExpenseCategory.swift,
-				Models/ExpenseTag.swift,
-				Models/SageSchema.swift,
-				Services/ExpenseStore.swift,
-				Services/ReceiptHandoffService.swift,
-				Services/SageModelContainer.swift,
-				Shortcuts/SageShortcutsProvider.swift,
-				Utilities/UIColorValueTransformer.swift,
-			);
-			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
 		};
 		C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -250,7 +183,6 @@
 			exceptions = (
 				C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */,
 				C68EEE1D2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTrackerWidgetExtension" target */,
-				C68EEE1E2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "SageKit" target */,
 			);
 			path = SageKit;
 			sourceTree = "<group>";

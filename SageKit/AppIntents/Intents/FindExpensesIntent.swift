@@ -7,7 +7,7 @@ import Foundation
 import AppIntents
 import SwiftData
 
-enum ExpenseTimePeriod: String, AppEnum {
+public enum ExpenseTimePeriod: String, AppEnum {
     case today
     case yesterday
     case thisWeek
@@ -15,9 +15,9 @@ enum ExpenseTimePeriod: String, AppEnum {
     case thisMonth
     case lastMonth
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Time Period"
+    public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Time Period"
 
-    static var caseDisplayRepresentations: [ExpenseTimePeriod: DisplayRepresentation] = [
+    public static var caseDisplayRepresentations: [ExpenseTimePeriod: DisplayRepresentation] = [
         .today: "Today",
         .yesterday: "Yesterday",
         .thisWeek: "This Week",
@@ -26,7 +26,7 @@ enum ExpenseTimePeriod: String, AppEnum {
         .lastMonth: "Last Month",
     ]
 
-    var dateRange: (start: Date, end: Date) {
+    public var dateRange: (start: Date, end: Date) {
         let calendar = Calendar.current
         let now = Date.now
         switch self {
@@ -65,16 +65,17 @@ enum ExpenseTimePeriod: String, AppEnum {
     }
 }
 
-struct FindExpensesIntent: AppIntent {
-    static var title: LocalizedStringResource = "Find Expenses"
-    static var openAppWhenRun: Bool = false
+public struct FindExpensesIntent: AppIntent {
+    public static var title: LocalizedStringResource = "Find Expenses"
+    public static var openAppWhenRun: Bool = false
+    
 
     @Parameter(title: "Time Period", default: .thisMonth) var timePeriod: ExpenseTimePeriod
     @Parameter(title: "Tag") var tag: ExpenseTagEntity?
     @Parameter(title: "Category") var category: ExpenseCategory?
     @Parameter(title: "Name Contains") var nameFilter: String?
 
-    static var parameterSummary: some ParameterSummary {
+    public static var parameterSummary: some ParameterSummary {
         Summary("How much did I spend \(\.$timePeriod)?") {
             \.$tag
             \.$category
@@ -82,8 +83,10 @@ struct FindExpensesIntent: AppIntent {
         }
     }
 
+    public init() { }
+    
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Double> {
+    public func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Double> {
         let store = try ExpenseStore()
         let (start, end) = timePeriod.dateRange
         var expenses = store.fetchExpenses(from: start, to: end)

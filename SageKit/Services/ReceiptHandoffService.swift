@@ -6,11 +6,11 @@
 //
 import UIKit
 
-struct ReceiptHandoffService {
+public struct ReceiptHandoffService {
     private static let groupID = "group.me.enzottic.SageAppGroup"
     private static let fileName = "pendingReceiptImage.jpg"
     
-    static func consumePendingImage() -> UIImage? {
+    public static func consumePendingImage() -> UIImage? {
         guard
             let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)?.appendingPathComponent(fileName),
             let data = try? Data(contentsOf: url),

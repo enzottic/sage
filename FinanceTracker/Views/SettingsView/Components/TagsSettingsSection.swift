@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct TagsSettingsSection: View {
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]

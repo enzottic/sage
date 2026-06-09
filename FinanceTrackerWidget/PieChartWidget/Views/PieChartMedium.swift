@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SageKit
 
 struct PieChartMedium: View {
     @Environment(\.categoryColors) private var categoryColors

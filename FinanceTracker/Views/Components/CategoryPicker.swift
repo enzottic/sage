@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SageKit
 
 struct CategoryPicker: View {
     @Environment(\.categoryColors) private var categoryColors

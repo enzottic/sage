@@ -5,6 +5,7 @@
 //  Created by Tyler McCormick on 3/13/26.
 //
 import SwiftUI
+import SageKit
 
 struct CategoryUtilizationView: View {
     @Environment(\.categoryColors) private var categoryColors

@@ -7,6 +7,7 @@
 
 import Foundation
 import WidgetKit
+import SageKit
 
 struct ExpenseSnapshot: Identifiable {
     let id: UUID

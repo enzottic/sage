@@ -8,10 +8,10 @@
 import Foundation
 import SwiftData
 
-enum SageModelContainer {
-    nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
+public enum SageModelContainer {
+    public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
 
-    static nonisolated func make(cloudKitEnabled: Bool = false) throws -> ModelContainer {
+    public static nonisolated func make(cloudKitEnabled: Bool = false) throws -> ModelContainer {
         UIColorValueTransformer.register()
 
         let schema = Schema(versionedSchema: SageSchemaV2.self)

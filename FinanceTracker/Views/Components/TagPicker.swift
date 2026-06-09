@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct TagPicker: View {
     @Binding var selectedTag: ExpenseTag?

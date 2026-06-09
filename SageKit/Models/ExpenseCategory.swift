@@ -7,12 +7,12 @@
 import SwiftUI
 import AppIntents
 
-enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
+public enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
     case needs = "Needs"
     case wants = "Wants"
     case savings = "Savings"
     
-    var defaultColor: Color {
+    public var defaultColor: Color {
         switch self {
         case .needs: return Color("NeedColor")
         case .wants: return Color("WantColor")
@@ -20,11 +20,11 @@ enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
         }
     }
 
-    func color(in colors: CategoryColors) -> Color {
+    public func color(in colors: CategoryColors) -> Color {
         colors.color(for: self)
     }
     
-    var description: String {
+    public var description: String {
         switch self {
         case .needs: "Essentials like bills and groceries."
         case .wants: "Non-essentials like entertainment, dining-out, etc."
@@ -33,7 +33,7 @@ enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
     }
 }
 
-extension ExpenseCategory {
+public extension ExpenseCategory {
     static var typeDisplayRepresentation: TypeDisplayRepresentation {
         TypeDisplayRepresentation(name: "Expense Category")
     }

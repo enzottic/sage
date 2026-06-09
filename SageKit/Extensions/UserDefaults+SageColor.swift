@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension UserDefaults {
+public extension UserDefaults {
     func sageColor(forKey key: String) -> Color? {
         guard let components = array(forKey: key) as? [Double], components.count == 4 else { return nil }
         return Color(.sRGB, red: components[0], green: components[1], blue: components[2], opacity: components[3])

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WidgetKit
+import SageKit
 
 struct CategorySpotlightEntryView: View {
     @Environment(\.categoryColors) private var categoryColors

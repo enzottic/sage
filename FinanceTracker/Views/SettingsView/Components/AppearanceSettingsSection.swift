@@ -5,6 +5,7 @@
 //  Created by Tyler McCormick on 10/15/25.
 //
 import SwiftUI
+import SageKit
 
 struct AppearanceSettingsSection: View {
     @Environment(AppConfiguration.self) private var config

@@ -6,15 +6,19 @@
 import AppIntents
 import WidgetKit
 
-struct UtilizationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Budget Utilization" }
-    static var description = IntentDescription("Shows your budget utilization across all categories.")
+public struct UtilizationAppIntent: WidgetConfigurationIntent {
+    public static var title: LocalizedStringResource { "Budget Utilization" }
+    public static var description = IntentDescription("Shows your budget utilization across all categories.")
+    
+    public init() { }
 }
 
-struct CategorySpotlightAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Category Spotlight" }
-    static var description = IntentDescription("Choose a budget category to spotlight.")
+public struct CategorySpotlightAppIntent: WidgetConfigurationIntent {
+    public static var title: LocalizedStringResource { "Category Spotlight" }
+    public static var description = IntentDescription("Choose a budget category to spotlight.")
 
     @Parameter(title: "Category", default: .needs)
-    var category: ExpenseCategory
+    public var category: ExpenseCategory
+    
+    public init() { }
 }

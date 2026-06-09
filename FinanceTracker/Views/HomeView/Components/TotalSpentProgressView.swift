@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Charts
+import SageKit
 
 struct TotalSpentProgressView: View {
     @Environment(\.categoryColors) private var categoryColors

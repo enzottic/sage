@@ -5,6 +5,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import SageKit
 
 struct EditRecurringRuleSheet: View {
     @Environment(\.modelContext) private var modelContext

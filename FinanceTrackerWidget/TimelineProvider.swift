@@ -6,6 +6,7 @@
 //
 import Foundation
 import WidgetKit
+import SageKit
 
 private extension Date {
     static var nextRefresh: Date { Date().addingTimeInterval(15 * 60) }

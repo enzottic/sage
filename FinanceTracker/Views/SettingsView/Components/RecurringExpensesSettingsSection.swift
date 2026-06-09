@@ -5,6 +5,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import SageKit
 
 struct RecurringExpensesSettingsSection: View {
     @Environment(AppRouter.self) var router

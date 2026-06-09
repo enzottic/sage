@@ -7,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import SageKit
 
 struct ExpenseDetailView: View {
     @Environment(\.dismiss) var dismiss

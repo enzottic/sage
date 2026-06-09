@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 import Charts
+import SageKit
 
 struct HomeViewNew: View {
     @Environment(AppConfiguration.self) private var config

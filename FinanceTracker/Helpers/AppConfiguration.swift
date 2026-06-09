@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import WidgetKit
+import SageKit
 
 enum Appearance: String, CaseIterable {
     case system = "System"

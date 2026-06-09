@@ -6,6 +6,7 @@
 //
 import Foundation
 import SwiftData
+import SageKit
 
 // Copies SQLite files (main + WAL + SHM) from src to dst. Safe to call if src doesn't exist.
 private func copyStoreFiles(from src: URL, to dst: URL) {

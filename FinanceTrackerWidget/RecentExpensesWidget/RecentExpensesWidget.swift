@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WidgetKit
+import SageKit
 
 struct RecentExpensesEntryView: View {
     @Environment(\.widgetFamily) var family

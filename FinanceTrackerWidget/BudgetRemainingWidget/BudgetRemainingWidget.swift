@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WidgetKit
+import SageKit
 
 struct BudgetRemainingEntryView: View {
     let entry: BudgetRemainingEntry

@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import Charts
+import SageKit
 
 struct MonthlySpendingData: Identifiable {
     let month: Date

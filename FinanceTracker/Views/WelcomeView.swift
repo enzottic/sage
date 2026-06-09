@@ -8,6 +8,7 @@
 import SwiftUI
 import WidgetKit
 import SwiftData
+import SageKit
 
 struct WelcomeView: View {
     @Environment(AppConfiguration.self) var config

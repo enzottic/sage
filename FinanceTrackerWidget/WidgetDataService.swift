@@ -7,6 +7,7 @@
 
 import Foundation
 import os
+import SageKit
 
 private let logger = Logger(subsystem: "me.enzottic.FinanceTracker.widget", category: "WidgetDataService")
 

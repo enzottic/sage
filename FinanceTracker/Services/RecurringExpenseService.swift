@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SageKit
 
 class RecurringExpenseService {
     private let modelContext: ModelContext

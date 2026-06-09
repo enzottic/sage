@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SageKit
 
 struct SearchExpensesView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var expenses: [Expense]

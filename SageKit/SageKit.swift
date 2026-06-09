@@ -6,4 +6,6 @@
 //
 
 import Foundation
+import AppIntents
 
+public struct SageKitPackage: AppIntentsPackage { }

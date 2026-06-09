@@ -9,21 +9,23 @@ import Foundation
 import AppIntents
 import SwiftData
 
-struct GetMonthlySpendingIntent: AppIntent {
-    static var title: LocalizedStringResource = "Get Monthly Spending"
+public struct GetMonthlySpendingIntent: AppIntent {
+    public static var title: LocalizedStringResource = "Get Monthly Spending"
     
     @Parameter(title: "Category") var category: ExpenseCategory?
     @Parameter(title: "Tag") var tag: ExpenseTagEntity?
 
-    static var parameterSummary: some ParameterSummary {
+    public static var parameterSummary: some ParameterSummary {
         Summary("How much have I spent this month?") {
             \.$category
             \.$tag
         }
     }
+    
+    public init() { }
 
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    public func perform() async throws -> some IntentResult & ProvidesDialog {
         let store = try ExpenseStore()
         
         if let tag {

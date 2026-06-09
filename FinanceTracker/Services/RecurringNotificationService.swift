@@ -9,6 +9,7 @@ import Foundation
 import UserNotifications
 import BackgroundTasks
 import SwiftData
+import SageKit
 
 enum RecurringNotificationService {
     static let bgTaskIdentifier = "me.enzottic.sage.recurringRefresh"
