@@ -12,14 +12,80 @@ import Charts
 import SageKit
 
 struct HomeView: View {
-    @Environment(AppConfiguration.self) private var config
+    @Environment(AppRouter.self) private var appRouter
     @Environment(SplitwiseService.self) private var splitwiseService
+
+    @State private var selectedMonth: Date = .now
+    @State private var showSplitwiseImport: Bool = false
+
+    var body: some View {
+        NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
+            HomeContentView(selectedMonth: selectedMonth)
+                .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
+                .scrollContentBackground(.hidden)
+                .background(.sageBackground)
+                .sheet(isPresented: $showSplitwiseImport) {
+                    SplitwiseImportView()
+                }
+                .toolbar {
+                    SageToolbar(
+                        onPrevious: {
+                            selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth)!
+                        },
+                        onNext: {
+                            selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
+                        },
+                        onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense) },
+                        onImportFromSplitwise: splitwiseService.isConfigured
+                            ? { showSplitwiseImport = true }
+                            : nil,
+                    )
+                }
+                .gradientBackground()
+                .navigationDestination(for: HomeRouter.Route.self) { route in
+                    switch route {
+                    case .categoryDetail(let category):
+                        HomeContentView.CategoryDetailRoute(category: category)
+                    case .addExpense:
+                        AddExpenseView()
+                    }
+                }
+                .navigationDestination(for: Expense.self) { expense in
+                    ExpenseDetailView(expense: expense)
+                }
+        }
+    }
+}
+
+// MARK: - Content
+
+private struct HomeContentView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(AppRouter.self) private var appRouter
 
-    @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
-    private var allExpenses: [Expense]
+    let selectedMonth: Date
 
+    @Query private var monthlyExpenses: [Expense]
+    @Query private var comparisonExpenses: [Expense]
     @Query private var recurringRules: [RecurringExpenseRule]
+
+    private let calendar = Calendar.current
+
+    init(selectedMonth: Date) {
+        self.selectedMonth = selectedMonth
+        let cal = Calendar.current
+
+        let startOfMonth = cal.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
+        let endOfMonth = cal.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+        _monthlyExpenses = Query(filter: #Predicate<Expense> { $0.date >= startOfMonth && $0.date <= endOfMonth }, sort: \.date)
+
+        let now = Date.now
+        let lastMonth = cal.date(byAdding: .month, value: -1, to: now) ?? now
+        let startOfLastMonth = cal.dateInterval(of: .month, for: lastMonth)?.start ?? lastMonth
+        _comparisonExpenses = Query(filter: #Predicate<Expense> { $0.date >= startOfLastMonth && $0.date <= now }, sort: \.date)
+    }
+
+    // MARK: Helpers
 
     private var upcomingRules: [RecurringExpenseRule] {
         recurringRules
@@ -33,7 +99,6 @@ struct HomeView: View {
     }
 
     private func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {
-        let calendar = Calendar.current
         let after = rule.lastGeneratedDate ?? rule.startDate
         let next: Date?
         switch rule.frequency {
@@ -41,23 +106,11 @@ struct HomeView: View {
         case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
         case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
         case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
+        @unknown default:
+            fatalError("Unknown frequency: \(rule.frequency)")
         }
         if let next, let endDate = rule.endDate, next > endDate { return nil }
         return next
-    }
-
-    @State private var selectedMonth: Date = .now
-    @State private var showSplitwiseImport: Bool = false
-
-    let calendar = Calendar.current
-
-    var monthlyExpenses: [Expense] {
-        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
-        let endOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
-
-        return allExpenses.filter { expense in
-            expense.date >= startOfMonth && expense.date < endOfMonth
-        }
     }
 
     var recentExpensesByDay: [(day: Date, expenses: [Expense])] {
@@ -74,15 +127,12 @@ struct HomeView: View {
         recentExpensesByDay.flatMap { $0.expenses }
     }
 
-    var totalSpent: Double {
-        monthlyExpenses.total
-    }
-
     func utilization(for category: ExpenseCategory) -> Double {
         switch category {
         case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
         case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
         case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
+        @unknown default: fatalError("Unknown expense category")
         }
     }
 
@@ -91,6 +141,7 @@ struct HomeView: View {
         case .wants: monthlyExpenses.wantsUsed
         case .needs: monthlyExpenses.needsUsed
         case .savings: monthlyExpenses.savingsUsed
+        @unknown default: fatalError("Unknown expense category")
         }
     }
 
@@ -99,49 +150,18 @@ struct HomeView: View {
         case .wants: config.wantsBudget
         case .needs: config.needsBudget
         case .savings: config.savingsBudget
+        @unknown default: fatalError("Unknown expense category")
         }
     }
 
+    // MARK: Body
+
     var body: some View {
-        NavigationStack(path: Bindable(appRouter.homeRouter).navigationPath) {
-            List {
-                monthlyOverview
-                categoryUtilization
-                upcomingRecurringSection
-                recentExpensesList
-            }
-            .navigationDestination(for: HomeRouter.Route.self) { route in
-                switch route {
-                case .categoryDetail(let category):
-                    CategoryDetailView(category: category, utilization: utilization(for: category), used: spent(for: category), total: budget(for: category))
-                case .addExpense:
-                    AddExpenseView()
-                }
-            }
-            .navigationDestination(for: Expense.self) { expense in
-                ExpenseDetailView(expense: expense)
-            }
-            .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
-            .scrollContentBackground(.hidden)
-            .background(.sageBackground)
-            .sheet(isPresented: $showSplitwiseImport) {
-                SplitwiseImportView()
-            }
-            .toolbar {
-                SageToolbar(
-                    onPrevious: {
-                        selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth)!
-                    },
-                    onNext: {
-                        selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
-                    },
-                    onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense) },
-                    onImportFromSplitwise: splitwiseService.isConfigured
-                        ? { showSplitwiseImport = true }
-                        : nil,
-                )
-            }
-            .gradientBackground()
+        List {
+            monthlyOverview
+            categoryUtilization
+            upcomingRecurringSection
+            recentExpensesList
         }
     }
 
@@ -158,7 +178,7 @@ struct HomeView: View {
         components.day = dayOfMonth
         let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
 
-        return allExpenses.filter {
+        return comparisonExpenses.filter {
             $0.date >= startOfLastMonth && $0.date <= cutoffDate
         }.total
     }
@@ -166,7 +186,7 @@ struct HomeView: View {
     var currentMonthPartialTotal: Double {
         let now = Date()
         let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
-        return allExpenses.filter {
+        return comparisonExpenses.filter {
             $0.date >= startOfMonth && $0.date <= now
         }.total
     }
@@ -282,7 +302,58 @@ struct HomeView: View {
             }
         }
     }
+
+    // MARK: - Navigation helpers
+
+    struct CategoryDetailRoute: View {
+        @Environment(AppConfiguration.self) private var config
+        @Query private var monthlyExpenses: [Expense]
+
+        let category: ExpenseCategory
+
+        init(category: ExpenseCategory) {
+            self.category = category
+            let cal = Calendar.current
+            let now = Date.now
+            let start = cal.dateInterval(of: .month, for: now)?.start ?? now
+            let end = cal.dateInterval(of: .month, for: now)?.end ?? now
+            _monthlyExpenses = Query(filter: #Predicate<Expense> { $0.date >= start && $0.date <= end }, sort: \.date)
+        }
+
+        private func utilization() -> Double {
+            switch category {
+            case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
+            case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
+            case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
+            @unknown default: fatalError("Unknown expense category")
+            }
+        }
+
+        private func spent() -> Double {
+            switch category {
+            case .wants: monthlyExpenses.wantsUsed
+            case .needs: monthlyExpenses.needsUsed
+            case .savings: monthlyExpenses.savingsUsed
+            @unknown default: fatalError("Unknown expense category")
+            }
+        }
+
+        private func budget() -> Double {
+            switch category {
+            case .wants: config.wantsBudget
+            case .needs: config.needsBudget
+            case .savings: config.savingsBudget
+            @unknown default: fatalError("Unknown expense category")
+            }
+        }
+
+        var body: some View {
+            CategoryDetailView(category: category, utilization: utilization(), used: spent(), total: budget())
+        }
+    }
 }
+
+// MARK: - Upcoming Recurring Card
 
 private struct UpcomingRecurringCard: View {
     @Environment(\.categoryColors) private var categoryColors

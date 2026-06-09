@@ -32,26 +32,41 @@ class TagDeduplicationService {
         var removedCount = 0
         
         for (_, tags) in grouped where tags.count > 1 {
-            // Sort by persistentModelID to get a deterministic winner across devices.
-            // All peers will pick the same winner since persistentModelID is stable.
-            var sorted = tags.sorted { $0.persistentModelID.hashValue < $1.persistentModelID.hashValue }
+            // Prefer the tag that already has expenses attached (the CloudKit-synced one).
+            // If neither or both have expenses, fall back to stable UUID string ordering
+            // so all devices converge on the same winner without relying on hashValue,
+            // which is randomized per process in Swift.
+            var sorted = tags.sorted { a, b in
+                let aHasExpenses = !(a.expenses?.isEmpty ?? true)
+                let bHasExpenses = !(b.expenses?.isEmpty ?? true)
+                if aHasExpenses != bHasExpenses { return aHasExpenses }
+                return (a.id.uuidString) < (b.id.uuidString)
+            }
             let winner = sorted.removeFirst()
-            
+
             for duplicate in sorted {
-                // Reassign expenses from the duplicate to the winner
-                if let expenses = duplicate.expenses {
+                // Fetch expenses referencing the duplicate directly — don't rely on the
+                // lazily-loaded inverse relationship, which may not be faulted in yet
+                // when this runs immediately after a CloudKit remote-change notification.
+                let duplicateTagID = duplicate.id
+                let expensesDescriptor = FetchDescriptor<Expense>(
+                    predicate: #Predicate { $0.tag?.id == duplicateTagID }
+                )
+                if let expenses: [Expense] = try? modelContext.fetch(expensesDescriptor) {
                     for expense in expenses {
                         expense.tag = winner
                     }
                 }
-                
-                // Reassign recurring rules from the duplicate to the winner
-                if let rules = duplicate.recurringRules {
+
+                let rulesDescriptor = FetchDescriptor<RecurringExpenseRule>(
+                    predicate: #Predicate { $0.tag?.id == duplicateTagID }
+                )
+                if let rules: [RecurringExpenseRule] = try? modelContext.fetch(rulesDescriptor) {
                     for rule in rules {
                         rule.tag = winner
                     }
                 }
-                
+
                 modelContext.delete(duplicate)
                 removedCount += 1
             }
