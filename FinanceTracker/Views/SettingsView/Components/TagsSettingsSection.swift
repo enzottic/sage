@@ -85,12 +85,12 @@ struct TagsSettingsSection: View {
         }
         .sheet(isPresented: $showAddTagSheet) {
             AddExpenseTagSheet()
-                .presentationBackground(Color.ui.background)
+                .presentationBackground(.sageBackground)
                 .presentationDetents([.medium])
         }
         .sheet(item: $tagToEdit) { tag in
             AddExpenseTagSheet(tagToEdit: tag)
-                .presentationBackground(Color.ui.background)
+                .presentationBackground(.background)
                 .presentationDetents([.medium])
         }
     }

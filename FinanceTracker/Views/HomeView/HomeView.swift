@@ -122,7 +122,7 @@ struct HomeView: View {
             }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
             .scrollContentBackground(.hidden)
-            .background(Color.ui.background)
+            .background(.sageBackground)
             .sheet(isPresented: $showSplitwiseImport) {
                 SplitwiseImportView()
             }

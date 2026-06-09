@@ -7,21 +7,6 @@
 
 import SwiftUI
 
-extension Color {
-    static let ui = Color.UI()
-
-    struct UI {
-        let sage = Color("Sage")
-        let background = Color("Background")
-        let cardBackground = Color("CardBackground")
-        let want = Color("WantColor")
-        let need = Color("NeedColor")
-        let saving = Color("SavingColor")
-        let selectedWant = Color("SelectedWant")
-        let selectedNeed = Color("SelectedNeed")
-    }
-}
-
 extension UserDefaults {
     func sageColor(forKey key: String) -> Color? {
         guard let components = array(forKey: key) as? [Double], components.count == 4 else { return nil }

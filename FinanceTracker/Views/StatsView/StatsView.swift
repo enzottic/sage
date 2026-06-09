@@ -104,7 +104,7 @@ struct StatsView: View {
                 }
                 .padding(.vertical)
             }
-            .background(Color.ui.background)
+            .background(.sageBackground)
             .navigationTitle("Stats")
             .gradientBackground(color: gradientColor)
         }
@@ -116,7 +116,7 @@ struct StatsView: View {
         } else if let tag = selectedTag, !tag.isDeleted {
             return tag.color
         } else {
-            return Color.ui.sage
+            return .sage
         }
     }
 
@@ -155,7 +155,7 @@ struct StatsView: View {
             .frame(height: 220)
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 15).fill(Color.ui.cardBackground))
+        .background(RoundedRectangle(cornerRadius: 15).fill(.cardBackground))
     }
 }
 

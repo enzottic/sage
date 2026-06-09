@@ -12,9 +12,9 @@ struct AppearanceSettingsSection: View {
     func appearanceFill(_ appearance: Appearance) -> UIColor {
         switch appearance {
         case .light:
-            return UIColor(Color.ui.background).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+            return UIColor(.sageBackground).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
         case .dark:
-            return UIColor(Color.ui.background).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+            return UIColor(.sageBackground).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
         case .system: return .darkGray
         }
     }

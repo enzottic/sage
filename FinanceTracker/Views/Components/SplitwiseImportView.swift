@@ -121,7 +121,7 @@ private struct SplitwiseExpenseRow: View {
                     Text(owedAmount, format: .currency(code: expense.currencyCode))
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.ui.sage)
+                        .foregroundStyle(.sage)
 
                     Text("of \(totalAmount.formatted(.currency(code: expense.currencyCode)))")
                         .font(.caption)
@@ -191,6 +191,6 @@ private struct SplitwiseImportConfirmSheet: View {
             }
         }
         .presentationDetents([.large])
-        .presentationBackground(Color.ui.background)
+        .presentationBackground(.sageBackground)
     }
 }

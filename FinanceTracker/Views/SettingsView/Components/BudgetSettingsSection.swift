@@ -28,7 +28,7 @@ struct BudgetSettingsSection: View {
             Section {
                     AllocationSlider(
                         title: "Wants",
-                        color: Color.ui.want,
+                        color: .want,
                         icon: "cart.fill",
                         percentage: Binding(
                             get: { config.wantsPercent * 100 },
@@ -38,7 +38,7 @@ struct BudgetSettingsSection: View {
 
                     AllocationSlider(
                         title: "Needs",
-                        color: Color.ui.need,
+                        color: .need,
                         icon: "house.fill",
                         percentage: Binding(
                             get: { config.needsPercent * 100 },

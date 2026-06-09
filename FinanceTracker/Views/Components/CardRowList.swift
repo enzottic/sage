@@ -39,7 +39,7 @@ struct CardRowList<Item, NavValue: Hashable, Content: View>: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.ui.cardBackground)
+                .fill(.cardBackground)
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
         )
     }

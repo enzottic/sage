@@ -113,7 +113,7 @@ struct RecurringExpensesSettingsSection: View {
         }
         .sheet(item: $ruleToEdit) { rule in
             EditRecurringRuleSheet(rule: rule)
-                .presentationBackground(Color.ui.background)
+                .presentationBackground(.sageBackground)
                 .presentationDetents([.large])
         }
         .navigationTitle("Recurring Expenses")

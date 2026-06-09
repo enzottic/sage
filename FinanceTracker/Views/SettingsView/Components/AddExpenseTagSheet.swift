@@ -60,7 +60,7 @@ struct AddExpenseTagSheet: View {
                         .font(.body)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.ui.cardBackground))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(.cardBackground))
                 }
                
                 // Color presets
@@ -89,7 +89,7 @@ struct AddExpenseTagSheet: View {
                 }
             }
             .padding()
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color.ui.cardBackground))
+            .background(RoundedRectangle(cornerRadius: 16).fill(.cardBackground))
             .padding(.horizontal)
             
             // Live preview

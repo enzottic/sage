@@ -205,7 +205,7 @@ struct ExpenseInfoForm: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
         }
-        .background(Color.ui.cardBackground)
+        .background(.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
     }
@@ -238,7 +238,7 @@ struct ExpenseInfoForm: View {
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(isSelected ? cat.color(in: categoryColors).opacity(0.18) : Color.ui.cardBackground)
+                            .fill(isSelected ? cat.color(in: categoryColors).opacity(0.18) : .cardBackground)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)

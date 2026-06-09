@@ -52,8 +52,8 @@ struct RootTabView: View {
         .sensoryFeedback(.success, trigger: appRouter.toast?.message) { _, newValue in newValue != nil }
         .animation(.spring(duration: 0.4), value: appRouter.toast == nil)
         .environment(appRouter)
-        .background(Color.ui.background)
-        .tint(Color.ui.sage)
+        .background(.background)
+        .tint(.sage)
         .onOpenURL { url in handleDeepLink(url) }
     }
     

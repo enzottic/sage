@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C673106B2FD4932500A4C432 /* AppIntents.framework */; };
+		C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; };
+		C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C68EEE1F2FD7C812003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; };
+		C68EEE202FD7C812003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
 		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -21,6 +25,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = C66031C52E8073C60078DD15;
 			remoteInfo = FinanceTracker;
+		};
+		C68EEE132FD7C7E8003C4FD6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C68EEE0E2FD7C7E8003C4FD6;
+			remoteInfo = SageKit;
+		};
+		C68EEE212FD7C812003C4FD6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C68EEE0E2FD7C7E8003C4FD6;
+			remoteInfo = SageKit;
 		};
 		C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +57,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		C68EEE1A2FD7C7E8003C4FD6 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C68EEE232FD7C812003C4FD6 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C68EEE202FD7C812003C4FD6 /* SageKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C6B09FE92E92CF5400899162 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -57,6 +97,7 @@
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C66031C62E8073C60078DD15 /* Sage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C673106B2FD4932500A4C432 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
+		C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SageKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinanceTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6B09FD22E92CF5200899162 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		C6B09FD42E92CF5200899162 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -84,6 +125,87 @@
 				Services/TagSuggestionService.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
+		C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIntents/Entities/ExpenseEntity.swift,
+				AppIntents/Entities/ExpenseTagEntity.swift,
+				AppIntents/Intents/AddExpenseIntent.swift,
+				AppIntents/Intents/FindExpensesIntent.swift,
+				AppIntents/Intents/GetBudgetRemainingIntent.swift,
+				AppIntents/Intents/GetMonthlySpendingIntent.swift,
+				AppIntents/Intents/WidgetConfigurationIntents.swift,
+				Assets.xcassets,
+				"Extensions/Date+Relative.swift",
+				"Extensions/Date+TextOutputStreamable.swift",
+				"Extensions/Number+CurrencyString.swift",
+				"Extensions/UserDefaults+SageColor.swift",
+				Models/CategoryColors.swift,
+				Models/ExpenseCategory.swift,
+				Models/ExpenseTag.swift,
+				Models/SageSchema.swift,
+				Services/ExpenseStore.swift,
+				Services/ReceiptHandoffService.swift,
+				Services/SageModelContainer.swift,
+				Shortcuts/SageShortcutsProvider.swift,
+				Utilities/UIColorValueTransformer.swift,
+			);
+			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
+		};
+		C68EEE1D2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTrackerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIntents/Entities/ExpenseEntity.swift,
+				AppIntents/Entities/ExpenseTagEntity.swift,
+				AppIntents/Intents/AddExpenseIntent.swift,
+				AppIntents/Intents/FindExpensesIntent.swift,
+				AppIntents/Intents/GetBudgetRemainingIntent.swift,
+				AppIntents/Intents/GetMonthlySpendingIntent.swift,
+				AppIntents/Intents/WidgetConfigurationIntents.swift,
+				Assets.xcassets,
+				"Extensions/Date+Relative.swift",
+				"Extensions/Date+TextOutputStreamable.swift",
+				"Extensions/Number+CurrencyString.swift",
+				"Extensions/UserDefaults+SageColor.swift",
+				Models/CategoryColors.swift,
+				Models/ExpenseCategory.swift,
+				Models/ExpenseTag.swift,
+				Models/SageSchema.swift,
+				Services/ExpenseStore.swift,
+				Services/ReceiptHandoffService.swift,
+				Services/SageModelContainer.swift,
+				Shortcuts/SageShortcutsProvider.swift,
+				Utilities/UIColorValueTransformer.swift,
+			);
+			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
+		};
+		C68EEE1E2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "SageKit" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIntents/Entities/ExpenseEntity.swift,
+				AppIntents/Entities/ExpenseTagEntity.swift,
+				AppIntents/Intents/AddExpenseIntent.swift,
+				AppIntents/Intents/FindExpensesIntent.swift,
+				AppIntents/Intents/GetBudgetRemainingIntent.swift,
+				AppIntents/Intents/GetMonthlySpendingIntent.swift,
+				AppIntents/Intents/WidgetConfigurationIntents.swift,
+				Assets.xcassets,
+				"Extensions/Date+Relative.swift",
+				"Extensions/Date+TextOutputStreamable.swift",
+				"Extensions/Number+CurrencyString.swift",
+				"Extensions/UserDefaults+SageColor.swift",
+				Models/CategoryColors.swift,
+				Models/ExpenseCategory.swift,
+				Models/ExpenseTag.swift,
+				Models/SageSchema.swift,
+				Services/ExpenseStore.swift,
+				Services/ReceiptHandoffService.swift,
+				Services/SageModelContainer.swift,
+				Shortcuts/SageShortcutsProvider.swift,
+				Utilities/UIColorValueTransformer.swift,
+			);
+			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
 		};
 		C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -123,6 +245,16 @@
 			path = FinanceTracker;
 			sourceTree = "<group>";
 		};
+		C68EEE102FD7C7E8003C4FD6 /* SageKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */,
+				C68EEE1D2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTrackerWidgetExtension" target */,
+				C68EEE1E2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "SageKit" target */,
+			);
+			path = SageKit;
+			sourceTree = "<group>";
+		};
 		C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -130,11 +262,6 @@
 				C6B09FE52E92CF5400899162 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTrackerWidgetExtension" target */,
 			);
 			path = FinanceTrackerWidget;
-			sourceTree = "<group>";
-		};
-		C6B09FEC2E92D69F00899162 /* Shared */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Shared;
 			sourceTree = "<group>";
 		};
 		C6B4BA0B2FC214FB00882087 /* FinanceTrackerShareExtension */ = {
@@ -159,6 +286,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C68EEE0C2FD7C7E8003C4FD6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +302,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */,
+				C68EEE1F2FD7C812003C4FD6 /* SageKit.framework in Frameworks */,
 				C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */,
 				C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */,
 			);
@@ -186,10 +322,10 @@
 			isa = PBXGroup;
 			children = (
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
-				C6B09FEC2E92D69F00899162 /* Shared */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
 				C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C6B4BA0B2FC214FB00882087 /* FinanceTrackerShareExtension */,
+				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
 				C6B09FD12E92CF5200899162 /* Frameworks */,
 				C66031C72E8073C60078DD15 /* Products */,
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
@@ -203,6 +339,7 @@
 				C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */,
 				C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */,
 				C6B4BA0A2FC214FB00882087 /* FinanceTrackerShareExtension.appex */,
+				C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -218,6 +355,16 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		C68EEE0A2FD7C7E8003C4FD6 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		C655B3AB2EF8E4B300E1F50E /* FinanceTrackerUITests */ = {
@@ -251,16 +398,17 @@
 				C66031C32E8073C60078DD15 /* Frameworks */,
 				C66031C42E8073C60078DD15 /* Resources */,
 				C6B09FE92E92CF5400899162 /* Embed Foundation Extensions */,
+				C68EEE1A2FD7C7E8003C4FD6 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				C6B09FE32E92CF5400899162 /* PBXTargetDependency */,
 				C6B4BA132FC214FC00882087 /* PBXTargetDependency */,
+				C68EEE142FD7C7E8003C4FD6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
-				C6B09FEC2E92D69F00899162 /* Shared */,
 			);
 			name = FinanceTracker;
 			packageProductDependencies = (
@@ -269,6 +417,29 @@
 			productReference = C66031C62E8073C60078DD15 /* Sage.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C68EEE0E2FD7C7E8003C4FD6 /* SageKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C68EEE172FD7C7E8003C4FD6 /* Build configuration list for PBXNativeTarget "SageKit" */;
+			buildPhases = (
+				C68EEE0A2FD7C7E8003C4FD6 /* Headers */,
+				C68EEE0B2FD7C7E8003C4FD6 /* Sources */,
+				C68EEE0C2FD7C7E8003C4FD6 /* Frameworks */,
+				C68EEE0D2FD7C7E8003C4FD6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
+			);
+			name = SageKit;
+			packageProductDependencies = (
+			);
+			productName = SageKit;
+			productReference = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C6B09FE62E92CF5400899162 /* Build configuration list for PBXNativeTarget "FinanceTrackerWidgetExtension" */;
@@ -276,14 +447,15 @@
 				C6B09FCC2E92CF5200899162 /* Sources */,
 				C6B09FCD2E92CF5200899162 /* Frameworks */,
 				C6B09FCE2E92CF5200899162 /* Resources */,
+				C68EEE232FD7C812003C4FD6 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C68EEE222FD7C812003C4FD6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
-				C6B09FEC2E92D69F00899162 /* Shared */,
 			);
 			name = FinanceTrackerWidgetExtension;
 			packageProductDependencies = (
@@ -321,7 +493,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2650;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					C655B3AB2EF8E4B300E1F50E = {
@@ -330,6 +502,9 @@
 					};
 					C66031C52E8073C60078DD15 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					C68EEE0E2FD7C7E8003C4FD6 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 					C6B09FCF2E92CF5200899162 = {
 						CreatedOnToolsVersion = 26.0;
@@ -359,6 +534,7 @@
 				C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */,
 				C655B3AB2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C6B4BA092FC214FB00882087 /* FinanceTrackerShareExtension */,
+				C68EEE0E2FD7C7E8003C4FD6 /* SageKit */,
 			);
 		};
 /* End PBXProject section */
@@ -372,6 +548,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C66031C42E8073C60078DD15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C68EEE0D2FD7C7E8003C4FD6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -409,6 +592,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C68EEE0B2FD7C7E8003C4FD6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C6B09FCC2E92CF5200899162 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -430,6 +620,16 @@
 			isa = PBXTargetDependency;
 			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
 			targetProxy = C655B3B22EF8E4B300E1F50E /* PBXContainerItemProxy */;
+		};
+		C68EEE142FD7C7E8003C4FD6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
+			targetProxy = C68EEE132FD7C7E8003C4FD6 /* PBXContainerItemProxy */;
+		};
+		C68EEE222FD7C812003C4FD6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
+			targetProxy = C68EEE212FD7C812003C4FD6 /* PBXContainerItemProxy */;
 		};
 		C6B09FE32E92CF5400899162 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -457,6 +657,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -478,6 +682,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -715,6 +923,94 @@
 			};
 			name = Release;
 		};
+		C68EEE182FD7C7E8003C4FD6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.SageKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_MODULE = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		C68EEE192FD7C7E8003C4FD6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.SageKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_MODULE = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 		C6B09FE72E92CF5400899162 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -875,6 +1171,15 @@
 			buildConfigurations = (
 				C66031D42E8073C70078DD15 /* Debug */,
 				C66031D52E8073C70078DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C68EEE172FD7C7E8003C4FD6 /* Build configuration list for PBXNativeTarget "SageKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C68EEE182FD7C7E8003C4FD6 /* Debug */,
+				C68EEE192FD7C7E8003C4FD6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

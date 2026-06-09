@@ -17,7 +17,7 @@ struct StatsFilterBar: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                filterPill("All", tint: Color.ui.sage,
+                filterPill("All", tint: .sage,
                            isActive: selectedCategory == nil && selectedTag == nil) {
                     withAnimation {
                         selectedCategory = nil
@@ -63,7 +63,7 @@ struct StatsFilterBar: View {
                 .fontWeight(.medium)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Capsule().fill(isActive ? tint.opacity(0.25) : Color.ui.cardBackground))
+                .background(Capsule().fill(isActive ? tint.opacity(0.25) : .cardBackground))
                 .foregroundStyle(isActive ? tint : .secondary)
         }
     }

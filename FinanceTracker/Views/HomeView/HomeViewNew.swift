@@ -102,7 +102,7 @@ struct HomeViewNew: View {
                 ExpenseDetailView(expense: expense)
             }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
-            .background(Color.ui.background)
+            .background(.background)
             .sheet(isPresented: $showSplitwiseImport) {
                 SplitwiseImportView()
             }
@@ -180,7 +180,7 @@ struct HomeViewNew: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.ui.cardBackground)
+                .fill(.cardBackground)
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
         )
     }
@@ -262,7 +262,7 @@ struct HomeViewNew: View {
                 .listStyle(.plain)
                 .scrollDisabled(true)
                 .scrollContentBackground(.hidden)
-                .background(Color.ui.cardBackground)
+                .background(.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
                 .frame(height: estimatedRecentListHeight)

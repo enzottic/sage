@@ -31,7 +31,7 @@ struct ExpensesView: View {
         NavigationStack(path: $navigationPath) {
             MonthExpensesList(month: selectedMonth, searchText: searchText)
                 .frame(maxWidth: .infinity)
-                .background(Color.ui.background)
+                .background(.sageBackground)
                 .navigationTitle(formatter.string(from: selectedMonth))
                 .searchable(text: $searchText, prompt: "Search expenses")
                 .navigationDestination(for: Expense.self) { expense in

@@ -40,6 +40,6 @@ struct SpendingComparisonCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 15).fill(Color.ui.cardBackground))
+        .background(RoundedRectangle(cornerRadius: 15).fill(.cardBackground))
     }
 }

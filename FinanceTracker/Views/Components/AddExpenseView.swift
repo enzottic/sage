@@ -58,7 +58,7 @@ struct AddExpenseView: View {
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.ui.background)
+        .background(.sageBackground)
         .scrollDismissesKeyboard(.immediately)
         .navigationTitle("New Expense")
         .navigationBarTitleDisplayMode(.inline)
@@ -202,7 +202,7 @@ struct AddExpenseView: View {
                             Text((total / 2).formatted(.currency(code: currencyCode)))
                                 .font(.footnote)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Color.ui.sage)
+                                .foregroundStyle(.sage)
                         }
                         Spacer()
                     }
@@ -212,7 +212,7 @@ struct AddExpenseView: View {
                 }
             }
         }
-        .background(Color.ui.cardBackground)
+        .background(.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
         .animation(.spring(duration: 0.3), value: selectedGroupId)

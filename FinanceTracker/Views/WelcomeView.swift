@@ -38,7 +38,7 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.ui.background
+                Color.sageBackground
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -83,7 +83,7 @@ struct WelcomeView: View {
                 .font(.system(size: 80))
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [Color.ui.want, Color.ui.need, Color.ui.saving],
+                        colors: [.want, .need, .saving],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -116,7 +116,7 @@ struct WelcomeView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.ui.sage)
+                    .background(.sage)
                     .cornerRadius(15)
             }
             .padding(.horizontal, 40)
@@ -133,7 +133,7 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 Image(systemName: "dollarsign.circle.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(Color.ui.sage)
+                    .foregroundStyle(.sage)
 
                 Text("Set Your Monthly Budget")
                     .font(.system(size: 28, weight: .bold))
@@ -153,7 +153,7 @@ struct WelcomeView: View {
                     .multilineTextAlignment(.center)
                     .focused($isInputFocused)
                     .padding()
-                    .background(Color.ui.cardBackground)
+                    .background(.cardBackground)
                     .cornerRadius(15)
 
                 Text("\(Locale.current.currency?.identifier ?? "USD") per month")
@@ -175,7 +175,7 @@ struct WelcomeView: View {
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.cardBackground)
+                        .background(.cardBackground)
                         .cornerRadius(15)
                 }
 
@@ -191,7 +191,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Int(monthlyIncome) ?? 0 > 0 ? Color.ui.sage : Color.gray)
+                        .background(Int(monthlyIncome) ?? 0 > 0 ? .sage : Color.gray)
                         .cornerRadius(15)
                 }
                 .disabled((Int(monthlyIncome) ?? 0) <= 0)
@@ -210,7 +210,7 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 60))
-                    .foregroundStyle(Color.ui.sage)
+                    .foregroundStyle(.sage)
 
                 Text("Budget Allocation")
                     .font(.system(size: 28, weight: .bold))
@@ -226,14 +226,14 @@ struct WelcomeView: View {
             VStack(spacing: 25) {
                 AllocationSlider(
                     title: "Wants",
-                    color: Color.ui.want,
+                    color: .want,
                     icon: "cart.fill",
                     percentage: $wantsPercent
                 )
 
                 AllocationSlider(
                     title: "Needs",
-                    color: Color.ui.need,
+                    color: .need,
                     icon: "house.fill",
                     percentage: $needsPercent
                 )
@@ -275,7 +275,7 @@ struct WelcomeView: View {
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.cardBackground)
+                        .background(.cardBackground)
                         .cornerRadius(15)
                 }
 
@@ -289,7 +289,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(needsPercent + wantsPercent <= 100 ? Color.ui.sage : Color.gray)
+                        .background(needsPercent + wantsPercent <= 100 ? .sage : Color.gray)
                         .cornerRadius(15)
                 }
                 .disabled(needsPercent + wantsPercent > 100)
@@ -322,7 +322,7 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 Image(systemName: "icloud.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(Color.ui.sage)
+                    .foregroundStyle(.sage)
 
                 Text("iCloud Sync")
                     .font(.system(size: 28, weight: .bold))
@@ -338,7 +338,7 @@ struct WelcomeView: View {
             Toggle(isOn: $cloudSyncEnabled) {
                 HStack {
                     Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
-                        .foregroundStyle(Color.ui.sage)
+                        .foregroundStyle(.sage)
                         .frame(width: 30)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -351,7 +351,7 @@ struct WelcomeView: View {
                 }
             }
             .padding()
-            .background(Color.ui.cardBackground)
+            .background(.cardBackground)
             .cornerRadius(15)
             .padding(.horizontal, 40)
 
@@ -375,7 +375,7 @@ struct WelcomeView: View {
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.cardBackground)
+                        .background(.cardBackground)
                         .cornerRadius(15)
                 }
 
@@ -389,7 +389,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.sage)
+                        .background(.sage)
                         .cornerRadius(15)
                 }
             }
@@ -433,14 +433,14 @@ struct WelcomeView: View {
                 BudgetSummaryRow(
                     title: "Wants (\(Int(wantsPercent))%)",
                     amount: Double(Int(monthlyIncome) ?? 0) * (wantsPercent / 100),
-                    color: Color.ui.want,
+                    color: .want,
                     icon: "cart.fill"
                 )
 
                 BudgetSummaryRow(
                     title: "Needs (\(Int(needsPercent))%)",
                     amount: Double(Int(monthlyIncome) ?? 0) * (needsPercent / 100),
-                    color: Color.ui.need,
+                    color: .need,
                     icon: "house.fill"
                 )
 
@@ -452,7 +452,7 @@ struct WelcomeView: View {
                 )
             }
             .padding(25)
-            .background(Color.ui.cardBackground)
+            .background(.cardBackground)
             .cornerRadius(20)
             .padding(.horizontal, 40)
 
@@ -469,7 +469,7 @@ struct WelcomeView: View {
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.cardBackground)
+                        .background(.cardBackground)
                         .cornerRadius(15)
                 }
 
@@ -481,7 +481,7 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.ui.sage)
+                        .background(.sage)
                         .cornerRadius(15)
                 }
             }
@@ -523,7 +523,7 @@ struct FeatureRow: View {
         HStack(alignment: .top, spacing: 15) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(Color.ui.sage)
+                .foregroundStyle(.sage)
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 4) {

@@ -61,7 +61,7 @@ struct SearchExpensesView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .background(Color.ui.background)
+            .background(.sageBackground)
             .navigationTitle("Search")
             .searchable(text: $searchText, prompt: "Search expenses")
             .navigationDestination(for: Expense.self) { expense in

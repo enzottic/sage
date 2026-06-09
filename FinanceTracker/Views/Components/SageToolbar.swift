@@ -40,13 +40,13 @@ struct SageToolbar: ToolbarContent {
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
-                .tint(Color.ui.sage)
+                .tint(.sage)
             } else {
                 Button(action: onAdd) {
                     Label("Add Item", systemImage: "plus")
                 }
-                .background(Color.ui.cardBackground)
-                .tint(Color.ui.sage)
+                .background(.cardBackground)
+                .tint(.sage)
             }
         }
     }
