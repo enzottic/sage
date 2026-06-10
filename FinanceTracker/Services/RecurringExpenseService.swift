@@ -70,6 +70,8 @@ class RecurringExpenseService {
             return calendar.date(byAdding: .weekOfYear, value: 2, to: date)
         case .monthly:
             return calendar.date(byAdding: .month, value: 1, to: date)
+        @unknown default:
+            fatalError("Unknown frequency: \(frequency)")
         }
     }
 }

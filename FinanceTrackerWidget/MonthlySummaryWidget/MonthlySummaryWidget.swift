@@ -32,15 +32,19 @@ struct MonthlySummaryEntryView: View {
     var smallBody: some View {
         VStack(alignment: .leading, spacing: 5) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("Remaining")
+                Text(Date.now.formatted(.dateTime.month(.wide).year()))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text(abs(entry.totalSpent).currencyString)
-                    .font(.title3)
-                    .fontWeight(.black)
-                    .foregroundStyle(isOverBudget ? .red : .primary)
-                    .minimumScaleFactor(0.7)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(abs(entry.totalSpent).currencyString)
+                        .font(.title3)
+                        .fontWeight(.black)
+                        .foregroundStyle(isOverBudget ? .red : .primary)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                    Text("spent")
+                        .font(.caption)
+                }
             }
 
             Divider()
@@ -89,22 +93,21 @@ struct MonthlySummaryEntryView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("This Month")
+                    Text(Date.now.formatted(.dateTime.month(.wide).year()))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(entry.totalSpent.currencyString)
-                        .font(.title2)
-                        .fontWeight(.black)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(entry.totalSpent.currencyString)
+                            .font(.title2)
+                            .fontWeight(.black)
+                        Text("spent")
+                    }
+                    .fontDesign(.rounded)
                 }
                 Spacer()
-                Text("of \(entry.totalIncome.currencyString)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
-            Divider()
-
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: categoryColors.needs)
                 fullCategoryRow(name: "Wants", spent: entry.wantsSpent, budget: entry.wantsBudget, color: categoryColors.wants)
                 fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: categoryColors.savings)
@@ -113,16 +116,21 @@ struct MonthlySummaryEntryView: View {
     }
 
     var largeBody: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(Date.now.formatted(.dateTime.month(.wide).year()))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text(entry.totalSpent.currencyString)
-                    .font(.title)
-                    .fontWeight(.black)
-                    .fontDesign(.rounded)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(entry.totalSpent.currencyString)
+                        .font(.title)
+                        .fontWeight(.black)
+                    Text("spent")
+                }
+                .fontDesign(.rounded)
             }
+            
+            Spacer()
 
             VStack(spacing: 10) {
                 fullCategoryRow(name: "Needs", spent: entry.needsSpent, budget: entry.needsBudget, color: categoryColors.needs)
@@ -130,7 +138,7 @@ struct MonthlySummaryEntryView: View {
                 fullCategoryRow(name: "Savings", spent: entry.savingsSpent, budget: entry.savingsBudget, color: categoryColors.savings)
             }
             
-            Divider()
+            Spacer()
             
             VStack(alignment: .leading) {
                 Text("Recent Expenses")

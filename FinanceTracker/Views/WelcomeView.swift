@@ -21,6 +21,8 @@ struct WelcomeView: View {
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled: Bool = false
+    @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
+    @State private var selectedTagNames: Set<String> = Set(ExpenseTag.suggestedTags.map(\.name))
     @FocusState private var isInputFocused: Bool
 
     enum OnboardingStep {
@@ -28,6 +30,7 @@ struct WelcomeView: View {
         case budget
         case allocation
         case sync
+        case tags
         case complete
     }
 
@@ -55,6 +58,9 @@ struct WelcomeView: View {
 
                         syncPage
                             .tag(OnboardingStep.sync)
+
+                        tagsPage
+                            .tag(OnboardingStep.tags)
 
                         completePage
                             .tag(OnboardingStep.complete)
@@ -382,6 +388,124 @@ struct WelcomeView: View {
 
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        currentStep = .tags
+                    }
+                } label: {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.sage)
+                        .cornerRadius(15)
+                }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 40)
+        }
+    }
+
+    // MARK: - Tags Page
+
+    var tagsPage: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            VStack(spacing: 12) {
+                Image(systemName: "tag.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.sage)
+
+                Text("Add Some Tags")
+                    .font(.system(size: 28, weight: .bold))
+                    .multilineTextAlignment(.center)
+
+                Text("Tags help you categorize expenses. Pick the ones you'd like to start with — you can always add or remove them later.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+
+            HStack {
+                Button("Select All") {
+                    selectedTagNames = Set(tagTemplates.map(\.name))
+                }
+                .font(.subheadline)
+                .foregroundStyle(.sage)
+
+                Spacer()
+
+                Button("Select None") {
+                    selectedTagNames = []
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 40)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(tagTemplates, id: \.name) { tag in
+                    let isSelected = selectedTagNames.contains(tag.name)
+                    Button {
+                        if isSelected {
+                            selectedTagNames.remove(tag.name)
+                        } else {
+                            selectedTagNames.insert(tag.name)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text(tag.emoji)
+                                .font(.title3)
+                            Text(tag.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .lineLimit(1)
+                            Spacer()
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.sage)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(isSelected ? Color(.cardBackground) : Color(.cardBackground).opacity(0.5))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(isSelected ? Color(tag.uiColor) : Color.clear, lineWidth: 1.5)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.spring(duration: 0.2), value: isSelected)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            HStack(spacing: 15) {
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        currentStep = .sync
+                    }
+                } label: {
+                    Text("Back")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.cardBackground)
+                        .cornerRadius(15)
+                }
+
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .complete
                     }
                 } label: {
@@ -462,7 +586,7 @@ struct WelcomeView: View {
             HStack(spacing: 15) {
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .sync
+                        currentStep = .tags
                     }
                 } label: {
                     Text("Back")
@@ -494,7 +618,6 @@ struct WelcomeView: View {
     // MARK: - Helper Functions
 
     func completeOnboarding() {
-        // Save configuration
         config.totalMonthlyIncome = Int(monthlyIncome) ?? 0
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
@@ -502,10 +625,14 @@ struct WelcomeView: View {
         config.isCloudSyncEnabled = cloudSyncEnabled
         config.markSetupComplete()
 
-        // Reload widgets
+        // Insert only the tags the user selected
+        for tag in tagTemplates where selectedTagNames.contains(tag.name) {
+            modelContext.insert(tag)
+        }
+        try? modelContext.save()
+
         WidgetCenter.shared.reloadAllTimelines()
 
-        // Mark onboarding as complete
         withAnimation {
             hasOpenedAppOnce = true
         }

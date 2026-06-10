@@ -23,6 +23,8 @@ struct ExpenseBackupSettingsSection: View {
     @State private var showImportConfirmation: Bool = false
     @State private var showImportSuccess: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
+    @State private var unknownTagNames: [String] = []
+    @State private var showUnknownTagsSheet: Bool = false
     
     let expenseExporter = ExpenseBackupService.shared
 
@@ -96,35 +98,53 @@ struct ExpenseBackupSettingsSection: View {
         } message: {
             Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
         }
-    }
-    
-    private func importExpenses(filePickerResult: Result<[URL], any Error>) {
-        switch (filePickerResult) {
-        case .success(let urls):
-            if let url = urls.first {
-                if url.startAccessingSecurityScopedResource() {
-                    print("Accessing file \(url.lastPathComponent)")
-                    let readFileResult = expenseExporter.readExpenses(from: url)
-                    
-                    switch (readFileResult) {
-                    case .success(let importedExpenses):
-                        pendingImportExpenses = importedExpenses
-                        showImportConfirmation = true
-                    case .failure(let error):
-                        print("Failed to read file: \(error.localizedDescription)")
-                    }
-                    
+        .sheet(isPresented: $showUnknownTagsSheet) {
+            UnknownTagsSheet(
+                unknownTagNames: unknownTagNames,
+                onResolve: { createdTags in
+                    createdTags.forEach { modelContext.insert($0) }
+                    try? modelContext.save()
+                    unknownTagNames = []
+                    showImportConfirmation = true
                 }
-            }
-        case .failure(let error):
-            print("Failed yo: \(error.localizedDescription)")
+            )
+            .presentationDetents([.medium])
         }
     }
     
+    private func importExpenses(filePickerResult: Result<[URL], any Error>) {
+        switch filePickerResult {
+        case .success(let urls):
+            guard let url = urls.first, url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            switch expenseExporter.readExpenses(from: url) {
+            case .success(let importedExpenses):
+                pendingImportExpenses = importedExpenses
+
+                let knownNames = Set(expenseTags.map(\.name))
+                let unknown = importedExpenses
+                    .map(\.tag)
+                    .filter { !$0.isEmpty && !knownNames.contains($0) }
+                let uniqueUnknown = Array(Set(unknown)).sorted()
+
+                if uniqueUnknown.isEmpty {
+                    showImportConfirmation = true
+                } else {
+                    unknownTagNames = uniqueUnknown
+                    showUnknownTagsSheet = true
+                }
+            case .failure(let error):
+                appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
+            }
+        case .failure(let error):
+            appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
+        }
+    }
+
     private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
         importedExpenses.map { e in
-            let tag = expenseTags.first { tag in e.tag == tag.name } ?? nil
-            
+            let tag = expenseTags.first { $0.name == e.tag }
             return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tag: tag, note: e.note)
         }
     }
@@ -134,6 +154,92 @@ struct ExpenseBackupSettingsSection: View {
             try modelContext.save()
         } catch {
             print("Failed to save model context: \(error.localizedDescription)")
+        }
+    }
+}
+
+struct UnknownTagsSheet: View {
+    let unknownTagNames: [String]
+    let onResolve: ([ExpenseTag]) -> Void
+
+    @State private var selectedNames: Set<String>
+
+    init(unknownTagNames: [String], onResolve: @escaping ([ExpenseTag]) -> Void) {
+        self.unknownTagNames = unknownTagNames
+        self.onResolve = onResolve
+        _selectedNames = State(initialValue: Set(unknownTagNames))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                Image(systemName: "tag.slash.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.orange)
+                    .padding(.top, 24)
+
+                Text("Unknown Tags Found")
+                    .font(.title3.bold())
+
+                Text("\(unknownTagNames.count) tag\(unknownTagNames.count == 1 ? "" : "s") in this file don't exist yet. Select the ones you'd like to create, or skip to leave those expenses untagged.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 8)
+            }
+
+            List(unknownTagNames, id: \.self) { name in
+                Button {
+                    if selectedNames.contains(name) {
+                        selectedNames.remove(name)
+                    } else {
+                        selectedNames.insert(name)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "tag.fill")
+                            .foregroundStyle(.orange)
+                        Text(name)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if selectedNames.contains(name) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.sage)
+                        } else {
+                            Image(systemName: "circle")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            .listStyle(.plain)
+
+            VStack(spacing: 10) {
+                Button {
+                    let newTags = unknownTagNames
+                        .filter { selectedNames.contains($0) }
+                        .map { ExpenseTag(name: $0, uiColor: .systemGray, emoji: "🏷️") }
+                    onResolve(newTags)
+                } label: {
+                    Text(selectedNames.isEmpty ? "Continue Without Creating" : "Create \(selectedNames.count) Tag\(selectedNames.count == 1 ? "" : "s")")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.sage)
+                        .cornerRadius(15)
+                }
+
+                Button("Skip") {
+                    onResolve([])
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
         }
     }
 }

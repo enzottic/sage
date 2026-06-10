@@ -45,7 +45,7 @@ class AppConfiguration {
         static let wantsPercent = "wantsPercent"
         static let savingsPercent = "savingsPercent"
         static let isCloudSyncEnabled = "isCloudSyncEnabled"
-        static let hasCompletedSetup = "hasCompletedetup"
+        static let hasCompletedSetup = "hasCompletedSetup"
         static let smartTaggingMode = "smartTaggingMode"
         static let needsColor = "categoryColorNeeds"
         static let wantsColor = "categoryColorWants"

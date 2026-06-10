@@ -47,7 +47,7 @@ public final class UIColorValueTransformer: ValueTransformer {
 public extension UIColorValueTransformer {
     static let name = NSValueTransformerName(rawValue: String(describing: UIColorValueTransformer.self))
     
-    public static nonisolated func register() {
+    static nonisolated func register() {
         let transformer = UIColorValueTransformer()
         ValueTransformer.setValueTransformer(transformer, forName: name)
     }

@@ -136,6 +136,8 @@ enum RecurringNotificationService {
         case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
         case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
         case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
+        @unknown default:
+            fatalError("Unknown frequency: \(rule.frequency)")
         }
         if let next, let endDate = rule.endDate, next > endDate { return nil }
         return next

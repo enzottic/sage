@@ -73,6 +73,8 @@ class WidgetDataService {
             return CategorySpotlightEntry(date: .now, category: .wants, spent: raw.wantsSpent, budget: raw.wantsBudget)
         case .savings:
             return CategorySpotlightEntry(date: .now, category: .savings, spent: raw.savingsSpent, budget: raw.savingsBudget)
+        @unknown default:
+            fatalError("Unknown category: \(category)")
         }
     }
 
