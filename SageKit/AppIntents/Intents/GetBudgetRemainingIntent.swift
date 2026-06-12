@@ -22,16 +22,16 @@ public struct GetBudgetRemainingIntent: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog {
-        let store = try ExpenseStore()
+        let store = ExpenseStore.shared
         if let category {
-            let remaining = store.remainingBudget(for: category)
+            let remaining = try store.remainingBudget(for: category)
             if remaining >= 0 {
                 return .result(dialog: "You have \(remaining.currencyString) remaining in your \(category.rawValue.lowercased()) budget.")
             } else {
                 return .result(dialog: "You're \((-remaining).currencyString) over your \(category.rawValue.lowercased()) budget.")
             }
         } else {
-            let remaining = store.totalRemainingBudget()
+            let remaining = try store.totalRemainingBudget()
             if remaining >= 0 {
                 return .result(dialog: "You have \(remaining.currencyString) left across all budgets this month.")
             } else {

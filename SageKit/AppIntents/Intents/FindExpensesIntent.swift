@@ -87,7 +87,7 @@ public struct FindExpensesIntent: AppIntent {
     
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Double> {
-        let store = try ExpenseStore()
+        let store = ExpenseStore.shared
         let (start, end) = timePeriod.dateRange
         var expenses = store.fetchExpenses(from: start, to: end)
 

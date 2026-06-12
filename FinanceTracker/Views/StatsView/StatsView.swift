@@ -10,13 +10,27 @@ import SwiftData
 import Charts
 import SageKit
 
-struct MonthlySpendingData: Identifiable {
-    let month: Date
-    let monthLabel: String
+enum StatsTimeframe: String, CaseIterable, Identifiable {
+    case monthly = "Monthly"
+    case weekly = "Weekly"
+
+    var id: String { rawValue }
+
+    var calendarComponent: Calendar.Component {
+        switch self {
+        case .monthly: .month
+        case .weekly: .weekOfYear
+        }
+    }
+}
+
+struct SpendingPeriodData: Identifiable {
+    let periodStart: Date
+    let label: String
     let total: Double
     let isCurrent: Bool
 
-    var id: String { monthLabel }
+    var id: Date { periodStart }
 }
 
 struct StatsView: View {
@@ -24,16 +38,18 @@ struct StatsView: View {
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
 
+    @State private var timeframe: StatsTimeframe = .monthly
     @State private var selectedCategory: ExpenseCategory? = nil
     @State private var selectedTag: ExpenseTag? = nil
 
-    private var gradientColor: Color {
+    private let calendar = Calendar.current
+    private let periodCount = 6
+
+    private var accentColor: Color {
         if let category = selectedCategory { return category.color(in: categoryColors) }
         if let tag = selectedTag, !tag.isDeleted { return tag.color }
         return .sage
     }
-
-    private let calendar = Calendar.current
 
     var filteredExpenses: [Expense] {
         allExpenses.filter { expense in
@@ -43,46 +59,61 @@ struct StatsView: View {
         }
     }
 
-    var chartData: [MonthlySpendingData] {
+    private var currentPeriodInterval: DateInterval {
+        calendar.dateInterval(of: timeframe.calendarComponent, for: Date())!
+    }
+
+    var chartData: [SpendingPeriodData] {
         let now = Date()
-        return (0..<6).reversed().map { monthsAgo in
-            let targetMonth = calendar.date(byAdding: .month, value: -monthsAgo, to: now)!
-            let interval = calendar.dateInterval(of: .month, for: targetMonth)!
-            let monthExpenses = filteredExpenses.filter {
+        return (0..<periodCount).reversed().compactMap { periodsAgo in
+            guard let target = calendar.date(byAdding: timeframe.calendarComponent, value: -periodsAgo, to: now),
+                  let interval = calendar.dateInterval(of: timeframe.calendarComponent, for: target) else { return nil }
+            let periodExpenses = filteredExpenses.filter {
                 $0.date >= interval.start && $0.date < interval.end
             }
-            let label = targetMonth.formatted(.dateTime.month(.abbreviated))
-            return MonthlySpendingData(
-                month: interval.start,
-                monthLabel: label,
-                total: monthExpenses.total,
-                isCurrent: monthsAgo == 0
+            let label = switch timeframe {
+            case .monthly: target.formatted(.dateTime.month(.abbreviated))
+            case .weekly: interval.start.formatted(.dateTime.month(.abbreviated).day())
+            }
+            return SpendingPeriodData(
+                periodStart: interval.start,
+                label: label,
+                total: periodExpenses.total,
+                isCurrent: periodsAgo == 0
             )
         }
     }
 
-    var currentMonthPartialTotal: Double {
+    /// Spending from the start of the current period through now.
+    var currentPartialTotal: Double {
         let now = Date()
-        let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
         return filteredExpenses.filter {
-            $0.date >= startOfMonth && $0.date <= now
+            $0.date >= currentPeriodInterval.start && $0.date <= now
         }.total
     }
 
-    var lastMonthPartialTotal: Double {
+    /// Spending in the previous period through the same elapsed time, for an apples-to-apples comparison.
+    var previousPartialTotal: Double {
         let now = Date()
-        let dayOfMonth = calendar.component(.day, from: now)
-        let lastMonth = calendar.date(byAdding: .month, value: -1, to: now)!
-        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
-        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
-
-        var components = calendar.dateComponents([.year, .month], from: lastMonth)
-        components.day = dayOfMonth
-        let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
-
+        let elapsed = now.timeIntervalSince(currentPeriodInterval.start)
+        guard let previousDate = calendar.date(byAdding: timeframe.calendarComponent, value: -1, to: now),
+              let previousInterval = calendar.dateInterval(of: timeframe.calendarComponent, for: previousDate) else { return 0 }
+        let cutoff = min(previousInterval.start.addingTimeInterval(elapsed), previousInterval.end)
         return filteredExpenses.filter {
-            $0.date >= startOfLastMonth && $0.date <= cutoffDate
+            $0.date >= previousInterval.start && $0.date <= cutoff
         }.total
+    }
+
+    /// Current spending pace extrapolated to the end of the period.
+    var projectedTotal: Double {
+        let interval = currentPeriodInterval
+        let elapsed = Date().timeIntervalSince(interval.start)
+        guard elapsed > 0 else { return 0 }
+        return currentPartialTotal / (elapsed / interval.duration)
+    }
+
+    private var projectedRemainder: Double {
+        max(0, projectedTotal - currentPartialTotal)
     }
 
     var body: some View {
@@ -93,10 +124,21 @@ struct StatsView: View {
                         selectedCategory: $selectedCategory,
                         selectedTag: $selectedTag
                     )
+                    .padding(.horizontal)
+
+                    Picker("Timeframe", selection: $timeframe) {
+                        ForEach(StatsTimeframe.allCases) { timeframe in
+                            Text(timeframe.rawValue).tag(timeframe)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
 
                     SpendingComparisonCard(
-                        currentMonthPartialTotal: currentMonthPartialTotal,
-                        lastMonthPartialTotal: lastMonthPartialTotal
+                        currentPartialTotal: currentPartialTotal,
+                        previousPartialTotal: previousPartialTotal,
+                        projectedTotal: projectedTotal,
+                        timeframe: timeframe
                     )
                     .padding(.horizontal)
 
@@ -107,37 +149,47 @@ struct StatsView: View {
             }
             .background(.sageBackground)
             .navigationTitle("Stats")
-            .gradientBackground(color: gradientColor)
-        }
-    }
-
-    private var barColor: Color {
-        if let category = selectedCategory {
-            return category.color(in: categoryColors)
-        } else if let tag = selectedTag, !tag.isDeleted {
-            return tag.color
-        } else {
-            return .sage
+            .gradientBackground(color: accentColor)
         }
     }
 
     private var spendingChart: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Monthly Spending")
+        VStack(alignment: .leading, spacing: 4) {
+            Text(timeframe == .monthly ? "Spending by Month" : "Spending by Week")
                 .font(.headline)
+            Text(timeframe == .monthly ? "Comparing the last 6 months" : "Comparing the last 6 weeks")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 8)
 
-            Chart(chartData) { item in
-                BarMark(
-                    x: .value("Month", item.monthLabel),
-                    y: .value("Spending", item.total)
-                )
-                .foregroundStyle(item.isCurrent ? barColor : barColor.opacity(0.5))
-                .cornerRadius(4)
-                .annotation(position: .top, spacing: 4) {
-                    if item.total > 0 {
-                        Text(item.total.currencyString)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+            Chart {
+                ForEach(chartData) { item in
+                    BarMark(
+                        x: .value("Period", item.label),
+                        y: .value("Spending", item.total)
+                    )
+                    .foregroundStyle(item.isCurrent ? accentColor : accentColor.opacity(0.5))
+                    .cornerRadius(4)
+                    .annotation(position: .top, spacing: 4) {
+                        if item.total > 0 && !(item.isCurrent && projectedRemainder > 0) {
+                            Text(item.total.currencyString)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if item.isCurrent && projectedRemainder > 0 {
+                        BarMark(
+                            x: .value("Period", item.label),
+                            y: .value("Spending", projectedRemainder)
+                        )
+                        .foregroundStyle(accentColor.opacity(0.2))
+                        .cornerRadius(4)
+                        .annotation(position: .top, spacing: 4) {
+                            Text("\(projectedTotal.currencyString) est.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -161,8 +213,6 @@ struct StatsView: View {
 }
 
 #Preview {
-    @Previewable @State var config = AppConfiguration()
     StatsView()
-        .modelContainer(previewAppContainer)
-        .environment(config)
+        .environmentInjection()
 }

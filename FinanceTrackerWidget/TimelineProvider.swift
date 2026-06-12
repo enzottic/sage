@@ -12,6 +12,53 @@ private extension Date {
     static var nextRefresh: Date { Date().addingTimeInterval(15 * 60) }
 }
 
+private extension ExpenseStore.MonthlySnapshot {
+    var utilizationEntry: UtilizationEntry {
+        UtilizationEntry(date: .now, totalSpent: totalSpent, wantsUtilization: wantsUtilization, needsUtilization: needsUtilization)
+    }
+
+    var pieChartEntry: PieChartEntry {
+        PieChartEntry(date: .now, wantsSpent: wantsSpent, needsSpent: needsSpent, savingsSpent: savingsSpent, totalUnspent: totalUnspent)
+    }
+
+    var recentExpensesEntry: RecentExpensesEntry {
+        RecentExpensesEntry(date: .now, expenses: recentExpenses)
+    }
+
+    var budgetRemainingEntry: BudgetRemainingEntry {
+        BudgetRemainingEntry(
+            date: .now,
+            remaining: totalUnspent,
+            totalIncome: totalIncome,
+            percentUsed: totalIncome > 0 ? totalSpent / Double(totalIncome) : 0
+        )
+    }
+
+    func categorySpotlightEntry(for category: ExpenseCategory) -> CategorySpotlightEntry {
+        switch category {
+        case .needs:
+            return CategorySpotlightEntry(date: .now, category: .needs, spent: needsSpent, budget: needsBudget)
+        case .wants:
+            return CategorySpotlightEntry(date: .now, category: .wants, spent: wantsSpent, budget: wantsBudget)
+        case .savings:
+            return CategorySpotlightEntry(date: .now, category: .savings, spent: savingsSpent, budget: savingsBudget)
+        @unknown default:
+            fatalError("Unknown category: \(category)")
+        }
+    }
+
+    var monthlySummaryEntry: MonthlySummaryEntry {
+        MonthlySummaryEntry(
+            date: .now,
+            totalSpent: totalSpent, totalIncome: totalIncome,
+            wantsSpent: wantsSpent, wantsBudget: wantsBudget,
+            needsSpent: needsSpent, needsBudget: needsBudget,
+            savingsSpent: savingsSpent, savingsBudget: savingsBudget,
+            recentExpenses: recentExpenses
+        )
+    }
+}
+
 // MARK: - Utilization
 
 struct UtilizationProvider: AppIntentTimelineProvider {
@@ -22,7 +69,7 @@ struct UtilizationProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: UtilizationAppIntent, in context: Context) async -> Timeline<UtilizationEntry> {
-        let entry = WidgetDataService()?.fetchUtilizationEntry() ?? .placeholder
+        let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.utilizationEntry ?? .placeholder
         return Timeline(entries: [entry], policy: .after(.nextRefresh))
     }
 }
@@ -37,8 +84,10 @@ struct PieChartProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PieChartEntry>) -> Void) {
-        let entry = WidgetDataService()?.fetchPieChartEntry() ?? .placeholder
-        completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        Task {
+            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.pieChartEntry ?? .placeholder
+            completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        }
     }
 }
 
@@ -52,8 +101,10 @@ struct RecentExpensesProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<RecentExpensesEntry>) -> Void) {
-        let entry = WidgetDataService()?.fetchRecentExpensesEntry() ?? .placeholder
-        completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        Task {
+            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.recentExpensesEntry ?? .placeholder
+            completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        }
     }
 }
 
@@ -67,8 +118,10 @@ struct BudgetRemainingProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetRemainingEntry>) -> Void) {
-        let entry = WidgetDataService()?.fetchBudgetRemainingEntry() ?? .placeholder
-        completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        Task {
+            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.budgetRemainingEntry ?? .placeholder
+            completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        }
     }
 }
 
@@ -82,8 +135,7 @@ struct CategorySpotlightProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: CategorySpotlightAppIntent, in context: Context) async -> Timeline<CategorySpotlightEntry> {
-        let entry = WidgetDataService()?.fetchCategorySpotlightEntry(for: configuration.category)
-            ?? .placeholder(category: configuration.category)
+        let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.categorySpotlightEntry(for: configuration.category) ?? .placeholder(category: configuration.category)
         return Timeline(entries: [entry], policy: .after(.nextRefresh))
     }
 }
@@ -98,7 +150,9 @@ struct MonthlySummaryProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MonthlySummaryEntry>) -> Void) {
-        let entry = WidgetDataService()?.fetchMonthlySummaryEntry() ?? .placeholder
-        completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        Task {
+            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.monthlySummaryEntry ?? .placeholder
+            completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
+        }
     }
 }

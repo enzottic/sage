@@ -26,17 +26,18 @@ public struct GetMonthlySpendingIntent: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog {
-        let store = try ExpenseStore()
+        let store = ExpenseStore.shared
         
-        if let tag {
-            let total = store.monthlyTotal(tagId: tag.id)
+        if let tag, let total = try? store.monthlyTotal(tagId: tag.id) {
             return .result(dialog: "You've spent \(total.currencyString) on \(tag.name.lowercased()) this month.")
-        } else if let category {
-            let total = store.monthlyTotal(category: category)
+        } else if let category, let total = try? store.monthlyTotal(category: category) {
             return .result(dialog: "You've spent \(total.currencyString) on \(category.rawValue.lowercased()) this moonth.")
         }
         
-        let total = store.monthlyTotal()
-        return .result(dialog: "You've spent \(total.currencyString) this month.")
+        if let total = try? store.monthlyTotal() {
+            return .result(dialog: "You've spent \(total.currencyString) this month.")
+        }
+        
+        return .result(dialog: "Unable to get monthly spending from Sage.")
     }
 }

@@ -9,14 +9,6 @@ import Foundation
 import WidgetKit
 import SageKit
 
-struct ExpenseSnapshot: Identifiable {
-    let id: UUID
-    let name: String
-    let amount: Double
-    let category: ExpenseCategory
-    let date: Date
-}
-
 struct UtilizationEntry: TimelineEntry {
     let date: Date
     let totalSpent: Double

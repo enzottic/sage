@@ -13,60 +13,65 @@ struct StatsFilterBar: View {
     @Environment(\.categoryColors) private var categoryColors
     @Binding var selectedCategory: ExpenseCategory?
     @Binding var selectedTag: ExpenseTag?
-    @Query var expenseTags: [ExpenseTag]
+    @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                filterPill("All", tint: .sage,
-                           isActive: selectedCategory == nil && selectedTag == nil) {
-                    withAnimation {
-                        selectedCategory = nil
-                        selectedTag = nil
+        HStack(spacing: 8) {
+            Menu {
+                Picker("Category", selection: $selectedCategory.animation()) {
+                    Text("All Categories").tag(nil as ExpenseCategory?)
+                    ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                        Text(category.rawValue).tag(category as ExpenseCategory?)
                     }
                 }
-
-                ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                    filterPill(category.rawValue, tint: category.color(in: categoryColors),
-                               isActive: selectedCategory == category) {
-                        withAnimation {
-                            selectedCategory = category
-                            selectedTag = nil
-                        }
-                    }
-                }
-
-                ForEach(expenseTags, id: \.id) { tag in
-                    if !tag.isDeleted {
-                        Button {
-                            withAnimation {
-                                selectedTag = tag
-                                selectedCategory = nil
-                            }
-                        } label: {
-                            TagCapsule(tag: tag, .small)
-                                .overlay(
-                                    Capsule()
-                                        .stroke(tag.color, lineWidth: selectedTag?.id == tag.id ? 2 : 0)
-                                )
-                        }
-                    }
-                }
+            } label: {
+                menuChip(
+                    text: selectedCategory?.rawValue ?? String(localized: "Category"),
+                    tint: selectedCategory?.color(in: categoryColors)
+                )
             }
-            .padding(.horizontal)
+
+            Menu {
+                Picker("Tag", selection: $selectedTag.animation()) {
+                    Text("All Tags").tag(nil as ExpenseTag?)
+                    ForEach(expenseTags, id: \.id) { tag in
+                        if !tag.isDeleted {
+                            Text("\(tag.emoji) \(tag.name)").tag(tag as ExpenseTag?)
+                        }
+                    }
+                }
+            } label: {
+                menuChip(text: tagChipText, tint: selectedTagColor)
+            }
+
+            Spacer()
         }
     }
 
-    private func filterPill(_ text: String, tint: Color, isActive: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    private var tagChipText: String {
+        if let tag = selectedTag, !tag.isDeleted {
+            return "\(tag.emoji) \(tag.name)"
+        }
+        return String(localized: "Tag")
+    }
+
+    private var selectedTagColor: Color? {
+        guard let tag = selectedTag, !tag.isDeleted else { return nil }
+        return tag.color
+    }
+
+    private func menuChip(text: String, tint: Color?) -> some View {
+        HStack(spacing: 4) {
             Text(text)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Capsule().fill(isActive ? tint.opacity(0.25) : .cardBackground))
-                .foregroundStyle(isActive ? tint : .secondary)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.caption2)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(tint.map { AnyShapeStyle($0.opacity(0.25)) } ?? AnyShapeStyle(.cardBackground)))
+        .foregroundStyle(tint ?? .secondary)
     }
 }
 
