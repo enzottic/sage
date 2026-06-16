@@ -22,7 +22,7 @@ struct WelcomeView: View {
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled: Bool = false
     @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
-    @State private var selectedTagNames: Set<String> = Set(ExpenseTag.suggestedTags.map(\.name))
+    @State private var selectedTagNames: Set<String> = []
     @FocusState private var isInputFocused: Bool
 
     enum OnboardingStep {
@@ -445,48 +445,8 @@ struct WelcomeView: View {
             }
             .padding(.horizontal, 40)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(tagTemplates, id: \.name) { tag in
-                    let isSelected = selectedTagNames.contains(tag.name)
-                    Button {
-                        if isSelected {
-                            selectedTagNames.remove(tag.name)
-                        } else {
-                            selectedTagNames.insert(tag.name)
-                        }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Text(tag.emoji)
-                                .font(.title3)
-                            Text(tag.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .lineLimit(1)
-                            Spacer()
-                            if isSelected {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.sage)
-                            } else {
-                                Image(systemName: "circle")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(isSelected ? Color(.cardBackground) : Color(.cardBackground).opacity(0.5))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(isSelected ? Color(tag.uiColor) : Color.clear, lineWidth: 1.5)
-                                )
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .animation(.spring(duration: 0.2), value: isSelected)
-                }
-            }
-            .padding(.horizontal, 24)
+            TagFlowGrid(tags: tagTemplates, selectedTagNames: $selectedTagNames)
+                .padding(.horizontal, 24)
 
             Spacer()
 
@@ -642,6 +602,97 @@ struct WelcomeView: View {
 }
 
 // MARK: - Supporting Views
+
+struct TagFlowGrid: View {
+    let tags: [ExpenseTag]
+    @Binding var selectedTagNames: Set<String>
+
+    var body: some View {
+        FlowLayout(spacing: 8) {
+            ForEach(tags, id: \.name) { tag in
+                tagChip(tag)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    @ViewBuilder
+    private func tagChip(_ tag: ExpenseTag) -> some View {
+        let isSelected = selectedTagNames.contains(tag.name)
+        Button {
+            if isSelected {
+                selectedTagNames.remove(tag.name)
+            } else {
+                selectedTagNames.insert(tag.name)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(tag.emoji)
+                    .font(.subheadline)
+                Text(tag.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isSelected ? Color(tag.uiColor).opacity(0.15) : Color(.cardBackground).opacity(0.5))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(isSelected ? Color(tag.uiColor) : Color.secondary.opacity(0.3), lineWidth: 1.5)
+                    )
+            )
+            .foregroundStyle(isSelected ? Color(tag.uiColor) : .primary)
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(duration: 0.2), value: isSelected)
+    }
+}
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        let height = rows.map { row in row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0 }.reduce(0) { $0 + $1 + spacing } - spacing
+        return CGSize(width: proposal.width ?? 0, height: max(0, height))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        var y = bounds.minY
+        for row in rows {
+            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
+            let rowWidth = row.map { $0.sizeThatFits(.unspecified).width }.reduce(0) { $0 + $1 + spacing } - spacing
+            var x = bounds.minX + (bounds.width - rowWidth) / 2
+            for subview in row {
+                let size = subview.sizeThatFits(.unspecified)
+                subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += rowHeight + spacing
+        }
+    }
+
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[LayoutSubview]] {
+        let maxWidth = proposal.width ?? .infinity
+        var rows: [[LayoutSubview]] = [[]]
+        var rowWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if rowWidth + size.width > maxWidth, !rows[rows.endIndex - 1].isEmpty {
+                rows.append([subview])
+                rowWidth = size.width + spacing
+            } else {
+                rows[rows.endIndex - 1].append(subview)
+                rowWidth += size.width + spacing
+            }
+        }
+        return rows
+    }
+}
 
 struct FeatureRow: View {
     let icon: String
