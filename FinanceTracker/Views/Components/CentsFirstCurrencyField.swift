@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CentsFirstCurrencyField: View {
     @Binding var amount: Double?
-    
+
     @State private var centsValue: String = "0"
     @FocusState private var isFocused: Bool
 
@@ -58,14 +58,14 @@ struct CentsFirstCurrencyField: View {
                 .accessibilityValue(displayValue)
                 .accessibilityHint("Enter expense amount using number keys")
 
-    
+
             Text(displayValue)
                 .font(.system(size: 52, weight: .bold))
                 .foregroundStyle(Color.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .onTapGesture { isFocused = true }
                 .accessibilityHidden(true)
-            
+
         }
         .onAppear {
             if let amount = amount {

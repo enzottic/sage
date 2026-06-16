@@ -34,7 +34,24 @@ struct ExpenseInfoForm: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isParsingReceipt = false
 
-    private enum Field: Hashable { case name, note }
+    private enum Field: Hashable { case name, amount, note }
+
+    @State private var showDatePicker = false
+    @State private var debouncedName: String = ""
+    @State private var debounceTask: Task<Void, Never>? = nil
+
+    private var nameSuggestions: [Expense] {
+        let trimmed = debouncedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+        let lower = trimmed.lowercased()
+        var seen = Set<String>()
+        return expenses.filter { expense in
+            let key = expense.name.lowercased()
+            guard key.contains(lower), !seen.contains(key) else { return false }
+            seen.insert(key)
+            return true
+        }.prefix(4).map { $0 }
+    }
 
     init(
         name: Binding<String>,
@@ -56,14 +73,27 @@ struct ExpenseInfoForm: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            amountHeader
-            basicInfoCard
+            nameHeader
+            if !isEditing && focusedField == .name && !nameSuggestions.isEmpty {
+                pastExpenseSuggestions
+                    .transition(.opacity.combined(with: .offset(y: -8)))
+            }
+            detailsCard
             sectionHeader(title: "Category") {
                 inlineCategoryPicker
             }
             sectionHeader(title: "Tag") {
                 TagPicker(selectedTag: $tag, tagIsAISuggested: tagIsAISuggested)
                     .padding(.horizontal, 8)
+            }
+        }
+        .animation(.spring(duration: 0.35, bounce: 0.2), value: focusedField == .name && !nameSuggestions.isEmpty)
+        .onChange(of: name) { _, newValue in
+            debounceTask?.cancel()
+            debounceTask = Task {
+                try? await Task.sleep(for: .seconds(0.5))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { debouncedName = newValue }
             }
         }
         .onChange(of: tag) { _, _ in tagIsAISuggested = false }
@@ -115,15 +145,15 @@ struct ExpenseInfoForm: View {
         }
     }
 
-    // MARK: - Amount header
+    // MARK: - Name header
 
-    private var amountHeader: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                CentsFirstCurrencyField(amount: $amount)
-                Text(isEditing ? "Tap to edit amount" : "Enter amount")
-                    .foregroundStyle(.secondary)
-                    .font(.subheadline)
+    private var nameHeader: some View {
+        HStack(alignment: .center, spacing: 16) {
+        TextField("New Expense", text: $name)
+            .font(.system(size: 34, weight: .bold))
+            .focused($focusedField, equals: .name)
+            .onChange(of: focusedField) { old, _ in
+                if old == .name { suggestTagIfNeeded() }
             }
             Spacer(minLength: 0)
             if !isEditing {
@@ -134,6 +164,73 @@ struct ExpenseInfoForm: View {
         }
         .padding(.horizontal)
     }
+
+    // MARK: - Past expense suggestions
+
+    private var pastExpenseSuggestions: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(nameSuggestions.enumerated()), id: \.element.id) { index, expense in
+                if index > 0 {
+                    Divider().padding(.leading, 56)
+                }
+                Button {
+                    name = expense.name
+                    amount = expense.amount
+                    category = expense.category
+                    tag = expense.tag
+                    tagIsAISuggested = false
+                    focusedField = nil
+                } label: {
+                    HStack(spacing: 12) {
+                        if let emoji = expense.tag?.emoji {
+                            Text(emoji)
+                                .font(.system(size: 20))
+                                .frame(width: 36, height: 36)
+                                .background(Color.secondary.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } else {
+                            Image(systemName: "clock")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 36, height: 36)
+                                .background(Color.secondary.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(expense.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
+                            HStack(spacing: 4) {
+                                Text(expense.category.rawValue)
+                                if let tagName = expense.tag?.name {
+                                    Text("·")
+                                    Text(tagName)
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+    }
+
+    // MARK: - Amount section
 
     private var receiptButton: some View {
         Button { showReceiptSourceDialog = true } label: {
@@ -163,32 +260,65 @@ struct ExpenseInfoForm: View {
         .disabled(isParsingReceipt)
     }
 
-    // MARK: - Basic info card
+    // MARK: - Details card
 
-    private var basicInfoCard: some View {
+    private var detailsCard: some View {
         VStack(spacing: 0) {
-            TextField("Expense name", text: $name)
-                .font(.body)
-                .focused($focusedField, equals: .name)
-                .onChange(of: focusedField) { old, _ in
-                    if old == .name { suggestTagIfNeeded() }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
-
-            Divider().padding(.leading, 52)
-
             HStack(spacing: 12) {
-                rowIcon("calendar")
-                Text("Date")
+                rowIcon("dollarsign")
+                Text("Amount")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                DatePicker("", selection: $date, displayedComponents: .date)
-                    .labelsHidden()
+                TextField(
+                    "$0.00",
+                    value: $amount,
+                    format: .currency(code: Locale.current.currency?.identifier ?? "USD")
+                )
+                .keyboardType(.decimalPad)
+                .font(.body)
+                .multilineTextAlignment(.trailing)
+                .focused($focusedField, equals: .amount)
+                .onChange(of: focusedField) { _, newField in
+                    if newField == .amount, (amount ?? 0) == 0 {
+                        amount = nil
+                    }
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 14)
+
+            Divider().padding(.leading, 52)
+
+            Button {
+                withAnimation(.spring(duration: 0.3)) { showDatePicker.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    rowIcon("calendar")
+                    Text("Date")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(date.formatted(date: .abbreviated, time: .omitted))
+                        .font(.subheadline)
+                        .foregroundStyle(showDatePicker ? .sage : .primary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.plain)
+
+            if showDatePicker {
+                DatePicker("", selection: $date, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
+                    .onChange(of: date) {
+                        withAnimation(.spring(duration: 0.3)) { showDatePicker = false }
+                    }
+                    .transition(.opacity.combined(with: .offset(y: -8)))
+            }
 
             Divider().padding(.leading, 52)
 

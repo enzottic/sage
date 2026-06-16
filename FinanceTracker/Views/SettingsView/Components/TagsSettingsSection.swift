@@ -16,6 +16,7 @@ struct TagsSettingsSection: View {
 
     @State private var showAddTagSheet = false
     @State private var tagToEdit: ExpenseTag? = nil
+    @State private var tagPendingDelete: ExpenseTag? = nil
 
     private var availableTaggingModes: [SmartTaggingMode] {
         SmartTaggingMode.allCases.filter { mode in
@@ -68,7 +69,12 @@ struct TagsSettingsSection: View {
                 .onDelete { indexSet in
                     let visible = expenseTags.filter { !$0.isDeleted }
                     for index in indexSet {
-                        modelContext.delete(visible[index])
+                        let tag = visible[index]
+                        if (tag.expenses ?? []).isEmpty {
+                            modelContext.delete(tag)
+                        } else {
+                            tagPendingDelete = tag
+                        }
                     }
                 }
             }
@@ -93,6 +99,25 @@ struct TagsSettingsSection: View {
             AddExpenseTagSheet(tagToEdit: tag)
                 .presentationBackground(.background)
                 .presentationDetents([.medium])
+        }
+        .alert("Remove Tag from Expenses?", isPresented: Binding(
+            get: { tagPendingDelete != nil },
+            set: { if !$0 { tagPendingDelete = nil } }
+        )) {
+            Button("Delete Tag", role: .destructive) {
+                if let tag = tagPendingDelete {
+                    modelContext.delete(tag)
+                }
+                tagPendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                tagPendingDelete = nil
+            }
+        } message: {
+            if let tag = tagPendingDelete {
+                let count = tag.expenses?.count ?? 0
+                Text("\(count) expenses have the \(tag.name) tag. Deleting it will remove the tag from those expenses.")
+            }
         }
     }
 }
