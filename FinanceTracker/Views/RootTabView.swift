@@ -36,6 +36,10 @@ struct RootTabView: View {
                 Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
                     AddExpenseView()
                 }
+            } else {
+                Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
+                    SearchExpensesView()
+                }
             }
         }
         .overlay(alignment: .top) {

@@ -20,7 +20,8 @@ private func copyStoreFiles(from src: URL, to dst: URL) {
 }
 
 // Migrates the store from the app's private sandbox to the shared app group container.
-// Only runs once, tracked by a flag in the app group UserDefaults.
+// Only runs once, tracked by a flag in the app group UserDefaults. Production only —
+// the DEBUG store has always lived in the app group as SageDev.sqlite.
 private func migrateStoreToAppGroupIfNeeded(destination: URL) {
     let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")
     let migrationKey = "hasCompletedStoreMigration"
@@ -31,9 +32,6 @@ private func migrateStoreToAppGroupIfNeeded(destination: URL) {
     // Only migrate if new store doesn't exist yet — avoids clobbering a store already opened there
     guard !fm.fileExists(atPath: destination.path) else { return }
 
-    #if DEBUG
-    let candidates = [URL.applicationSupportDirectory.appending(path: "SageDev.sqlite")]
-    #else
     // CloudKit will re-sync all data to the new location — no need to copy stale local files,
     // and doing so can confuse CloudKit's change tracking metadata.
     let cloudSyncEnabled = (UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")?.bool(forKey: "isCloudSyncEnabled")) ?? false
@@ -45,7 +43,6 @@ private func migrateStoreToAppGroupIfNeeded(destination: URL) {
         URL.applicationSupportDirectory.appending(path: "Sage.store"),
         URL.applicationSupportDirectory.appending(path: "FinanceTracker.store"),
     ]
-    #endif
 
     for candidate in candidates where fm.fileExists(atPath: candidate.path) {
         copyStoreFiles(from: candidate, to: destination)
@@ -56,6 +53,7 @@ private func migrateStoreToAppGroupIfNeeded(destination: URL) {
 @MainActor
 let appContainer: ModelContainer = {
     do {
+        #if !DEBUG
         // iCloud KVS is authoritative for the sync preference
         let cloudKVS = NSUbiquitousKeyValueStore.default
         let cloudSyncEnabled: Bool
@@ -68,21 +66,19 @@ let appContainer: ModelContainer = {
 
         let groupURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: SageModelContainer.appGroupIdentifier)!
-
-        #if DEBUG
-        let storeURL = groupURL.appending(path: "SageDev.sqlite")
-        #else
         let storeURL = groupURL.appending(path: "Sage.sqlite")
+        migrateStoreToAppGroupIfNeeded(destination: storeURL)
+        #else
+        let cloudSyncEnabled = false
         #endif
 
-        migrateStoreToAppGroupIfNeeded(destination: storeURL)
-
         let modelContainer = try SageModelContainer.make(cloudKitEnabled: cloudSyncEnabled)
-        
-        // Generate any due recurring expenses through today
+
+        #if !DEBUG
         let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
         recurringService.generateAllExpenses(through: Date())
-        
+        #endif
+
         return modelContainer
     } catch {
         fatalError("Failed to create model container: \(error)")

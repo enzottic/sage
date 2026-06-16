@@ -69,13 +69,6 @@ struct WelcomeView: View {
                     .animation(.easeInOut, value: currentStep)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .keyboard) {
-                    Button("Done") {
-                        isInputFocused = false
-                    }
-                }
-            }
 
         }
     }
@@ -162,6 +155,13 @@ struct WelcomeView: View {
                     .padding()
                     .background(.cardBackground)
                     .cornerRadius(15)
+                    .toolbar {
+                        ToolbarItem(placement: .keyboard) {
+                            Button("Done") {
+                                isInputFocused = false
+                            }
+                        }
+                    }
 
                 Text("\(Locale.current.currency?.identifier ?? "USD") per month")
                     .font(.subheadline)
@@ -188,6 +188,7 @@ struct WelcomeView: View {
 
                 Button {
                     if let income = Int(monthlyIncome), income > 0 {
+                        isInputFocused = false
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                             currentStep = .allocation
                         }
@@ -420,7 +421,7 @@ struct WelcomeView: View {
                     .font(.system(size: 28, weight: .bold))
                     .multilineTextAlignment(.center)
 
-                Text("Tags help you categorize expenses. Pick the ones you'd like to start with — you can always add or remove them later.")
+                Text("Tags help you categorize expenses. Pick the ones you'd like to start with. You can always add or remove them later.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

@@ -33,6 +33,14 @@ public enum SageModelContainer {
         )
         #endif
 
-        return try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [config])
+        let container = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [config])
+
+        #if DEBUG
+        let seedContext = ModelContext(container)
+        MockDataSeeder.seed(into: seedContext)
+        try seedContext.save()
+        #endif
+
+        return container
     }
 }

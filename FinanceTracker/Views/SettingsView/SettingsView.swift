@@ -7,11 +7,16 @@
 import SwiftUI
 import SwiftData
 import WebKit
+import WidgetKit
 import Darwin
+import SageKit
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showDeleteAllConfirmation = false
 
     private var feedbackURL: URL {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -76,6 +81,28 @@ struct SettingsView: View {
                         SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                     }
                 }
+
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteAllConfirmation = true
+                    } label: {
+                        SettingsListItem(text: "Delete All Expenses", icon: "trash.fill", color: .red)
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                #if DEBUG
+                Section("Debug") {
+                    Button(role: .destructive) {
+                        NSUbiquitousKeyValueStore.default.removeObject(forKey: "hasCompletedSetup")
+                        NSUbiquitousKeyValueStore.default.synchronize()
+                        UserDefaults.standard.removeObject(forKey: "hasOpenedAppOnce")
+                    } label: {
+                        SettingsListItem(text: "Reset Onboarding", icon: "arrow.counterclockwise", color: .orange)
+                            .foregroundStyle(.orange)
+                    }
+                }
+                #endif
             }
             .navigationTitle("Settings")
             .navigationDestination(for: SettingsPage.self) { page in
@@ -96,6 +123,25 @@ struct SettingsView: View {
                     PrivacyWebView()
                 }
             }
+            .alert("Delete All Expenses?", isPresented: $showDeleteAllConfirmation) {
+                Button("Delete All", role: .destructive) {
+                    deleteAllExpenses()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete every expense. This cannot be undone.")
+            }
+        }
+    }
+
+    private func deleteAllExpenses() {
+        do {
+            try modelContext.delete(model: Expense.self)
+            try modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
+            router.showToast(SageToast(message: "All expenses deleted", kind: .success))
+        } catch {
+            router.showToast(SageToast(message: error.localizedDescription, kind: .error))
         }
     }
 }

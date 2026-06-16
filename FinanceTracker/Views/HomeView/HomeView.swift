@@ -7,7 +7,6 @@
 
 import SwiftUI
 import SwiftData
-import FoundationModels
 import Charts
 import SageKit
 

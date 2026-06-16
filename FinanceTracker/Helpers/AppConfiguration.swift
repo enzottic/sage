@@ -164,7 +164,11 @@ class AppConfiguration {
     }
     
     init() {
+        #if DEBUG
+        self.defaults = .standard
+        #else
         self.defaults = UserDefaults(suiteName: suite) ?? .standard
+        #endif
         
         // iCloud KVS is the source of truth for all settings.
         // Fall back to local UserDefaults if iCloud KVS hasn't synced yet.

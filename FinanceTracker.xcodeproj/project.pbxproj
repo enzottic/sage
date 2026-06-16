@@ -8,13 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C673106B2FD4932500A4C432 /* AppIntents.framework */; };
-		C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; };
-		C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
+		C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C68EEE1F2FD7C812003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; };
-		C68EEE202FD7C812003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
-		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C6B4BA142FC214FC00882087 /* FinanceTrackerShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B4BA0A2FC214FB00882087 /* FinanceTrackerShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -74,7 +73,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				C68EEE202FD7C812003C4FD6 /* SageKit.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -425,7 +423,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2700;
-				LastUpgradeCheck = 2650;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					C655B3AB2EF8E4B300E1F50E = {
 						CreatedOnToolsVersion = 26.0;
@@ -554,6 +552,7 @@
 		};
 		C68EEE142FD7C7E8003C4FD6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
 			targetProxy = C68EEE132FD7C7E8003C4FD6 /* PBXContainerItemProxy */;
 		};
@@ -564,7 +563,6 @@
 		};
 		C6B09FE32E92CF5400899162 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilter = ios;
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 			targetProxy = C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */;
 		};
@@ -791,8 +789,8 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -840,8 +838,8 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = YES;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = PROD;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -858,7 +856,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
@@ -902,7 +900,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
