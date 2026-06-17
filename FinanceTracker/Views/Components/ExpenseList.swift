@@ -14,7 +14,6 @@ struct ExpenseList: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var appRouter
 
-
     let expenses: [Expense]
 
     @State private var expenseToDelete: Expense? = nil
@@ -33,6 +32,12 @@ struct ExpenseList: View {
                         showingDeleteConfirmation = true
                     }
                     .tint(.red)
+                    
+                    Button("Duplicate") {
+                        print("duplicate")
+                        appRouter.navigateTo(tab: .home)
+                        appRouter.homeRouter.navigateTo(route: .addExpense(expense: expense))
+                    }
                 }
             }
         }

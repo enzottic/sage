@@ -35,11 +35,14 @@ struct ExpensesView: View {
                 .background(.sageBackground)
                 .navigationTitle(formatter.string(from: selectedMonth))
                 .searchable(text: $searchText, prompt: "Search expenses")
+                .navigationDestination(for: ExpensesViewRouter.Route.self) { route in
+                    switch route {
+                    case .addExpense(let expense):
+                        AddExpenseView(expense: expense)
+                    }
+                }
                 .navigationDestination(for: Expense.self) { expense in
                     ExpenseDetailView(expense: expense)
-                }
-                .navigationDestination(for: AddExpenseRoute.self) { _ in
-                    AddExpenseView()
                 }
                 .sheet(isPresented: $showSplitwiseImport) {
                     SplitwiseImportView()
@@ -54,7 +57,7 @@ struct ExpensesView: View {
                             slideDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { navigationPath.append(AddExpenseRoute()) },
+                        onAdd: { appRouter.expensesViewRouter.navigateTo(route: .addExpense(expense: nil)) },
                         onImportFromSplitwise: splitwiseService.isConfigured
                             ? { showSplitwiseImport = true }
                             : nil,

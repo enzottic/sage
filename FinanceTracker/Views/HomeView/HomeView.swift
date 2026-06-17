@@ -34,7 +34,7 @@ struct HomeView: View {
                         onNext: {
                             selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense) },
+                        onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense(expense: nil)) },
                         onImportFromSplitwise: splitwiseService.isConfigured
                             ? { showSplitwiseImport = true }
                             : nil,
@@ -45,8 +45,8 @@ struct HomeView: View {
                     switch route {
                     case .categoryDetail(let category):
                         HomeContentView.CategoryDetailRoute(category: category)
-                    case .addExpense:
-                        AddExpenseView()
+                    case .addExpense(let expense):
+                        AddExpenseView(expense: expense)
                     }
                 }
                 .navigationDestination(for: Expense.self) { expense in

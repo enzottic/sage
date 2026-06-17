@@ -13,7 +13,7 @@ enum SageTab: Equatable, Hashable {
     case stats
     case settings
     case search
-    case addExpense
+    case addExpense(expense: Expense?)
 }
 
 /// Push value for the "add expense" flow when used as a navigation destination.
@@ -28,7 +28,9 @@ struct SageToast {
 @Observable
 class AppRouter {
     var homeRouter = HomeRouter()
+    var expensesViewRouter = ExpensesViewRouter()
     var settingsRouter = SettingsRouter()
+    
     var selectedTab: SageTab = .home
     var expensesMonth: Date = .now
     var toast: SageToast? = nil
@@ -56,9 +58,22 @@ class HomeRouter {
 
     enum Route: Hashable {
         case categoryDetail(category: ExpenseCategory)
-        case addExpense
+        case addExpense(expense: Expense?)
     }
 
+    func navigateTo(route: Route) {
+        navigationPath.append(route)
+    }
+}
+
+@Observable
+class ExpensesViewRouter {
+    var navigationPath = NavigationPath()
+    
+    enum Route: Hashable {
+        case addExpense(expense: Expense?)
+    }
+    
     func navigateTo(route: Route) {
         navigationPath.append(route)
     }

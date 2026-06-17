@@ -33,6 +33,15 @@ struct AddExpenseView: View {
     @State private var isParsingReceipt: Bool = false
 
     @Query private var allTags: [ExpenseTag]
+    
+    init(expense: Expense?) {
+        if let expense = expense {
+            _name = State(initialValue: expense.name)
+            _amount = State(initialValue: expense.amount)
+            _tag = State(initialValue: expense.tag ?? nil)
+            _category = State(initialValue: expense.category)
+        }
+    }
 
     private var selectedGroup: SplitwiseGroup? {
         availableGroups.first { $0.id == selectedGroupId }
@@ -336,6 +345,6 @@ struct AddExpenseView: View {
 }
 
 #Preview {
-    AddExpenseView()
+    AddExpenseView(expense: nil)
         .environmentInjection()
 }

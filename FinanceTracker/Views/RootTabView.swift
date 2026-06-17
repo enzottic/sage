@@ -33,8 +33,8 @@ struct RootTabView: View {
             }
             
             if #available(anyAppleOS 27.0, *) {
-                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
-                    AddExpenseView()
+                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense(expense: nil), role: .prominent) {
+                    AddExpenseView(expense: nil)
                 }
             } else {
                 Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
@@ -66,7 +66,7 @@ struct RootTabView: View {
     private func handleDeepLink(_ url: URL) {
         guard (url.scheme == "sage" || url.scheme == "sage-dev"), url.host == "add-expense" else { return }
         appRouter.selectedTab = .home
-        appRouter.homeRouter.navigateTo(route: .addExpense)
+        appRouter.homeRouter.navigateTo(route: .addExpense(expense: nil))
     }
 }
 
