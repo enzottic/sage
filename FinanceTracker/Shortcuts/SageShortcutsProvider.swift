@@ -7,9 +7,10 @@
 
 import Foundation
 import AppIntents
+import SageKit
 
-public struct SageShortcutsProvider: AppShortcutsProvider {
-    public static var appShortcuts: [AppShortcut] = [
+struct SageShortcutsProvider: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] = [
         AppShortcut(
             intent: AddExpenseAppIntent(),
             phrases: [
@@ -26,6 +27,7 @@ public struct SageShortcutsProvider: AppShortcutsProvider {
             intent: GetMonthlySpendingIntent(),
             phrases: [
                 "How much have I spent in ${applicationName}",
+                "How much have I spent this month in ${applicationName}",
                 "How much have I spent on \(\.$category) in ${applicationName}",
                 "Check my spending this month in ${applicationName}",
                 "Check my \(\.$category) spending this month in ${applicationName}",

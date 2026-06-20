@@ -10,7 +10,7 @@ import SwiftData
 public struct GetBudgetRemainingIntent: AppIntent {
     public static var title: LocalizedStringResource = "Check Budget Remaining"
 
-    @Parameter(title: "Category") var category: ExpenseCategory?
+    @Parameter(title: "Category") public var category: ExpenseCategory?
 
     public static var parameterSummary: some ParameterSummary {
         Summary("How much budget do I have left?") {

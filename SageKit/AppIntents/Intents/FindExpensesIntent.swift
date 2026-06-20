@@ -70,10 +70,10 @@ public struct FindExpensesIntent: AppIntent {
     public static var openAppWhenRun: Bool = false
     
 
-    @Parameter(title: "Time Period", default: .thisMonth) var timePeriod: ExpenseTimePeriod
-    @Parameter(title: "Tag") var tag: ExpenseTagEntity?
-    @Parameter(title: "Category") var category: ExpenseCategory?
-    @Parameter(title: "Name Contains") var nameFilter: String?
+    @Parameter(title: "Time Period", default: .thisMonth) public var timePeriod: ExpenseTimePeriod
+    @Parameter(title: "Tag") public var tag: ExpenseTagEntity?
+    @Parameter(title: "Category") public var category: ExpenseCategory?
+    @Parameter(title: "Name Contains") public var nameFilter: String?
 
     public static var parameterSummary: some ParameterSummary {
         Summary("How much did I spend \(\.$timePeriod)?") {

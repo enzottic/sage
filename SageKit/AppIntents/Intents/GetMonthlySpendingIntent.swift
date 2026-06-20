@@ -12,8 +12,8 @@ import SwiftData
 public struct GetMonthlySpendingIntent: AppIntent {
     public static var title: LocalizedStringResource = "Get Monthly Spending"
     
-    @Parameter(title: "Category") var category: ExpenseCategory?
-    @Parameter(title: "Tag") var tag: ExpenseTagEntity?
+    @Parameter(title: "Category") public var category: ExpenseCategory?
+    @Parameter(title: "Tag") public var tag: ExpenseTagEntity?
 
     public static var parameterSummary: some ParameterSummary {
         Summary("How much have I spent this month?") {

@@ -28,6 +28,11 @@ struct SageApp: App {
         // Register before the app finishes launching (BGTaskScheduler requirement)
         RecurringNotificationService.registerBackgroundTask()
 
+        // Make ExpenseStore resolvable via @Dependency in App Intents.
+        // Must run before any intent's perform(); SageApp.init() runs even
+        // for background Siri launches, so this is the correct place.
+        AppDependencyManager.shared.add(dependency: ExpenseStore.shared)
+
         // Register App Shortcuts phrases with Siri
         SageShortcutsProvider.updateAppShortcutParameters()
 
