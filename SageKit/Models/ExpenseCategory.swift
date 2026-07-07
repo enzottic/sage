@@ -11,7 +11,15 @@ public enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
     case needs = "Needs"
     case wants = "Wants"
     case savings = "Savings"
-    
+
+    public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Expense Category"
+
+    public static var caseDisplayRepresentations: [ExpenseCategory: DisplayRepresentation] = [
+        .needs: "Needs",
+        .wants: "Wants",
+        .savings: "Savings"
+    ]
+
     public var defaultColor: Color {
         switch self {
         case .needs: return Color("NeedColor")
@@ -30,19 +38,5 @@ public enum ExpenseCategory: String, CaseIterable, Codable, AppEnum {
         case .wants: "Non-essentials like entertainment, dining-out, etc."
         case .savings: "Money set aside to save."
         }
-    }
-}
-
-public extension ExpenseCategory {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Expense Category")
-    }
-    
-    static var caseDisplayRepresentations: [Self: DisplayRepresentation] {
-        [
-            .wants: "Wants",
-            .needs: "Needs",
-            .savings: "Savings"
-        ]
     }
 }

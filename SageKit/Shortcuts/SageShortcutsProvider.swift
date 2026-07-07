@@ -7,10 +7,9 @@
 
 import Foundation
 import AppIntents
-import SageKit
 
-struct SageShortcutsProvider: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] = [
+public struct SageShortcutsProvider: AppShortcutsProvider {
+    public static var appShortcuts: [AppShortcut] = [
         AppShortcut(
             intent: AddExpenseAppIntent(),
             phrases: [
@@ -30,7 +29,7 @@ struct SageShortcutsProvider: AppShortcutsProvider {
                 "How much have I spent this month in ${applicationName}",
                 "How much have I spent on \(\.$category) in ${applicationName}",
                 "Check my spending this month in ${applicationName}",
-                "Check my \(\.$category) spending this month in ${applicationName}",
+                "Check my spending on \(\.$category) this month in ${applicationName}",
             ],
             shortTitle: "Monthly Spending",
             systemImageName: "chart.bar"
