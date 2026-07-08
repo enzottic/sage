@@ -17,7 +17,6 @@ struct ExpensesView: View {
     @State private var showSplitwiseImport: Bool = false
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
-    @State private var navigationPath = NavigationPath()
 
     let calendar = Calendar.current
     let formatter: DateFormatter
@@ -29,7 +28,7 @@ struct ExpensesView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack(path: Bindable(appRouter.expensesViewRouter).navigationPath) {
             MonthExpensesList(month: selectedMonth, searchText: searchText)
                 .frame(maxWidth: .infinity)
                 .background(.sageBackground)
@@ -74,5 +73,5 @@ struct ExpensesView: View {
 
 #Preview {
     ExpensesView()
-        .modelContainer(previewAppContainer)
+        .environmentInjection()
 }
