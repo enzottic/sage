@@ -35,8 +35,10 @@ struct SpendingPeriodData: Identifiable {
 
 struct StatsView: View {
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(AppConfiguration.self) private var config
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
+    @Query private var recurringRules: [RecurringExpenseRule]
 
     @State private var timeframe: StatsTimeframe = .monthly
     @State private var selectedCategory: ExpenseCategory? = nil
@@ -59,8 +61,25 @@ struct StatsView: View {
         }
     }
 
+    /// Recurring rules matching the active category/tag filter.
+    private var filteredRecurringRules: [RecurringExpenseRule] {
+        recurringRules.filter { rule in
+            let matchesCategory = selectedCategory == nil || rule.category == selectedCategory
+            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || rule.tag?.id == selectedTag?.id
+            return matchesCategory && matchesTag
+        }
+    }
+
     private var currentPeriodInterval: DateInterval {
         calendar.dateInterval(of: timeframe.calendarComponent, for: Date())!
+    }
+
+    /// Filtered expenses recorded from the start of the current period through now.
+    var currentPeriodExpenses: [Expense] {
+        let now = Date()
+        return filteredExpenses.filter {
+            $0.date >= currentPeriodInterval.start && $0.date <= now
+        }
     }
 
     var chartData: [SpendingPeriodData] {
@@ -86,10 +105,7 @@ struct StatsView: View {
 
     /// Spending from the start of the current period through now.
     var currentPartialTotal: Double {
-        let now = Date()
-        return filteredExpenses.filter {
-            $0.date >= currentPeriodInterval.start && $0.date <= now
-        }.total
+        currentPeriodExpenses.total
     }
 
     /// Spending in the previous period through the same elapsed time, for an apples-to-apples comparison.
@@ -104,16 +120,47 @@ struct StatsView: View {
         }.total
     }
 
-    /// Current spending pace extrapolated to the end of the period.
+    /// Variable (non-recurring) spend totals for recent *complete* periods,
+    /// used as the historical baseline for the projection.
+    private var historicalVariableTotals: [Double] {
+        let now = Date()
+        return (1..<periodCount).compactMap { periodsAgo in
+            guard let target = calendar.date(byAdding: timeframe.calendarComponent, value: -periodsAgo, to: now),
+                  let interval = calendar.dateInterval(of: timeframe.calendarComponent, for: target) else { return nil }
+            return filteredExpenses.filter {
+                $0.date >= interval.start && $0.date < interval.end && $0.recurringExpenseId == nil
+            }.total
+        }
+    }
+
+    /// Recurring-aware, history-blended projection of total spend for the period.
     var projectedTotal: Double {
-        let interval = currentPeriodInterval
-        let elapsed = Date().timeIntervalSince(interval.start)
-        guard elapsed > 0 else { return 0 }
-        return currentPartialTotal / (elapsed / interval.duration)
+        SpendingProjection.project(
+            periodExpenses: currentPeriodExpenses,
+            recurringRules: filteredRecurringRules,
+            interval: currentPeriodInterval,
+            now: Date(),
+            historicalVariableTotals: historicalVariableTotals,
+            calendar: calendar
+        )
     }
 
     private var projectedRemainder: Double {
         max(0, projectedTotal - currentPartialTotal)
+    }
+
+    /// Budget to compare the projection against, when meaningful.
+    /// Only for the monthly timeframe with income set and no tag filter
+    /// (tags have no budget; weekly proration would distort the 50/30/20 model).
+    private var periodBudget: Double? {
+        guard timeframe == .monthly, config.totalMonthlyIncome > 0, selectedTag == nil else { return nil }
+        switch selectedCategory {
+        case .needs: return config.needsBudget
+        case .wants: return config.wantsBudget
+        case .savings: return config.savingsBudget
+        case nil: return config.needsBudget + config.wantsBudget + config.savingsBudget
+        @unknown default: return config.needsBudget + config.wantsBudget + config.savingsBudget
+        }
     }
 
     var body: some View {
@@ -138,9 +185,15 @@ struct StatsView: View {
                         currentPartialTotal: currentPartialTotal,
                         previousPartialTotal: previousPartialTotal,
                         projectedTotal: projectedTotal,
+                        periodBudget: periodBudget,
                         timeframe: timeframe
                     )
                     .padding(.horizontal)
+
+                    if currentPartialTotal > 0 {
+                        TopSpendingBreakdown(expenses: currentPeriodExpenses, accentColor: accentColor)
+                            .padding(.horizontal)
+                    }
 
                     spendingChart
                         .padding(.horizontal)

@@ -40,8 +40,8 @@ class RecurringExpenseService {
         
         let effectiveEnd = rule.endDate.map { min($0, date) } ?? date
         
-        var nextDate = nextOccurrence(after: lastGenerated, frequency: rule.frequency)
-        
+        var nextDate = rule.frequency.nextOccurrence(after: lastGenerated, calendar: calendar)
+
         while let generationDate = nextDate, generationDate <= effectiveEnd {
             let expense = Expense(
                 name: rule.name,
@@ -53,25 +53,9 @@ class RecurringExpenseService {
                 recurringExpenseId: rule.id
             )
             modelContext.insert(expense)
-            
+
             rule.lastGeneratedDate = generationDate
-            nextDate = nextOccurrence(after: generationDate, frequency: rule.frequency)
-        }
-    }
-    
-    private func nextOccurrence(after date: Date, frequency: RecurrenceFrequency) -> Date? {
-        let calendar = Calendar.current
-        switch frequency {
-        case .daily:
-            return calendar.date(byAdding: .day, value: 1, to: date)
-        case .weekly:
-            return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
-        case .biweekly:
-            return calendar.date(byAdding: .weekOfYear, value: 2, to: date)
-        case .monthly:
-            return calendar.date(byAdding: .month, value: 1, to: date)
-        @unknown default:
-            fatalError("Unknown frequency: \(frequency)")
+            nextDate = rule.frequency.nextOccurrence(after: generationDate, calendar: calendar)
         }
     }
 }

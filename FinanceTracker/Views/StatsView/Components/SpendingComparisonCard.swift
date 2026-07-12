@@ -12,6 +12,7 @@ struct SpendingComparisonCard: View {
     let currentPartialTotal: Double
     let previousPartialTotal: Double
     let projectedTotal: Double
+    var periodBudget: Double? = nil
     let timeframe: StatsTimeframe
 
     private var percentageChange: Double {
@@ -69,6 +70,21 @@ struct SpendingComparisonCard: View {
                     }
                 }
                 .font(.subheadline)
+
+                if let periodBudget {
+                    let difference = projectedTotal - periodBudget
+                    let isOver = difference > 0
+                    HStack(spacing: 6) {
+                        Image(systemName: isOver ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        if isOver {
+                            Text("\(difference.currencyString) over your \(periodBudget.currencyString) budget")
+                        } else {
+                            Text("\(abs(difference).currencyString) under your \(periodBudget.currencyString) budget")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(isOver ? .red : .green)
+                }
             }
         }
         .padding()

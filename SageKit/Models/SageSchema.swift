@@ -296,3 +296,17 @@ public typealias ExpenseTag = SageSchemaV2.ExpenseTag
 public typealias RecurringExpenseRule = SageSchemaV2.RecurringExpenseRule
 public typealias RecurrenceFrequency = SageSchemaV2.RecurrenceFrequency
 public typealias ExpenseAccount = SageSchemaV2.ExpenseAccount
+
+public extension RecurrenceFrequency {
+    /// The next occurrence date one interval after `date`, or nil if it can't be computed.
+    /// Shared by generation (`RecurringExpenseService`) and projection (`SpendingProjection`)
+    /// so both step the cadence identically.
+    func nextOccurrence(after date: Date, calendar: Calendar = .current) -> Date? {
+        switch self {
+        case .daily:    return calendar.date(byAdding: .day, value: 1, to: date)
+        case .weekly:   return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
+        case .biweekly: return calendar.date(byAdding: .weekOfYear, value: 2, to: date)
+        case .monthly:  return calendar.date(byAdding: .month, value: 1, to: date)
+        }
+    }
+}

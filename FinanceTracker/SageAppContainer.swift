@@ -89,7 +89,7 @@ let appContainer: ModelContainer = {
 let previewAppContainer: ModelContainer = {
     do {
         let schema = Schema(versionedSchema: SageSchemaV2.self)
-        let container = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self ,configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         
         let expenseTags: [String: ExpenseTag] = [
             "Other" : .other,
