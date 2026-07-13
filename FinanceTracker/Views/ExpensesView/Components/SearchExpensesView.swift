@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct SearchExpensesView: View {
+    @Environment(AppRouter.self) private var appRouter
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var expenses: [Expense]
     @State private var searchText: String = ""
     
@@ -33,7 +34,8 @@ struct SearchExpensesView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        @Bindable var appRouter = appRouter
+        NavigationStack(path: $appRouter.searchPath) {
             VStack {
                 if searchText.isEmpty {
                     ContentUnavailableView(
@@ -65,9 +67,7 @@ struct SearchExpensesView: View {
             .background(.sageBackground)
             .navigationTitle("Search")
             .searchable(text: $searchText, prompt: "Search expenses")
-            .navigationDestination(for: Expense.self) { expense in
-                ExpenseDetailView(expense: expense)
-            }
+            .appRouteDestinations()
             .gradientBackground()
         }
     }
@@ -75,5 +75,5 @@ struct SearchExpensesView: View {
 
 #Preview {
     SearchExpensesView()
-        .modelContainer(previewAppContainer)
+        .environmentInjection()
 }

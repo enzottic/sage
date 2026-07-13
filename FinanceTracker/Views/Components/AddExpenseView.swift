@@ -73,6 +73,9 @@ struct AddExpenseView: View {
         .navigationTitle("New Expense")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 if isSaving {
                     ProgressView()

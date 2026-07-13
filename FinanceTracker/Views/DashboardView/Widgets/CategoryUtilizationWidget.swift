@@ -47,7 +47,7 @@ struct CategoryUtilizationWidget: View {
     var body: some View {
         Section {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
+                NavigationLink(value: AppRoute.categoryDetail(category)) {
                     CategoryUtilizationView(
                         for: category,
                         utilization(for: category),

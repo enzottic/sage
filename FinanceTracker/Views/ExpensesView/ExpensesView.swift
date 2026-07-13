@@ -14,7 +14,6 @@ struct ExpensesView: View {
     @Environment(AppRouter.self) private var appRouter
 
     @State private var selectedMonth: Date
-    @State private var showSplitwiseImport: Bool = false
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
 
@@ -28,24 +27,14 @@ struct ExpensesView: View {
     }
 
     var body: some View {
-        NavigationStack(path: Bindable(appRouter.expensesViewRouter).navigationPath) {
+        @Bindable var appRouter = appRouter
+        NavigationStack(path: $appRouter.expensesPath) {
             MonthExpensesList(month: selectedMonth, searchText: searchText)
                 .frame(maxWidth: .infinity)
                 .background(.sageBackground)
                 .navigationTitle(formatter.string(from: selectedMonth))
                 .searchable(text: $searchText, prompt: "Search expenses")
-                .navigationDestination(for: ExpensesViewRouter.Route.self) { route in
-                    switch route {
-                    case .addExpense(let expense):
-                        AddExpenseView(expense: expense)
-                    }
-                }
-                .navigationDestination(for: Expense.self) { expense in
-                    ExpenseDetailView(expense: expense)
-                }
-                .sheet(isPresented: $showSplitwiseImport) {
-                    SplitwiseImportView()
-                }
+                .appRouteDestinations()
                 .toolbar {
                     SageToolbar(
                         onPrevious: {
@@ -56,9 +45,9 @@ struct ExpensesView: View {
                             slideDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { appRouter.expensesViewRouter.navigateTo(route: .addExpense(expense: nil)) },
+                        onAdd: { appRouter.presentSheet(.addExpense(nil)) },
                         onImportFromSplitwise: splitwiseService.isConfigured
-                            ? { showSplitwiseImport = true }
+                            ? { appRouter.presentSheet(.splitwiseImport) }
                             : nil,
                     )
                 }

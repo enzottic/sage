@@ -46,7 +46,8 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack(path: Bindable(router.settingsRouter).navigationPath) {
+        @Bindable var router = router
+        NavigationStack(path: $router.settingsPath) {
             List {
 
                 Section {

@@ -14,7 +14,6 @@ struct DashboardView: View {
     @Environment(AppConfiguration.self) var config
     
     @State private var selectedMonth: Date
-    @State private var showSplitwiseImportSheet: Bool = false
 
     @State private var rows: [DashboardRowConfiguration] = [
         .init(widgets: [.monthlyOverview]),
@@ -25,7 +24,7 @@ struct DashboardView: View {
 //            .singleCategoryUtilization(.wants),
 //            .singleCategoryUtilization(.savings),
 //        ]),
-            .init(widgets: [.recentExpenses(.regular)]),
+        .init(widgets: [.recentExpenses(.regular)]),
     ]
 
     init() {
@@ -33,7 +32,8 @@ struct DashboardView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        @Bindable var appRouter = appRouter
+        NavigationStack(path: $appRouter.homePath) {
             List {
                 ForEach(rows, id: \.self) { row in
                     if row.widgets.count == 1, let widget = row.widgets.first {
@@ -49,9 +49,6 @@ struct DashboardView: View {
             .listSectionSpacing(12)
             .scrollContentBackground(.hidden)
             .background(.sageBackground)
-            .sheet(isPresented: $showSplitwiseImportSheet) {
-                SplitwiseImportView()
-            }
             .toolbar {
                 SageToolbar(
                     onPrevious: {
@@ -60,24 +57,14 @@ struct DashboardView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
-                    onAdd: { appRouter.homeRouter.navigateTo(route: .addExpense(expense: nil)) },
+                    onAdd: { appRouter.presentSheet(.addExpense(nil)) },
                     onImportFromSplitwise: splitwiseService.isConfigured
-                        ? { showSplitwiseImportSheet = true }
+                        ? { appRouter.presentSheet(.splitwiseImport) }
                         : nil,
                 )
             }
             .gradientBackground()
-            .navigationDestination(for: HomeRouter.Route.self) { route in
-                switch route {
-                case .categoryDetail(let category):
-                    HomeContentView.CategoryDetailRoute(category: category)
-                case .addExpense(let expense):
-                    AddExpenseView(expense: expense)
-                }
-            }
-            .navigationDestination(for: Expense.self) { expense in
-                ExpenseDetailView(expense: expense)
-            }
+            .appRouteDestinations()
         }
     }
 

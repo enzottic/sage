@@ -54,7 +54,7 @@ struct SingleCategoryUtilizationWidget: View {
         switch layout {
         case .full:
             Section {
-                NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
+                NavigationLink(value: AppRoute.categoryDetail(category)) {
                     fullContent
                 }
                 .tint(.primary)
@@ -65,7 +65,7 @@ struct SingleCategoryUtilizationWidget: View {
             // so no Section: the dashboard draws the card background around this.
             // A Button (not NavigationLink) so List doesn't add a disclosure chevron.
             Button {
-                appRouter.homeRouter.navigateTo(route: .categoryDetail(category: category))
+                appRouter.push(.categoryDetail(category))
             } label: {
                 compactContent
                     .padding()

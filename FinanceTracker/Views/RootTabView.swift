@@ -10,11 +10,26 @@ import SwiftData
 import SageKit
 
 struct RootTabView: View {
-    
+
     @State private var appRouter = AppRouter()
-    
+
+    /// Intercepts selection of the prominent "Add Expense" tab (iOS 27+): it presents the
+    /// add sheet instead of switching tabs, and never writes `.addExpense` to `selectedTab`.
+    private var tabSelection: Binding<SageTab> {
+        Binding(
+            get: { appRouter.selectedTab },
+            set: { newValue in
+                if newValue == .addExpense {
+                    appRouter.presentSheet(.addExpense(nil))
+                } else {
+                    appRouter.selectedTab = newValue
+                }
+            }
+        )
+    }
+
     var body: some View {
-        TabView(selection: $appRouter.selectedTab) {
+        TabView(selection: tabSelection) {
 
             Tab("Home", systemImage: "house", value: SageTab.home) {
                 DashboardView()
@@ -31,15 +46,26 @@ struct RootTabView: View {
             Tab("Settings", systemImage: "gear", value: SageTab.settings) {
                 SettingsView()
             }
-            
+
             if #available(anyAppleOS 27.0, *) {
-                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense(expense: nil), role: .prominent) {
-                    AddExpenseView(expense: nil)
+                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
+                    // Unreachable: selecting this tab presents the add sheet (see tabSelection).
+                    Color.clear
                 }
             } else {
                 Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
                     SearchExpensesView()
                 }
+            }
+        }
+        .sheet(item: $appRouter.presentedSheet) { sheet in
+            switch sheet {
+            case .addExpense(let expense):
+                NavigationStack {
+                    AddExpenseView(expense: expense)
+                }
+            case .splitwiseImport:
+                SplitwiseImportView()
             }
         }
         .overlay(alignment: .top) {
@@ -59,14 +85,11 @@ struct RootTabView: View {
         .environment(appRouter)
         .background(.background)
         .tint(.sage)
-        .onOpenURL { url in handleDeepLink(url) }
-    }
-    
-    @MainActor
-    private func handleDeepLink(_ url: URL) {
-        guard (url.scheme == "sage" || url.scheme == "sage-dev"), url.host == "add-expense" else { return }
-        appRouter.selectedTab = .home
-        appRouter.homeRouter.navigateTo(route: .addExpense(expense: nil))
+        .onOpenURL { url in
+            if let link = SageDeepLink(url: url) {
+                appRouter.navigate(to: link)
+            }
+        }
     }
 }
 

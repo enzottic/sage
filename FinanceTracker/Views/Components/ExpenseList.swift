@@ -23,7 +23,7 @@ struct ExpenseList: View {
     var body: some View {
         Group {
             ForEach(expenses) { expense in
-                NavigationLink(value: expense) {
+                NavigationLink(value: AppRoute.expenseDetail(expense)) {
                     ExpenseRowItem(expense: expense, style: rowStyle)
                 }
                 .buttonStyle(.plain)
@@ -33,11 +33,9 @@ struct ExpenseList: View {
                         showingDeleteConfirmation = true
                     }
                     .tint(.red)
-                    
+
                     Button("Duplicate") {
-                        print("duplicate")
-                        appRouter.navigateTo(tab: .home)
-                        appRouter.homeRouter.navigateTo(route: .addExpense(expense: expense))
+                        appRouter.presentSheet(.addExpense(expense))
                     }
                 }
             }
