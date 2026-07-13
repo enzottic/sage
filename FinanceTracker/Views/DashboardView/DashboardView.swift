@@ -8,13 +8,6 @@ import SwiftUI
 import SwiftData
 import SageKit
 
-/// A displayable dashboard row: either one full-width widget or a pair of
-/// half-width widgets sharing a single (chrome-less) list row.
-private enum DashboardRow: Hashable {
-    case full(DashboardWidgetConfiguration)
-    case pair(DashboardWidgetConfiguration, DashboardWidgetConfiguration?)
-}
-
 struct DashboardView: View {
     @Environment(AppRouter.self) var appRouter
     @Environment(SplitwiseService.self) private var splitwiseService
@@ -23,59 +16,37 @@ struct DashboardView: View {
     @State private var selectedMonth: Date
     @State private var showSplitwiseImportSheet: Bool = false
 
-    @State private var widgets: [DashboardWidgetConfiguration] = [
-        .init(widget: .monthlyOverview, size: .full),
-        .init(widget: .recentExpenses, size: .full),
-        .init(widget: .categoryUtilization, size: .full),
+    @State private var rows: [DashboardRowConfiguration] = [
+        .init(widgets: [.monthlyOverview]),
+        .init(widgets: [.singleCategoryUtilization(.needs)]),
+        .init(widgets: [.singleCategoryUtilization(.wants)]),
+        .init(widgets: [.singleCategoryUtilization(.savings)]),
+//        .init(widgets: [
+//            .singleCategoryUtilization(.wants),
+//            .singleCategoryUtilization(.savings),
+//        ]),
+            .init(widgets: [.recentExpenses(.regular)]),
     ]
 
     init() {
         _selectedMonth = State(initialValue: .now)
     }
 
-    /// Groups consecutive half-size widgets into pairs; full-size widgets get
-    /// their own row. An unpaired half stays at half width next to an empty slot.
-    private var rows: [DashboardRow] {
-        var result: [DashboardRow] = []
-        var pendingHalf: DashboardWidgetConfiguration?
-        for config in widgets {
-            switch config.size {
-            case .full:
-                if let pending = pendingHalf {
-                    result.append(.pair(pending, nil))
-                    pendingHalf = nil
-                }
-                result.append(.full(config))
-            case .half:
-                if let pending = pendingHalf {
-                    result.append(.pair(pending, config))
-                    pendingHalf = nil
-                } else {
-                    pendingHalf = config
-                }
-            }
-        }
-        if let pending = pendingHalf {
-            result.append(.pair(pending, nil))
-        }
-        return result
-    }
-
     var body: some View {
-        NavigationStack{
+        NavigationStack {
             List {
                 ForEach(rows, id: \.self) { row in
-                    switch row {
-                    case .full(let config):
-                        widgetView(for: config)
-                    case .pair(let leading, let trailing):
+                    if row.widgets.count == 1, let widget = row.widgets.first {
+                        widgetView(for: widget, layout: .full)
+                    } else {
                         Section {
-                            halfWidgetPair(leading, trailing)
+                            sharedWidgetRow(row.widgets)
                         }
                     }
                 }
             }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
+            .listSectionSpacing(12)
             .scrollContentBackground(.hidden)
             .background(.sageBackground)
             .sheet(isPresented: $showSplitwiseImportSheet) {
@@ -96,14 +67,14 @@ struct DashboardView: View {
                 )
             }
             .gradientBackground()
-//            .navigationDestination(for: HomeRouter.Route.self) { route in
-//                switch route {
-//                case .categoryDetail(let category):
-//                    HomeContentView.CategoryDetailRoute(category: category)
-//                case .addExpense(let expense):
-//                    AddExpenseView(expense: expense)
-//                }
-//            }
+            .navigationDestination(for: HomeRouter.Route.self) { route in
+                switch route {
+                case .categoryDetail(let category):
+                    HomeContentView.CategoryDetailRoute(category: category)
+                case .addExpense(let expense):
+                    AddExpenseView(expense: expense)
+                }
+            }
             .navigationDestination(for: Expense.self) { expense in
                 ExpenseDetailView(expense: expense)
             }
@@ -111,29 +82,26 @@ struct DashboardView: View {
     }
 
     @ViewBuilder
-    func widgetView(for config: DashboardWidgetConfiguration) -> some View {
-        switch config.widget {
+    func widgetView(for widget: DashboardWidget, layout: DashboardWidgetLayout) -> some View {
+        switch widget {
         case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: .now)
         case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: .now)
-        case .recentExpenses: RecentExpensesWidget(selectedMonth: .now)
+        case .recentExpenses(let rowStyle): RecentExpensesWidget(selectedMonth: .now, rowStyle: rowStyle)
         case .singleCategoryUtilization(let category):
-            SingleCategoryUtilizationWidget(category: category, size: config.size, selectedMonth: .now)
+            SingleCategoryUtilizationWidget(category: category, layout: layout, selectedMonth: .now)
         }
     }
 
-    /// Two half widgets in one list row. The row's own background/insets are
-    /// cleared so each widget can draw its own card, sized to half the width
-    /// a regular inset-grouped section would occupy.
-    private func halfWidgetPair(
-        _ leading: DashboardWidgetConfiguration,
-        _ trailing: DashboardWidgetConfiguration?
-    ) -> some View {
+    /// Multiple widgets sharing one list row as equal-width cards. The row's
+    /// own background/insets are cleared so each widget draws its own card;
+    /// the HStack splits the section width evenly (2 widgets = halves,
+    /// 3 = thirds, ...).
+    private func sharedWidgetRow(_ widgets: [DashboardWidget]) -> some View {
         HStack(spacing: 16) {
-            halfWidgetCard(for: leading)
-            if let trailing {
-                halfWidgetCard(for: trailing)
-            } else {
-                Color.clear.frame(maxWidth: .infinity)
+            ForEach(widgets, id: \.self) { widget in
+                widgetView(for: widget, layout: .compact)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 10))
             }
         }
         .buttonStyle(.borderless)
@@ -141,19 +109,13 @@ struct DashboardView: View {
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
-
-    private func halfWidgetCard(for config: DashboardWidgetConfiguration) -> some View {
-        widgetView(for: config)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 10))
-    }
 }
 
 func expenseQuery(for month: Date, limit: Int? = nil) -> Query<Expense, [Expense]> {
     let cal = Calendar.current
     let startOfMonth = cal.dateInterval(of: .month, for: month)?.start ?? month
     let endOfMonth = cal.dateInterval(of: .month, for: month)?.end ?? month
-    return expenseQuery(start: startOfMonth, end: endOfMonth)
+    return expenseQuery(start: startOfMonth, end: endOfMonth, limit: limit)
 }
 
 func expenseQuery(start: Date, end: Date, limit: Int? = nil) -> Query<Expense, [Expense]> {

@@ -17,7 +17,7 @@ struct RootTabView: View {
         TabView(selection: $appRouter.selectedTab) {
 
             Tab("Home", systemImage: "house", value: SageTab.home) {
-                HomeView()
+                DashboardView()
             }
 
             Tab("Expenses", systemImage: "list.bullet", value: SageTab.expenses) {

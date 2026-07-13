@@ -14,13 +14,13 @@ struct SingleCategoryUtilizationWidget: View {
     @Environment(\.categoryColors) private var categoryColors
 
     let category: ExpenseCategory
-    let size: DashboardWidgetSize
+    let layout: DashboardWidgetLayout
 
     @Query var monthlyExpenses: [Expense]
 
-    init(category: ExpenseCategory, size: DashboardWidgetSize, selectedMonth: Date) {
+    init(category: ExpenseCategory, layout: DashboardWidgetLayout, selectedMonth: Date) {
         self.category = category
-        self.size = size
+        self.layout = layout
         _monthlyExpenses = expenseQuery(for: selectedMonth)
     }
 
@@ -51,7 +51,7 @@ struct SingleCategoryUtilizationWidget: View {
     private var tint: Color { isOverBudget ? .red : category.color(in: categoryColors) }
 
     var body: some View {
-        switch size {
+        switch layout {
         case .full:
             Section {
                 NavigationLink(value: HomeRouter.Route.categoryDetail(category: category)) {
@@ -60,14 +60,14 @@ struct SingleCategoryUtilizationWidget: View {
                 .tint(.primary)
                 .listRowSeparator(.hidden)
             }
-        case .half:
-            // Rendered inside a cleared list row (see DashboardView.halfWidgetPair),
+        case .compact:
+            // Rendered inside a cleared list row (see DashboardView.sharedWidgetRow),
             // so no Section: the dashboard draws the card background around this.
             // A Button (not NavigationLink) so List doesn't add a disclosure chevron.
             Button {
                 appRouter.homeRouter.navigateTo(route: .categoryDetail(category: category))
             } label: {
-                halfContent
+                compactContent
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .contentShape(Rectangle())
@@ -111,7 +111,7 @@ struct SingleCategoryUtilizationWidget: View {
         }
     }
 
-    private var halfContent: some View {
+    private var compactContent: some View {
         VStack(spacing: 8) {
             CircularProgressBar(progress: utilization, tint: tint)
                 .frame(width: 64, height: 64)
@@ -129,11 +129,11 @@ struct SingleCategoryUtilizationWidget: View {
 }
 
 #Preview("Full") {
-    SingleCategoryUtilizationWidget(category: .wants, size: .full, selectedMonth: .now)
+    SingleCategoryUtilizationWidget(category: .wants, layout: .full, selectedMonth: .now)
         .environmentInjection()
 }
 
-#Preview("Half") {
-    SingleCategoryUtilizationWidget(category: .wants, size: .half, selectedMonth: .now)
+#Preview("Compact") {
+    SingleCategoryUtilizationWidget(category: .wants, layout: .compact, selectedMonth: .now)
         .environmentInjection()
 }

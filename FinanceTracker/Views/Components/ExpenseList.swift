@@ -15,6 +15,7 @@ struct ExpenseList: View {
     @Environment(AppRouter.self) private var appRouter
 
     let expenses: [Expense]
+    var rowStyle: ExpenseRowItem.Style = .regular
 
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
@@ -23,7 +24,7 @@ struct ExpenseList: View {
         Group {
             ForEach(expenses) { expense in
                 NavigationLink(value: expense) {
-                    ExpenseRowItem(expense: expense)
+                    ExpenseRowItem(expense: expense, style: rowStyle)
                 }
                 .buttonStyle(.plain)
                 .swipeActions {

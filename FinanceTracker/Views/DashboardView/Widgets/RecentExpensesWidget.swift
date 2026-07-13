@@ -12,57 +12,31 @@ struct RecentExpensesWidget: View {
     @Environment(AppConfiguration.self) var config
     @Environment(AppRouter.self) var appRouter
     
-    private let calendar = Calendar.current
-    
     @Query var recentExpenses: [Expense]
     @State private var selectedMonth: Date
-    
-    init(selectedMonth: Date = .now) {
-        _recentExpenses = expenseQuery(for: .now, limit: 10)
+    let rowStyle: ExpenseRowItem.Style
+
+    init(selectedMonth: Date = .now, rowStyle: ExpenseRowItem.Style = .condensed) {
+        _recentExpenses = expenseQuery(for: .now, limit: 5)
         _selectedMonth = .init(initialValue: selectedMonth)
+        self.rowStyle = rowStyle
     }
-    
-    var recentExpensesByDay: [(day: Date, expenses: [Expense])] {
-        let grouped = Dictionary(grouping: recentExpenses) {
-            calendar.startOfDay(for: $0.date)
-        }
-        return grouped
-            .sorted { $0.key > $1.key }
-            .prefix(7)
-            .map { (day: $0.key, expenses: $0.value) }
-    }
-    
+
     var body: some View {
         if !recentExpenses.isEmpty {
             Section {
-            } footer: {
+                ExpenseList(expenses: recentExpenses, rowStyle: rowStyle)
+            } header: {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Recent Expenses")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                     Spacer()
                     Button("Show All") {
                         appRouter.expensesMonth = selectedMonth
                         appRouter.selectedTab = .expenses
                     }
-                }
-                .font(.subheadline)
-                .fontWeight(.semibold)
-            }
-
-            ForEach(recentExpensesByDay, id: \.day) { group in
-                Section {
-                    ExpenseList(expenses: group.expenses)
-                } header: {
-                    HStack {
-                        Text(group.day.relative())
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(group.expenses.total.currencyString)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                    }
+                    .font(.subheadline)
                 }
             }
         }
