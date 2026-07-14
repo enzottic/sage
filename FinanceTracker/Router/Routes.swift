@@ -23,8 +23,8 @@ enum SageTab: Equatable, Hashable {
 /// Destinations pushed onto a tab's navigation stack. Shared across tabs because
 /// pushes originate from shared components (e.g. `ExpenseList`).
 enum AppRoute: Hashable {
-    case expenseDetail(Expense)          // drill-down / edit
-    case categoryDetail(ExpenseCategory) // category budget breakdown
+    case expenseDetail(Expense)                     // drill-down / edit
+    case categoryDetail(ExpenseCategory, Date)      // category budget breakdown, for the given month
 }
 
 // MARK: - Sheets (modal)
@@ -71,8 +71,8 @@ extension View {
             switch route {
             case .expenseDetail(let expense):
                 ExpenseDetailView(expense: expense)
-            case .categoryDetail(let category):
-                CategoryDetailScreen(category: category)
+            case .categoryDetail(let category, let month):
+                CategoryDetailScreen(category: category, month: month)
             }
         }
     }

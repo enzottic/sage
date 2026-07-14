@@ -15,12 +15,11 @@ struct CategoryDetailScreen: View {
 
     let category: ExpenseCategory
 
-    init(category: ExpenseCategory) {
+    init(category: ExpenseCategory, month: Date) {
         self.category = category
         let cal = Calendar.current
-        let now = Date.now
-        let start = cal.dateInterval(of: .month, for: now)?.start ?? now
-        let end = cal.dateInterval(of: .month, for: now)?.end ?? now
+        let start = cal.dateInterval(of: .month, for: month)?.start ?? month
+        let end = cal.dateInterval(of: .month, for: month)?.end ?? month
         _monthlyExpenses = Query(filter: #Predicate<Expense> { $0.date >= start && $0.date <= end }, sort: \.date)
     }
 

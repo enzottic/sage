@@ -12,8 +12,10 @@ struct CategoryUtilizationWidget: View {
     @Environment(AppConfiguration.self) private var config
     
     @Query var monthlyExpenses: [Expense]
-    
+    private let selectedMonth: Date
+
     init(selectedMonth: Date) {
+        self.selectedMonth = selectedMonth
         _monthlyExpenses = expenseQuery(for: selectedMonth)
     }
     
@@ -47,7 +49,7 @@ struct CategoryUtilizationWidget: View {
     var body: some View {
         Section {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                NavigationLink(value: AppRoute.categoryDetail(category)) {
+                NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
                     CategoryUtilizationView(
                         for: category,
                         utilization(for: category),

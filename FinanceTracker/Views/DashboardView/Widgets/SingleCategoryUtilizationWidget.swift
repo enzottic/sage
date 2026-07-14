@@ -15,12 +15,14 @@ struct SingleCategoryUtilizationWidget: View {
 
     let category: ExpenseCategory
     let layout: DashboardWidgetLayout
+    private let selectedMonth: Date
 
     @Query var monthlyExpenses: [Expense]
 
     init(category: ExpenseCategory, layout: DashboardWidgetLayout, selectedMonth: Date) {
         self.category = category
         self.layout = layout
+        self.selectedMonth = selectedMonth
         _monthlyExpenses = expenseQuery(for: selectedMonth)
     }
 
@@ -54,7 +56,7 @@ struct SingleCategoryUtilizationWidget: View {
         switch layout {
         case .full:
             Section {
-                NavigationLink(value: AppRoute.categoryDetail(category)) {
+                NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
                     fullContent
                 }
                 .tint(.primary)
@@ -65,7 +67,7 @@ struct SingleCategoryUtilizationWidget: View {
             // so no Section: the dashboard draws the card background around this.
             // A Button (not NavigationLink) so List doesn't add a disclosure chevron.
             Button {
-                appRouter.push(.categoryDetail(category))
+                appRouter.push(.categoryDetail(category, selectedMonth))
             } label: {
                 compactContent
                     .padding()

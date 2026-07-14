@@ -17,7 +17,7 @@ struct RecentExpensesWidget: View {
     let rowStyle: ExpenseRowItem.Style
 
     init(selectedMonth: Date = .now, rowStyle: ExpenseRowItem.Style = .condensed) {
-        _recentExpenses = expenseQuery(for: .now, limit: 5)
+        _recentExpenses = expenseQuery(for: selectedMonth, limit: 5)
         _selectedMonth = .init(initialValue: selectedMonth)
         self.rowStyle = rowStyle
     }

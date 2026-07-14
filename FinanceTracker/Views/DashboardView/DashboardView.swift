@@ -71,11 +71,11 @@ struct DashboardView: View {
     @ViewBuilder
     func widgetView(for widget: DashboardWidget, layout: DashboardWidgetLayout) -> some View {
         switch widget {
-        case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: .now)
-        case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: .now)
-        case .recentExpenses(let rowStyle): RecentExpensesWidget(selectedMonth: .now, rowStyle: rowStyle)
+        case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: selectedMonth)
+        case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth)
+        case .recentExpenses(let rowStyle): RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle)
         case .singleCategoryUtilization(let category):
-            SingleCategoryUtilizationWidget(category: category, layout: layout, selectedMonth: .now)
+            SingleCategoryUtilizationWidget(category: category, layout: layout, selectedMonth: selectedMonth)
         }
     }
 

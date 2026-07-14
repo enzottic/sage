@@ -12,20 +12,32 @@ struct MonthlyOverviewWidget: View {
     @Environment(AppConfiguration.self) private var config
     
     private let calendar = Calendar.current
+    private let selectedMonth: Date
 
     @Query var monthlyExpenses: [Expense]
     @Query var comparisonExpenses: [Expense]
-    
+
+    /// True when the selected month is the month containing "today" — only
+    /// then does it make sense to compare partial (month-to-date) totals.
+    /// For a fully elapsed past month, both months are compared in full.
+    private var isCurrentMonth: Bool {
+        calendar.isDate(selectedMonth, equalTo: .now, toGranularity: .month)
+    }
+
     var lastMonthPartialTotal: Double {
-        let now = Date()
-        let dayOfMonth = calendar.component(.day, from: now)
-        let lastMonth = calendar.date(byAdding: .month, value: -1, to: now)!
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
         let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
         let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
 
-        var components = calendar.dateComponents([.year, .month], from: lastMonth)
-        components.day = dayOfMonth
-        let cutoffDate = calendar.date(from: components) ?? endOfLastMonth
+        let cutoffDate: Date
+        if isCurrentMonth {
+            let dayOfMonth = calendar.component(.day, from: .now)
+            var components = calendar.dateComponents([.year, .month], from: lastMonth)
+            components.day = dayOfMonth
+            cutoffDate = calendar.date(from: components) ?? endOfLastMonth
+        } else {
+            cutoffDate = endOfLastMonth
+        }
 
         return comparisonExpenses.filter {
             $0.date >= startOfLastMonth && $0.date <= cutoffDate
@@ -33,10 +45,10 @@ struct MonthlyOverviewWidget: View {
     }
 
     var currentMonthPartialTotal: Double {
-        let now = Date()
-        let startOfMonth = calendar.dateInterval(of: .month, for: now)!.start
+        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)!.start
+        let cutoffDate = isCurrentMonth ? Date() : calendar.dateInterval(of: .month, for: selectedMonth)!.end
         return comparisonExpenses.filter {
-            $0.date >= startOfMonth && $0.date <= now
+            $0.date >= startOfMonth && $0.date <= cutoffDate
         }.total
     }
 
@@ -75,11 +87,13 @@ struct MonthlyOverviewWidget: View {
     }
     
     init(selectedMonth: Date) {
-        let lastMonth = calendar.date(byAdding: .month, value: -1, to: .now) ?? .now
+        self.selectedMonth = selectedMonth
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
         let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)?.start ?? lastMonth
-        
+        let endOfSelectedMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
+
         _monthlyExpenses = expenseQuery(for: selectedMonth)
-        _comparisonExpenses = expenseQuery(start: startOfLastMonth, end: .now)
+        _comparisonExpenses = expenseQuery(start: startOfLastMonth, end: endOfSelectedMonth)
     }
     
     var body: some View {
