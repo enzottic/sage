@@ -10,6 +10,7 @@ import SwiftData
 import AppIntents
 import SageKit
 import Combine
+import UserNotifications
 
 @main
 struct SageApp: App {
@@ -26,6 +27,9 @@ struct SageApp: App {
 
         // Register before the app finishes launching (BGTaskScheduler requirement)
         RecurringNotificationService.registerBackgroundTask()
+
+        // Present notifications that fire while the app is foreground
+        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 
         // Make ExpenseStore resolvable via @Dependency in App Intents.
         AppDependencyManager.shared.add(dependency: ExpenseStore.shared)

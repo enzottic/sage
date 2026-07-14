@@ -69,7 +69,7 @@ struct RecurringExpensesSettingsSection: View {
                         }
                     }
                 } else {
-                    Text("Get notified at 9 AM the day before each bill is due.")
+                    Text("Get notified at 9 AM the day before each bill is due, and on the day each recurring expense is added.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
