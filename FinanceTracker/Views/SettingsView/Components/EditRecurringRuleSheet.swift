@@ -123,6 +123,9 @@ struct EditRecurringRuleSheet: View {
         do {
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
+            Task {
+                await RecurringNotificationService.rescheduleAll(modelContext: modelContext)
+            }
             dismiss()
         } catch {
             errorMessage = "Failed to save: \(error.localizedDescription)"

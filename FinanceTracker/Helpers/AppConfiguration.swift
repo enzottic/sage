@@ -35,7 +35,24 @@ enum SmartTaggingMode: String, CaseIterable {
 class AppConfiguration {
     private let defaults: UserDefaults
     private let cloudKVS = NSUbiquitousKeyValueStore.default
-    private let suite = "group.me.enzottic.SageAppGroup"
+    private static let suite = "group.me.enzottic.SageAppGroup"
+
+    /// The defaults store local-only flags are persisted to. DEBUG uses .standard to match
+    /// init(); release uses the shared app-group suite so widgets and background tasks read
+    /// the same values the app writes.
+    static var localDefaults: UserDefaults {
+        #if DEBUG
+        .standard
+        #else
+        UserDefaults(suiteName: suite) ?? .standard
+        #endif
+    }
+
+    /// Reads the persisted flag without an AppConfiguration instance (background tasks,
+    /// non-view call sites).
+    static var isBillRemindersEnabled: Bool {
+        localDefaults.bool(forKey: Keys.billRemindersEnabled)
+    }
     
     // Keys used in both UserDefaults and iCloud KVS
     private enum Keys {
@@ -164,11 +181,7 @@ class AppConfiguration {
     }
     
     init() {
-        #if DEBUG
-        self.defaults = .standard
-        #else
-        self.defaults = UserDefaults(suiteName: suite) ?? .standard
-        #endif
+        self.defaults = Self.localDefaults
         
         // iCloud KVS is the source of truth for all settings.
         // Fall back to local UserDefaults if iCloud KVS hasn't synced yet.

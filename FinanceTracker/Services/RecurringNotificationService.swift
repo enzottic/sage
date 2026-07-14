@@ -15,6 +15,7 @@ enum RecurringNotificationService {
     static let bgTaskIdentifier = "me.enzottic.sage.recurringRefresh"
     private static let center = UNUserNotificationCenter.current()
     private static let notificationIDPrefix = "recurring-day-"
+    private static let addedNotificationIDPrefix = "recurring-added-"
 
     // MARK: - Authorization
 
@@ -32,9 +33,11 @@ enum RecurringNotificationService {
     /// Grouping by day means multiple bills landing on the same date produce a single notification,
     /// and slot usage is bounded by due dates rather than rule count.
     static func scheduleAll(rules: [RecurringExpenseRule], enabled: Bool) async {
-        // Remove every previously scheduled recurring-day notification
+        // Remove every previously scheduled recurring notification
         let pending = await center.pendingNotificationRequests()
-        let staleIDs = pending.map(\.identifier).filter { $0.hasPrefix(notificationIDPrefix) }
+        let staleIDs = pending.map(\.identifier).filter {
+            $0.hasPrefix(notificationIDPrefix) || $0.hasPrefix(addedNotificationIDPrefix)
+        }
         center.removePendingNotificationRequests(withIdentifiers: staleIDs)
 
         guard enabled else { return }
@@ -52,7 +55,16 @@ enum RecurringNotificationService {
 
         for (day, dayRules) in byDay {
             await scheduleNotification(dueDate: day, rules: dayRules)
+            await scheduleAddedNotification(dueDate: day, rules: dayRules)
         }
+    }
+
+    /// Re-fetches all rules and re-schedules notifications. For call sites that don't
+    /// have an AppConfiguration instance or a fresh rule list handy (rule create/edit,
+    /// background refresh).
+    static func rescheduleAll(modelContext: ModelContext) async {
+        let rules = (try? modelContext.fetch(FetchDescriptor<RecurringExpenseRule>())) ?? []
+        await scheduleAll(rules: rules, enabled: AppConfiguration.isBillRemindersEnabled)
     }
 
     // MARK: - Background Task
@@ -72,10 +84,7 @@ enum RecurringNotificationService {
                     let service = RecurringExpenseService(modelContext: context)
                     service.generateAllExpenses(through: Date())
 
-                    let rules = (try? context.fetch(FetchDescriptor<RecurringExpenseRule>())) ?? []
-                    let enabled = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)?
-                        .bool(forKey: "billRemindersEnabled") ?? false
-                    await scheduleAll(rules: rules, enabled: enabled)
+                    await rescheduleAll(modelContext: context)
                 } catch {}
 
                 scheduleNextBackgroundRefresh()
@@ -121,10 +130,49 @@ enum RecurringNotificationService {
         try? await center.add(request)
     }
 
+    /// Fires at 9 AM on the due date itself, announcing the expenses generated for that day.
+    /// The row may be inserted slightly later (next launch or background refresh), but it is
+    /// dated to this day. If 9 AM has already passed, skip — the user will see the expense
+    /// generated on next launch anyway.
+    private static func scheduleAddedNotification(dueDate: Date, rules: [RecurringExpenseRule]) async {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: dueDate)
+        components.hour = 9
+        components.minute = 0
+        guard let fireDate = Calendar.current.date(from: components), fireDate > Date() else { return }
+
+        let content = UNMutableNotificationContent()
+        content.sound = .default
+        content.threadIdentifier = "recurring-added"
+
+        if rules.count == 1, let rule = rules.first {
+            content.title = "Recurring Expense Added"
+            content.body = "\(rule.name) (\(rule.amount.currencyStringWithFraction)) was added."
+        } else {
+            content.title = "\(rules.count) Recurring Expenses Added"
+            content.body = rules
+                .map { "\($0.name) (\($0.amount.currencyStringWithFraction))" }
+                .joined(separator: ", ")
+        }
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: addedNotificationID(for: dueDate),
+            content: content,
+            trigger: trigger
+        )
+        try? await center.add(request)
+    }
+
     private static func notificationID(for day: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return "\(notificationIDPrefix)\(formatter.string(from: day))"
+    }
+
+    private static func addedNotificationID(for day: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return "\(addedNotificationIDPrefix)\(formatter.string(from: day))"
     }
 
     private static func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {
