@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>me.enzottic.sage.recurringRefresh</string>
+	</array>
+	<key>CFBundleSpokenName</key>
+	<string>Sage</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -19,10 +25,6 @@
 	<string>$(SPLITWISE_CONSUMER_KEY)</string>
 	<key>SplitwiseConsumerSecret</key>
 	<string>$(SPLITWISE_CONSUMER_SECRET)</string>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>me.enzottic.sage.recurringRefresh</string>
-	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -31,7 +33,5 @@
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
-	<key>CFBundleSpokenName</key>
-	<string>Sage</string>
 </dict>
 </plist>

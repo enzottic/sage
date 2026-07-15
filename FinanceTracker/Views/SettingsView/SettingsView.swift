@@ -49,7 +49,6 @@ struct SettingsView: View {
         @Bindable var router = router
         NavigationStack(path: $router.settingsPath) {
             List {
-
                 Section {
                     let page = SettingsPage.appearance
                     NavigationLink(value: page) {
@@ -106,6 +105,9 @@ struct SettingsView: View {
                 #endif
             }
             .navigationTitle("Settings")
+            .background(.sageBackground)
+            .scrollContentBackground(.hidden)
+            .gradientBackground()
             .navigationDestination(for: SettingsPage.self) { page in
                 switch page {
                 case .appearance:

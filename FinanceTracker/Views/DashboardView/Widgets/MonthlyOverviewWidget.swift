@@ -112,3 +112,8 @@ struct MonthlyOverviewWidget: View {
         }
     }
 }
+
+#Preview {
+    MonthlyOverviewWidget(selectedMonth: .now)
+        .environmentInjection()
+}

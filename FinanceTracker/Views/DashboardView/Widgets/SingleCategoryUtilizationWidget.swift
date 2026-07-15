@@ -63,9 +63,6 @@ struct SingleCategoryUtilizationWidget: View {
                 .listRowSeparator(.hidden)
             }
         case .compact:
-            // Rendered inside a cleared list row (see DashboardView.sharedWidgetRow),
-            // so no Section: the dashboard draws the card background around this.
-            // A Button (not NavigationLink) so List doesn't add a disclosure chevron.
             Button {
                 appRouter.push(.categoryDetail(category, selectedMonth))
             } label: {
@@ -115,16 +112,15 @@ struct SingleCategoryUtilizationWidget: View {
 
     private var compactContent: some View {
         VStack(spacing: 8) {
-            CircularProgressBar(progress: utilization, tint: tint)
-                .frame(width: 64, height: 64)
-
             Text(category.rawValue)
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
-            Text(spent.currencyString)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            CircularProgressBar(progress: utilization, tint: tint, lineWidth: 10)
+                .frame(width: 64, height: 64)
+
+            Text(spent.currencyString + " of " + remaining.currencyString)
+                .font(.subheadline)
         }
         .frame(maxWidth: .infinity)
     }
