@@ -46,11 +46,9 @@ struct ExpenseRowItem: View {
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
-                    if let tagName = expense.tag?.name {
-                        Text(tagName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(expense.date.relative())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
                     if expense.recurringExpenseId != nil {
                         Image(systemName: "arrow.trianglehead.2.clockwise")

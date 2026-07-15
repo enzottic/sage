@@ -183,10 +183,7 @@ struct AppearanceSettingsSection: View {
                 }
             } header: {
                 Text("Category Colors")
-            } footer: {
-                Text("Palettes are designed to be distinguishable for color blindness.")
             }
-
         }
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)

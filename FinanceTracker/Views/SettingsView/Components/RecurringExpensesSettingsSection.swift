@@ -45,38 +45,6 @@ struct RecurringExpensesSettingsSection: View {
 
     var body: some View {
         List {
-            Section {
-                Toggle(isOn: Binding(
-                    get: { config.billRemindersEnabled },
-                    set: { handleReminderToggle($0) }
-                )) {
-                    Label("Bill Reminders", systemImage: "bell.badge")
-                }
-
-                if config.billRemindersEnabled && notificationAuthStatus == .denied {
-                    Label {
-                        Text("Notifications are disabled. Tap to open ") +
-                        Text("Settings").foregroundColor(.accentColor) +
-                        Text(" and enable them.")
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.yellow)
-                    }
-                    .font(.caption)
-                    .onTapGesture {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                } else {
-                    Text("Get notified at 9 AM the day before each bill is due, and on the day each recurring expense is added.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } header: {
-                Text("Notifications")
-            }
-
             if rules.isEmpty {
                 ContentUnavailableView(
                     "No Recurring Expense Rules",
@@ -123,10 +91,6 @@ struct RecurringExpensesSettingsSection: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("Delete Recurring Rule?", isPresented: $showDeleteConfirmation, presenting: ruleToDelete) { rule in
             Button("Delete Rule", role: .destructive) {
-                let remaining = rules.filter { $0.id != rule.id }
-                Task {
-                    await RecurringNotificationService.scheduleAll(rules: remaining, enabled: config.billRemindersEnabled)
-                }
                 modelContext.delete(rule)
                 try? modelContext.save()
                 router.showToast(SageToast(message: "Expense Recurrence Rule Deleted", kind: .success))
@@ -134,27 +98,6 @@ struct RecurringExpensesSettingsSection: View {
             Button("Cancel", role: .cancel) {}
         } message: { rule in
             Text("'\(rule.name)' will stop generating future expenses. Past expenses will not be deleted.")
-        }
-    }
-
-    private func handleReminderToggle(_ enabled: Bool) {
-        if enabled {
-            Task {
-                let granted = await RecurringNotificationService.requestAuthorization()
-                if granted {
-                    config.billRemindersEnabled = true
-                    notificationAuthStatus = .authorized
-                    await RecurringNotificationService.scheduleAll(rules: rules, enabled: true)
-                } else {
-                    config.billRemindersEnabled = false
-                    notificationAuthStatus = await RecurringNotificationService.authorizationStatus()
-                }
-            }
-        } else {
-            config.billRemindersEnabled = false
-            Task {
-                await RecurringNotificationService.scheduleAll(rules: rules, enabled: false)
-            }
         }
     }
 }

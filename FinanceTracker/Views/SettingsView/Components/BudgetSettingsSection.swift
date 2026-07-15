@@ -56,7 +56,7 @@ struct BudgetSettingsSection: View {
 
                         Spacer()
 
-                        Text("\(Int(round(config.savingsPercent * 100)))%")
+                        Text(config.savingsPercent, format: .percent.precision(.fractionLength(0)))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundStyle(.teal)

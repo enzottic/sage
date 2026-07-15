@@ -25,14 +25,12 @@ struct SageApp: App {
         // Pull latest iCloud KVS values before checking setup state
         NSUbiquitousKeyValueStore.default.synchronize()
 
-        // Register before the app finishes launching (BGTaskScheduler requirement)
-        RecurringNotificationService.registerBackgroundTask()
-
         // Present notifications that fire while the app is foreground
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 
         // Make ExpenseStore resolvable via @Dependency in App Intents.
-        AppDependencyManager.shared.add(dependency: ExpenseStore.shared)
+        let expenseStore = ExpenseStore.shared
+        AppDependencyManager.shared.add(dependency: expenseStore)
 
         // Register App Shortcuts phrases with Siri
         SageShortcutsProvider.updateAppShortcutParameters()
@@ -54,10 +52,6 @@ struct SageApp: App {
                 }
             }
             .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
-            .task {
-                await scheduleRecurringNotifications()
-                RecurringNotificationService.scheduleNextBackgroundRefresh()
-            }
             .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
                 // KVS values may arrive after launch — check if onboarding was completed on another device
                 if !hasOpenedAppOnce, AppConfiguration.hasCompletedSetupOnAnotherDevice {
@@ -79,13 +73,6 @@ struct SageApp: App {
             UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(descriptor: inlineDescriptor, size: 17)]
         }
     }
-
-    @MainActor
-    private func scheduleRecurringNotifications() async {
-        let rules = (try? appContainer.mainContext.fetch(FetchDescriptor<RecurringExpenseRule>())) ?? []
-        await RecurringNotificationService.scheduleAll(rules: rules, enabled: appConfiguration.billRemindersEnabled)
-    }
-
 }
 
 struct MainAppPackage: AppIntentsPackage {

@@ -256,7 +256,7 @@ struct WelcomeView: View {
 
                     Spacer()
 
-                    Text("\(Int(savingsPercent))%")
+                    Text(savingsPercent / 100, format: .percent.precision(.fractionLength(0)))
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(.teal)
@@ -265,7 +265,7 @@ struct WelcomeView: View {
             .padding(.horizontal, 40)
 
             if needsPercent + wantsPercent > 100 {
-                Text("Total percentage cannot exceed 100%")
+                Text("Total percentage cannot exceed \(100, format: .percent)")
                     .font(.caption)
                     .foregroundStyle(.red)
             }

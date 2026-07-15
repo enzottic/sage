@@ -339,9 +339,6 @@ struct AddExpenseView: View {
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
             appRouter.showToast(SageToast(message: "Expense saved", kind: .success))
-            if isRecurring {
-                await RecurringNotificationService.rescheduleAll(modelContext: modelContext)
-            }
         } catch {
             isSaving = false
             errorMessage = "Failed to save expense: \(error.localizedDescription)"

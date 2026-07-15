@@ -79,7 +79,7 @@ struct TopSpendingBreakdown: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                Text("\(fraction * 100, specifier: "%.0f")%")
+                Text(fraction, format: .percent.precision(.fractionLength(0)))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .frame(width: 36, alignment: .trailing)

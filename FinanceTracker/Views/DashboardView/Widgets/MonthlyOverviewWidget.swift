@@ -104,7 +104,7 @@ struct MonthlyOverviewWidget: View {
                 HStack(spacing: 4) {
                     Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
                         .foregroundStyle(isSpendingMore ? .red : .green)
-                    Text("\(abs(percentageChange), specifier: "%.0f")%")
+                    Text(abs(percentageChange) / 100, format: .percent.precision(.fractionLength(0)))
                     Text("from last month")
                 }
                 .foregroundStyle(isSpendingMore ? Color.red : Color.green)
