@@ -79,7 +79,6 @@ struct SingleCategoryUtilizationWidget: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(category.rawValue)
-                    .font(.title2)
                     .fontWeight(.bold)
 
                 Spacer()
