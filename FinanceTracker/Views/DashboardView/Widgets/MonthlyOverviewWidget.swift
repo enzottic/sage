@@ -10,7 +10,8 @@ import SageKit
 
 struct MonthlyOverviewWidget: View {
     @Environment(AppConfiguration.self) private var config
-    
+    @Environment(\.categoryColors) private var categoryColors
+
     private let calendar = Calendar.current
     private let selectedMonth: Date
 
@@ -59,33 +60,22 @@ struct MonthlyOverviewWidget: View {
     
     private var isSpendingMore: Bool { percentageChange > 0 }
 
-    func utilization(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
-        case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
-        case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
-        @unknown default: fatalError("Unknown expense category")
-        }
+    private var totalSpent: Double { monthlyExpenses.total }
+
+    private var totalBudget: Double { Double(config.totalMonthlyIncome) }
+
+    private var totalUtilization: Double {
+        totalBudget == 0 ? 0 : totalSpent / totalBudget
     }
 
-    func spent(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: monthlyExpenses.wantsUsed
-        case .needs: monthlyExpenses.needsUsed
-        case .savings: monthlyExpenses.savingsUsed
-        @unknown default: fatalError("Unknown expense category")
-        }
-    }
+    private var remaining: Double { max(totalBudget - totalSpent, 0) }
 
-    func budget(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: config.wantsBudget
-        case .needs: config.needsBudget
-        case .savings: config.savingsBudget
-        @unknown default: fatalError("Unknown expense category")
-        }
-    }
-    
+    private var isOverBudget: Bool { totalSpent > totalBudget + 0.001 }
+
+    private var tint: Color { isOverBudget ? .red : .sage }
+
+    private var trendColor: Color { isSpendingMore ? .red : .green }
+
     init(selectedMonth: Date) {
         self.selectedMonth = selectedMonth
         let lastMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
@@ -98,18 +88,65 @@ struct MonthlyOverviewWidget: View {
     
     var body: some View {
         Section {
-            TotalSpentProgressView(wantsSpent: spent(for: .wants), needsSpent: spent(for: .needs), savingsSpent: spent(for: .savings), totalIncome: Double(config.totalMonthlyIncome))
-        } footer: {
-            if lastMonthPartialTotal > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
-                        .foregroundStyle(isSpendingMore ? .red : .green)
-                    Text(abs(percentageChange) / 100, format: .percent.precision(.fractionLength(0)))
-                    Text("from last month")
+            VStack(spacing: 12) {
+                ArcProgressGauge(progress: totalUtilization, tint: tint) {
+                    gaugeLabel
                 }
-                .foregroundStyle(isSpendingMore ? Color.red : Color.green)
+                .frame(maxWidth: 420)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 12)
+
+                Divider()
+
+                HStack {
+                    Text(isOverBudget
+                         ? "\((totalSpent - totalBudget).currencyString) over"
+                         : "\(remaining.currencyString) left")
+                        .font(.subheadline)
+                        .foregroundStyle(isOverBudget ? .red : .secondary)
+
+                    Spacer()
+
+                    if lastMonthPartialTotal > 0 {
+                        trendPill
+                    }
+                }
             }
         }
+    }
+
+    private var gaugeLabel: some View {
+        VStack(spacing: 2) {
+            Text("SPENT")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            Text(totalSpent.currencyString)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Text("\(totalUtilization.formatted(.percent.precision(.fractionLength(0)))) of \(totalBudget.currencyString)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    private var trendPill: some View {
+        HStack(spacing: 4) {
+            Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
+            Text("\((abs(percentageChange) / 100).formatted(.percent.precision(.fractionLength(0)))) vs last month")
+        }
+        .font(.caption)
+        .fontWeight(.medium)
+        .foregroundStyle(trendColor)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(trendColor.opacity(0.12), in: .capsule)
     }
 }
 

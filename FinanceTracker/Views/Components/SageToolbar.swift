@@ -24,30 +24,42 @@ struct SageToolbar: ToolbarContent {
             }
         }
 
-        ToolbarItem {
-            if let onImportFromSplitwise {
-                Menu {
-                    Button {
-                        onAdd()
-                    } label: {
-                        Label("Add Expense", systemImage: "plus")
-                    }
-                    Button {
-                        onImportFromSplitwise()
-                    } label: {
-                        Label("Import from Splitwise", systemImage: "square.and.arrow.down")
-                    }
-                } label: {
-                    Label("Add", systemImage: "plus")
-                }
-                .tint(.sage)
-            } else {
-                Button(action: onAdd) {
-                    Label("Add Item", systemImage: "plus")
-                }
-                .background(.cardBackground)
-                .tint(.sage)
-            }
+        ToolbarItem(placement: .topBarTrailing) {
+            addButton
         }
+    }
+
+    @ViewBuilder
+    private var addButton: some View {
+        if let onImportFromSplitwise {
+            Menu {
+                Button {
+                    onAdd()
+                } label: {
+                    Label("Add Expense", systemImage: "plus")
+                }
+                Button {
+                    onImportFromSplitwise()
+                } label: {
+                    Label("Import from Splitwise", systemImage: "square.and.arrow.down")
+                }
+            } label: {
+                addLabel
+            }
+            .tint(.sage)
+            .buttonStyle(.borderedProminent)
+        } else {
+            Button(action: onAdd) {
+                addLabel
+            }
+            .tint(.sage)
+            .buttonStyle(.borderedProminent)
+        }
+    }
+
+    private var addLabel: some View {
+        Image(systemName: "plus")
+//            .font(.title3.weight(.semibold))
+//            .foregroundStyle(.white)
     }
 }

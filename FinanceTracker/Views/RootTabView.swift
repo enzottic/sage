@@ -47,7 +47,7 @@ struct RootTabView: View {
                 SettingsView()
             }
 
-            if #available(anyAppleOS 27.0, *) {
+            if #available(iOS 27.0, *) {
                 Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
                     // Unreachable: selecting this tab presents the add sheet (see tabSelection).
                     Color.clear

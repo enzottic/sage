@@ -28,7 +28,7 @@ struct DashboardView: View {
     ]
 
     init() {
-        _selectedMonth = State(initialValue: .now)
+        _selectedMonth = State(initialValue: Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 5))!)
     }
 
     var body: some View {
@@ -63,7 +63,6 @@ struct DashboardView: View {
                         : nil,
                 )
             }
-            .gradientBackground()
             .appRouteDestinations()
         }
     }
