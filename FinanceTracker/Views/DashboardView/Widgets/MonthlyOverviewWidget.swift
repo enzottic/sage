@@ -18,9 +18,6 @@ struct MonthlyOverviewWidget: View {
     @Query var monthlyExpenses: [Expense]
     @Query var comparisonExpenses: [Expense]
 
-    /// True when the selected month is the month containing "today" — only
-    /// then does it make sense to compare partial (month-to-date) totals.
-    /// For a fully elapsed past month, both months are compared in full.
     private var isCurrentMonth: Bool {
         calendar.isDate(selectedMonth, equalTo: .now, toGranularity: .month)
     }
@@ -117,11 +114,6 @@ struct MonthlyOverviewWidget: View {
 
     private var gaugeLabel: some View {
         VStack(spacing: 2) {
-            Text("SPENT")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-
             Text(totalSpent.currencyString)
                 .font(.largeTitle)
                 .fontWeight(.bold)

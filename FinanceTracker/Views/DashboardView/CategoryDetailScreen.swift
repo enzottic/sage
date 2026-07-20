@@ -14,9 +14,11 @@ struct CategoryDetailScreen: View {
     @Query private var monthlyExpenses: [Expense]
 
     let category: ExpenseCategory
+    let month: Date
 
     init(category: ExpenseCategory, month: Date) {
         self.category = category
+        self.month = month
         let cal = Calendar.current
         let start = cal.dateInterval(of: .month, for: month)?.start ?? month
         let end = cal.dateInterval(of: .month, for: month)?.end ?? month
@@ -51,6 +53,6 @@ struct CategoryDetailScreen: View {
     }
 
     var body: some View {
-        CategoryDetailView(category: category, utilization: utilization(), used: spent(), total: budget())
+        CategoryDetailView(category: category, utilization: utilization(), used: spent(), total: budget(), month: month)
     }
 }

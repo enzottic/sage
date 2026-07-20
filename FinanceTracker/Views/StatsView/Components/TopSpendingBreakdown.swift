@@ -12,6 +12,10 @@ import SageKit
 struct TopSpendingBreakdown: View {
     let expenses: [Expense]
     let accentColor: Color
+    var title: String = "Top Spending"
+    /// Label for expenses with no tag. When nil, they fall back to their category name,
+    /// which only reads well in a mixed-category context like Stats.
+    var untaggedLabel: String? = nil
 
     private struct Row: Identifiable {
         let id: String
@@ -34,7 +38,7 @@ struct TopSpendingBreakdown: View {
                     return Row(id: key, label: tag.name, emoji: tag.emoji, amount: items.total)
                 }
                 let category = items.first?.category ?? .wants
-                return Row(id: key, label: category.rawValue, emoji: nil, amount: items.total)
+                return Row(id: key, label: untaggedLabel ?? category.rawValue, emoji: nil, amount: items.total)
             }
             .sorted { $0.amount > $1.amount }
             .prefix(5)
@@ -43,7 +47,7 @@ struct TopSpendingBreakdown: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Top Spending")
+            Text(title)
                 .font(.headline)
 
             ForEach(rows) { row in

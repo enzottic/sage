@@ -18,7 +18,7 @@ struct GradientBackgroundModifier: ViewModifier {
             content
             
             LinearGradient(
-                colors: [color.opacity(0.5), .clear],
+                colors: [color.opacity(0.3), .clear],
                 startPoint: .top,
                 endPoint: .bottom
             )

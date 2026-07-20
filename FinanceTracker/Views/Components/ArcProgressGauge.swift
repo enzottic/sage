@@ -7,13 +7,9 @@
 
 import SwiftUI
 
-/// A half-circle gauge that fills clockwise from the left end. `content` is laid
-/// out in the well under the arc.
 struct ArcProgressGauge<Content: View>: View {
     let progress: Double
     var tint: Color = .sage
-    /// Stroke thickness as a fraction of the gauge's width, so the arc keeps the
-    /// same visual weight as it scales. Clamped by `lineWidthRange`.
     var lineWidthRatio: CGFloat = 0.073
     var lineWidthRange: ClosedRange<CGFloat> = 16...30
     @ViewBuilder var content: () -> Content
@@ -36,6 +32,8 @@ struct ArcProgressGauge<Content: View>: View {
 
                 content()
                     .padding(.horizontal, lineWidth)
+                    .frame(width: proxy.size.width, height: proxy.size.height - lineWidth / 2, alignment: .center)
+                    .offset(y: lineWidth / 4)
             }
         }
         .aspectRatio(2, contentMode: .fit)
@@ -50,8 +48,6 @@ private extension Comparable {
     }
 }
 
-/// The 180° arc, swept left to right over the top. Inset by half the line width
-/// so the stroke stays inside the view's bounds.
 private struct ArcShape: Shape {
     let lineWidth: CGFloat
 

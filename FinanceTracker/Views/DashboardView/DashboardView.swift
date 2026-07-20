@@ -20,15 +20,11 @@ struct DashboardView: View {
         .init(widgets: [.singleCategoryUtilization(.needs)]),
         .init(widgets: [.singleCategoryUtilization(.wants)]),
         .init(widgets: [.singleCategoryUtilization(.savings)]),
-//        .init(widgets: [
-//            .singleCategoryUtilization(.wants),
-//            .singleCategoryUtilization(.savings),
-//        ]),
         .init(widgets: [.recentExpenses(.regular)]),
     ]
 
     init() {
-        _selectedMonth = State(initialValue: Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 5))!)
+        _selectedMonth = State(initialValue: .now)
     }
 
     var body: some View {
@@ -49,6 +45,7 @@ struct DashboardView: View {
             .listSectionSpacing(12)
             .scrollContentBackground(.hidden)
             .background(.sageBackground)
+            .gradientBackground()
             .toolbar {
                 SageToolbar(
                     onPrevious: {
@@ -78,10 +75,6 @@ struct DashboardView: View {
         }
     }
 
-    /// Multiple widgets sharing one list row as equal-width cards. The row's
-    /// own background/insets are cleared so each widget draws its own card;
-    /// the HStack splits the section width evenly (2 widgets = halves,
-    /// 3 = thirds, ...).
     private func sharedWidgetRow(_ widgets: [DashboardWidget]) -> some View {
         HStack(spacing: 16) {
             ForEach(widgets, id: \.self) { widget in

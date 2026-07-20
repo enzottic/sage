@@ -15,14 +15,16 @@ struct SingleCategoryUtilizationWidget: View {
 
     let category: ExpenseCategory
     let layout: DashboardWidgetLayout
+    let isNavigable: Bool
     private let selectedMonth: Date
 
     @Query var monthlyExpenses: [Expense]
 
-    init(category: ExpenseCategory, layout: DashboardWidgetLayout, selectedMonth: Date) {
+    init(category: ExpenseCategory, layout: DashboardWidgetLayout, selectedMonth: Date, isNavigable: Bool = true) {
         self.category = category
         self.layout = layout
         self.selectedMonth = selectedMonth
+        self.isNavigable = isNavigable
         _monthlyExpenses = expenseQuery(for: selectedMonth)
     }
 
@@ -56,22 +58,33 @@ struct SingleCategoryUtilizationWidget: View {
         switch layout {
         case .full:
             Section {
-                NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
+                if isNavigable {
+                    NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
+                        fullContent
+                    }
+                    .tint(.primary)
+                    .listRowSeparator(.hidden)
+                } else {
                     fullContent
+                        .listRowSeparator(.hidden)
                 }
-                .tint(.primary)
-                .listRowSeparator(.hidden)
             }
         case .compact:
-            Button {
-                appRouter.push(.categoryDetail(category, selectedMonth))
-            } label: {
+            if isNavigable {
+                Button {
+                    appRouter.push(.categoryDetail(category, selectedMonth))
+                } label: {
+                    compactContent
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            } else {
                 compactContent
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
         }
     }
 
