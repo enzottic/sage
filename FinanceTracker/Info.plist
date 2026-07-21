@@ -8,6 +8,8 @@
 	</array>
 	<key>CFBundleSpokenName</key>
 	<string>Sage</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Sage uses the camera to photograph receipts and add expenses automatically.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

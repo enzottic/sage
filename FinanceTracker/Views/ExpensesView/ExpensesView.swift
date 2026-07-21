@@ -16,9 +16,15 @@ struct ExpensesView: View {
     @State private var selectedMonth: Date
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
+    @State private var receiptSource: ReceiptCaptureSource?
 
     let calendar = Calendar.current
     let formatter: DateFormatter
+
+    /// Receipt parsing is only available on iOS 26+, so only offer the menu entry there.
+    private var receiptImportEnabled: Bool {
+        if #available(iOS 26.0, *) { true } else { false }
+    }
 
     init(month: Date = Date()) {
         _selectedMonth = State(initialValue: Date())
@@ -49,8 +55,12 @@ struct ExpensesView: View {
                         onImportFromSplitwise: splitwiseService.isConfigured
                             ? { appRouter.presentSheet(.splitwiseImport) }
                             : nil,
+                        onImportFromReceipt: receiptImportEnabled
+                            ? { source in receiptSource = source }
+                            : nil,
                     )
                 }
+                .receiptCapture(source: $receiptSource)
                 .gradientBackground()
                 .onChange(of: appRouter.expensesMonth) { _, month in
                     selectedMonth = month
