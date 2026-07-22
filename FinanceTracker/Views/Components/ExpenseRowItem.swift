@@ -19,6 +19,8 @@ struct ExpenseRowItem: View {
     let expense: Expense
     var style: Style = .regular
 
+    private var tags: [ExpenseTag] { expense.tags ?? [] }
+
     var body: some View {
         switch style {
         case .regular: regularContent
@@ -33,8 +35,19 @@ struct ExpenseRowItem: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(expense.category.color(in: categoryColors).secondary)
                     .frame(width: 40, height: 40)
-                if let tagEmoji = expense.tag?.emoji {
+                if let tagEmoji = tags.first?.emoji {
                     Text(tagEmoji)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if tags.count > 1 {
+                    Text("+\(tags.count - 1)")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Capsule().fill(expense.category.color(in: categoryColors)))
+                        .offset(x: 4, y: 4)
                 }
             }
 
@@ -74,7 +87,7 @@ struct ExpenseRowItem: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(expense.category.color(in: categoryColors).secondary)
                     .frame(width: 24, height: 24)
-                if let tagEmoji = expense.tag?.emoji {
+                if let tagEmoji = tags.first?.emoji {
                     Text(tagEmoji)
                         .font(.caption)
                 }

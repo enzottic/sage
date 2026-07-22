@@ -17,7 +17,7 @@ struct EditRecurringRuleSheet: View {
     @State private var amount: Double?
     @State private var note: String
     @State private var category: ExpenseCategory
-    @State private var tag: ExpenseTag?
+    @State private var tags: [ExpenseTag]
     @State private var frequency: RecurrenceFrequency
     @State private var hasEndDate: Bool
     @State private var endDate: Date
@@ -31,7 +31,7 @@ struct EditRecurringRuleSheet: View {
         _amount = State(initialValue: rule.amount)
         _note = State(initialValue: rule.note)
         _category = State(initialValue: rule.category)
-        _tag = State(initialValue: rule.tag)
+        _tags = State(initialValue: rule.tags ?? [])
         _frequency = State(initialValue: rule.frequency)
         _hasEndDate = State(initialValue: rule.endDate != nil)
         _endDate = State(initialValue: rule.endDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date.now)!)
@@ -44,7 +44,7 @@ struct EditRecurringRuleSheet: View {
                 amount: $amount,
                 date: .constant(rule.startDate),
                 category: $category,
-                tag: $tag,
+                tags: $tags,
                 note: $note
             )
 
@@ -116,7 +116,7 @@ struct EditRecurringRuleSheet: View {
         rule.amount = expenseAmount
         rule.note = note
         rule.category = category
-        rule.tag = tag
+        rule.tags = tags
         rule.frequency = frequency
         rule.endDate = hasEndDate ? endDate : nil
 

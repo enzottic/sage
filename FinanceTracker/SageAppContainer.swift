@@ -88,7 +88,7 @@ let appContainer: ModelContainer = {
 @MainActor
 let previewAppContainer: ModelContainer = {
     do {
-        let schema = Schema(versionedSchema: SageSchemaV2.self)
+        let schema = Schema(versionedSchema: SageSchemaV3.self)
         let container = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         
         let expenseTags: [String: ExpenseTag] = [

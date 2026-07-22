@@ -92,7 +92,7 @@ public struct FindExpensesIntent: AppIntent {
         var expenses = store.fetchExpenses(from: start, to: end)
 
         if let tag {
-            expenses = expenses.filter { $0.tag?.id == tag.id }
+            expenses = expenses.filter { ($0.tags ?? []).contains { $0.id == tag.id } }
         }
         if let category {
             expenses = expenses.filter { $0.category == category }

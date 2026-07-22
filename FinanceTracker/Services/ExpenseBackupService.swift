@@ -95,9 +95,16 @@ class ExportableExpense: Identifiable {
     let date: Date
     let amount: Double
     let category: String
+    /// Pipe-joined tag names (e.g. "Dining|Groceries"). A single `String` column keeps the CSV
+    /// format flat and backward-compatible with single-tag exports.
     let tag: String
     let note: String
-    
+
+    /// The individual tag names encoded in `tag`, with empties removed.
+    var tagNames: [String] {
+        tag.split(separator: "|").map(String.init).filter { !$0.isEmpty }
+    }
+
     init(name: String, date: Date, amount: Double, category: String, tag: String, note: String) {
         self.name = name
         self.date = date
@@ -111,7 +118,7 @@ class ExportableExpense: Identifiable {
 extension [Expense] {
     func toExportable() -> [ExportableExpense] {
         self.map {
-            ExportableExpense(name: $0.name, date: $0.date, amount: $0.amount, category: $0.category.rawValue, tag: $0.tag?.name ?? "Other", note: $0.note)
+            ExportableExpense(name: $0.name, date: $0.date, amount: $0.amount, category: $0.category.rawValue, tag: ($0.tags ?? []).map(\.name).joined(separator: "|"), note: $0.note)
         }
     }
 }

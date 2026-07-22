@@ -102,7 +102,7 @@ final public class ExpenseStore {
     }
 
     public func monthlyTotal(tagId: UUID, month: Date = .now) throws -> Double {
-        try fetchExpenses(for: month).filter { $0.tag?.id == tagId }.total
+        try fetchExpenses(for: month).filter { ($0.tags ?? []).contains { $0.id == tagId } }.total
     }
 
     // MARK: - Budget

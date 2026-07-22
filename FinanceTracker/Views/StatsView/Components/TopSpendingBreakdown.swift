@@ -27,19 +27,32 @@ struct TopSpendingBreakdown: View {
     private var total: Double { expenses.total }
 
     private var rows: [Row] {
-        let groups = Dictionary(grouping: expenses) { expense -> String in
-            if let tag = expense.tag, !tag.isDeleted { return "tag-\(tag.id)" }
-            return "cat-\(expense.category.rawValue)"
+        // An expense can carry multiple tags; attribute its full amount to each tag it has, so a
+        // multi-tagged expense appears under every one of its tags. Untagged expenses fall back to
+        // their category. (Rows can therefore sum to more than the grand total — expected for a
+        // "where the money went" ranking.)
+        var accumulator: [String: Row] = [:]
+
+        func add(key: String, label: String, emoji: String?, amount: Double) {
+            if let existing = accumulator[key] {
+                accumulator[key] = Row(id: key, label: existing.label, emoji: existing.emoji, amount: existing.amount + amount)
+            } else {
+                accumulator[key] = Row(id: key, label: label, emoji: emoji, amount: amount)
+            }
         }
 
-        return groups
-            .map { key, items -> Row in
-                if let tag = items.first?.tag, !tag.isDeleted {
-                    return Row(id: key, label: tag.name, emoji: tag.emoji, amount: items.total)
+        for expense in expenses {
+            let activeTags = (expense.tags ?? []).filter { !$0.isDeleted }
+            if activeTags.isEmpty {
+                add(key: "cat-\(expense.category.rawValue)", label: untaggedLabel ?? expense.category.rawValue, emoji: nil, amount: expense.amount)
+            } else {
+                for tag in activeTags {
+                    add(key: "tag-\(tag.id)", label: tag.name, emoji: tag.emoji, amount: expense.amount)
                 }
-                let category = items.first?.category ?? .wants
-                return Row(id: key, label: untaggedLabel ?? category.rawValue, emoji: nil, amount: items.total)
             }
+        }
+
+        return accumulator.values
             .sorted { $0.amount > $1.amount }
             .prefix(5)
             .map { $0 }

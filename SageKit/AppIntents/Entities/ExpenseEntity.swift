@@ -19,16 +19,17 @@ public struct ExpenseEntity: IndexedEntity {
     let amount: Double
     let category: ExpenseCategory
     let date: Date
-    let tag: ExpenseTagEntity?
+    let tags: [ExpenseTagEntity]
 
     public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Expense"
 
     public var displayRepresentation: DisplayRepresentation {
         let subtitle: String
-        if let tag {
-            subtitle = "\(amount.currencyString) · \(category) · \(tag.emoji) \(tag.name)"
-        } else {
+        if tags.isEmpty {
             subtitle = "\(amount.currencyString) · \(category)"
+        } else {
+            let tagsText = tags.map { "\($0.emoji) \($0.name)" }.joined(separator: ", ")
+            subtitle = "\(amount.currencyString) · \(category) · \(tagsText)"
         }
 
         return DisplayRepresentation(
@@ -37,13 +38,13 @@ public struct ExpenseEntity: IndexedEntity {
         )
     }
 
-    public init(id: UUID, name: String, amount: Double, category: ExpenseCategory, date: Date, tag: ExpenseTag?) {
+    public init(id: UUID, name: String, amount: Double, category: ExpenseCategory, date: Date, tags: [ExpenseTag]) {
         self.id = id
         self.name = name
         self.amount = amount
         self.category = category
         self.date = date
-        self.tag = tag?.entity
+        self.tags = tags.map(\.entity)
     }
     
     @MainActor
@@ -76,7 +77,7 @@ public struct ExpenseEntity: IndexedEntity {
 
 extension Expense {
     var entity: ExpenseEntity {
-        ExpenseEntity(id: self.id, name: self.name, amount: self.amount, category: self.category, date: self.date, tag: self.tag)
+        ExpenseEntity(id: self.id, name: self.name, amount: self.amount, category: self.category, date: self.date, tags: self.tags ?? [])
     }
 }
 

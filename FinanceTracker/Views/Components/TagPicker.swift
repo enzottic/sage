@@ -10,87 +10,85 @@ import SwiftData
 import SageKit
 
 struct TagPicker: View {
-    @Binding var selectedTag: ExpenseTag?
-    /// Whether the currently selected tag was suggested by the AI (shows rainbow border).
-    var tagIsAISuggested: Bool = false
+    @Binding var selectedTags: [ExpenseTag]
+    /// IDs of currently-selected tags that were suggested by the AI (shows rainbow border).
+    var aiSuggestedTagIDs: Set<UUID> = []
 
     @State private var newTagSheetIsPresented: Bool = false
     @Namespace private var tagNamespace
 
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
 
+    private func isSelected(_ tag: ExpenseTag) -> Bool {
+        selectedTags.contains { $0.id == tag.id }
+    }
+
+    private func toggle(_ tag: ExpenseTag) {
+        if let index = selectedTags.firstIndex(where: { $0.id == tag.id }) {
+            selectedTags.remove(at: index)
+        } else {
+            selectedTags.append(tag)
+        }
+    }
+
     var body: some View {
-        ZStack(alignment: .leading) {
-            if let selectedTag {
-                // A tag is selected — show just that tag with a deselect button
-                HStack(spacing: 6) {
-                    TagCapsule(tag: selectedTag, .medium, aiSuggested: tagIsAISuggested)
-                        .matchedGeometryEffect(id: selectedTag.persistentModelID, in: tagNamespace)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .center, spacing: 10) {
+                ForEach(expenseTags, id: \.self) { option in
+                    let selected = isSelected(option)
                     Button {
                         withAnimation(.spring(duration: 0.35)) {
-                            self.selectedTag = nil
+                            toggle(option)
                         }
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .accessibilityLabel(Text("Remove tag"))
+                        TagCapsule(tag: option, .medium, aiSuggested: aiSuggestedTagIDs.contains(option.id))
+                            // Selected chips read at full strength with a ring in the tag's own
+                            // colour; unselected ones recede. The ring is drawn inside the
+                            // capsule's bounds so it can't be clipped by the scroll view.
+                            .opacity(selected ? 1 : 0.4)
+                            .overlay {
+                                if selected, !aiSuggestedTagIDs.contains(option.id) {
+                                    Capsule().strokeBorder(option.color, lineWidth: 2)
+                                }
+                            }
+                            .matchedGeometryEffect(id: option.persistentModelID, in: tagNamespace)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 10)
-            } else {
-                // No tag selected — show all tags
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .center, spacing: 10) {
-                        ForEach(expenseTags, id: \.self) { option in
-                            Button {
-                                withAnimation(.spring(duration: 0.35)) {
-                                    selectedTag = option
-                                }
-                            } label: {
-                                TagCapsule(tag: option, .medium)
-                                    .matchedGeometryEffect(id: option.persistentModelID, in: tagNamespace)
-                            }
-                            .buttonStyle(.plain)
-                        }
 
-                        Button {
-                            newTagSheetIsPresented.toggle()
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "plus")
-                                Text("Add")
-                            }
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.sageAccent))
-                            .accessibilityLabel(Text("Add new tag"))
-                        }
-                        .buttonStyle(.plain)
+                Button {
+                    newTagSheetIsPresented.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Add")
                     }
-                    .padding(.horizontal, 10)
+                    .font(.subheadline)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.sageAccent))
+                    .accessibilityLabel(Text("Add new tag"))
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
         }
-        .clipped()
-        .padding(.vertical, 2)
-        .animation(.spring(duration: 0.35), value: selectedTag == nil)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(isPresented: $newTagSheetIsPresented) {
             AddExpenseTagSheet { newTag in
-                selectedTag = newTag
+                selectedTags.append(newTag)
             }
         }
     }
 }
 
 #Preview {
-    @Previewable @State var selectedTag: ExpenseTag? = .dining
+    @Previewable @State var selectedTags: [ExpenseTag] = [.dining]
     VStack(spacing: 20) {
-        TagPicker(selectedTag: $selectedTag)
+        TagPicker(selectedTags: $selectedTags)
         Text("Item down here)")
     }
     .environmentInjection()

@@ -42,8 +42,8 @@ public struct AddExpenseAppIntent: AppIntent {
             date: date ?? .now
         )
         
-        if let tagEntity = tag {
-            expense.tag = try? expenseStore.fetchTag(id: tagEntity.id)
+        if let tagEntity = tag, let resolved = try? expenseStore.fetchTag(id: tagEntity.id) {
+            expense.tags = [resolved]
         }
         
         expenseStore.addExpense(expense)

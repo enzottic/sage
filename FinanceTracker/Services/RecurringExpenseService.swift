@@ -48,7 +48,7 @@ class RecurringExpenseService {
                 amount: rule.amount,
                 category: rule.category,
                 date: generationDate,
-                tag: rule.tag,
+                tags: rule.tags ?? [],
                 note: rule.note,
                 recurringExpenseId: rule.id
             )

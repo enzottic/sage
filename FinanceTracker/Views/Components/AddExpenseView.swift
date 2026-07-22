@@ -19,7 +19,7 @@ struct AddExpenseView: View {
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
     @State private var category: ExpenseCategory = .needs
-    @State private var tag: ExpenseTag? = nil
+    @State private var tags: [ExpenseTag] = []
     @State private var note: String = ""
     @State private var isRecurring: Bool = false
     @State private var recurrenceFrequency: RecurrenceFrequency = .monthly
@@ -38,7 +38,7 @@ struct AddExpenseView: View {
         if let expense = expense {
             _name = State(initialValue: expense.name)
             _amount = State(initialValue: expense.amount)
-            _tag = State(initialValue: expense.tag ?? nil)
+            _tags = State(initialValue: expense.tags ?? [])
             _category = State(initialValue: expense.category)
         }
     }
@@ -59,7 +59,7 @@ struct AddExpenseView: View {
                     amount: $amount,
                     date: $date,
                     category: $category,
-                    tag: $tag,
+                    tags: $tags,
                     note: $note
                 )
 
@@ -255,8 +255,8 @@ struct AddExpenseView: View {
 
             category = parsed.category.lowercased() == "needs" ? .needs : .wants
 
-            if let tagName = parsed.tag {
-                tag = allTags.first { $0.name == tagName }
+            if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
+                tags = [matched]
             }
         }
     }
@@ -313,7 +313,7 @@ struct AddExpenseView: View {
                 amount: saveAmount,
                 note: note,
                 category: category,
-                tag: tag,
+                tags: tags,
                 frequency: recurrenceFrequency,
                 startDate: date,
                 lastGeneratedDate: date
@@ -327,7 +327,7 @@ struct AddExpenseView: View {
             amount: saveAmount,
             category: category,
             date: date,
-            tag: tag,
+            tags: tags,
             note: note,
             recurringExpenseId: recurringId
         )

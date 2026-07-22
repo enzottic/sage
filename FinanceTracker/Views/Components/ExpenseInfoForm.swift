@@ -19,13 +19,14 @@ struct ExpenseInfoForm: View {
     @Binding var amount: Double?
     @Binding var date: Date
     @Binding var category: ExpenseCategory
-    @Binding var tag: ExpenseTag?
+    @Binding var tags: [ExpenseTag]
     @Binding var note: String
     var isEditing: Bool
 
     private let tagSuggestionService = TagSuggestionService()
     @FocusState private var focusedField: Field?
-    @State private var tagIsAISuggested = false
+    /// IDs of currently-selected tags that were suggested by the AI (drives the rainbow border).
+    @State private var aiSuggestedTagIDs: Set<UUID> = []
 
     private enum Field: Hashable { case name, amount, note }
 
@@ -51,7 +52,7 @@ struct ExpenseInfoForm: View {
         amount: Binding<Double?>,
         date: Binding<Date>,
         category: Binding<ExpenseCategory>,
-        tag: Binding<ExpenseTag?>,
+        tags: Binding<[ExpenseTag]>,
         note: Binding<String>,
         isEditing: Bool = false
     ) {
@@ -59,7 +60,7 @@ struct ExpenseInfoForm: View {
         self._amount = amount
         self._date = date
         self._category = category
-        self._tag = tag
+        self._tags = tags
         self._note = note
         self.isEditing = isEditing
     }
@@ -75,8 +76,8 @@ struct ExpenseInfoForm: View {
             sectionHeader(title: "Category") {
                 inlineCategoryPicker
             }
-            sectionHeader(title: "Tag") {
-                TagPicker(selectedTag: $tag, tagIsAISuggested: tagIsAISuggested)
+            sectionHeader(title: "Tags") {
+                TagPicker(selectedTags: $tags, aiSuggestedTagIDs: aiSuggestedTagIDs)
                     .padding(.horizontal, 8)
             }
         }
@@ -89,9 +90,13 @@ struct ExpenseInfoForm: View {
                 await MainActor.run { debouncedName = newValue }
             }
         }
-        .onChange(of: tag) { _, _ in tagIsAISuggested = false }
+        .onChange(of: tags) { _, newValue in
+            // Keep the AI-suggested highlight only for tags that are still selected.
+            let selectedIDs = Set(newValue.map(\.id))
+            aiSuggestedTagIDs.formIntersection(selectedIDs)
+        }
         .sensoryFeedback(.selection, trigger: category)
-        .sensoryFeedback(.selection, trigger: tag)
+        .sensoryFeedback(.selection, trigger: tags.map(\.id))
     }
 
     // MARK: - Name header
@@ -121,12 +126,12 @@ struct ExpenseInfoForm: View {
                     name = expense.name
                     amount = expense.amount
                     category = expense.category
-                    tag = expense.tag
-                    tagIsAISuggested = false
+                    tags = expense.tags ?? []
+                    aiSuggestedTagIDs = []
                     focusedField = nil
                 } label: {
                     HStack(spacing: 12) {
-                        if let emoji = expense.tag?.emoji {
+                        if let emoji = expense.tags?.first?.emoji {
                             Text(emoji)
                                 .font(.system(size: 20))
                                 .frame(width: 36, height: 36)
@@ -147,9 +152,10 @@ struct ExpenseInfoForm: View {
                                 .foregroundStyle(.primary)
                             HStack(spacing: 4) {
                                 Text(expense.category.rawValue)
-                                if let tagName = expense.tag?.name {
+                                let tagNames = (expense.tags ?? []).map(\.name).joined(separator: ", ")
+                                if !tagNames.isEmpty {
                                     Text("·")
-                                    Text(tagName)
+                                    Text(tagNames)
                                 }
                             }
                             .font(.caption)
@@ -323,12 +329,12 @@ struct ExpenseInfoForm: View {
 
     private func suggestTagIfNeeded() {
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              tag == nil,
+              tags.isEmpty,
               config.smartTaggingMode != .none else { return }
 
         let tagNames = expenseTags.map(\.name)
         let currentName = name
-        let history = expenses.map { (name: $0.name, tagName: $0.tag?.name) }
+        let history = expenses.map { (name: $0.name, tagName: $0.tags?.first?.name) }
 
         Task {
             if let result = await tagSuggestionService.suggestTag(
@@ -338,9 +344,11 @@ struct ExpenseInfoForm: View {
                 smartTaggingMode: config.smartTaggingMode
             ) {
                 await MainActor.run {
-                    if tag == nil {
-                        tag = expenseTags.first { $0.name == result.tagName }
-                        tagIsAISuggested = result.source == .ai
+                    if tags.isEmpty, let suggested = expenseTags.first(where: { $0.name == result.tagName }) {
+                        tags = [suggested]
+                        if result.source == .ai {
+                            aiSuggestedTagIDs = [suggested.id]
+                        }
                     }
                 }
             }
@@ -353,7 +361,7 @@ struct ExpenseInfoForm: View {
     @Previewable @State var amount: Double? = nil
     @Previewable @State var date: Date = Date.now
     @Previewable @State var category: ExpenseCategory = .needs
-    @Previewable @State var tag: ExpenseTag? = nil
+    @Previewable @State var tags: [ExpenseTag] = []
     @Previewable @State var note: String = ""
 
     ScrollView {
@@ -362,7 +370,7 @@ struct ExpenseInfoForm: View {
             amount: $amount,
             date: $date,
             category: $category,
-            tag: $tag,
+            tags: $tags,
             note: $note
         )
         .padding(.vertical, 20)
@@ -375,7 +383,7 @@ struct ExpenseInfoForm: View {
     @Previewable @State var amount: Double? = 57.57
     @Previewable @State var date: Date = Date.now
     @Previewable @State var category: ExpenseCategory = .needs
-    @Previewable @State var tag: ExpenseTag? = nil
+    @Previewable @State var tags: [ExpenseTag] = []
     @Previewable @State var note: String = "Weekly shop + party stuff"
 
     ScrollView {
@@ -384,7 +392,7 @@ struct ExpenseInfoForm: View {
             amount: $amount,
             date: $date,
             category: $category,
-            tag: $tag,
+            tags: $tags,
             note: $note,
             isEditing: true
         )

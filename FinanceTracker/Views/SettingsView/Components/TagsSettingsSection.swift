@@ -11,12 +11,50 @@ import SageKit
 
 struct TagsSettingsSection: View {
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
+    @Query private var allExpenses: [Expense]
     @Environment(\.modelContext) private var modelContext
     @Environment(AppConfiguration.self) private var config
 
     @State private var showAddTagSheet = false
     @State private var tagToEdit: ExpenseTag? = nil
     @State private var tagPendingDelete: ExpenseTag? = nil
+
+    /// This month's spend against `tag` versus its cap. Over-budget reads in red.
+    @ViewBuilder
+    private func budgetProgress(for tag: ExpenseTag, budget: Double) -> some View {
+        let spent = allExpenses.monthlyTotal(for: tag)
+        let fraction = min(spent / budget, 1)
+        let isOver = spent > budget
+
+        VStack(alignment: .leading, spacing: 4) {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(tag.color.opacity(0.15))
+                    Capsule()
+                        .fill(isOver ? Color.red : tag.color)
+                        .frame(width: max(0, geometry.size.width * fraction))
+                }
+            }
+            .frame(height: 5)
+
+            HStack(spacing: 4) {
+                Text("\(spent.currencyString) of \(budget.currencyString)")
+                    .font(.caption2)
+                    .foregroundStyle(isOver ? .red : .secondary)
+                Spacer()
+                if isOver {
+                    Text("Over by \((spent - budget).currencyString)")
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                } else {
+                    Text("\((budget - spent).currencyString) left")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
 
     private var availableTaggingModes: [SmartTaggingMode] {
         SmartTaggingMode.allCases.filter { mode in
@@ -52,17 +90,23 @@ struct TagsSettingsSection: View {
                     Button {
                         tagToEdit = tag
                     } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(tag.color)
-                                    .frame(width: 35, height: 35)
-                                Text(tag.emoji)
-                                    .font(.system(size: 18))
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(tag.color)
+                                        .frame(width: 35, height: 35)
+                                    Text(tag.emoji)
+                                        .font(.system(size: 18))
+                                }
+                                Text(tag.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
                             }
-                            Text(tag.name)
-                                .foregroundStyle(.primary)
-                            Spacer()
+
+                            if let budget = tag.budget, budget > 0 {
+                                budgetProgress(for: tag, budget: budget)
+                            }
                         }
                     }
                 }
@@ -70,7 +114,7 @@ struct TagsSettingsSection: View {
                     let visible = expenseTags.filter { !$0.isDeleted }
                     for index in indexSet {
                         let tag = visible[index]
-                        if (tag.expenses ?? []).isEmpty {
+                        if (tag.taggedExpenses ?? []).isEmpty {
                             modelContext.delete(tag)
                         } else {
                             tagPendingDelete = tag
@@ -115,7 +159,7 @@ struct TagsSettingsSection: View {
             }
         } message: {
             if let tag = tagPendingDelete {
-                let count = tag.expenses?.count ?? 0
+                let count = tag.taggedExpenses?.count ?? 0
                 Text("\(count) expenses have the \(tag.name) tag. Deleting it will remove the tag from those expenses.")
             }
         }

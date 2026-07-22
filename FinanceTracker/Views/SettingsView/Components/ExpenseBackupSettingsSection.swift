@@ -124,8 +124,8 @@ struct ExpenseBackupSettingsSection: View {
 
                 let knownNames = Set(expenseTags.map(\.name))
                 let unknown = importedExpenses
-                    .map(\.tag)
-                    .filter { !$0.isEmpty && !knownNames.contains($0) }
+                    .flatMap(\.tagNames)
+                    .filter { !knownNames.contains($0) }
                 let uniqueUnknown = Array(Set(unknown)).sorted()
 
                 if uniqueUnknown.isEmpty {
@@ -144,8 +144,9 @@ struct ExpenseBackupSettingsSection: View {
 
     private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
         importedExpenses.map { e in
-            let tag = expenseTags.first { $0.name == e.tag }
-            return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tag: tag, note: e.note)
+            let tagsByName = Dictionary(expenseTags.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+            let tags = e.tagNames.compactMap { tagsByName[$0] }
+            return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tags: tags, note: e.note)
         }
     }
         

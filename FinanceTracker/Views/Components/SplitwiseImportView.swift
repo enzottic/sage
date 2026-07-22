@@ -145,7 +145,7 @@ private struct SplitwiseImportConfirmSheet: View {
     @State private var amount: Double?
     @State private var date: Date
     @State private var category: ExpenseCategory = .wants
-    @State private var tag: ExpenseTag? = nil
+    @State private var tags: [ExpenseTag] = []
     @State private var note: String = ""
 
     init(expense: SplitwiseFetchedExpense, userId: Int, onImport: @escaping (Expense) -> Void) {
@@ -167,7 +167,7 @@ private struct SplitwiseImportConfirmSheet: View {
                 amount: $amount,
                 date: $date,
                 category: $category,
-                tag: $tag,
+                tags: $tags,
                 note: $note
             )
             .toolbar {
@@ -182,7 +182,7 @@ private struct SplitwiseImportConfirmSheet: View {
                             amount: amt,
                             category: category,
                             date: date,
-                            tag: tag,
+                            tags: tags,
                             note: note
                         ))
                     }

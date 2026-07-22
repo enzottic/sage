@@ -26,7 +26,7 @@ struct ExpenseDetailView: View {
             amount: expense.amount,
             date: expense.date,
             category: expense.category,
-            tag: expense.tag,
+            tags: expense.tags ?? [],
             note: expense.note
         ))
     }
@@ -41,7 +41,7 @@ struct ExpenseDetailView: View {
                 ),
                 date: $workingExpense.date,
                 category: $workingExpense.category,
-                tag: $workingExpense.tag,
+                tags: $workingExpense.tags,
                 note: $workingExpense.note,
                 isEditing: true
             )
@@ -65,7 +65,7 @@ struct ExpenseDetailView: View {
         expense.amount = workingExpense.amount ?? 0
         expense.date = workingExpense.date
         expense.category = workingExpense.category
-        expense.tag = workingExpense.tag
+        expense.tags = workingExpense.tags
         expense.note = workingExpense.note
         try! modelContext.save()
         WidgetCenter.shared.reloadAllTimelines()
@@ -77,7 +77,7 @@ private struct EditableExpense {
     var amount: Double?
     var date: Date
     var category: ExpenseCategory
-    var tag: ExpenseTag?
+    var tags: [ExpenseTag]
     var note: String
 }
 

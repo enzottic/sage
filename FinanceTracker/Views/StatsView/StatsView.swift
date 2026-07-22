@@ -56,7 +56,7 @@ struct StatsView: View {
     var filteredExpenses: [Expense] {
         allExpenses.filter { expense in
             let matchesCategory = selectedCategory == nil || expense.category == selectedCategory
-            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || expense.tag?.id == selectedTag?.id
+            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || (expense.tags ?? []).contains { $0.id == selectedTag?.id }
             return matchesCategory && matchesTag
         }
     }
@@ -65,7 +65,7 @@ struct StatsView: View {
     private var filteredRecurringRules: [RecurringExpenseRule] {
         recurringRules.filter { rule in
             let matchesCategory = selectedCategory == nil || rule.category == selectedCategory
-            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || rule.tag?.id == selectedTag?.id
+            let matchesTag = selectedTag == nil || selectedTag?.isDeleted == true || (rule.tags ?? []).contains { $0.id == selectedTag?.id }
             return matchesCategory && matchesTag
         }
     }

@@ -31,7 +31,7 @@ struct MonthExpensesList: View {
         return expenses.filter { expense in
             expense.name.localizedCaseInsensitiveContains(searchText)
             || expense.note.localizedCaseInsensitiveContains(searchText)
-            || (expense.tag?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+            || (expense.tags ?? []).contains { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
     }
     
