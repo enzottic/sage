@@ -27,7 +27,7 @@ struct AddExpenseTagSheet: View {
     /// keyboard would silently discard what the user typed.
     @State private var budgetText: String = ""
 
-    @State private var emojiPickerPresented: Bool = false
+    @State private var emojiFieldFocused: Bool = false
 
     private var isEditing: Bool { tagToEdit != nil }
     
@@ -63,18 +63,20 @@ struct AddExpenseTagSheet: View {
                 // Emoji + Name row
                 HStack(spacing: 12) {
                     Button {
-                        emojiPickerPresented.toggle()
+                        emojiFieldFocused = true
                     } label: {
                         Text(emoji)
                             .font(.title2)
                             .frame(width: 44, height: 44)
                             .background(Circle().fill(color.quaternary))
                     }
-                    .emojiPicker(
-                        isPresented: $emojiPickerPresented,
-                        selectedEmoji: $emoji
+                    // Hosts the emoji keyboard; the button above is the visible tap target.
+                    .background(
+                        EmojiKeyboardField(emoji: $emoji, isFocused: $emojiFieldFocused)
+                            .frame(width: 1, height: 1)
+                            .allowsHitTesting(false)
                     )
-                    
+
                     TextField("Tag Name", text: $name)
                         .font(.body)
                         .padding(.horizontal, 12)

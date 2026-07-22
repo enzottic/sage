@@ -15,8 +15,9 @@ struct TagPicker: View {
     var aiSuggestedTagIDs: Set<UUID> = []
 
     @State private var newTagSheetIsPresented: Bool = false
-    @Namespace private var tagNamespace
 
+    /// Alphabetical and deliberately never reordered: chips stay put as they're tapped, so
+    /// positions are predictable and nothing moves out from under a finger.
     @Query(sort: \ExpenseTag.name) var expenseTags: [ExpenseTag]
 
     private func isSelected(_ tag: ExpenseTag) -> Bool {
@@ -32,50 +33,45 @@ struct TagPicker: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .center, spacing: 10) {
-                ForEach(expenseTags, id: \.self) { option in
-                    let selected = isSelected(option)
-                    Button {
-                        withAnimation(.spring(duration: 0.35)) {
-                            toggle(option)
-                        }
-                    } label: {
-                        TagCapsule(tag: option, .medium, aiSuggested: aiSuggestedTagIDs.contains(option.id))
-                            // Selected chips read at full strength with a ring in the tag's own
-                            // colour; unselected ones recede. The ring is drawn inside the
-                            // capsule's bounds so it can't be clipped by the scroll view.
-                            .opacity(selected ? 1 : 0.4)
-                            .overlay {
-                                if selected, !aiSuggestedTagIDs.contains(option.id) {
-                                    Capsule().strokeBorder(option.color, lineWidth: 2)
-                                }
-                            }
-                            .matchedGeometryEffect(id: option.persistentModelID, in: tagNamespace)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(selected ? .isSelected : [])
-                }
-
+        // Every tag wraps into view rather than scrolling off the edge, so a selected tag can
+        // never end up hidden.
+        FlowLayout(spacing: 8, alignment: .leading) {
+            ForEach(expenseTags, id: \.self) { option in
+                let selected = isSelected(option)
                 Button {
-                    newTagSheetIsPresented.toggle()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                        Text("Add")
+                    withAnimation(.spring(duration: 0.2)) {
+                        toggle(option)
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color.sageAccent))
-                    .accessibilityLabel(Text("Add new tag"))
+                } label: {
+                    TagCapsule(
+                        tag: option,
+                        .medium,
+                        aiSuggested: aiSuggestedTagIDs.contains(option.id),
+                        isSelected: selected
+                    )
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+
+            Button {
+                newTagSheetIsPresented.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "plus")
+                    Text("Add")
+                }
+                .font(.subheadline)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.sageAccent))
+                .accessibilityLabel(Text("Add new tag"))
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(isPresented: $newTagSheetIsPresented) {
             AddExpenseTagSheet { newTag in

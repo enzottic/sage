@@ -315,11 +315,10 @@ struct ExpenseInfoForm: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
+            Text(title)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
-                .tracking(0.6)
                 .padding(.horizontal)
             content()
         }

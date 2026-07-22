@@ -45,7 +45,10 @@ struct ExpenseDetailView: View {
                 note: $workingExpense.note,
                 isEditing: true
             )
+            .padding(.top, 20)
+            .padding(.bottom, 40)
         }
+        .background(.sageBackground)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Edit Expense")
         .navigationBarTitleDisplayMode(.inline)
@@ -58,6 +61,7 @@ struct ExpenseDetailView: View {
                 .tint(Color.sageAccent)
             }
         }
+        .gradientBackground()
     }
     
     func saveItem() {
