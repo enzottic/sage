@@ -12,6 +12,7 @@ import SageKit
 struct RootTabView: View {
 
     @State private var appRouter = AppRouter()
+    @State private var whatsNewRelease: WhatsNewRelease?
 
     /// Intercepts selection of the prominent "Add Expense" tab (iOS 27+): it presents the
     /// add sheet instead of switching tabs, and never writes `.addExpense` to `selectedTab`.
@@ -89,6 +90,14 @@ struct RootTabView: View {
             if let link = SageDeepLink(url: url) {
                 appRouter.navigate(to: link)
             }
+        }
+        .task {
+            whatsNewRelease = WhatsNewStore.releaseToPresent()
+            // Marked seen at presentation, so dismissing by swipe counts the same as the button.
+            WhatsNewStore.markCurrentVersionSeen()
+        }
+        .sheet(item: $whatsNewRelease) { release in
+            WhatsNewSheet(release: release)
         }
     }
 }

@@ -39,6 +39,8 @@ struct SageApp: App {
         if !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
            AppConfiguration.hasCompletedSetupOnAnotherDevice {
             UserDefaults.standard.set(true, forKey: "hasOpenedAppOnce")
+            // Still a fresh install here — skip What's New, the same as after onboarding.
+            WhatsNewStore.markCurrentVersionSeen()
         }
     }
     
@@ -55,6 +57,7 @@ struct SageApp: App {
             .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
                 // KVS values may arrive after launch — check if onboarding was completed on another device
                 if !hasOpenedAppOnce, AppConfiguration.hasCompletedSetupOnAnotherDevice {
+                    WhatsNewStore.markCurrentVersionSeen()
                     hasOpenedAppOnce = true
                 }
             }

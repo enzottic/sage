@@ -586,6 +586,9 @@ struct WelcomeView: View {
         config.isCloudSyncEnabled = cloudSyncEnabled
         config.markSetupComplete()
 
+        // Fresh install — the current release's highlights are all new to this user already.
+        WhatsNewStore.markCurrentVersionSeen()
+
         // Insert only the tags the user selected
         for tag in tagTemplates where selectedTagNames.contains(tag.name) {
             modelContext.insert(tag)
@@ -654,12 +657,13 @@ struct FeatureRow: View {
     let icon: String
     let title: String
     let description: String
+    var tint: Color = .sage
 
     var body: some View {
         HStack(alignment: .top, spacing: 15) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(.sage)
+                .foregroundStyle(tint)
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 4) {
