@@ -35,6 +35,6 @@ public extension ExpenseTag {
     static var other: ExpenseTag         { .init(name: "Other",             uiColor: .systemGray,   emoji: "🔖") }
     
     var entity: ExpenseTagEntity {
-        ExpenseTagEntity(id: self.id, name: self.name, emoji: self.emoji)
+        ExpenseTagEntity(id: self.id, name: self.name, emoji: self.emoji, symbolName: self.symbolName)
     }
 }

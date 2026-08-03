@@ -35,8 +35,8 @@ struct ExpenseRowItem: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(expense.category.color(in: categoryColors).secondary)
                     .frame(width: 40, height: 40)
-                if let tagEmoji = tags.first?.emoji {
-                    Text(tagEmoji)
+                if let tag = tags.first {
+                    TagGlyphView(tag: tag)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
@@ -87,8 +87,8 @@ struct ExpenseRowItem: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(expense.category.color(in: categoryColors).secondary)
                     .frame(width: 24, height: 24)
-                if let tagEmoji = tags.first?.emoji {
-                    Text(tagEmoji)
+                if let tag = tags.first {
+                    TagGlyphView(tag: tag)
                         .font(.caption)
                 }
             }

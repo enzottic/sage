@@ -26,7 +26,7 @@ struct StatsFilterBar: View {
                 }
             } label: {
                 menuChip(
-                    text: selectedCategory?.rawValue ?? String(localized: "Category"),
+                    label: Text(selectedCategory?.rawValue ?? String(localized: "Category")),
                     tint: selectedCategory?.color(in: categoryColors)
                 )
             }
@@ -36,23 +36,23 @@ struct StatsFilterBar: View {
                     Text("All Tags").tag(nil as ExpenseTag?)
                     ForEach(expenseTags, id: \.id) { tag in
                         if !tag.isDeleted {
-                            Text("\(tag.emoji) \(tag.name)").tag(tag as ExpenseTag?)
+                            TagMenuLabel(tag: tag).tag(tag as ExpenseTag?)
                         }
                     }
                 }
             } label: {
-                menuChip(text: tagChipText, tint: selectedTagColor)
+                menuChip(label: tagChipLabel, tint: selectedTagColor)
             }
 
             Spacer()
         }
     }
 
-    private var tagChipText: String {
+    private var tagChipLabel: Text {
         if let tag = selectedTag, !tag.isDeleted {
-            return "\(tag.emoji) \(tag.name)"
+            return Text(glyph: tag.glyph, name: tag.name)
         }
-        return String(localized: "Tag")
+        return Text(String(localized: "Tag"))
     }
 
     private var selectedTagColor: Color? {
@@ -60,9 +60,9 @@ struct StatsFilterBar: View {
         return tag.color
     }
 
-    private func menuChip(text: String, tint: Color?) -> some View {
+    private func menuChip(label: Text, tint: Color?) -> some View {
         HStack(spacing: 4) {
-            Text(text)
+            label
                 .font(.subheadline)
                 .fontWeight(.medium)
             Image(systemName: "chevron.up.chevron.down")

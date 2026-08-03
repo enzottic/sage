@@ -73,7 +73,7 @@ struct TagCapsule: View {
 
     var body: some View {
         if let tag, !tag.isDeleted {
-            Text("\(tag.emoji) \(tag.name)")
+            Text(glyph: tag.glyph, name: tag.name)
                 .foregroundStyle(isSelected ? tag.color : .primary)
                 .font(font)
                 .padding(.horizontal, horizontalPadding)

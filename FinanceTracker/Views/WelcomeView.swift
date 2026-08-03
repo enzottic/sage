@@ -627,7 +627,7 @@ struct TagFlowGrid: View {
             }
         } label: {
             HStack(spacing: 6) {
-                Text(tag.emoji)
+                TagGlyphView(tag: tag)
                     .font(.subheadline)
                 Text(tag.name)
                     .font(.subheadline)

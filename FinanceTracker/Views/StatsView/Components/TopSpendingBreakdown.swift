@@ -20,7 +20,7 @@ struct TopSpendingBreakdown: View {
     private struct Row: Identifiable {
         let id: String
         let label: String
-        let emoji: String?
+        let glyph: TagGlyph?
         let amount: Double
     }
 
@@ -33,21 +33,21 @@ struct TopSpendingBreakdown: View {
         // "where the money went" ranking.)
         var accumulator: [String: Row] = [:]
 
-        func add(key: String, label: String, emoji: String?, amount: Double) {
+        func add(key: String, label: String, glyph: TagGlyph?, amount: Double) {
             if let existing = accumulator[key] {
-                accumulator[key] = Row(id: key, label: existing.label, emoji: existing.emoji, amount: existing.amount + amount)
+                accumulator[key] = Row(id: key, label: existing.label, glyph: existing.glyph, amount: existing.amount + amount)
             } else {
-                accumulator[key] = Row(id: key, label: label, emoji: emoji, amount: amount)
+                accumulator[key] = Row(id: key, label: label, glyph: glyph, amount: amount)
             }
         }
 
         for expense in expenses {
             let activeTags = (expense.tags ?? []).filter { !$0.isDeleted }
             if activeTags.isEmpty {
-                add(key: "cat-\(expense.category.rawValue)", label: untaggedLabel ?? expense.category.rawValue, emoji: nil, amount: expense.amount)
+                add(key: "cat-\(expense.category.rawValue)", label: untaggedLabel ?? expense.category.rawValue, glyph: nil, amount: expense.amount)
             } else {
                 for tag in activeTags {
-                    add(key: "tag-\(tag.id)", label: tag.name, emoji: tag.emoji, amount: expense.amount)
+                    add(key: "tag-\(tag.id)", label: tag.name, glyph: tag.glyph, amount: expense.amount)
                 }
             }
         }
@@ -78,8 +78,9 @@ struct TopSpendingBreakdown: View {
 
         VStack(spacing: 4) {
             HStack(spacing: 8) {
-                if let emoji = row.emoji {
-                    Text(emoji)
+                if let glyph = row.glyph {
+                    TagGlyphView(glyph)
+                        .foregroundStyle(accentColor)
                 } else {
                     Circle()
                         .fill(accentColor)

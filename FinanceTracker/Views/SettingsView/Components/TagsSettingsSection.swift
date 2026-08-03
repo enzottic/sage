@@ -96,8 +96,11 @@ struct TagsSettingsSection: View {
                                     Circle()
                                         .fill(tag.color)
                                         .frame(width: 35, height: 35)
-                                    Text(tag.emoji)
+                                    // The circle is filled with the tag color, so a symbol has to
+                                    // be knocked out in white rather than tinted to match.
+                                    TagGlyphView(tag: tag)
                                         .font(.system(size: 18))
+                                        .foregroundStyle(.white)
                                 }
                                 Text(tag.name)
                                     .foregroundStyle(.primary)

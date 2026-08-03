@@ -92,16 +92,17 @@ private struct UpcomingRecurringCard: View {
 
     private var isImminent: Bool { daysAway <= 3 }
 
-    private var tagEmoji: String? {
-        rule.tags?.first?.emoji ?? rule.tag?.emoji
+    private var tag: ExpenseTag? {
+        rule.tags?.first ?? rule.tag
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                if let tagEmoji {
-                    Text(tagEmoji)
+                if let tag {
+                    TagGlyphView(tag: tag)
                         .font(.title2)
+                        .foregroundStyle(tag.color)
                 }
 
                 Spacer()

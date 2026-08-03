@@ -131,9 +131,10 @@ struct ExpenseInfoForm: View {
                     focusedField = nil
                 } label: {
                     HStack(spacing: 12) {
-                        if let emoji = expense.tags?.first?.emoji {
-                            Text(emoji)
+                        if let tag = expense.tags?.first {
+                            TagGlyphView(tag: tag)
                                 .font(.system(size: 20))
+                                .foregroundStyle(tag.color)
                                 .frame(width: 36, height: 36)
                                 .background(Color.secondary.opacity(0.1))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))

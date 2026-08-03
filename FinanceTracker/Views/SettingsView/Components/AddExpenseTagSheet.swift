@@ -18,7 +18,7 @@ struct AddExpenseTagSheet: View {
 
     @State private var name: String = ""
     @State private var color: Color = .gray
-    @State private var emoji: String = "💰"
+    @State private var glyph: TagGlyph = .emoji("💰")
 
     /// Budgets are opt-in: when this stays off the tag's `budget` is left nil.
     @State private var hasBudget: Bool = false
@@ -27,9 +27,18 @@ struct AddExpenseTagSheet: View {
     /// keyboard would silently discard what the user typed.
     @State private var budgetText: String = ""
 
-    @State private var emojiFieldFocused: Bool = false
+    @State private var showingGlyphPicker: Bool = false
+    /// The last emoji the user settled on. `emoji` stays populated on the model even while an
+    /// icon is showing, so string-only surfaces (Shortcuts, entity subtitles) keep a mark and
+    /// clearing the icon later restores something better than the default.
+    @State private var fallbackEmoji: String = "💰"
 
     private var isEditing: Bool { tagToEdit != nil }
+
+    /// The `emoji` / `symbolName` pair to persist for the currently picked glyph.
+    private var storedGlyphFields: (emoji: String, symbolName: String?) {
+        (glyph.emojiValue ?? fallbackEmoji, glyph.symbolValue)
+    }
     
     private let presetColors: [Color] = [
         .red, .orange, .yellow, .green, .mint, .teal, .blue, .indigo, .purple, .pink
@@ -60,22 +69,17 @@ struct AddExpenseTagSheet: View {
 
             // Form fields
             VStack(spacing: 16) {
-                // Emoji + Name row
+                // Glyph + Name row
                 HStack(spacing: 12) {
                     Button {
-                        emojiFieldFocused = true
+                        showingGlyphPicker = true
                     } label: {
-                        Text(emoji)
+                        TagGlyphView(glyph)
                             .font(.title2)
+                            .foregroundStyle(color)
                             .frame(width: 44, height: 44)
                             .background(Circle().fill(color.quaternary))
                     }
-                    // Hosts the emoji keyboard; the button above is the visible tap target.
-                    .background(
-                        EmojiKeyboardField(emoji: $emoji, isFocused: $emojiFieldFocused)
-                            .frame(width: 1, height: 1)
-                            .allowsHitTesting(false)
-                    )
 
                     TextField("Tag Name", text: $name)
                         .font(.body)
@@ -150,7 +154,7 @@ struct AddExpenseTagSheet: View {
             
             // Live preview
             VStack(spacing: 12) {
-                Text("\(emoji) \(displayName)")
+                Text(glyph: glyph, name: displayName)
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundStyle(name.isEmpty ? color.opacity(0.4) : color)
@@ -159,7 +163,7 @@ struct AddExpenseTagSheet: View {
                     .background(Capsule().fill(color.quaternary))
             }
             .animation(.easeInOut(duration: 0.2), value: color)
-            .animation(.easeInOut(duration: 0.2), value: emoji)
+            .animation(.easeInOut(duration: 0.2), value: glyph)
             
             Spacer()
             
@@ -167,14 +171,16 @@ struct AddExpenseTagSheet: View {
             Button {
                 // Toggling the budget off (or leaving it blank) clears any previously set cap.
                 let resolvedBudget = parsedBudget
+                let stored = storedGlyphFields
                 if let tag = tagToEdit {
                     tag.name = name
                     tag.uiColor = UIColor(color)
-                    tag.emoji = emoji
+                    tag.emoji = stored.emoji
+                    tag.symbolName = stored.symbolName
                     tag.budget = resolvedBudget
                     try? modelContext.save()
                 } else {
-                    let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: emoji, budget: resolvedBudget)
+                    let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: stored.emoji, symbolName: stored.symbolName, budget: resolvedBudget)
                     modelContext.insert(newExpenseTag)
                     try? modelContext.save()
                     onTagAdded?(newExpenseTag)
@@ -192,10 +198,17 @@ struct AddExpenseTagSheet: View {
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
+        .sheet(isPresented: $showingGlyphPicker) {
+            TagGlyphPickerSheet(glyph: $glyph, tint: color)
+        }
+        .onChange(of: glyph) { _, newValue in
+            if case .emoji(let value) = newValue { fallbackEmoji = value }
+        }
         .onAppear {
             if let tag = tagToEdit {
                 name = tag.name
-                emoji = tag.emoji
+                glyph = tag.glyph
+                fallbackEmoji = tag.emoji
                 color = Color(tag.uiColor)
                 hasBudget = tag.hasBudget
                 budgetText = tag.budget.map { String(format: "%.2f", $0) } ?? ""

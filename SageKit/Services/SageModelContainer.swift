@@ -14,7 +14,7 @@ public enum SageModelContainer {
     public static nonisolated func make(cloudKitEnabled: Bool = false) throws -> ModelContainer {
         UIColorValueTransformer.register()
 
-        let schema = Schema(versionedSchema: SageSchemaV3.self)
+        let schema = Schema(versionedSchema: SageSchemaV4.self)
         let groupURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)!
 
