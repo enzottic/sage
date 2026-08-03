@@ -16,6 +16,9 @@ struct WhatsNewSheet: View {
             ScrollView {
                 VStack(spacing: 36) {
                     header
+                    
+                    Text("Thank you for being a Sage beta tester! These are just a few of the many improvments that have been made this update. Please continue to leave feedback via the e-mail link in the Settings tab.")
+                        .font(.subheadline)
 
                     VStack(alignment: .leading, spacing: 24) {
                         ForEach(release.features) { feature in
@@ -27,6 +30,7 @@ struct WhatsNewSheet: View {
                             )
                         }
                     }
+                    
                 }
                 .padding(.horizontal, 32)
                 .padding(.top, 48)

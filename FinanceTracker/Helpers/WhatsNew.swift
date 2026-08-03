@@ -28,8 +28,6 @@ struct WhatsNewRelease: Identifiable, Hashable {
     var id: String { version }
 }
 
-/// Every release that has a What's New sheet. A version missing from here shows no sheet at
-/// all, so shipping a bug-fix build doesn't require inventing highlights for it.
 enum WhatsNewCatalog {
     static let releases: [WhatsNewRelease] = [
         WhatsNewRelease(
@@ -38,13 +36,13 @@ enum WhatsNewCatalog {
                 WhatsNewFeature(
                     icon: "square.grid.2x2.fill",
                     title: "Redesigned Home Screen",
-                    description: "Home is now a dashboard of widgets, including a look at your upcoming recurring expenses.",
+                    description: "Redesigned the main home screen and category detail screens.",
                     tint: .need
                 ),
                 WhatsNewFeature(
                     icon: "tag.fill",
                     title: "Multiple Tags per Expense",
-                    description: "An expense is no longer limited to a single tag. Add every tag that fits.",
+                    description: "An expense is no longer limited to a single tag.",
                     tint: .sage
                 ),
                 WhatsNewFeature(
