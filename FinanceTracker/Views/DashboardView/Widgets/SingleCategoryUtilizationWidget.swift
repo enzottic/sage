@@ -131,8 +131,10 @@ struct SingleCategoryUtilizationWidget: View {
             CircularProgressBar(progress: utilization, tint: tint, lineWidth: 10)
                 .frame(width: 64, height: 64)
 
-            Text(spent.currencyString + " of " + remaining.currencyString)
+            Text("\(spent.currencyString) of \(budget.currencyString)")
                 .font(.subheadline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
     }

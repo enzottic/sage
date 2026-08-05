@@ -645,3 +645,37 @@ public extension RecurrenceFrequency {
         }
     }
 }
+
+public extension RecurringExpenseRule {
+    /// The next date this rule will generate an expense, or nil once it has passed `endDate`.
+    ///
+    /// A rule that has generated before steps one interval from its last generation; one that
+    /// hasn't yet advances from `startDate` to the first occurrence on or after `date`. Shared
+    /// by the dashboard's upcoming list and the Settings rule list so both show the same date.
+    func nextOccurrence(after date: Date = .now, calendar: Calendar = .current) -> Date? {
+        let next: Date?
+
+        if let lastGeneratedDate {
+            next = frequency.nextOccurrence(after: lastGeneratedDate, calendar: calendar)
+        } else {
+            next = firstOccurrence(onOrAfter: date, calendar: calendar)
+        }
+
+        guard let next, endDate.map({ next <= $0 }) ?? true else { return nil }
+        return next
+    }
+
+    /// Walks the cadence forward from `startDate` until it lands on or after `date`.
+    private func firstOccurrence(onOrAfter date: Date, calendar: Calendar) -> Date? {
+        var occurrence = startDate
+
+        while occurrence < date {
+            guard let following = frequency.nextOccurrence(after: occurrence, calendar: calendar) else {
+                return nil
+            }
+            occurrence = following
+        }
+
+        return occurrence
+    }
+}

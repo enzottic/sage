@@ -225,7 +225,8 @@ struct StatsView: View {
                     .cornerRadius(4)
                     .annotation(position: .top, spacing: 4) {
                         if item.total > 0 && !(item.isCurrent && projectedRemainder > 0) {
-                            Text(item.total.currencyString)
+                            // Rounded like the axis — six labels across the plot collide at full precision.
+                            Text(item.total.currencyStringRounded)
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -239,7 +240,7 @@ struct StatsView: View {
                         .foregroundStyle(accentColor.opacity(0.2))
                         .cornerRadius(4)
                         .annotation(position: .top, spacing: 4) {
-                            Text("\(projectedTotal.currencyString) est.")
+                            Text("\(projectedTotal.currencyStringRounded) est.")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -250,7 +251,8 @@ struct StatsView: View {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
                         if let doubleValue = value.as(Double.self) {
-                            Text(doubleValue.currencyString)
+                            // Axis labels are a scale, not amounts — cents would just crowd them.
+                            Text(doubleValue.currencyStringRounded)
                                 .font(.caption2)
                         }
                     }

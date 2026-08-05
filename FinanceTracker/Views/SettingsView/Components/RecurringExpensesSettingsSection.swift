@@ -16,26 +16,10 @@ struct RecurringExpensesSettingsSection: View {
 
     private var sortedRules: [RecurringExpenseRule] {
         rules.sorted {
-            let a = nextOccurrence(for: $0) ?? .distantFuture
-            let b = nextOccurrence(for: $1) ?? .distantFuture
+            let a = $0.nextOccurrence() ?? .distantFuture
+            let b = $1.nextOccurrence() ?? .distantFuture
             return a < b
         }
-    }
-
-    private func nextOccurrence(for rule: RecurringExpenseRule) -> Date? {
-        let calendar = Calendar.current
-        let after = rule.lastGeneratedDate ?? rule.startDate
-        let next: Date?
-        switch rule.frequency {
-        case .daily:    next = calendar.date(byAdding: .day, value: 1, to: after)
-        case .weekly:   next = calendar.date(byAdding: .weekOfYear, value: 1, to: after)
-        case .biweekly: next = calendar.date(byAdding: .weekOfYear, value: 2, to: after)
-        case .monthly:  next = calendar.date(byAdding: .month, value: 1, to: after)
-        @unknown default:
-            fatalError("Unknown frequency: \(rule.frequency)")
-        }
-        if let next, let endDate = rule.endDate, next > endDate { return nil }
-        return next
     }
 
     @State private var ruleToEdit: RecurringExpenseRule? = nil
@@ -54,7 +38,7 @@ struct RecurringExpensesSettingsSection: View {
             } else {
                 Section {
                     ForEach(sortedRules) { rule in
-                        RecurringRuleRow(rule: rule, nextOccurrence: nextOccurrence(for: rule))
+                        RecurringRuleRow(rule: rule, nextOccurrence: rule.nextOccurrence())
                             .contentShape(Rectangle())
                             .onTapGesture { ruleToEdit = rule }
                             .contextMenu {
@@ -139,7 +123,7 @@ private struct RecurringRuleRow: View {
 
             Spacer()
 
-            Text(rule.amount.currencyStringWithFraction)
+            Text(rule.amount.currencyString)
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
