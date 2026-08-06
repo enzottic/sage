@@ -189,8 +189,8 @@ struct AddExpenseView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
 
-                // Split summary
-                if selectedGroupId != nil, let total = amount {
+                // Split details
+                if let group = selectedGroup, let total = amount, !group.members.isEmpty {
                     Divider()
                         .padding(.leading, 16)
 
@@ -212,7 +212,7 @@ struct AddExpenseView: View {
                             Text("Your share")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
-                            Text((total / 2).formatted(.currency(code: currencyCode)))
+                            Text((total / Double(group.members.count)).formatted(.currency(code: currencyCode)))
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.sage)
@@ -285,19 +285,24 @@ struct AddExpenseView: View {
             return
         }
 
-        let saveAmount = selectedGroup != nil ? total / 2 : total
+        var saveAmount = total
 
         isSaving = true
 
         if let group = selectedGroup {
+            let req = CreateSplitwiseExpenseRequest(
+                cost: String(
+                    format: "%.2f",
+                    locale: Locale(identifier: "en_US_POSIX"),
+                    total
+                ),
+                description: name,
+                groupId: group.id,
+                splitEqually: true
+            )
+
             do {
-                let req = CreateSplitwiseExpenseRequest(
-                    cost: String(format: "%.2f", total),
-                    description: name,
-                    groupId: group.id,
-                    splitEqually: true
-                )
-                try await splitwise.createExpense(req: req)
+                saveAmount = try await splitwise.createExpense(req: req)
             } catch {
                 isSaving = false
                 errorMessage = "Couldn't add to Splitwise: \(error.localizedDescription)"

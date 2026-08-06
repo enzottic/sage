@@ -66,9 +66,10 @@ struct SplitwiseFetchedExpense: Identifiable, Codable {
 struct SplitwiseGroup: Identifiable, Codable {
     let id: Int
     let name: String
+    let members: [SplitwisePerson]
     
     enum CodingKeys: String, CodingKey {
-        case id, name
+        case id, name, members
     }
 }
 
@@ -95,6 +96,7 @@ enum SplitwiseError: LocalizedError {
     case notAuthenticated
     case invalidResponse(Int)
     case unauthorized
+    case missingUserShare
 
     var errorDescription: String? {
         switch self {
@@ -105,6 +107,7 @@ enum SplitwiseError: LocalizedError {
         case .notAuthenticated:     return "Not signed in to Splitwise."
         case .invalidResponse(let code): return "Splitwise returned an unexpected response (HTTP \(code))."
         case .unauthorized:         return "Session expired. Please sign in again."
+        case .missingUserShare:     return "Splitwise did not return your share of the expense."
         }
     }
 }
@@ -268,14 +271,22 @@ final class SplitwiseService {
         return response.groups
     }
     
-    func createExpense(req: CreateSplitwiseExpenseRequest) async throws {
+    func createExpense(req: CreateSplitwiseExpenseRequest) async throws -> Double {
         if currentUserId == nil { try await fetchCurrentUser() }
+        guard let currentUserId else { throw SplitwiseError.missingUserShare }
         let components = URLComponents(
             url: baseURL.appendingPathComponent("create_expense"),
             resolvingAgainstBaseURL: false
         )!
         let body = try JSONEncoder().encode(req)
-        _ = try await request(url: components.url!, body: body)
+        let data = try await request(url: components.url!, body: body)
+        let response = try Self.decoder.decode(ExpensesResponse.self, from: data)
+        guard let expense = response.expenses.first else {
+            throw SplitwiseError.missingUserShare
+        }
+        let owedAmount = expense.owedAmount(forUserId: currentUserId)
+        guard owedAmount > 0 else { throw SplitwiseError.missingUserShare }
+        return owedAmount
     }
 
     // MARK: - Token Exchange & Refresh
