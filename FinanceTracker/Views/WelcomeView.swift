@@ -13,6 +13,7 @@ import SageKit
 struct WelcomeView: View {
     @Environment(AppConfiguration.self) var config
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
 
@@ -47,26 +48,26 @@ struct WelcomeView: View {
 
                 VStack(spacing: 0) {
                     TabView(selection: $currentStep) {
-                        welcomePage
+                        ScrollView { welcomePage }
                             .tag(OnboardingStep.welcome)
 
-                        budgetPage
+                        ScrollView { budgetPage }
                             .tag(OnboardingStep.budget)
 
-                        allocationPage
+                        ScrollView { allocationPage }
                             .tag(OnboardingStep.allocation)
 
-                        syncPage
+                        ScrollView { syncPage }
                             .tag(OnboardingStep.sync)
 
-                        tagsPage
+                        ScrollView { tagsPage }
                             .tag(OnboardingStep.tags)
 
-                        completePage
+                        ScrollView { completePage }
                             .tag(OnboardingStep.complete)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
-                    .animation(.easeInOut, value: currentStep)
+                    .animation(reduceMotion ? nil : .easeInOut, value: currentStep)
                 }
             }
 
@@ -84,11 +85,12 @@ struct WelcomeView: View {
                 .scaledToFit()
                 .frame(width: 120, height: 120)
                 .padding(.bottom, 20)
+                .accessibilityHidden(true)
 
             VStack(spacing: 12) {
                 Text("Welcome to Sage")
                     .accessibilityIdentifier("onboarding-welcome-title")
-                    .font(.system(size: 36, weight: .bold))
+                    .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
             }
 
@@ -103,7 +105,7 @@ struct WelcomeView: View {
             Spacer()
 
             Button {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                     currentStep = .budget
                 }
             } label: {
@@ -133,7 +135,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.sage)
 
                 Text("Set Your Monthly Budget")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
 
                 Text("Enter your total monthly spendable income")
@@ -147,7 +149,7 @@ struct WelcomeView: View {
                 TextField("0", text: $monthlyIncome)
                     .accessibilityIdentifier("onboarding-income-field")
                     .keyboardType(.numberPad)
-                    .font(.system(size: 48, weight: .bold))
+                    .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
                     .focused($isInputFocused)
                     .padding()
@@ -172,7 +174,7 @@ struct WelcomeView: View {
 
             HStack(spacing: 15) {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .welcome
                     }
                 } label: {
@@ -188,7 +190,7 @@ struct WelcomeView: View {
                 Button {
                     if let income = Int(monthlyIncome), income > 0 {
                         isInputFocused = false
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                             currentStep = .allocation
                         }
                     }
@@ -221,7 +223,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.sage)
 
                 Text("Budget Allocation")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
 
                 Text("Customize your wants, needs, and savings percentages")
@@ -274,7 +276,7 @@ struct WelcomeView: View {
 
             HStack(spacing: 15) {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .budget
                     }
                 } label: {
@@ -288,7 +290,7 @@ struct WelcomeView: View {
                 }
 
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .sync
                     }
                 } label: {
@@ -334,7 +336,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.sage)
 
                 Text("iCloud Sync")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
 
                 Text("Sync your expenses across all your devices using iCloud")
@@ -375,7 +377,7 @@ struct WelcomeView: View {
 
             HStack(spacing: 15) {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .allocation
                     }
                 } label: {
@@ -389,7 +391,7 @@ struct WelcomeView: View {
                 }
 
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .tags
                     }
                 } label: {
@@ -420,7 +422,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.sage)
 
                 Text("Add Some Tags")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
 
                 Text("Tags help you categorize expenses. Pick the ones you'd like to start with. You can always add or remove them later.")
@@ -454,7 +456,7 @@ struct WelcomeView: View {
 
             HStack(spacing: 15) {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .sync
                     }
                 } label: {
@@ -468,7 +470,7 @@ struct WelcomeView: View {
                 }
 
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .complete
                     }
                 } label: {
@@ -496,10 +498,11 @@ struct WelcomeView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 80))
                 .foregroundStyle(Color.green)
+                .accessibilityHidden(true)
 
             VStack(spacing: 12) {
                 Text("You're All Set!")
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
 
                 Text("Here's your budget breakdown")
@@ -549,7 +552,7 @@ struct WelcomeView: View {
 
             HStack(spacing: 15) {
                 Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                         currentStep = .tags
                     }
                 } label: {
@@ -601,7 +604,7 @@ struct WelcomeView: View {
 
         WidgetCenter.shared.reloadAllTimelines()
 
-        withAnimation {
+        withAnimation(reduceMotion ? nil : .default) {
             hasOpenedAppOnce = true
         }
     }
@@ -611,6 +614,8 @@ struct WelcomeView: View {
 // MARK: - Supporting Views
 
 struct TagFlowGrid: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let tags: [ExpenseTag]
     @Binding var selectedTagNames: Set<String>
 
@@ -653,7 +658,9 @@ struct TagFlowGrid: View {
             .foregroundStyle(isSelected ? Color(tag.uiColor) : .primary)
         }
         .buttonStyle(.plain)
-        .animation(.spring(duration: 0.2), value: isSelected)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .animation(reduceMotion ? nil : .spring(duration: 0.2), value: isSelected)
     }
 }
 
@@ -706,6 +713,7 @@ struct BudgetSummaryRow: View {
                 .fontWeight(isTotal ? .bold : .semibold)
                 .foregroundStyle(color)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 

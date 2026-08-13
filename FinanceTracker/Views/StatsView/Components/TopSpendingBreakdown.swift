@@ -113,6 +113,10 @@ struct TopSpendingBreakdown: View {
                 }
             }
             .frame(height: 6)
+            .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(row.label)
+        .accessibilityValue("\(row.amount.currencyString), \(fraction.formatted(.percent.precision(.fractionLength(0)))) of total spending")
     }
 }

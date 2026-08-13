@@ -10,6 +10,8 @@ import SwiftData
 import SageKit
 
 struct TagPicker: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @Binding var selectedTags: [ExpenseTag]
     /// IDs of currently-selected tags that were suggested by the AI (shows rainbow border).
     var aiSuggestedTagIDs: Set<UUID> = []
@@ -39,7 +41,7 @@ struct TagPicker: View {
             ForEach(expenseTags, id: \.self) { option in
                 let selected = isSelected(option)
                 Button {
-                    withAnimation(.spring(duration: 0.2)) {
+                    withAnimation(reduceMotion ? nil : .spring(duration: 0.2)) {
                         toggle(option)
                     }
                 } label: {
@@ -52,6 +54,7 @@ struct TagPicker: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(selected ? .isSelected : [])
+                .accessibilityValue(selected ? "Selected" : "Not selected")
             }
 
             Button {

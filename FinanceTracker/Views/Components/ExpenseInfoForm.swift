@@ -19,6 +19,7 @@ struct ReceiptImportConfiguration {
 struct ExpenseInfoForm: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \ExpenseTag.name) private var expenseTags: [ExpenseTag]
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
 
@@ -94,7 +95,7 @@ struct ExpenseInfoForm: View {
                     .padding(.horizontal, 8)
             }
         }
-        .animation(.spring(duration: 0.35, bounce: 0.2), value: focusedField == .name && !nameSuggestions.isEmpty)
+        .animation(reduceMotion ? nil : .spring(duration: 0.35, bounce: 0.2), value: focusedField == .name && !nameSuggestions.isEmpty)
         .onChange(of: name) { _, newValue in
             debounceTask?.cancel()
             debounceTask = Task {
@@ -118,7 +119,7 @@ struct ExpenseInfoForm: View {
         HStack(alignment: .center, spacing: 16) {
             TextField("New Expense", text: $name)
                 .accessibilityIdentifier("expense-name-field")
-                .font(.system(size: 34, weight: .bold))
+                .font(.largeTitle.bold())
                 .focused($focusedField, equals: .name)
                 .onChange(of: focusedField) { old, _ in
                     if old == .name { suggestTagIfNeeded() }
@@ -166,7 +167,7 @@ struct ExpenseInfoForm: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            .frame(width: 72, height: 80)
+            .frame(minWidth: 72, minHeight: 80)
             .background {
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(
@@ -280,7 +281,7 @@ struct ExpenseInfoForm: View {
             Divider().padding(.leading, 52)
 
             Button {
-                withAnimation(.spring(duration: 0.3)) { showDatePicker.toggle() }
+                withAnimation(reduceMotion ? nil : .spring(duration: 0.3)) { showDatePicker.toggle() }
             } label: {
                 HStack(spacing: 12) {
                     rowIcon("calendar")
@@ -296,6 +297,9 @@ struct ExpenseInfoForm: View {
                 .padding(.vertical, 14)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Date")
+            .accessibilityValue(date.formatted(date: .long, time: .omitted))
+            .accessibilityHint(showDatePicker ? "Closes the date picker" : "Opens the date picker")
 
             if showDatePicker {
                 DatePicker("", selection: $date, displayedComponents: .date)
@@ -304,7 +308,7 @@ struct ExpenseInfoForm: View {
                     .padding(.horizontal, 8)
                     .padding(.bottom, 8)
                     .onChange(of: date) {
-                        withAnimation(.spring(duration: 0.3)) { showDatePicker = false }
+                        withAnimation(reduceMotion ? nil : .spring(duration: 0.3)) { showDatePicker = false }
                     }
                     .transition(.opacity.combined(with: .offset(y: -8)))
             }
@@ -341,7 +345,21 @@ struct ExpenseInfoForm: View {
     // MARK: - Category picker (inline)
 
     private var inlineCategoryPicker: some View {
-        HStack(spacing: 10) {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                inlineCategoryButtons
+            }
+
+            VStack(spacing: 10) {
+                inlineCategoryButtons
+            }
+        }
+        .padding(.horizontal)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.15), value: category)
+    }
+
+    @ViewBuilder
+    private var inlineCategoryButtons: some View {
             ForEach(ExpenseCategory.allCases, id: \.self) { cat in
                 let isSelected = category == cat
                 Button {
@@ -371,10 +389,9 @@ struct ExpenseInfoForm: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("expense-category-\(cat.rawValue.lowercased())")
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityValue(isSelected ? "Selected" : "Not selected")
             }
-        }
-        .padding(.horizontal)
-        .animation(.easeInOut(duration: 0.15), value: category)
     }
 
 

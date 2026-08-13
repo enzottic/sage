@@ -36,6 +36,7 @@ struct SpendingPeriodData: Identifiable {
 struct StatsView: View {
     @Environment(\.categoryColors) private var categoryColors
     @Environment(AppConfiguration.self) private var config
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var allExpenses: [Expense]
     @Query private var recurringRules: [RecurringExpenseRule]
@@ -223,6 +224,8 @@ struct StatsView: View {
                     )
                     .foregroundStyle(item.isCurrent ? accentColor : accentColor.opacity(0.5))
                     .cornerRadius(4)
+                    .accessibilityLabel(item.isCurrent ? "\(item.label), current period" : item.label)
+                    .accessibilityValue(item.total.currencyString)
                     .annotation(position: .top, spacing: 4) {
                         if item.total > 0 && !(item.isCurrent && projectedRemainder > 0) {
                             // Rounded like the axis — six labels across the plot collide at full precision.
@@ -239,6 +242,8 @@ struct StatsView: View {
                         )
                         .foregroundStyle(accentColor.opacity(0.2))
                         .cornerRadius(4)
+                        .accessibilityLabel("\(item.label), projected additional spending")
+                        .accessibilityValue(projectedRemainder.currencyString)
                         .annotation(position: .top, spacing: 4) {
                             Text("\(projectedTotal.currencyStringRounded) est.")
                                 .font(.caption2)
@@ -259,7 +264,7 @@ struct StatsView: View {
                     AxisGridLine()
                 }
             }
-            .animation(.easeInOut, value: chartData.map(\.total))
+            .animation(reduceMotion ? nil : .easeInOut, value: chartData.map(\.total))
             .frame(height: 220)
         }
         .padding()
