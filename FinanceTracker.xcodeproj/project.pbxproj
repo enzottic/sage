@@ -14,7 +14,6 @@
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
 		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		C6B4BA142FC214FC00882087 /* FinanceTrackerShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B4BA0A2FC214FB00882087 /* FinanceTrackerShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,13 +45,6 @@
 			remoteGlobalIDString = C6B09FCF2E92CF5200899162;
 			remoteInfo = FinanceTrackerWidgetExtension;
 		};
-		C6B4BA122FC214FC00882087 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C6B4BA092FC214FB00882087;
-			remoteInfo = FinanceTrackerShareExtension;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -83,7 +75,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				C6B4BA142FC214FC00882087 /* FinanceTrackerShareExtension.appex in Embed Foundation Extensions */,
 				C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -333,7 +324,6 @@
 			);
 			dependencies = (
 				C6B09FE32E92CF5400899162 /* PBXTargetDependency */,
-				C6B4BA132FC214FC00882087 /* PBXTargetDependency */,
 				C68EEE142FD7C7E8003C4FD6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
@@ -566,11 +556,6 @@
 			isa = PBXTargetDependency;
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 			targetProxy = C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */;
-		};
-		C6B4BA132FC214FC00882087 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C6B4BA092FC214FB00882087 /* FinanceTrackerShareExtension */;
-			targetProxy = C6B4BA122FC214FC00882087 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
