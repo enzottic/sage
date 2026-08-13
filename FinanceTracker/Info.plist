@@ -19,10 +19,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>SplitwiseConsumerKey</key>
-	<string>$(SPLITWISE_CONSUMER_KEY)</string>
-	<key>SplitwiseConsumerSecret</key>
-	<string>$(SPLITWISE_CONSUMER_SECRET)</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 </dict>

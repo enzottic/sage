@@ -65,10 +65,9 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach([SettingsPage.backup, .splitwise], id: \.self) { page in
-                        NavigationLink(value: page) {
-                            SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
-                        }
+                    let page = SettingsPage.backup
+                    NavigationLink(value: page) {
+                        SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                     }
                 }
 
@@ -120,8 +119,6 @@ struct SettingsView: View {
                     TagsSettingsSection()
                 case .backup:
                     ExpenseBackupSettingsSection()
-                case .splitwise:
-                    SplitwiseSettingsSection()
                 case .privacy:
                     PrivacyWebView()
                 }
@@ -187,7 +184,6 @@ enum SettingsPage: String, Hashable, CaseIterable {
     case recurringExpenses = "Recurring Expenses"
     case tags = "Tags"
     case backup = "Backup"
-    case splitwise = "Splitwise"
     case privacy = "Privacy"
 
     var icon: String {
@@ -197,7 +193,6 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .recurringExpenses: "arrow.trianglehead.clockwise"
         case .tags: "tag.fill"
         case .backup: "cloud.fill"
-        case .splitwise: "arrow.trianglehead.branch"
         case .privacy: "hand.raised.fill"
         }
     }
@@ -209,7 +204,6 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .tags: .purple
         case .recurringExpenses: .orange
         case .backup: .blue
-        case .splitwise: .green
         case .privacy: .red
         }
     }
@@ -274,6 +268,5 @@ private struct WebView: UIViewRepresentable {
     SettingsView()
         .environment(appConfig)
         .environment(AppRouter())
-        .environment(SplitwiseService())
         .modelContainer(previewAppContainer)
 }

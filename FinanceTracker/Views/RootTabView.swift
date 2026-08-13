@@ -55,8 +55,6 @@ struct RootTabView: View {
                 NavigationStack {
                     AddExpenseView(expense: expense)
                 }
-            case .splitwiseImport:
-                SplitwiseImportView()
             }
         }
         .overlay(alignment: .top) {

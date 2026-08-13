@@ -16,13 +16,11 @@ extension View {
 struct EnvironmentInjection: ViewModifier {
     @State var config = AppConfiguration()
     @State var appRouter = AppRouter()
-    @State var splitwise = SplitwiseService()
     
     func body(content: Content) -> some View {
         content
             .modelContainer(previewAppContainer)
             .environment(config)
             .environment(appRouter)
-            .environment(splitwise)
     }
 }

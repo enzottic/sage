@@ -10,7 +10,6 @@ import SageKit
 
 struct DashboardView: View {
     @Environment(AppRouter.self) var appRouter
-    @Environment(SplitwiseService.self) private var splitwiseService
     @Environment(AppConfiguration.self) var config
     
     @State private var selectedMonth: Date
@@ -55,10 +54,7 @@ struct DashboardView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
                     },
-                    onAdd: { appRouter.presentSheet(.addExpense(nil)) },
-                    onImportFromSplitwise: splitwiseService.isConfigured
-                        ? { appRouter.presentSheet(.splitwiseImport) }
-                        : nil
+                    onAdd: { appRouter.presentSheet(.addExpense(nil)) }
                 )
             }
             .appRouteDestinations()

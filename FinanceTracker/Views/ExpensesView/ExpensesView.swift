@@ -10,7 +10,6 @@ import SwiftData
 import SageKit
 
 struct ExpensesView: View {
-    @Environment(SplitwiseService.self) private var splitwiseService
     @Environment(AppRouter.self) private var appRouter
 
     @State private var selectedMonth: Date
@@ -45,10 +44,7 @@ struct ExpensesView: View {
                             slideDirection = .trailing
                             selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
                         },
-                        onAdd: { appRouter.presentSheet(.addExpense(nil)) },
-                        onImportFromSplitwise: splitwiseService.isConfigured
-                            ? { appRouter.presentSheet(.splitwiseImport) }
-                            : nil
+                        onAdd: { appRouter.presentSheet(.addExpense(nil)) }
                     )
                 }
                 .gradientBackground()

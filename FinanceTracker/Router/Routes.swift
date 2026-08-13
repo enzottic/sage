@@ -32,15 +32,13 @@ enum AppRoute: Hashable {
 /// Modally presented flows, hosted once at `RootTabView` so they appear above any tab.
 enum SageSheet: Identifiable, Hashable {
     case addExpense(Expense?)            // nil = blank, non-nil = duplicate prefill
-    case splitwiseImport
 
     var id: Self { self }
 }
 
 // MARK: - Deep links
 
-/// External URLs the app can open. Unknown hosts return `nil` so schemes like
-/// `sage://splitwise-callback` (consumed by ASWebAuthenticationSession) pass through untouched.
+/// External URLs the app can open. Unknown hosts return `nil`.
 enum SageDeepLink {
     case addExpense
 

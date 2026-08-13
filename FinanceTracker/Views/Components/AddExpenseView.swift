@@ -14,7 +14,6 @@ import SageKit
 struct AddExpenseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(SplitwiseService.self) private var splitwise
     @Environment(AppRouter.self) private var appRouter
 
     @State private var name: String = ""
@@ -29,9 +28,6 @@ struct AddExpenseView: View {
     @State private var showError = false
     @State private var isSaving = false
 
-    @State private var selectedGroupId: Int? = nil
-    @State private var availableGroups: [SplitwiseGroup] = []
-    @State private var isLoadingGroups: Bool = false
     @State private var isParsingReceipt: Bool = false
     @State private var showCamera = false
     @State private var showPhotoLibrary = false
@@ -46,14 +42,6 @@ struct AddExpenseView: View {
             _tags = State(initialValue: expense.tags ?? [])
             _category = State(initialValue: expense.category)
         }
-    }
-
-    private var selectedGroup: SplitwiseGroup? {
-        availableGroups.first { $0.id == selectedGroupId }
-    }
-
-    private var currencyCode: String {
-        Locale.current.currency?.identifier ?? "USD"
     }
 
     private var receiptImportEnabled: Bool {
@@ -123,11 +111,6 @@ struct AddExpenseView: View {
             }
             .ignoresSafeArea()
         }
-        .task {
-            if splitwise.isConnected {
-                await loadGroups()
-            }
-        }
         .gradientBackground()
     }
 
@@ -177,72 +160,10 @@ struct AddExpenseView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            if splitwise.isConnected {
-                Divider()
-                    .padding(.leading, 56)
-
-                // Splitwise row
-                HStack {
-                    Text("Splitwise")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if isLoadingGroups {
-                        ProgressView().scaleEffect(0.8)
-                    } else {
-                        Picker("Splitwise", selection: $selectedGroupId) {
-                            Text("No split").tag(Optional<Int>.none)
-                            ForEach(availableGroups) { group in
-                                Text(group.name).tag(Optional(group.id))
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(selectedGroupId == nil ? .secondary : .primary)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
-                // Split details
-                if let group = selectedGroup, let total = amount, !group.members.isEmpty {
-                    Divider()
-                        .padding(.leading, 16)
-
-                    HStack(spacing: 24) {
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Text("Total")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                            Text(total.formatted(.currency(code: currencyCode)))
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .strikethrough()
-                        }
-                        Image(systemName: "arrow.right")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                        VStack(spacing: 2) {
-                            Text("Your share")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                            Text((total / Double(group.members.count)).formatted(.currency(code: currencyCode)))
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.sage)
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
         }
         .background(.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
-        .animation(.spring(duration: 0.3), value: selectedGroupId)
         .animation(.spring(duration: 0.3), value: amount)
         .animation(.spring(duration: 0.3), value: isRecurring)
     }
@@ -303,17 +224,6 @@ struct AddExpenseView: View {
         showError = true
     }
 
-    private func loadGroups() async {
-        isLoadingGroups = true
-        do {
-            availableGroups = try await splitwise.fetchGroups()
-        } catch {
-            errorMessage = "Couldn't load Splitwise groups: \(error.localizedDescription)"
-            showError = true
-        }
-        isLoadingGroups = false
-    }
-
     func saveItem() async {
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Please enter an expense name"
@@ -327,37 +237,13 @@ struct AddExpenseView: View {
             return
         }
 
-        var saveAmount = total
-
         isSaving = true
-
-        if let group = selectedGroup {
-            let req = CreateSplitwiseExpenseRequest(
-                cost: String(
-                    format: "%.2f",
-                    locale: Locale(identifier: "en_US_POSIX"),
-                    total
-                ),
-                description: name,
-                groupId: group.id,
-                splitEqually: true
-            )
-
-            do {
-                saveAmount = try await splitwise.createExpense(req: req)
-            } catch {
-                isSaving = false
-                errorMessage = "Couldn't add to Splitwise: \(error.localizedDescription)"
-                showError = true
-                return
-            }
-        }
 
         var recurringId: UUID? = nil
         if isRecurring {
             let rule = RecurringExpenseRule(
                 name: name,
-                amount: saveAmount,
+                amount: total,
                 note: note,
                 category: category,
                 tags: tags,
@@ -371,7 +257,7 @@ struct AddExpenseView: View {
 
         let newExpense = Expense(
             name: name,
-            amount: saveAmount,
+            amount: total,
             category: category,
             date: date,
             tags: tags,

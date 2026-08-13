@@ -15,7 +15,6 @@ import UserNotifications
 @main
 struct SageApp: App {
     @State private var appConfiguration = AppConfiguration()
-    @State private var splitwiseService = SplitwiseService()
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     
     init() {
@@ -64,7 +63,6 @@ struct SageApp: App {
         }
         .environment(appConfiguration)
         .environment(\.categoryColors, appConfiguration.categoryColors)
-        .environment(splitwiseService)
         .modelContainer(appContainer)
     }
     
