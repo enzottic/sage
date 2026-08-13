@@ -79,15 +79,10 @@ struct WelcomeView: View {
         VStack(spacing: 30) {
             Spacer()
 
-            Image(systemName: "chart.pie.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.want, .need, .saving],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            Image("LaunchIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
                 .padding(.bottom, 20)
 
             VStack(spacing: 12) {
@@ -97,7 +92,7 @@ struct WelcomeView: View {
             }
 
             VStack(alignment: .leading, spacing: 20) {
-                FeatureRow(icon: "chart.bar.fill", title: "Track Expenses", description: "Monitor spending across three basic categories:wants, needs, and savings")
+                FeatureRow(icon: "chart.bar.fill", title: "Track Expenses", description: "Monitor spending across three basic categories: wants, needs, and savings")
                 FeatureRow(icon: "percent", title: "Smart Allocation", description: "Set custom budget percentages that work for you")
                 FeatureRow(icon: "eye.fill", title: "Visual Insights", description: "See your budget utilization at a glance")
             }
