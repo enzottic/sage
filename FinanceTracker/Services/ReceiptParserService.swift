@@ -14,64 +14,97 @@ import SageKit
 class ReceiptParserService {
     init() {}
 
-    func parseReceipt(image: UIImage, tags: [ExpenseTag]) async -> ParsedExpense? {
-        let text = await recgonizeTextInImage(image: image)
-        guard text.isEmpty == false else { return nil }
+    func parseReceipt(image: UIImage, tags: [ExpenseTag]) async throws -> ParsedExpense {
+        guard SystemLanguageModel.default.isAvailable else {
+            throw ReceiptParserError.languageModelUnavailable
+        }
 
-        return await extractExpenseDataFromText(receiptText: text, tags: tags)
+        let text = try await recognizeTextInImage(image: image)
+
+        return try await extractExpenseDataFromText(receiptText: text, tags: tags)
     }
 
     // Uses the Vision framework to pull text out of the image
-    private func recgonizeTextInImage(image: UIImage) async  -> String {
-        var text: String = ""
+    private func recognizeTextInImage(image: UIImage) async throws -> String {
+        guard let imageData = image.pngData() else {
+            throw ReceiptParserError.imageEncodingFailed
+        }
+
         var request = RecognizeTextRequest()
         request.recognitionLevel = .accurate
 
-        if let imageData = image.pngData(),
-            let results = try? await request.perform(on: imageData) {
-            for observation in results {
-                let candidate = observation.topCandidates(1)
-                if let observedText = candidate.first?.string {
-                    text += "\n\(observedText)"
-                }
-            }
+        let results: [RecognizedTextObservation]
+        do {
+            results = try await request.perform(on: imageData)
+        } catch {
+            throw ReceiptParserError.textRecognitionFailed
+        }
+
+        let text = results.compactMap { observation in
+            observation.topCandidates(1).first?.string
+        }
+        .joined(separator: "\n")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !text.isEmpty else {
+            throw ReceiptParserError.noTextFound
         }
 
         return text
     }
 
-
-    // Uses a local AI model from FoundationModels framework to generate a parsed expense object, using the raw text
-    // pulled from the receipt as input
-    private func extractExpenseDataFromText(receiptText: String, tags: [ExpenseTag]) async -> ParsedExpense? {
+    // Uses a local AI model to generate an expense from the recognized receipt text.
+    private func extractExpenseDataFromText(receiptText: String, tags: [ExpenseTag]) async throws -> ParsedExpense {
         let instructions = Instructions("""
-You are an experienced expense categorizer. You are given a string of text that has been recgonized from
-an receipt. You are to determine the following information from the text:
+You are an experienced expense categorizer. You are given a string of text that was recognized from
+a receipt. You are to determine the following information from the receipt:
 1. The total price of the item purchased (MOST IMPORTANT)
 2. The name of what was purchased. For example, if you see a grocery receipt, you would note "Groceries". If you see a receipt for a TV, you would say "TV". The name of the store would suffice as well if you cannot determine the exact item or if there are multiple items.
-3. The category of what this item/purchase would generally be. There are only two options: Needs or Wants. Needs describe expenses that are needed/must be spent. This includes things like rent, groceries, utility bills, and other payments. Wants are things that are not needed and are leisure spends, such as new devices, eating out, shopping, clothes, etc. Pick which one best fits the receipt.
-4. The date the transaction occured on. If no date is found, do NOT provide a date at all.
-5. A tag that further describes the expense. You MUST pick EXACTLY ONE tag ONLY from the list provided. DO NOT respond with any other tag other than ones in the provided list that follows 'Available Tags'. If no tags match close enough, do not respond with ANY tag.
+3. The category of what this item/purchase would generally be. There are only two options: Needs or Wants. Needs describe expenses that are needed/must be spent. This includes rent, groceries, utility bills, and other payments. Wants are not needed and are leisure spends, such as new devices, eating out, shopping, and clothes. Pick the best option for the receipt.
+4. The date the transaction occurred on. If no date is found, do NOT provide a date.
+5. A tag that further describes the expense. You MUST pick EXACTLY ONE tag ONLY from the provided list. If no tag matches, do not provide a tag.
 """)
         let session = LanguageModelSession(instructions: instructions)
         let prompt = "Receipt Text: \(receiptText). Available Tags: \(tags.compactMap { $0.name }.joined(separator: ","))"
-        print(prompt)
-        
+
         do {
             let response = try await session.respond(to: prompt, generating: ParsedExpense.self)
             return response.content
         } catch {
-            return nil
+            throw ReceiptParserError.parsingFailed
         }
     }
 }
 
-    
+@available(iOS 26.0, *)
+enum ReceiptParserError: LocalizedError {
+    case languageModelUnavailable
+    case imageEncodingFailed
+    case textRecognitionFailed
+    case noTextFound
+    case parsingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .languageModelUnavailable:
+            "Receipt reading requires Apple Intelligence on this device."
+        case .imageEncodingFailed:
+            "Sage couldn't prepare this photo. Choose another photo and try again."
+        case .textRecognitionFailed:
+            "Sage couldn't read text from this photo. Try a clearer photo of the full receipt."
+        case .noTextFound:
+            "Sage couldn't find receipt text in this photo. Try a clearer photo of the full receipt."
+        case .parsingFailed:
+            "Sage couldn't read this receipt. Try again later."
+        }
+    }
+}
+
 @available(iOS 26.0, *)
 @Generable(description: "A collection of details for an expense parsed from a receipt")
 struct ParsedExpense {
     @Guide(description: "A short description of the expense, or where the expense came from. You should try to be as descriptive as possible in as little words as possible. For example, if the receipt seems to be a grocery receipt and is from the store 'Safeway', you would respond with 'Safeway'.")
-let name: String
+    let name: String
     @Guide(description: "The total price of goods stated on the receipt. You may seem an itemized receipt with individual charges, and then a total charge. In general, the price you will note down is the highest price you see from the receipt text.")
     let price: Double
     @Guide(description: "The date the the transaction occured on, in YYYY-MM-DD format. YOU MUST RESPOND IN THIS FORMAT. If no date can be found, do not return a date.")

@@ -9,6 +9,7 @@ import SwiftData
 import WidgetKit
 import PhotosUI
 import UIKit
+import FoundationModels
 import SageKit
 
 struct AddExpenseView: View {
@@ -44,8 +45,31 @@ struct AddExpenseView: View {
         }
     }
 
-    private var receiptImportEnabled: Bool {
-        if #available(iOS 26.0, *) { true } else { false }
+    private var receiptImportUnavailableMessage: String? {
+        if #available(iOS 26.0, *) {
+            return SystemLanguageModel.default.isAvailable
+                ? nil
+                : "Receipt reading requires Apple Intelligence on this device."
+        }
+
+        return "Receipt reading requires iOS 26 or later."
+    }
+
+    private var receiptImportConfiguration: ReceiptImportConfiguration? {
+        guard receiptImportUnavailableMessage == nil else { return nil }
+
+        return ReceiptImportConfiguration(
+            isParsing: isParsingReceipt,
+            canUseCamera: UIImagePickerController.isSourceTypeAvailable(.camera),
+            onTakePhoto: {
+                guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                    showReceiptError("This device does not have a camera. Choose a photo from your library instead.")
+                    return
+                }
+                showCamera = true
+            },
+            onChoosePhoto: { showPhotoLibrary = true }
+        )
     }
 
     var body: some View {
@@ -58,13 +82,8 @@ struct AddExpenseView: View {
                     category: $category,
                     tags: $tags,
                     note: $note,
-                    receiptImport: receiptImportEnabled
-                        ? ReceiptImportConfiguration(
-                            isParsing: isParsingReceipt,
-                            onTakePhoto: { showCamera = true },
-                            onChoosePhoto: { showPhotoLibrary = true }
-                        )
-                        : nil
+                    receiptImport: receiptImportConfiguration,
+                    receiptImportUnavailableMessage: receiptImportUnavailableMessage
                 )
 
                 optionsCard
@@ -106,9 +125,12 @@ struct AddExpenseView: View {
             Task { await loadReceiptPhoto(item) }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPickerView { image in
-                Task { await parseReceipt(image) }
-            }
+            CameraPickerView(
+                onImagePicked: { image in
+                    Task { await parseReceipt(image) }
+                },
+                onFailure: showReceiptError
+            )
             .ignoresSafeArea()
         }
         .gradientBackground()
@@ -184,7 +206,7 @@ struct AddExpenseView: View {
 
             await parseReceipt(image)
         } catch {
-            showReceiptError("Sage couldn't open that photo: \(error.localizedDescription)")
+            showReceiptError("Sage couldn't open that photo. Choose another photo and try again.")
         }
     }
 
@@ -193,29 +215,33 @@ struct AddExpenseView: View {
         isParsingReceipt = true
         defer { isParsingReceipt = false }
 
+        guard receiptImportUnavailableMessage == nil else {
+            showReceiptError(receiptImportUnavailableMessage ?? "Receipt reading is unavailable.")
+            return
+        }
+
         if #available(iOS 26.0, *) {
-            let service = ReceiptParserService()
-            guard let parsed = await service.parseReceipt(image: image, tags: allTags) else {
-                showReceiptError("Sage couldn't read this receipt. Try a clearer photo.")
-                return
+            do {
+                let parsed = try await ReceiptParserService().parseReceipt(image: image, tags: allTags)
+                name = parsed.name
+                amount = parsed.price
+
+                if let dateStr = parsed.date {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "yyyy-MM-dd"
+                    date = formatter.date(from: dateStr) ?? .now
+                }
+
+                category = parsed.category.lowercased() == "needs" ? .needs : .wants
+
+                if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
+                    tags = [matched]
+                }
+            } catch let error as ReceiptParserError {
+                showReceiptError(error.localizedDescription)
+            } catch {
+                showReceiptError("Sage couldn't read this receipt. Try again later.")
             }
-
-            name = parsed.name
-            amount = parsed.price
-
-            if let dateStr = parsed.date {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                date = formatter.date(from: dateStr) ?? .now
-            }
-
-            category = parsed.category.lowercased() == "needs" ? .needs : .wants
-
-            if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
-                tags = [matched]
-            }
-        } else {
-            showReceiptError("Receipt reading requires iOS 26 or later.")
         }
     }
 

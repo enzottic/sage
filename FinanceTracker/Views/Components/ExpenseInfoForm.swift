@@ -11,6 +11,7 @@ import SageKit
 
 struct ReceiptImportConfiguration {
     let isParsing: Bool
+    let canUseCamera: Bool
     let onTakePhoto: () -> Void
     let onChoosePhoto: () -> Void
 }
@@ -29,6 +30,7 @@ struct ExpenseInfoForm: View {
     @Binding var note: String
     var isEditing: Bool
     var receiptImport: ReceiptImportConfiguration?
+    var receiptImportUnavailableMessage: String?
 
     private let tagSuggestionService = TagSuggestionService()
     @FocusState private var focusedField: Field?
@@ -62,7 +64,8 @@ struct ExpenseInfoForm: View {
         tags: Binding<[ExpenseTag]>,
         note: Binding<String>,
         isEditing: Bool = false,
-        receiptImport: ReceiptImportConfiguration? = nil
+        receiptImport: ReceiptImportConfiguration? = nil,
+        receiptImportUnavailableMessage: String? = nil
     ) {
         self._name = name
         self._amount = amount
@@ -72,6 +75,7 @@ struct ExpenseInfoForm: View {
         self._note = note
         self.isEditing = isEditing
         self.receiptImport = receiptImport
+        self.receiptImportUnavailableMessage = receiptImportUnavailableMessage
     }
 
     var body: some View {
@@ -123,6 +127,12 @@ struct ExpenseInfoForm: View {
 
             if !isEditing, let receiptImport {
                 receiptButton(receiptImport)
+            } else if !isEditing, let receiptImportUnavailableMessage {
+                Text(receiptImportUnavailableMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 144)
             }
         }
         .padding(.horizontal)
@@ -130,7 +140,9 @@ struct ExpenseInfoForm: View {
 
     private func receiptButton(_ configuration: ReceiptImportConfiguration) -> some View {
         Menu {
-            Button("Take Photo", systemImage: "camera", action: configuration.onTakePhoto)
+            if configuration.canUseCamera {
+                Button("Take Photo", systemImage: "camera", action: configuration.onTakePhoto)
+            }
             Button(
                 "Choose from Photos",
                 systemImage: "photo.on.rectangle",
