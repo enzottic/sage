@@ -61,7 +61,7 @@ class AppConfiguration {
         static let needsPercent = "needsPercent"
         static let wantsPercent = "wantsPercent"
         static let savingsPercent = "savingsPercent"
-        static let isCloudSyncEnabled = "isCloudSyncEnabled"
+        static let isCloudSyncEnabled = SageModelContainer.cloudKitPreferenceKey
         static let hasCompletedSetup = "hasCompletedSetup"
         static let smartTaggingMode = "smartTaggingMode"
         static let needsColor = "categoryColorNeeds"
@@ -113,7 +113,7 @@ class AppConfiguration {
     
     var isCloudSyncEnabled: Bool {
         didSet {
-            defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+            SageModelContainer.setCloudKitPreference(isCloudSyncEnabled)
             cloudKVS.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
             cloudKVS.synchronize()
         }

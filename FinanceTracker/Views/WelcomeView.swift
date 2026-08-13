@@ -347,7 +347,7 @@ struct WelcomeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Enable iCloud Sync")
                             .font(.headline)
-                        Text("You can change this later in Settings")
+                        Text("Your choice takes effect the next time you open the app")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

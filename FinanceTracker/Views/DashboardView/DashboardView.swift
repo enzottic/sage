@@ -97,7 +97,7 @@ func expenseQuery(for month: Date, limit: Int? = nil) -> Query<Expense, [Expense
 
 func expenseQuery(start: Date, end: Date, limit: Int? = nil) -> Query<Expense, [Expense]> {
     var descriptor = FetchDescriptor<Expense>(
-        predicate: #Predicate { $0.date > start && $0.date < end },
+        predicate: #Predicate { $0.date >= start && $0.date < end },
         sortBy: [SortDescriptor(\.date, order: .reverse)]
     )
     descriptor.fetchLimit = limit

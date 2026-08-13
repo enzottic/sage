@@ -51,7 +51,7 @@ struct ExpenseBackupSettingsSection: View {
             } header: {
                 Text("iCloud Sync")
             } footer: {
-                Text("Sync your expenses across all your Apple devices.")
+                Text("Changes take effect the next time you open the app.")
             }
 
             Section {

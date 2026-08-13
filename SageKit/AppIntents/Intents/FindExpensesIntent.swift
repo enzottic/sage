@@ -75,6 +75,9 @@ public struct FindExpensesIntent: AppIntent {
     @Parameter(title: "Category") public var category: ExpenseCategory?
     @Parameter(title: "Name Contains") public var nameFilter: String?
 
+    @Dependency
+    var expenseStore: ExpenseStore
+
     public static var parameterSummary: some ParameterSummary {
         Summary("How much did I spend \(\.$timePeriod)?") {
             \.$tag
@@ -87,9 +90,8 @@ public struct FindExpensesIntent: AppIntent {
     
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Double> {
-        let store = ExpenseStore.shared
         let (start, end) = timePeriod.dateRange
-        var expenses = store.fetchExpenses(from: start, to: end)
+        var expenses = expenseStore.fetchExpenses(from: start, to: end)
 
         if let tag {
             expenses = expenses.filter { ($0.tags ?? []).contains { $0.id == tag.id } }
