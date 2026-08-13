@@ -1,0 +1,44 @@
+{
+  "configurations" : [
+    {
+      "id" : "959A053F-29D6-4831-A26C-0A7831ECBA5F",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "-com.apple.CoreData.CloudKitDebug 1",
+        "enabled" : false
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:FinanceTracker.xcodeproj",
+      "identifier" : "C66031C52E8073C60078DD15",
+      "name" : "FinanceTracker"
+    },
+    "testInteropMode" : "complete"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FinanceTracker.xcodeproj",
+        "identifier" : "C62400062FFF002400000006",
+        "name" : "FinanceTrackerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:FinanceTracker.xcodeproj",
+        "identifier" : "C655B3AB2EF8E4B300E1F50E",
+        "name" : "FinanceTrackerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

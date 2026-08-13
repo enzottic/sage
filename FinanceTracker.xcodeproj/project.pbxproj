@@ -19,14 +19,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		C62400022FFF002400000002 /* PBXContainerItemProxy */ = {
+		C62200022FFD000100000022 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = C68EEE0E2FD7C7E8003C4FD6;
 			remoteInfo = SageKit;
 		};
-		C62200022FFD000100000022 /* PBXContainerItemProxy */ = {
+		C62400022FFF002400000002 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
 			proxyType = 1;
@@ -109,6 +109,7 @@
 		C6B09FD42E92CF5200899162 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinanceTrackerWidgetExtension.entitlements; sourceTree = "<group>"; };
 		C6B4BA0A2FC214FB00882087 /* FinanceTrackerShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinanceTrackerShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FinanceTracker.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -271,6 +272,7 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
+				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
 				C62400042FFF002400000004 /* FinanceTrackerTests */,
@@ -610,17 +612,17 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		C62400092FFF002400000009 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			platformFilter = ios;
-			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
-			targetProxy = C62400022FFF002400000002 /* PBXContainerItemProxy */;
-		};
 		C62200032FFD000100000022 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilter = ios;
 			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
 			targetProxy = C62200022FFD000100000022 /* PBXContainerItemProxy */;
+		};
+		C62400092FFF002400000009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
+			targetProxy = C62400022FFF002400000002 /* PBXContainerItemProxy */;
 		};
 		C655B3B32EF8E4B300E1F50E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

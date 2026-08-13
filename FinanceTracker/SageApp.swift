@@ -48,7 +48,8 @@ struct SageApp: App {
         SageShortcutsProvider.updateAppShortcutParameters()
 
         // If onboarding was completed on another device, skip it here
-        if !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
+        if !UITestConfiguration.isEnabled,
+           !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
            AppConfiguration.hasCompletedSetupOnAnotherDevice {
             UserDefaults.standard.set(true, forKey: "hasOpenedAppOnce")
             // Still a fresh install here — skip What's New, the same as after onboarding.
@@ -73,7 +74,11 @@ struct SageApp: App {
     @ViewBuilder
     private var mainContent: some View {
         Group {
-            if !hasOpenedAppOnce {
+            // UI tests control their initial screen through launch environment.
+            // Do not let persisted onboarding state from an earlier test change it.
+            if UITestConfiguration.isEnabled, !UITestConfiguration.showsOnboarding {
+                RootTabView()
+            } else if !hasOpenedAppOnce {
                 WelcomeView()
             } else {
                 RootTabView()
@@ -81,7 +86,9 @@ struct SageApp: App {
         }
         .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
-            if !hasOpenedAppOnce, AppConfiguration.hasCompletedSetupOnAnotherDevice {
+            if !UITestConfiguration.isEnabled,
+               !hasOpenedAppOnce,
+               AppConfiguration.hasCompletedSetupOnAnotherDevice {
                 WhatsNewStore.markCurrentVersionSeen()
                 hasOpenedAppOnce = true
             }

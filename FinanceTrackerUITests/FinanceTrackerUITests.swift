@@ -105,8 +105,12 @@ final class FinanceTrackerUITests: XCTestCase {
         let app = launchApp(seedExpense: "Search Needle")
         openExpenses(in: app)
 
+        // Swipe down so that the search bar is visible. Sometimes it gets hidden above the first expense in the list.
+        app.swipeDown()
+
         let searchField = app.searchFields.firstMatch
         XCTAssertTrue(searchField.waitForExistence(timeout: timeout), "The expense search field did not appear.")
+
         searchField.tap()
         searchField.typeText("Needle")
 
@@ -133,12 +137,15 @@ final class FinanceTrackerUITests: XCTestCase {
     }
 
     func testDeletesDashboardExpense() {
-        let app = launchApp(seedExpense: "Dashboard Expense to Delete")
+        let app = launchApp(showsOnboarding: false, seedExpense: "Dashboard Expense to Delete")
 
+        app.swipeUp()
+        app.swipeUp()
+        
         let row = expenseRow(named: "Dashboard Expense to Delete", in: app)
         XCTAssertTrue(row.waitForExistence(timeout: timeout), "The dashboard expense did not appear.")
-        scrollToHittability(of: row, in: app)
-        row.swipeLeft()
+        
+        revealDeleteAction(for: row)
         tap("delete-expense-action", in: app)
         tap("confirm-delete-expense-button", in: app)
 
@@ -196,12 +203,26 @@ final class FinanceTrackerUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "expense-row-\(name)").firstMatch
     }
 
-    private func scrollToHittability(of element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<6 {
-            if element.waitForHittability(timeout: 1) { return }
+    private func scrollToVisibility(of element: XCUIElement, in app: XCUIApplication) -> Bool {
+        let window = app.windows.firstMatch
+        for _ in 0..<10 {
+            let frame = element.frame
+            if window.exists,
+               !frame.isNull,
+               !frame.isEmpty,
+               window.frame.contains(frame) {
+                return true
+            }
             app.swipeUp()
         }
-        XCTFail("The element did not become hittable.")
+        XCTFail("The element did not become visible.")
+        return false
+    }
+
+    private func revealDeleteAction(for row: XCUIElement) {
+        let start = row.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5))
+        let end = row.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
+        start.press(forDuration: 0.1, thenDragTo: end)
     }
 
     private func tap(_ identifier: String, in app: XCUIApplication) {
