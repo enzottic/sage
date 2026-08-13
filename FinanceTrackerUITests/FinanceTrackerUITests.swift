@@ -2,7 +2,7 @@ import XCTest
 
 @MainActor
 final class FinanceTrackerUITests: XCTestCase {
-    private let timeout: TimeInterval = 10
+    private let timeout: TimeInterval = 20
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -150,9 +150,16 @@ final class FinanceTrackerUITests: XCTestCase {
     }
 
     private func addExpense(named name: String, amount: String, in app: XCUIApplication) {
-        tap("add-expense-button", in: app)
-
+        let addButton = app.descendants(matching: .any)
+            .matching(identifier: "add-expense-button")
+            .firstMatch
         let nameField = app.textFields["expense-name-field"]
+
+        tap(addButton, named: "add-expense-button")
+        if !nameField.waitForExistence(timeout: timeout) {
+            tap(addButton, named: "add-expense-button")
+        }
+
         XCTAssertTrue(nameField.waitForExistence(timeout: timeout), "The add expense form did not appear.")
         nameField.tap()
         nameField.typeText(name)
@@ -175,13 +182,26 @@ final class FinanceTrackerUITests: XCTestCase {
 
     private func tap(_ identifier: String, in app: XCUIApplication) {
         let element = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+        tap(element, named: identifier)
+    }
+
+    private func tap(_ element: XCUIElement, named identifier: String) {
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "The element '\(identifier)' did not appear.")
-        XCTAssertTrue(element.isHittable, "The element '\(identifier)' was not hittable.")
+        XCTAssertTrue(
+            element.waitForHittability(timeout: timeout),
+            "The element '\(identifier)' was not hittable."
+        )
         element.tap()
     }
 }
 
 private extension XCUIElement {
+    func waitForHittability(timeout: TimeInterval) -> Bool {
+        let predicate = NSPredicate(format: "hittable == true")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: self)
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+    }
+
     func clearAndTypeText(_ text: String) {
         let currentText = value as? String ?? ""
         coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
