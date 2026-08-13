@@ -12,6 +12,7 @@ import SageKit
 struct ExpenseDetailView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
+    @Environment(AppRouter.self) private var appRouter
     
     let expense: Expense
     
@@ -19,6 +20,7 @@ struct ExpenseDetailView: View {
     @State private var workingExpense: EditableExpense
     @State private var showingDeleteConfirmation: Bool = false
     @State private var saveErrorMessage: String?
+    @State private var isSaving = false
 
     init(expense: Expense) {
         self.expense = expense
@@ -55,11 +57,18 @@ struct ExpenseDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    saveItem()
+                if isSaving {
+                    ProgressView("Saving expense")
+                        .controlSize(.small)
+                        .accessibilityLabel("Saving expense")
+                } else {
+                    Button("Save") {
+                        Task { await saveItem() }
+                    }
+                    .accessibilityIdentifier("save-expense-changes-button")
+                    .tint(Color.sageAccent)
+                    .disabled(isSaving)
                 }
-                .accessibilityIdentifier("save-expense-changes-button")
-                .tint(Color.sageAccent)
             }
         }
         .alert("Could not save expense", isPresented: Binding(
@@ -73,7 +82,13 @@ struct ExpenseDetailView: View {
         .gradientBackground()
     }
     
-    func saveItem() {
+    private func saveItem() async {
+        guard !isSaving else { return }
+        isSaving = true
+        defer { isSaving = false }
+
+        await Task.yield()
+
         expense.name = workingExpense.name
         expense.amount = workingExpense.amount ?? 0
         expense.date = workingExpense.date
@@ -84,9 +99,10 @@ struct ExpenseDetailView: View {
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
+            appRouter.showToast(SageToast(message: "Expense updated", kind: .success))
         } catch {
             modelContext.rollback()
-            saveErrorMessage = error.localizedDescription
+            saveErrorMessage = "Sage could not save this expense. Check available storage and try again."
         }
     }
 }

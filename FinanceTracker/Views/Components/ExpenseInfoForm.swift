@@ -152,8 +152,10 @@ struct ExpenseInfoForm: View {
         } label: {
             VStack(spacing: 6) {
                 if configuration.isParsing {
-                    ProgressView()
-                        .frame(width: 22, height: 22)
+                    ProgressView("Reading")
+                        .controlSize(.small)
+                        .font(.caption2)
+                        .frame(height: 22)
                 } else {
                     Image(systemName: "receipt")
                         .font(.system(size: 22, weight: .regular))
@@ -175,7 +177,8 @@ struct ExpenseInfoForm: View {
             .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(configuration.isParsing)
-        .accessibilityLabel("Receipt")
+        .accessibilityLabel(configuration.isParsing ? "Reading receipt" : "Receipt")
+        .accessibilityValue(configuration.isParsing ? "In progress" : "")
     }
 
     // MARK: - Past expense suggestions

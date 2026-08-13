@@ -59,10 +59,18 @@ final class AppRouter {
     func showToast(_ toast: SageToast) {
         dismissTask?.cancel()
         withAnimation(.spring(duration: 0.4)) { self.toast = toast }
+
+        guard toast.kind != .progress else { return }
+
         dismissTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
             withAnimation(.spring(duration: 0.4)) { self.toast = nil }
         }
+    }
+
+    func dismissToast() {
+        dismissTask?.cancel()
+        withAnimation(.spring(duration: 0.4)) { toast = nil }
     }
 }

@@ -65,12 +65,17 @@ struct RootTabView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .task {
                         try? await Task.sleep(for: .milliseconds(700))
-                        let prefix = toast.kind == .success ? "Success" : "Error"
+                        let prefix: String
+                        switch toast.kind {
+                        case .progress: prefix = "In progress"
+                        case .success: prefix = "Success"
+                        case .error: prefix = "Error"
+                        }
                         AccessibilityNotification.Announcement("\(prefix): \(toast.message)").post()
                     }
             }
         }
-        .sensoryFeedback(.success, trigger: appRouter.toast?.message) { _, newValue in newValue != nil }
+        .sensoryFeedback(.success, trigger: appRouter.toast?.kind == .success) { _, isSuccess in isSuccess }
         .animation(.spring(duration: 0.4), value: appRouter.toast == nil)
         .environment(appRouter)
         .background(.background)

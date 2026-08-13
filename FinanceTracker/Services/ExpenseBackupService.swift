@@ -9,13 +9,25 @@ import Foundation
 import OSLog
 import SageKit
 
-final class ExpenseBackupService {
+final class ExpenseBackupService: Sendable {
     static let shared = ExpenseBackupService()
-    private let logger = Logger(subsystem: "me.enzottic.FinanceTracker", category: "ExpenseBackup")
+    private static let logger = Logger(subsystem: "me.enzottic.FinanceTracker", category: "ExpenseBackup")
 
-    func exportExpenses(expenses: [Expense]) -> Result<String, ExpenseExportServiceError> {
+    func exportExpenses(expenses: [ExportableExpense]) async -> Result<Void, ExpenseExportServiceError> {
+        await Task.detached(priority: .userInitiated) {
+            Self.writeExport(expenses: expenses)
+        }.value
+    }
+
+    func readExpenses(from filePath: URL) async -> Result<[ExportableExpense], ExpenseExportServiceError> {
+        await Task.detached(priority: .userInitiated) {
+            Self.readExport(from: filePath)
+        }.value
+    }
+
+    private static func writeExport(expenses: [ExportableExpense]) -> Result<Void, ExpenseExportServiceError> {
         do {
-            let csvContent = ExpenseCSVCodec.encode(expenses.toExportable())
+            let csvContent = ExpenseCSVCodec.encode(expenses)
             let fileName = "sage-export.csv"
             
             let documentsDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
@@ -23,7 +35,7 @@ final class ExpenseBackupService {
             let fileURL = documentsDirectory.appendingPathComponent(fileName)
             
             guard let csvData = csvContent.data(using: .utf8) else {
-                return .failure(.dataConversionError("Could not encode the CSV file as UTF-8."))
+                return .failure(.dataConversionError("Could not prepare the CSV. Try exporting again."))
             }
             try csvData.write(to: fileURL, options: .atomic)
             
@@ -31,17 +43,16 @@ final class ExpenseBackupService {
             
         } catch {
             logger.error("Expense export failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
-            return .failure(.filesystemError("Error saving file: \(error.localizedDescription)"))
+            return .failure(.filesystemError("Could not save the CSV. Check available storage and try again."))
         }
         
-        
-        return .success("File saved successfully")
+        return .success(())
     }
     
     // Returns an array of ExportableExpense, to be inserted into the SwiftData model on import
-    func readExpenses(from filePath: URL) -> Result<[ExportableExpense], ExpenseExportServiceError> {
+    private static func readExport(from filePath: URL) -> Result<[ExportableExpense], ExpenseExportServiceError> {
         guard let fileContents = try? String(contentsOf: filePath, encoding: .utf8) else {
-            return .failure(.fileReadError("Could not read file at \(filePath)"))
+            return .failure(.fileReadError("Could not read the CSV. Choose another file and try again."))
         }
         
         do {
@@ -54,7 +65,7 @@ final class ExpenseBackupService {
     }
 }
 
-enum ExpenseExportServiceError: LocalizedError {
+enum ExpenseExportServiceError: LocalizedError, Sendable {
     case serializationError(String)
     case dataConversionError(String)
     case filesystemError(String)
