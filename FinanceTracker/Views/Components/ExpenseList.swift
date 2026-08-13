@@ -19,6 +19,7 @@ struct ExpenseList: View {
 
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
+    @State private var deleteErrorMessage: String?
 
     var body: some View {
         Group {
@@ -54,14 +55,27 @@ struct ExpenseList: View {
                 expenseToDelete = nil
             }
         })
+        .alert("Could not delete expense", isPresented: Binding(
+            get: { deleteErrorMessage != nil },
+            set: { if !$0 { deleteErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteErrorMessage ?? "Please try again.")
+        }
     }
     
     private func deleteExpense(_ expense: Expense) {
         withAnimation {
             modelContext.delete(expense)
-            try! modelContext.save()
+        }
+        do {
+            try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             appRouter.showToast(SageToast(message: "Expense deleted", kind: .success))
+        } catch {
+            modelContext.rollback()
+            deleteErrorMessage = error.localizedDescription
         }
     }
 }

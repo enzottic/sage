@@ -9,6 +9,17 @@ import Foundation
 import SwiftData
 
 public enum SageModelContainer {
+    public enum Error: LocalizedError, Equatable {
+        case appGroupUnavailable
+
+        public var errorDescription: String? {
+            switch self {
+            case .appGroupUnavailable:
+                return "The shared app storage is unavailable."
+            }
+        }
+    }
+
     public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
     public nonisolated static let cloudKitPreferenceKey = "isCloudSyncEnabled"
     private nonisolated static let activeCloudKitPreferenceKey = "activeCloudSyncEnabled"
@@ -53,21 +64,18 @@ public enum SageModelContainer {
         )
     }
 
+    /// The shared store result. Callers handle a failed store open instead of terminating.
     @MainActor
-    public static let shared: ModelContainer = {
-        do {
-            return try make()
-        } catch {
-            fatalError("Failed to create the Sage model container: \(error)")
-        }
-    }()
+    public static let shared: Result<ModelContainer, any Swift.Error> = Result(catching: make)
 
     private static nonisolated func make() throws -> ModelContainer {
         UIColorValueTransformer.register()
 
         let schema = Schema(versionedSchema: SageSchemaV4.self)
-        let groupURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)!
+        guard let groupURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
+            throw Error.appGroupUnavailable
+        }
 
         #if DEBUG
         let config = ModelConfiguration(

@@ -73,7 +73,7 @@ struct CategorySpotlightEntry: TimelineEntry {
         case .wants:   return CategorySpotlightEntry(date: .now, category: .wants, spent: 1045.32, budget: 2100)
         case .savings: return CategorySpotlightEntry(date: .now, category: .savings, spent: 500.0, budget: 1400)
         @unknown default:
-            fatalError("Unknown category: \(category)")
+            return .placeholder(category: .needs)
         }
     }
 }

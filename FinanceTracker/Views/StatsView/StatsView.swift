@@ -71,7 +71,7 @@ struct StatsView: View {
     }
 
     private var currentPeriodInterval: DateInterval {
-        calendar.dateInterval(of: timeframe.calendarComponent, for: Date())!
+        calendar.dateInterval(of: timeframe.calendarComponent, for: Date()) ?? DateInterval(start: Date(), duration: 0)
     }
 
     /// Filtered expenses recorded from the start of the current period through now.

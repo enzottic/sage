@@ -34,7 +34,7 @@ struct EditRecurringRuleSheet: View {
         _tags = State(initialValue: rule.tags ?? [])
         _frequency = State(initialValue: rule.frequency)
         _hasEndDate = State(initialValue: rule.endDate != nil)
-        _endDate = State(initialValue: rule.endDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date.now)!)
+        _endDate = State(initialValue: rule.endDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date.now) ?? Date.now)
     }
 
     var body: some View {

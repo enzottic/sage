@@ -91,10 +91,15 @@ class ShareViewController: UIViewController {
     @MainActor
     private func openMainApp() {
         #if DEBUG
-        let url = URL(string: "sage-dev://add-expense?source=receipt")!
+        let urlString = "sage-dev://add-expense?source=receipt"
         #else
-        let url = URL(string: "sage://add-expense?source=receipt")!
+        let urlString = "sage://add-expense?source=receipt"
         #endif
+        guard let url = URL(string: urlString) else {
+            log.error("Could not create the Sage deep link")
+            finish()
+            return
+        }
         log.info("Attempting to open \(url.absoluteString) via extensionContext")
 
         var responder: UIResponder? = self

@@ -37,10 +37,12 @@ struct SageApp: App {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 
         // Make ExpenseStore resolvable via @Dependency in App Intents.
-        let expenseStore = UITestConfiguration.isEnabled
-            ? ExpenseStore(modelContainer: appContainer)
-            : ExpenseStore.shared
-        AppDependencyManager.shared.add(dependency: expenseStore)
+        if UITestConfiguration.isEnabled,
+           case let .success(container) = appContainerResult {
+            AppDependencyManager.shared.add(dependency: ExpenseStore(modelContainer: container))
+        } else if let expenseStore = ExpenseStore.shared {
+            AppDependencyManager.shared.add(dependency: expenseStore)
+        }
 
         // Register App Shortcuts phrases with Siri
         SageShortcutsProvider.updateAppShortcutParameters()
@@ -56,25 +58,34 @@ struct SageApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if !hasOpenedAppOnce {
-                    WelcomeView()
-                } else {
-                    RootTabView()
-                }
-            }
-            .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
-            .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
-                // KVS values may arrive after launch — check if onboarding was completed on another device
-                if !hasOpenedAppOnce, AppConfiguration.hasCompletedSetupOnAnotherDevice {
-                    WhatsNewStore.markCurrentVersionSeen()
-                    hasOpenedAppOnce = true
-                }
+            switch appContainerResult {
+            case let .success(container):
+                mainContent
+                    .modelContainer(container)
+            case let .failure(error):
+                DataStoreRecoveryView(error: error)
             }
         }
         .environment(appConfiguration)
         .environment(\.categoryColors, appConfiguration.categoryColors)
-        .modelContainer(appContainer)
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        Group {
+            if !hasOpenedAppOnce {
+                WelcomeView()
+            } else {
+                RootTabView()
+            }
+        }
+        .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+        .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
+            if !hasOpenedAppOnce, AppConfiguration.hasCompletedSetupOnAnotherDevice {
+                WhatsNewStore.markCurrentVersionSeen()
+                hasOpenedAppOnce = true
+            }
+        }
     }
     
     private func configureNavigationBarAppearance() {
@@ -84,6 +95,18 @@ struct SageApp: App {
         if let inlineDescriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
             UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(descriptor: inlineDescriptor, size: 17)]
         }
+    }
+}
+
+private struct DataStoreRecoveryView: View {
+    let error: any Swift.Error
+
+    var body: some View {
+        ContentUnavailableView(
+            "Your data could not open",
+            systemImage: "externaldrive.badge.exclamationmark",
+            description: Text("Sage could not access its shared storage. Check available device storage, then close and reopen the app. \(error.localizedDescription)")
+        )
     }
 }
 

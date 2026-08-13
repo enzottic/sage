@@ -24,7 +24,7 @@ struct CategoryUtilizationWidget: View {
         case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
         case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
         case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
-        @unknown default: fatalError("Unknown expense category")
+        @unknown default: 0
         }
     }
 
@@ -33,7 +33,7 @@ struct CategoryUtilizationWidget: View {
         case .wants: monthlyExpenses.wantsUsed
         case .needs: monthlyExpenses.needsUsed
         case .savings: monthlyExpenses.savingsUsed
-        @unknown default: fatalError("Unknown expense category")
+        @unknown default: 0
         }
     }
 
@@ -42,7 +42,7 @@ struct CategoryUtilizationWidget: View {
         case .wants: config.wantsBudget
         case .needs: config.needsBudget
         case .savings: config.savingsBudget
-        @unknown default: fatalError("Unknown expense category")
+        @unknown default: 0
         }
     }
 

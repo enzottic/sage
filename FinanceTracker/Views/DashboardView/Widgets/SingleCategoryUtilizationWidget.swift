@@ -33,7 +33,7 @@ struct SingleCategoryUtilizationWidget: View {
         case .wants: monthlyExpenses.wantsUsed
         case .needs: monthlyExpenses.needsUsed
         case .savings: monthlyExpenses.savingsUsed
-        @unknown default: fatalError("Unknown expense category")
+        @unknown default: 0
         }
     }
 
@@ -42,7 +42,7 @@ struct SingleCategoryUtilizationWidget: View {
         case .wants: config.wantsBudget
         case .needs: config.needsBudget
         case .savings: config.savingsBudget
-        @unknown default: fatalError("Unknown expense category")
+        @unknown default: 0
         }
     }
 

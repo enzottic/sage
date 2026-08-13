@@ -49,10 +49,10 @@ struct DashboardView: View {
             .toolbar {
                 SageToolbar(
                     onPrevious: {
-                        selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth)!
+                        selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
                     },
                     onNext: {
-                        selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth)!
+                        selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
                     },
                     onAdd: { appRouter.presentSheet(.addExpense(nil)) }
                 )
