@@ -102,13 +102,15 @@ struct AddExpenseView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if isSaving {
-                    ProgressView()
+                    ProgressView("Saving expense")
+                        .controlSize(.small)
+                        .accessibilityLabel("Saving expense")
                 } else {
                     Button("Save") { Task { await saveItem() } }
                         .accessibilityIdentifier("save-expense-button")
                         .fontWeight(.semibold)
                         .tint(Color(red: 108 / 255, green: 138 / 255, blue: 78 / 255))
-                        .disabled(isParsingReceipt)
+                        .disabled(isParsingReceipt || isSaving)
                 }
             }
         }
@@ -213,7 +215,7 @@ struct AddExpenseView: View {
     }
 
     private func parseReceipt(_ image: UIImage) async {
-        guard !isParsingReceipt else { return }
+        guard !isParsingReceipt, !isSaving else { return }
         isParsingReceipt = true
         defer { isParsingReceipt = false }
 
@@ -239,6 +241,10 @@ struct AddExpenseView: View {
                 if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
                     tags = [matched]
                 }
+
+                appRouter.showToast(
+                    SageToast(message: "Receipt details added. Review them before saving.", kind: .success)
+                )
             } catch let error as ReceiptParserError {
                 showReceiptError(error.localizedDescription)
             } catch {
@@ -253,6 +259,8 @@ struct AddExpenseView: View {
     }
 
     func saveItem() async {
+        guard !isSaving else { return }
+
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Please enter an expense name"
             showError = true
@@ -266,6 +274,9 @@ struct AddExpenseView: View {
         }
 
         isSaving = true
+        defer { isSaving = false }
+
+        await Task.yield()
 
         var recurringId: UUID? = nil
         if isRecurring {
@@ -301,8 +312,8 @@ struct AddExpenseView: View {
             dismiss()
             appRouter.showToast(SageToast(message: "Expense saved", kind: .success))
         } catch {
-            isSaving = false
-            errorMessage = "Failed to save expense: \(error.localizedDescription)"
+            modelContext.rollback()
+            errorMessage = "Sage could not save this expense. Check available storage and try again."
             showError = true
         }
     }

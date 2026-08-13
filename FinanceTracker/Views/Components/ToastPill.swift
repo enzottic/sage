@@ -10,8 +10,7 @@ struct ToastPill: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: toast.kind == .success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(toast.kind == .success ? Color.green : Color.red)
+            toastIcon
             Text(toast.message)
                 .font(.subheadline)
                 .fontWeight(.medium)
@@ -20,6 +19,29 @@ struct ToastPill: View {
         .padding(.vertical, 10)
         .optionalGlassEffect(in: .capsule)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(toast.kind == .success ? "Success" : "Error"): \(toast.message)")
+        .accessibilityLabel("\(accessibilityPrefix): \(toast.message)")
+    }
+
+    @ViewBuilder
+    private var toastIcon: some View {
+        switch toast.kind {
+        case .progress:
+            ProgressView()
+                .controlSize(.small)
+        case .success:
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .error:
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
+        }
+    }
+
+    private var accessibilityPrefix: String {
+        switch toast.kind {
+        case .progress: return "In progress"
+        case .success: return "Success"
+        case .error: return "Error"
+        }
     }
 }

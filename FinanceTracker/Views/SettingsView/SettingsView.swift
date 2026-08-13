@@ -17,6 +17,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var showDeleteAllConfirmation = false
+    @State private var isDeletingAll = false
 
     private var feedbackURL: URL? {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -92,6 +93,7 @@ struct SettingsView: View {
                         SettingsListItem(text: "Delete All Expenses", icon: "trash.fill", color: .red)
                             .foregroundStyle(.red)
                     }
+                    .disabled(isDeletingAll)
                 }
 
                 #if DEBUG
@@ -129,23 +131,44 @@ struct SettingsView: View {
             }
             .alert("Delete All Expenses?", isPresented: $showDeleteAllConfirmation) {
                 Button("Delete All", role: .destructive) {
-                    deleteAllExpenses()
+                    Task { await deleteAllExpenses() }
                 }
+                .disabled(isDeletingAll)
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This will permanently delete every expense. This cannot be undone.")
             }
+            .safeAreaInset(edge: .bottom) {
+                if isDeletingAll {
+                    ProgressView("Deleting expenses")
+                        .font(.subheadline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(.bar)
+                        .accessibilityLabel("Deleting expenses. In progress.")
+                }
+            }
         }
     }
 
-    private func deleteAllExpenses() {
+    private func deleteAllExpenses() async {
+        guard !isDeletingAll else { return }
+        isDeletingAll = true
+        router.showToast(SageToast(message: "Deleting expenses…", kind: .progress))
+        defer { isDeletingAll = false }
+
+        await Task.yield()
+
         do {
             try modelContext.delete(model: Expense.self)
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             router.showToast(SageToast(message: "All expenses deleted", kind: .success))
         } catch {
-            router.showToast(SageToast(message: error.localizedDescription, kind: .error))
+            modelContext.rollback()
+            router.showToast(
+                SageToast(message: "Sage could not delete the expenses. Check storage and try again.", kind: .error)
+            )
         }
     }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import WidgetKit
 import SageKit
 
 struct ExpenseBackupSettingsSection: View {
@@ -19,21 +20,27 @@ struct ExpenseBackupSettingsSection: View {
     @Query var expenseTags: [ExpenseTag]
 
     @State private var showFileImporter: Bool = false
-    @State private var showExportConfirmation: Bool = false
     @State private var showImportConfirmation: Bool = false
-    @State private var showImportSuccess: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
     @State private var pendingImportTags: [ExpenseTag] = []
     @State private var unknownTagNames: [String] = []
     @State private var showUnknownTagsSheet: Bool = false
+    @State private var isReadingImport = false
+    @State private var isImporting = false
+    @State private var isExporting = false
+    @State private var importedExpenseCount = 0
+    @State private var importTotal = 0
     
     let expenseExporter = ExpenseBackupService.shared
 
+    private var isWorking: Bool {
+        isReadingImport || isImporting || isExporting
+    }
+
     var body: some View {
-        @Bindable var config = config
         List {
             Section {
-                Toggle(isOn: $config.isCloudSyncEnabled) {
+                Toggle(isOn: cloudSyncBinding) {
                     HStack {
                         ZStack {
                             RoundedRectangle(cornerRadius: 10)
@@ -48,6 +55,7 @@ struct ExpenseBackupSettingsSection: View {
                         }
                     }
                 }
+                .disabled(isWorking)
             } header: {
                 Text("iCloud Sync")
             } footer: {
@@ -56,22 +64,19 @@ struct ExpenseBackupSettingsSection: View {
 
             Section {
                 Button {
+                    guard !isWorking else { return }
                     showFileImporter = true
                 } label: {
                     SettingsListItem(text: "Import from CSV", icon: "square.and.arrow.down", color: .green)
                 }
+                .disabled(isWorking)
 
                 Button {
-                    let result = expenseExporter.exportExpenses(expenses: expenses)
-                    switch (result) {
-                    case .success:
-                        appRouter.showToast(SageToast(message: "Expenses saved to Files app.", kind: .success))
-                    case .failure(let error):
-                        appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
-                    }
+                    exportExpenses()
                 } label: {
                     SettingsListItem(text: "Export to CSV", icon: "square.and.arrow.up", color: .orange)
                 }
+                .disabled(isWorking)
             } header: {
                 Text("CSV Backup")
             } footer: {
@@ -80,6 +85,11 @@ struct ExpenseBackupSettingsSection: View {
         }
         .navigationTitle("Backup")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if isWorking {
+                operationProgress
+            }
+        }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [UTType.commaSeparatedText],
@@ -88,8 +98,9 @@ struct ExpenseBackupSettingsSection: View {
         )
         .alert("Import Expenses", isPresented: $showImportConfirmation) {
             Button("Import") {
-                importPendingExpenses()
+                Task { await importPendingExpenses() }
             }
+            .disabled(isWorking)
             Button("Cancel", role: .cancel) {
                 clearPendingImport()
             }
@@ -108,34 +119,117 @@ struct ExpenseBackupSettingsSection: View {
             .presentationDetents([.medium])
         }
     }
+
+    private var cloudSyncBinding: Binding<Bool> {
+        Binding(
+            get: { config.isCloudSyncEnabled },
+            set: { enabled in
+                if config.updateCloudSyncEnabled(enabled) {
+                    let state = enabled ? "enabled" : "disabled"
+                    appRouter.showToast(
+                        SageToast(message: "iCloud sync will be \(state) when you reopen Sage.", kind: .success)
+                    )
+                } else {
+                    appRouter.showToast(
+                        SageToast(
+                            message: "Sage saved the sync setting on this device. Connect to iCloud, then try again.",
+                            kind: .error
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var operationProgress: some View {
+        VStack(spacing: 6) {
+            if isImporting {
+                ProgressView(value: Double(importedExpenseCount), total: Double(max(importTotal, 1))) {
+                    Text("Importing expenses")
+                } currentValueLabel: {
+                    Text("\(importedExpenseCount) of \(importTotal)")
+                }
+            } else if isReadingImport {
+                ProgressView("Reading CSV")
+            } else {
+                ProgressView("Creating CSV export")
+            }
+        }
+        .font(.subheadline)
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(.bar)
+        .accessibilityElement(children: .combine)
+    }
     
     private func importExpenses(filePickerResult: Result<[URL], any Error>) {
+        guard !isWorking else { return }
+
         switch filePickerResult {
         case .success(let urls):
-            guard let url = urls.first, url.startAccessingSecurityScopedResource() else { return }
-            defer { url.stopAccessingSecurityScopedResource() }
+            guard let url = urls.first else {
+                appRouter.showToast(SageToast(message: "No CSV file was selected. Choose a file and try again.", kind: .error))
+                return
+            }
+            guard url.startAccessingSecurityScopedResource() else {
+                appRouter.showToast(SageToast(message: "Sage cannot access this CSV. Choose another file and try again.", kind: .error))
+                return
+            }
 
-            switch expenseExporter.readExpenses(from: url) {
-            case .success(let importedExpenses):
-                pendingImportExpenses = importedExpenses
+            isReadingImport = true
+            appRouter.showToast(SageToast(message: "Reading CSV import…", kind: .progress))
 
-                let knownNames = Set(expenseTags.map(\.name))
-                let unknown = importedExpenses
-                    .flatMap(\.tagNames)
-                    .filter { !knownNames.contains($0) }
-                let uniqueUnknown = Array(Set(unknown)).sorted()
+            Task {
+                let result = await expenseExporter.readExpenses(from: url)
+                url.stopAccessingSecurityScopedResource()
+                isReadingImport = false
 
-                if uniqueUnknown.isEmpty {
-                    showImportConfirmation = true
-                } else {
-                    unknownTagNames = uniqueUnknown
-                    showUnknownTagsSheet = true
+                switch result {
+                case .success(let importedExpenses):
+                    pendingImportExpenses = importedExpenses
+
+                    let knownNames = Set(expenseTags.map(\.name))
+                    let unknown = importedExpenses
+                        .flatMap(\.tagNames)
+                        .filter { !knownNames.contains($0) }
+                    let uniqueUnknown = Array(Set(unknown)).sorted()
+
+                    if uniqueUnknown.isEmpty {
+                        showImportConfirmation = true
+                    } else {
+                        unknownTagNames = uniqueUnknown
+                        showUnknownTagsSheet = true
+                    }
+                    appRouter.showToast(SageToast(message: "CSV is ready to import.", kind: .success))
+                case .failure:
+                    appRouter.showToast(
+                        SageToast(message: "Sage could not read this CSV. Choose a valid Sage export and try again.", kind: .error)
+                    )
                 }
+            }
+        case .failure:
+            appRouter.showToast(SageToast(message: "Sage could not open this CSV. Choose another file and try again.", kind: .error))
+        }
+    }
+
+    private func exportExpenses() {
+        guard !isWorking else { return }
+
+        let exportableExpenses = expenses.toExportable()
+        isExporting = true
+        appRouter.showToast(SageToast(message: "Creating CSV export…", kind: .progress))
+
+        Task {
+            let result = await expenseExporter.exportExpenses(expenses: exportableExpenses)
+            isExporting = false
+
+            switch result {
+            case .success:
+                appRouter.showToast(SageToast(message: "CSV export saved to Files.", kind: .success))
             case .failure(let error):
                 appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
             }
-        case .failure(let error):
-            appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
         }
     }
 
@@ -149,7 +243,9 @@ struct ExpenseBackupSettingsSection: View {
         }
     }
 
-    private func importPendingExpenses() {
+    private func importPendingExpenses() async {
+        guard !isWorking else { return }
+
         let expensesToInsert = toNormalExpenses(pendingImportExpenses)
         guard expensesToInsert.count == pendingImportExpenses.count else {
             appRouter.showToast(SageToast(message: "The import contains an invalid expense category.", kind: .error))
@@ -157,16 +253,32 @@ struct ExpenseBackupSettingsSection: View {
             return
         }
 
+        isImporting = true
+        importedExpenseCount = 0
+        importTotal = expensesToInsert.count
+        appRouter.showToast(SageToast(message: "Importing expenses…", kind: .progress))
+        defer { isImporting = false }
+
         pendingImportTags.forEach { modelContext.insert($0) }
-        expensesToInsert.forEach { modelContext.insert($0) }
+        for (index, expense) in expensesToInsert.enumerated() {
+            modelContext.insert(expense)
+            importedExpenseCount = index + 1
+
+            if index.isMultiple(of: 25) {
+                await Task.yield()
+            }
+        }
 
         do {
             try modelContext.save()
-            appRouter.showToast(SageToast(message: "Successfully imported expenses", kind: .success))
+            WidgetCenter.shared.reloadAllTimelines()
+            appRouter.showToast(
+                SageToast(message: "Imported \(expensesToInsert.count) expense\(expensesToInsert.count == 1 ? "" : "s").", kind: .success)
+            )
         } catch {
             modelContext.rollback()
             appRouter.showToast(
-                SageToast(message: "The import failed. No expenses were saved: \(error.localizedDescription)", kind: .error)
+                SageToast(message: "Sage could not import the CSV. No expenses were saved. Check storage and try again.", kind: .error)
             )
         }
 

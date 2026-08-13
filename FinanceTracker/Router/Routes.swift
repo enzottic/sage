@@ -54,7 +54,7 @@ enum SageDeepLink {
 // MARK: - Toast
 
 struct SageToast {
-    enum Kind { case success, error }
+    enum Kind: Equatable { case progress, success, error }
     let message: String
     let kind: Kind
 }

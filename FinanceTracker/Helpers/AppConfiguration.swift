@@ -119,6 +119,14 @@ class AppConfiguration {
         }
     }
 
+    /// Saves the CloudKit preference and reports whether iCloud accepted the setting update.
+    /// The data store itself changes on the next app launch.
+    @discardableResult
+    func updateCloudSyncEnabled(_ enabled: Bool) -> Bool {
+        isCloudSyncEnabled = enabled
+        return cloudKVS.synchronize()
+    }
+
     var smartTaggingMode: SmartTaggingMode {
         didSet {
             defaults.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
