@@ -99,4 +99,21 @@ struct PendingReceiptStoreTests {
         #expect(takenData == data)
         #expect(try PendingReceiptStore.take(from: directory) == nil)
     }
+
+    @Test
+    func failedReadDeletesInvalidPendingReceipt() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let invalidReceipt = directory
+            .appendingPathComponent(PendingReceiptStore.fileName, isDirectory: true)
+        try FileManager.default.createDirectory(at: invalidReceipt, withIntermediateDirectories: true)
+
+        #expect(throws: (any Error).self) {
+            try PendingReceiptStore.take(from: directory)
+        }
+        #expect(!FileManager.default.fileExists(atPath: invalidReceipt.path))
+    }
 }

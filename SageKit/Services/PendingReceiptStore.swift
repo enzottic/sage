@@ -38,7 +38,14 @@ public enum PendingReceiptStore {
         let url = fileURL(in: directory)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
 
-        let data = try Data(contentsOf: url)
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            try? FileManager.default.removeItem(at: url)
+            throw error
+        }
+
         try FileManager.default.removeItem(at: url)
         return data
     }

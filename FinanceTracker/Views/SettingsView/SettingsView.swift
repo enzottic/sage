@@ -163,7 +163,7 @@ struct SettingsView: View {
                 .disabled(isChangingData)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently removes all expenses, recurring rules, custom tags, accounts, settings, and temporary receipt files. This cannot be undone.")
+                Text("This permanently removes all expenses, recurring rules, tags, and settings. This cannot be undone.")
             }
             .safeAreaInset(edge: .bottom) {
                 if let activeDataOperation {
