@@ -16,52 +16,10 @@ enum UITestConfiguration {
     static var seedExpenseName: String? { environment["SAGE_UI_TEST_SEED_EXPENSE"] }
 }
 
-// Copies SQLite files (main + WAL + SHM) from src to dst. Safe to call if src doesn't exist.
-private func copyStoreFiles(from src: URL, to dst: URL) {
-    let fm = FileManager.default
-    for suffix in ["", "-wal", "-shm"] {
-        let srcFile = URL(fileURLWithPath: src.path + suffix)
-        let dstFile = URL(fileURLWithPath: dst.path + suffix)
-        guard fm.fileExists(atPath: srcFile.path) else { continue }
-        try? fm.copyItem(at: srcFile, to: dstFile)
-    }
-}
-
-// Migrates the store from the app's private sandbox to the shared app group container.
-// Only runs once, tracked by a flag in the app group UserDefaults. Production only —
-// the DEBUG store has always lived in the app group as SageDev.sqlite.
-private func migrateStoreToAppGroupIfNeeded(destination: URL) {
-    let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")
-    let migrationKey = "hasCompletedStoreMigration"
-    guard !(defaults?.bool(forKey: migrationKey) ?? false) else { return }
-    defer { defaults?.set(true, forKey: migrationKey) }
-
-    let fm = FileManager.default
-    // Only migrate if new store doesn't exist yet — avoids clobbering a store already opened there
-    guard !fm.fileExists(atPath: destination.path) else { return }
-
-    // CloudKit will re-sync all data to the new location — no need to copy stale local files,
-    // and doing so can confuse CloudKit's change tracking metadata.
-    let cloudSyncEnabled = (UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")?.bool(forKey: "isCloudSyncEnabled")) ?? false
-    guard !cloudSyncEnabled else { return }
-
-    // SwiftData's default name when no url is given varies; try the most common candidates
-    let candidates = [
-        URL.applicationSupportDirectory.appending(path: "default.store"),
-        URL.applicationSupportDirectory.appending(path: "Sage.store"),
-        URL.applicationSupportDirectory.appending(path: "FinanceTracker.store"),
-    ]
-
-    for candidate in candidates where fm.fileExists(atPath: candidate.path) {
-        copyStoreFiles(from: candidate, to: destination)
-        return
-    }
-}
-
 @MainActor
 let appContainer: ModelContainer = {
-    do {
-        if UITestConfiguration.isEnabled {
+    if UITestConfiguration.isEnabled {
+        do {
             let container = try SageModelContainer.makeInMemory()
             if let seedName = UITestConfiguration.seedExpenseName {
                 container.mainContext.insert(
@@ -70,38 +28,19 @@ let appContainer: ModelContainer = {
                 try container.mainContext.save()
             }
             return container
+        } catch {
+            fatalError("Failed to create UI test model container: \(error)")
         }
-
-        #if !DEBUG
-        // iCloud KVS is authoritative for the sync preference
-        let cloudKVS = NSUbiquitousKeyValueStore.default
-        let cloudSyncEnabled: Bool
-        if cloudKVS.object(forKey: "isCloudSyncEnabled") != nil {
-            cloudSyncEnabled = cloudKVS.bool(forKey: "isCloudSyncEnabled")
-        } else {
-            let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup")
-            cloudSyncEnabled = defaults?.bool(forKey: "isCloudSyncEnabled") ?? false
-        }
-
-        let groupURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: SageModelContainer.appGroupIdentifier)!
-        let storeURL = groupURL.appending(path: "Sage.sqlite")
-        migrateStoreToAppGroupIfNeeded(destination: storeURL)
-        #else
-        let cloudSyncEnabled = false
-        #endif
-
-        let modelContainer = try SageModelContainer.make(cloudKitEnabled: cloudSyncEnabled)
-
-        #if !DEBUG
-        let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
-        recurringService.generateAllExpenses(through: Date())
-        #endif
-
-        return modelContainer
-    } catch {
-        fatalError("Failed to create model container: \(error)")
     }
+
+    let modelContainer = SageModelContainer.shared
+
+    #if !DEBUG
+    let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
+    recurringService.generateAllExpenses(through: Date())
+    #endif
+
+    return modelContainer
 }()
 
 @MainActor

@@ -10,18 +10,10 @@ import SwiftData
 
 @MainActor @Observable
 final public class ExpenseStore {
-    public static let shared = ExpenseStore()
+    public static let shared = ExpenseStore(modelContainer: SageModelContainer.shared)
     
     let modelContainer: ModelContainer
     var context: ModelContext
-
-    private convenience init() {
-        guard let container = try? SageModelContainer.make() else {
-            fatalError("Failed to create the model container")
-        }
-
-        self.init(modelContainer: container)
-    }
 
     public init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer

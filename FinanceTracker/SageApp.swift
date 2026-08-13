@@ -29,6 +29,10 @@ struct SageApp: App {
         // Pull latest iCloud KVS values before checking setup state
         NSUbiquitousKeyValueStore.default.synchronize()
 
+        // Keep the store configuration stable across the app, widgets, and App Intents until
+        // the next app launch.
+        SageModelContainer.activateCloudKitPreference()
+
         // Present notifications that fire while the app is foreground
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 

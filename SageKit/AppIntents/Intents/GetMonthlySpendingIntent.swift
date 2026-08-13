@@ -15,6 +15,9 @@ public struct GetMonthlySpendingIntent: AppIntent {
     @Parameter(title: "Category") public var category: ExpenseCategory?
     @Parameter(title: "Tag") public var tag: ExpenseTagEntity?
 
+    @Dependency
+    var expenseStore: ExpenseStore
+
     public static var parameterSummary: some ParameterSummary {
         Summary("How much have I spent this month?") {
             \.$category
@@ -26,15 +29,13 @@ public struct GetMonthlySpendingIntent: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog {
-        let store = ExpenseStore.shared
-        
-        if let tag, let total = try? store.monthlyTotal(tagId: tag.id) {
+        if let tag, let total = try? expenseStore.monthlyTotal(tagId: tag.id) {
             return .result(dialog: "You've spent \(total.currencyString) on \(tag.name.lowercased()) this month.")
-        } else if let category, let total = try? store.monthlyTotal(category: category) {
+        } else if let category, let total = try? expenseStore.monthlyTotal(category: category) {
             return .result(dialog: "You've spent \(total.currencyString) on \(category.rawValue.lowercased()) this moonth.")
         }
         
-        if let total = try? store.monthlyTotal() {
+        if let total = try? expenseStore.monthlyTotal() {
             return .result(dialog: "You've spent \(total.currencyString) this month.")
         }
         

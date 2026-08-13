@@ -12,6 +12,9 @@ public struct GetBudgetRemainingIntent: AppIntent {
 
     @Parameter(title: "Category") public var category: ExpenseCategory?
 
+    @Dependency
+    var expenseStore: ExpenseStore
+
     public static var parameterSummary: some ParameterSummary {
         Summary("How much budget do I have left?") {
             \.$category
@@ -22,16 +25,15 @@ public struct GetBudgetRemainingIntent: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ProvidesDialog {
-        let store = ExpenseStore.shared
         if let category {
-            let remaining = try store.remainingBudget(for: category)
+            let remaining = try expenseStore.remainingBudget(for: category)
             if remaining >= 0 {
                 return .result(dialog: "You have \(remaining.currencyString) remaining in your \(category.rawValue.lowercased()) budget.")
             } else {
                 return .result(dialog: "You're \((-remaining).currencyString) over your \(category.rawValue.lowercased()) budget.")
             }
         } else {
-            let remaining = try store.totalRemainingBudget()
+            let remaining = try expenseStore.totalRemainingBudget()
             if remaining >= 0 {
                 return .result(dialog: "You have \(remaining.currencyString) left across all budgets this month.")
             } else {
