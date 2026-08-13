@@ -43,7 +43,7 @@ private extension ExpenseStore.MonthlySnapshot {
         case .savings:
             return CategorySpotlightEntry(date: .now, category: .savings, spent: savingsSpent, budget: savingsBudget)
         @unknown default:
-            fatalError("Unknown category: \(category)")
+            return CategorySpotlightEntry(date: .now, category: .needs, spent: 0, budget: 0)
         }
     }
 
@@ -69,7 +69,7 @@ struct UtilizationProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: UtilizationAppIntent, in context: Context) async -> Timeline<UtilizationEntry> {
-        let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.utilizationEntry ?? .placeholder
+        let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.utilizationEntry ?? .placeholder
         return Timeline(entries: [entry], policy: .after(.nextRefresh))
     }
 }
@@ -85,7 +85,7 @@ struct PieChartProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PieChartEntry>) -> Void) {
         Task {
-            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.pieChartEntry ?? .placeholder
+            let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.pieChartEntry ?? .placeholder
             completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
         }
     }
@@ -102,7 +102,7 @@ struct RecentExpensesProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<RecentExpensesEntry>) -> Void) {
         Task {
-            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.recentExpensesEntry ?? .placeholder
+            let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.recentExpensesEntry ?? .placeholder
             completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
         }
     }
@@ -119,7 +119,7 @@ struct BudgetRemainingProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetRemainingEntry>) -> Void) {
         Task {
-            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.budgetRemainingEntry ?? .placeholder
+            let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.budgetRemainingEntry ?? .placeholder
             completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
         }
     }
@@ -135,7 +135,7 @@ struct CategorySpotlightProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: CategorySpotlightAppIntent, in context: Context) async -> Timeline<CategorySpotlightEntry> {
-        let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.categorySpotlightEntry(for: configuration.category) ?? .placeholder(category: configuration.category)
+        let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.categorySpotlightEntry(for: configuration.category) ?? .placeholder(category: configuration.category)
         return Timeline(entries: [entry], policy: .after(.nextRefresh))
     }
 }
@@ -151,7 +151,7 @@ struct MonthlySummaryProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MonthlySummaryEntry>) -> Void) {
         Task {
-            let entry = (try? await ExpenseStore.shared.monthlySnapshot())?.monthlySummaryEntry ?? .placeholder
+            let entry = (try? await ExpenseStore.shared?.monthlySnapshot())?.monthlySummaryEntry ?? .placeholder
             completion(Timeline(entries: [entry], policy: .after(.nextRefresh)))
         }
     }

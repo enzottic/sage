@@ -18,6 +18,7 @@ struct ExpenseDetailView: View {
     @State private var isEditing: Bool = false
     @State private var workingExpense: EditableExpense
     @State private var showingDeleteConfirmation: Bool = false
+    @State private var saveErrorMessage: String?
 
     init(expense: Expense) {
         self.expense = expense
@@ -56,11 +57,18 @@ struct ExpenseDetailView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     saveItem()
-                    dismiss()
                 }
                 .accessibilityIdentifier("save-expense-changes-button")
                 .tint(Color.sageAccent)
             }
+        }
+        .alert("Could not save expense", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage ?? "Please try again.")
         }
         .gradientBackground()
     }
@@ -72,8 +80,14 @@ struct ExpenseDetailView: View {
         expense.category = workingExpense.category
         expense.tags = workingExpense.tags
         expense.note = workingExpense.note
-        try! modelContext.save()
-        WidgetCenter.shared.reloadAllTimelines()
+        do {
+            try modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
+            dismiss()
+        } catch {
+            modelContext.rollback()
+            saveErrorMessage = error.localizedDescription
+        }
     }
 }
 

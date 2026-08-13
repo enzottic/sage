@@ -17,9 +17,9 @@ enum UITestConfiguration {
 }
 
 @MainActor
-let appContainer: ModelContainer = {
+let appContainerResult: Result<ModelContainer, any Error> = {
     if UITestConfiguration.isEnabled {
-        do {
+        return Result {
             let container = try SageModelContainer.makeInMemory()
             if let seedName = UITestConfiguration.seedExpenseName {
                 container.mainContext.insert(
@@ -28,19 +28,19 @@ let appContainer: ModelContainer = {
                 try container.mainContext.save()
             }
             return container
-        } catch {
-            fatalError("Failed to create UI test model container: \(error)")
         }
     }
 
-    let modelContainer = SageModelContainer.shared
+    let result = SageModelContainer.shared
 
     #if !DEBUG
-    let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
-    recurringService.generateAllExpenses(through: Date())
+    if case let .success(modelContainer) = result {
+        let recurringService = RecurringExpenseService(modelContext: modelContainer.mainContext)
+        recurringService.generateAllExpenses(through: Date())
+    }
     #endif
 
-    return modelContainer
+    return result
 }()
 
 @MainActor

@@ -38,11 +38,11 @@ struct ExpensesView: View {
                     SageToolbar(
                         onPrevious: {
                             slideDirection = .leading
-                            selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
+                            selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
                         },
                         onNext: {
                             slideDirection = .trailing
-                            selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth)!
+                            selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
                         },
                         onAdd: { appRouter.presentSheet(.addExpense(nil)) }
                     )

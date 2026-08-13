@@ -50,8 +50,10 @@ struct RecurringExpensesSettingsSection: View {
                             }
                     }
                     .onDelete { indexSet in
-                        ruleToDelete = sortedRules[indexSet.first!]
-                        showDeleteConfirmation = true
+                        if let index = indexSet.first, sortedRules.indices.contains(index) {
+                            ruleToDelete = sortedRules[index]
+                            showDeleteConfirmation = true
+                        }
                     }
                 } header: {
                     Text("Recurring Expenses")
@@ -150,4 +152,3 @@ private struct RecurringRuleRow: View {
     RecurringExpensesSettingsSection()
         .environmentInjection()
 }
-

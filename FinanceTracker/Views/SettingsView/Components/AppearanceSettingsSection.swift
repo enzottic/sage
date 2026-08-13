@@ -177,7 +177,7 @@ struct AppearanceSettingsSection: View {
                             ColorPicker("", selection: $config.savingsColor, supportsOpacity: false)
                                 .labelsHidden()
                         @unknown default:
-                            fatalError("Unknown category: \(category)")
+                            EmptyView()
                         }
                     }
                 }

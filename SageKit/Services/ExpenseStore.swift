@@ -10,7 +10,10 @@ import SwiftData
 
 @MainActor @Observable
 final public class ExpenseStore {
-    public static let shared = ExpenseStore(modelContainer: SageModelContainer.shared)
+    public static let shared: ExpenseStore? = {
+        guard case let .success(container) = SageModelContainer.shared else { return nil }
+        return ExpenseStore(modelContainer: container)
+    }()
     
     let modelContainer: ModelContainer
     var context: ModelContext

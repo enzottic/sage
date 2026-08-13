@@ -18,7 +18,7 @@ struct SettingsView: View {
 
     @State private var showDeleteAllConfirmation = false
 
-    private var feedbackURL: URL {
+    private var feedbackURL: URL? {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         let ios = UIDevice.current.systemVersion
@@ -30,7 +30,7 @@ struct SettingsView: View {
             URLQueryItem(name: "subject", value: "Sage Feedback"),
             URLQueryItem(name: "body", value: body)
         ]
-        return components.url!
+        return components.url
     }
 
     private static var deviceModel: String {
@@ -72,8 +72,12 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Link(destination: feedbackURL) {
-                        SettingsListItem(text: "Feedback", icon: "envelope.fill", color: .yellow)
+                    if let feedbackURL {
+                        Link(destination: feedbackURL) {
+                            SettingsListItem(text: "Feedback", icon: "envelope.fill", color: .yellow)
+                        }
+                    } else {
+                        SettingsListItem(text: "Feedback unavailable", icon: "envelope.fill", color: .gray)
                     }
                     let page = SettingsPage.privacy
                     NavigationLink(value: page) {
@@ -211,10 +215,17 @@ enum SettingsPage: String, Hashable, CaseIterable {
 
 private struct PrivacyWebView: View {
     @State private var isReaderMode = false
+    private let privacyURL = URL(string: "https://enzottic.me/sage/privacy")
 
     var body: some View {
-        WebView(url: URL(string: "https://enzottic.me/sage/privacy")!, isReaderMode: isReaderMode)
-            .ignoresSafeArea()
+        Group {
+            if let privacyURL {
+                WebView(url: privacyURL, isReaderMode: isReaderMode)
+                    .ignoresSafeArea()
+            } else {
+                ContentUnavailableView("Privacy policy unavailable", systemImage: "exclamationmark.triangle")
+            }
+        }
             .navigationTitle("Privacy")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

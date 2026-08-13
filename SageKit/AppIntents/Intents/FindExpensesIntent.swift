@@ -32,23 +32,23 @@ public enum ExpenseTimePeriod: String, AppEnum {
         switch self {
         case .today:
             let start = calendar.startOfDay(for: now)
-            return (start, calendar.date(byAdding: .day, value: 1, to: start)!)
+            return (start, calendar.date(byAdding: .day, value: 1, to: start) ?? now)
         case .yesterday:
             let today = calendar.startOfDay(for: now)
-            return (calendar.date(byAdding: .day, value: -1, to: today)!, today)
+            return (calendar.date(byAdding: .day, value: -1, to: today) ?? today, today)
         case .thisWeek:
             let start = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
-            return (start, calendar.date(byAdding: .weekOfYear, value: 1, to: start)!)
+            return (start, calendar.date(byAdding: .weekOfYear, value: 1, to: start) ?? now)
         case .lastWeek:
             let thisWeekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
-            let start = calendar.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)!
+            let start = calendar.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart) ?? thisWeekStart
             return (start, thisWeekStart)
         case .thisMonth:
             let start = calendar.dateInterval(of: .month, for: now)?.start ?? now
-            return (start, calendar.date(byAdding: .month, value: 1, to: start)!)
+            return (start, calendar.date(byAdding: .month, value: 1, to: start) ?? now)
         case .lastMonth:
             let thisMonthStart = calendar.dateInterval(of: .month, for: now)?.start ?? now
-            let start = calendar.date(byAdding: .month, value: -1, to: thisMonthStart)!
+            let start = calendar.date(byAdding: .month, value: -1, to: thisMonthStart) ?? thisMonthStart
             return (start, thisMonthStart)
         }
     }

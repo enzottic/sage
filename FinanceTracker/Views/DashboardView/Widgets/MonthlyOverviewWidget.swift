@@ -23,9 +23,9 @@ struct MonthlyOverviewWidget: View {
     }
 
     var lastMonthPartialTotal: Double {
-        let lastMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth)!
-        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.start
-        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)!.end
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
+        let startOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)?.start ?? lastMonth
+        let endOfLastMonth = calendar.dateInterval(of: .month, for: lastMonth)?.end ?? lastMonth
 
         let cutoffDate: Date
         if isCurrentMonth {
@@ -43,8 +43,8 @@ struct MonthlyOverviewWidget: View {
     }
 
     var currentMonthPartialTotal: Double {
-        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)!.start
-        let cutoffDate = isCurrentMonth ? Date() : calendar.dateInterval(of: .month, for: selectedMonth)!.end
+        let startOfMonth = calendar.dateInterval(of: .month, for: selectedMonth)?.start ?? selectedMonth
+        let cutoffDate = isCurrentMonth ? Date() : calendar.dateInterval(of: .month, for: selectedMonth)?.end ?? selectedMonth
         return comparisonExpenses.filter {
             $0.date >= startOfMonth && $0.date <= cutoffDate
         }.total
