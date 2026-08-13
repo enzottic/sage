@@ -9,6 +9,8 @@ import XCTest
 
 final class FinanceTrackerUITests: XCTestCase {
 
+    private let elementTimeout: TimeInterval = 10
+
     override func setUpWithError() throws {
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
@@ -19,67 +21,113 @@ final class FinanceTrackerUITests: XCTestCase {
     }
 
     @MainActor
-    func testWelcomeViewAppearsOnFirstLaunch() throws {
-        // Given: App is launching for the first time
+    private func launchApp(hasOpenedAppOnce: Bool) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments.append("-hasOpenedAppOnce")
-        app.launchArguments.append("false")
-
-        // When: App is launched
+        app.launchArguments += [
+            "-hasOpenedAppOnce",
+            hasOpenedAppOnce ? "true" : "false"
+        ]
         app.launch()
+        return app
+    }
 
-        // Then: Welcome view should be displayed
+    @MainActor
+    func testWelcomeViewAppearsOnFirstLaunch() throws {
+        let app = launchApp(hasOpenedAppOnce: false)
+
         let welcomeTitle = app.staticTexts["Welcome to Sage"]
-        XCTAssertTrue(welcomeTitle.exists, "Welcome view title should be visible on first launch")
+        XCTAssertTrue(
+            welcomeTitle.waitForExistence(timeout: elementTimeout),
+            "Welcome view title should be visible on first launch"
+        )
 
-        // Verify the welcome screen has expected elements
         let getStartedButton = app.buttons["Get Started"]
-        XCTAssertTrue(getStartedButton.exists, "Get Started button should be visible")
+        XCTAssertTrue(
+            getStartedButton.waitForExistence(timeout: elementTimeout),
+            "Get Started button should be visible"
+        )
 
         let subtitle = app.staticTexts["Your Smart Budgeting Companion"]
-        XCTAssertTrue(subtitle.exists, "Welcome subtitle should be visible")
+        XCTAssertTrue(
+            subtitle.waitForExistence(timeout: elementTimeout),
+            "Welcome subtitle should be visible"
+        )
     }
 
     @MainActor
     func testWelcomeViewDoesNotAppearAfterOnboarding() throws {
-        // Given: App has been opened before
-        let app = XCUIApplication()
-        app.launchArguments.append("-hasOpenedAppOnce")
-        app.launchArguments.append("true")
+        let app = launchApp(hasOpenedAppOnce: true)
 
-        // When: App is launched
-        app.launch()
-
-        // Then: Welcome view should NOT be displayed
         let welcomeTitle = app.staticTexts["Welcome to Sage"]
         XCTAssertFalse(welcomeTitle.exists, "Welcome view should not appear when app has been opened before")
 
-        // Main app tab view should be visible instead
         let homeTab = app.tabBars.buttons.element(boundBy: 0)
-        XCTAssertTrue(homeTab.waitForExistence(timeout: 2), "Main tab bar should be visible")
+        XCTAssertTrue(
+            homeTab.waitForExistence(timeout: elementTimeout),
+            "Main tab bar should be visible"
+        )
     }
-    
+
     @MainActor
     func testCanAddExpenseAndPersists() {
-        let app = XCUIApplication()
-        
-        app.activate()
-        app.buttons["Add Item"].firstMatch.tap()
-        app.textFields["Expense Name"].firstMatch.tap()
-        app.textFields["Expense Name"].firstMatch.typeText("test")
-        app.staticTexts["$0.00"].firstMatch.tap()
-        app.textFields["Expense Amount Field"].firstMatch.typeText("test123123")
-        app.buttons["Wants"].firstMatch.tap()
-        app.buttons["Add a Tag"].firstMatch.tap()
-        app.buttons["✈️ Travel"].firstMatch.tap()
-        app.buttons["Save"].firstMatch.tap()
-        app.buttons["Needs, $0, of $3,650"].firstMatch.swipeUp()
-        
-        let text = app.staticTexts["test"]
-        XCTAssertTrue(text.exists, "Could not find Test text")
-        
+        let expenseName = "UI Test Expense"
+        let app = launchApp(hasOpenedAppOnce: true)
+
+        let addButton = app.buttons["Add Expense"].firstMatch
+        XCTAssertTrue(
+            addButton.waitForExistence(timeout: elementTimeout),
+            "Add expense button should be visible"
+        )
+        addButton.tap()
+
+        let nameField = app.textFields["New Expense"].firstMatch
+        XCTAssertTrue(
+            nameField.waitForExistence(timeout: elementTimeout),
+            "Expense name field should be visible"
+        )
+        nameField.tap()
+        nameField.typeText(expenseName)
+
+        let amountField = app.textFields["Expense Amount Field"].firstMatch
+        XCTAssertTrue(
+            amountField.waitForExistence(timeout: elementTimeout),
+            "Expense amount field should be visible"
+        )
+        amountField.tap()
+        amountField.typeText("1234")
+
+        let saveButton = app.buttons["Save"].firstMatch
+        XCTAssertTrue(
+            saveButton.waitForExistence(timeout: elementTimeout),
+            "Save button should be visible"
+        )
+        saveButton.tap()
+
+        let newExpenseNavigationBar = app.navigationBars["New Expense"]
+        XCTAssertTrue(
+            newExpenseNavigationBar.waitForNonExistence(timeout: elementTimeout),
+            "New expense view should close after save"
+        )
+
+        app.terminate()
+        app.launch()
+
+        let expensesTab = app.tabBars.buttons["Expenses"]
+        XCTAssertTrue(
+            expensesTab.waitForExistence(timeout: elementTimeout),
+            "Expenses tab should be visible"
+        )
+        expensesTab.tap()
+
+        let savedExpense = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@", expenseName)
+        ).firstMatch
+        XCTAssertTrue(
+            savedExpense.waitForExistence(timeout: elementTimeout),
+            "Saved expense should remain after relaunch"
+        )
     }
-    
+
     @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
