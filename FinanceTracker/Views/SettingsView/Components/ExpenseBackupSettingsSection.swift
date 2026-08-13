@@ -23,6 +23,7 @@ struct ExpenseBackupSettingsSection: View {
     @State private var showImportConfirmation: Bool = false
     @State private var showImportSuccess: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
+    @State private var pendingImportTags: [ExpenseTag] = []
     @State private var unknownTagNames: [String] = []
     @State private var showUnknownTagsSheet: Bool = false
     
@@ -87,13 +88,10 @@ struct ExpenseBackupSettingsSection: View {
         )
         .alert("Import Expenses", isPresented: $showImportConfirmation) {
             Button("Import") {
-                toNormalExpenses(pendingImportExpenses).forEach { modelContext.insert($0) }
-                save()
-                appRouter.showToast(SageToast(message: "Successfully imported expenses", kind: .success))
-                pendingImportExpenses = []
+                importPendingExpenses()
             }
             Button("Cancel", role: .cancel) {
-                pendingImportExpenses = []
+                clearPendingImport()
             }
         } message: {
             Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
@@ -102,8 +100,7 @@ struct ExpenseBackupSettingsSection: View {
             UnknownTagsSheet(
                 unknownTagNames: unknownTagNames,
                 onResolve: { createdTags in
-                    createdTags.forEach { modelContext.insert($0) }
-                    try? modelContext.save()
+                    pendingImportTags = createdTags
                     unknownTagNames = []
                     showImportConfirmation = true
                 }
@@ -143,19 +140,43 @@ struct ExpenseBackupSettingsSection: View {
     }
 
     private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
-        importedExpenses.map { e in
-            let tagsByName = Dictionary(expenseTags.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        importedExpenses.compactMap { e in
+            let availableTags = expenseTags + pendingImportTags
+            let tagsByName = Dictionary(availableTags.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
             let tags = e.tagNames.compactMap { tagsByName[$0] }
-            return Expense(name: e.name, amount: e.amount, category: ExpenseCategory(rawValue: e.category)!, date: e.date, tags: tags, note: e.note)
+            guard let category = ExpenseCategory(rawValue: e.category) else { return nil }
+            return Expense(name: e.name, amount: e.amount, category: category, date: e.date, tags: tags, note: e.note)
         }
     }
-        
-    private func save() {
+
+    private func importPendingExpenses() {
+        let expensesToInsert = toNormalExpenses(pendingImportExpenses)
+        guard expensesToInsert.count == pendingImportExpenses.count else {
+            appRouter.showToast(SageToast(message: "The import contains an invalid expense category.", kind: .error))
+            clearPendingImport()
+            return
+        }
+
+        pendingImportTags.forEach { modelContext.insert($0) }
+        expensesToInsert.forEach { modelContext.insert($0) }
+
         do {
             try modelContext.save()
+            appRouter.showToast(SageToast(message: "Successfully imported expenses", kind: .success))
         } catch {
-            print("Failed to save model context: \(error.localizedDescription)")
+            modelContext.rollback()
+            appRouter.showToast(
+                SageToast(message: "The import failed. No expenses were saved: \(error.localizedDescription)", kind: .error)
+            )
         }
+
+        clearPendingImport()
+    }
+
+    private func clearPendingImport() {
+        pendingImportExpenses = []
+        pendingImportTags = []
+        unknownTagNames = []
     }
 }
 
