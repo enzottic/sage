@@ -132,6 +132,22 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testDeletesDashboardExpense() {
+        let app = launchApp(seedExpense: "Dashboard Expense to Delete")
+
+        let row = expenseRow(named: "Dashboard Expense to Delete", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: timeout), "The dashboard expense did not appear.")
+        scrollToHittability(of: row, in: app)
+        row.swipeLeft()
+        tap("delete-expense-action", in: app)
+        tap("confirm-delete-expense-button", in: app)
+
+        XCTAssertTrue(
+            row.waitForNonExistence(timeout: timeout),
+            "The deleted expense remained on the dashboard."
+        )
+    }
+
     private func launchApp(showsOnboarding: Bool = false, seedExpense: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["SAGE_UI_TESTING"] = "1"
@@ -178,6 +194,14 @@ final class FinanceTrackerUITests: XCTestCase {
 
     private func expenseRow(named name: String, in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: "expense-row-\(name)").firstMatch
+    }
+
+    private func scrollToHittability(of element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<6 {
+            if element.waitForHittability(timeout: 1) { return }
+            app.swipeUp()
+        }
+        XCTFail("The element did not become hittable.")
     }
 
     private func tap(_ identifier: String, in app: XCUIApplication) {

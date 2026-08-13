@@ -20,10 +20,17 @@ struct ExpenseList: View {
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
     @State private var deleteErrorMessage: String?
+    /// Hides a row while SwiftData removes it from the parent query. Its
+    /// persistent identifier is safe to read after model detachment.
+    @State private var deletingExpenseIDs: Set<PersistentIdentifier> = []
+
+    private var visibleExpenses: [Expense] {
+        expenses.filter { !deletingExpenseIDs.contains($0.persistentModelID) }
+    }
 
     var body: some View {
         Group {
-            ForEach(expenses) { expense in
+            ForEach(visibleExpenses) { expense in
                 NavigationLink(value: AppRoute.expenseDetail(expense)) {
                     ExpenseRowItem(expense: expense, style: rowStyle)
                 }
@@ -66,15 +73,25 @@ struct ExpenseList: View {
     }
     
     private func deleteExpense(_ expense: Expense) {
+        let expenseID = expense.persistentModelID
+
+        // Do not keep a deleted SwiftData model in view state. SwiftUI can
+        // otherwise update the row after its attribute faults are removed.
+        expenseToDelete = nil
         withAnimation {
-            modelContext.delete(expense)
+            deletingExpenseIDs.insert(expenseID)
         }
+        modelContext.delete(expense)
+
         do {
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             appRouter.showToast(SageToast(message: "Expense deleted", kind: .success))
         } catch {
             modelContext.rollback()
+            withAnimation {
+                deletingExpenseIDs.remove(expenseID)
+            }
             deleteErrorMessage = error.localizedDescription
         }
     }
