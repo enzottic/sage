@@ -124,9 +124,7 @@ struct SettingsView: View {
                 #endif
             }
             .navigationTitle("Settings")
-            .background(.sageBackground)
-            .scrollContentBackground(.hidden)
-            .gradientBackground()
+            .settingsBackground()
             .navigationDestination(for: SettingsPage.self) { page in
                 switch page {
                 case .appearance:

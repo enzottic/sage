@@ -65,6 +65,7 @@ struct BudgetSettingsSection: View {
                 Text("Budget Allocation")
             }
         }
+        .settingsBackground()
         .navigationTitle("Budget and Allocation")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

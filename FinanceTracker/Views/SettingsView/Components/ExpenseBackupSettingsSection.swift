@@ -83,6 +83,7 @@ struct ExpenseBackupSettingsSection: View {
                 Text("Export your expenses as a CSV list. Recurring expense rules are not exported.")
             }
         }
+        .settingsBackground()
         .navigationTitle("Backup")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {

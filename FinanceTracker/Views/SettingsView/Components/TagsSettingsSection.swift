@@ -126,6 +126,7 @@ struct TagsSettingsSection: View {
                 }
             }
         }
+        .settingsBackground()
         .navigationTitle("Tags")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

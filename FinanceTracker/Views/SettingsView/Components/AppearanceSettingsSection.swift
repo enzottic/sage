@@ -185,6 +185,7 @@ struct AppearanceSettingsSection: View {
                 Text("Category Colors")
             }
         }
+        .settingsBackground()
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
     }

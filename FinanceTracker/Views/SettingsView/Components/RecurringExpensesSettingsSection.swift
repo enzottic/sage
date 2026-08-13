@@ -60,6 +60,7 @@ struct RecurringExpensesSettingsSection: View {
                 }
             }
         }
+        .settingsBackground()
         .task {
             notificationAuthStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
         }

@@ -33,4 +33,11 @@ extension View {
     func gradientBackground(color: Color = .sage) -> some View {
         modifier(GradientBackgroundModifier(color))
     }
+
+    /// Applies the Sage background treatment used by Settings lists.
+    func settingsBackground() -> some View {
+        scrollContentBackground(.hidden)
+            .background(.sageBackground)
+            .gradientBackground()
+    }
 }
