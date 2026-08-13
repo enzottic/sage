@@ -18,16 +18,11 @@ class ShareViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        log.info("viewDidAppear — starting handleIncomingImage")
         Task { await handleIncomingImage() }
     }
 
     @MainActor
     private func handleIncomingImage() async {
-        log.info("handleIncomingImage called")
-        log.info("extensionContext: \(self.extensionContext != nil ? "present" : "nil")")
-        log.info("inputItems count: \(self.extensionContext?.inputItems.count ?? -1)")
-
         guard
             let item = extensionContext?.inputItems.first as? NSExtensionItem,
             let provider = item.attachments?.first(where: {
@@ -38,11 +33,8 @@ class ShareViewController: UIViewController {
             return finish()
         }
 
-        log.info("Image provider found, loading item...")
-
         do {
             let loaded = try await provider.loadItem(forTypeIdentifier: UTType.image.identifier)
-            log.info("Loaded item type: \(String(describing: type(of: loaded)))")
 
             let image: UIImage? = switch loaded {
                 case let img as UIImage: img
@@ -56,19 +48,16 @@ class ShareViewController: UIViewController {
                 return finish()
             }
 
-            log.info("Image loaded: \(image.size.width)x\(image.size.height)")
-
             do {
                 try saveImageToAppGroup(image)
-                log.info("Image saved to app group successfully")
             } catch {
-                log.error("saveImageToAppGroup failed: \(error)")
+                log.error("Could not save shared receipt image: \(error.localizedDescription, privacy: .private(mask: .hash))")
                 return finish()
             }
 
             openMainApp()
         } catch {
-            log.error("loadItem failed: \(error)")
+            log.error("Could not load shared receipt image: \(error.localizedDescription, privacy: .private(mask: .hash))")
             finish()
         }
     }
@@ -77,15 +66,12 @@ class ShareViewController: UIViewController {
         let containerURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.me.enzottic.SageAppGroup"
         )
-        log.info("App group container URL: \(containerURL?.path ?? "NIL — app group not configured")")
-
         guard let containerURL, let data = image.jpegData(compressionQuality: 0.8) else {
             throw URLError(.badURL)
         }
 
         let fileURL = containerURL.appendingPathComponent("pendingReceiptImage.jpg")
         try data.write(to: fileURL)
-        log.info("Wrote \(data.count) bytes to \(fileURL.path)")
     }
 
     @MainActor
@@ -100,8 +86,6 @@ class ShareViewController: UIViewController {
             finish()
             return
         }
-        log.info("Attempting to open \(url.absoluteString) via extensionContext")
-
         var responder: UIResponder? = self
         while responder != nil {
             if let application = responder as? UIApplication {
@@ -114,7 +98,6 @@ class ShareViewController: UIViewController {
     }
 
     private func finish() {
-        log.info("finish() called — completing extension request")
         extensionContext?.completeRequest(returningItems: nil)
     }
 }

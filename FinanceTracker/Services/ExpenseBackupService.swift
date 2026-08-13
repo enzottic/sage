@@ -6,10 +6,12 @@
 //
 
 import Foundation
+import OSLog
 import SageKit
 
 final class ExpenseBackupService {
     static let shared = ExpenseBackupService()
+    private let logger = Logger(subsystem: "me.enzottic.FinanceTracker", category: "ExpenseBackup")
 
     func exportExpenses(expenses: [Expense]) -> Result<String, ExpenseExportServiceError> {
         do {
@@ -25,10 +27,10 @@ final class ExpenseBackupService {
             }
             try csvData.write(to: fileURL, options: .atomic)
             
-            print("File saved successfully at: \(fileURL.path)")
+            logger.info("Expense export completed.")
             
         } catch {
-            print("Error: \(error.localizedDescription)")
+            logger.error("Expense export failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
             return .failure(.filesystemError("Error saving file: \(error.localizedDescription)"))
         }
         
