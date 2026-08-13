@@ -8,8 +8,31 @@ import Foundation
 import SwiftData
 import SageKit
 
+enum UITestConfiguration {
+    private static let environment = ProcessInfo.processInfo.environment
+
+    static var isEnabled: Bool { environment["SAGE_UI_TESTING"] == "1" }
+    static var showsOnboarding: Bool { environment["SAGE_UI_TEST_ONBOARDING"] == "1" }
+    static var seedExpenseName: String? { environment["SAGE_UI_TEST_SEED_EXPENSE"] }
+}
+
 @MainActor
 let appContainer: ModelContainer = {
+    if UITestConfiguration.isEnabled {
+        do {
+            let container = try SageModelContainer.makeInMemory()
+            if let seedName = UITestConfiguration.seedExpenseName {
+                container.mainContext.insert(
+                    Expense(name: seedName, amount: 42.50, category: .wants, date: .now)
+                )
+                try container.mainContext.save()
+            }
+            return container
+        } catch {
+            fatalError("Failed to create UI test model container: \(error)")
+        }
+    }
+
     let modelContainer = SageModelContainer.shared
 
     #if !DEBUG

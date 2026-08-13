@@ -98,12 +98,14 @@ struct AddExpenseView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
+                    .accessibilityIdentifier("cancel-expense-button")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if isSaving {
                     ProgressView()
                 } else {
                     Button("Save") { Task { await saveItem() } }
+                        .accessibilityIdentifier("save-expense-button")
                         .fontWeight(.semibold)
                         .tint(Color(red: 108 / 255, green: 138 / 255, blue: 78 / 255))
                         .disabled(isParsingReceipt)

@@ -15,7 +15,7 @@ final public class ExpenseStore {
     let modelContainer: ModelContainer
     var context: ModelContext
 
-    private init(modelContainer: ModelContainer) {
+    public init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
         self.context = modelContainer.mainContext
     }

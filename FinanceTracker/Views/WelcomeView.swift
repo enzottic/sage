@@ -87,6 +87,7 @@ struct WelcomeView: View {
 
             VStack(spacing: 12) {
                 Text("Welcome to Sage")
+                    .accessibilityIdentifier("onboarding-welcome-title")
                     .font(.system(size: 36, weight: .bold))
                     .multilineTextAlignment(.center)
             }
@@ -114,6 +115,7 @@ struct WelcomeView: View {
                     .background(.sage)
                     .cornerRadius(15)
             }
+            .accessibilityIdentifier("onboarding-get-started-button")
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
@@ -143,6 +145,7 @@ struct WelcomeView: View {
 
             VStack(spacing: 8) {
                 TextField("0", text: $monthlyIncome)
+                    .accessibilityIdentifier("onboarding-income-field")
                     .keyboardType(.numberPad)
                     .font(.system(size: 48, weight: .bold))
                     .multilineTextAlignment(.center)
@@ -155,6 +158,7 @@ struct WelcomeView: View {
                             Button("Done") {
                                 isInputFocused = false
                             }
+                            .accessibilityIdentifier("onboarding-keyboard-done-button")
                         }
                     }
 
@@ -197,6 +201,7 @@ struct WelcomeView: View {
                         .background(Int(monthlyIncome) ?? 0 > 0 ? .sage : Color.gray)
                         .cornerRadius(15)
                 }
+                .accessibilityIdentifier("onboarding-budget-continue-button")
                 .disabled((Int(monthlyIncome) ?? 0) <= 0)
             }
             .padding(.horizontal, 40)
@@ -295,6 +300,7 @@ struct WelcomeView: View {
                         .background(needsPercent + wantsPercent <= 100 ? .sage : Color.gray)
                         .cornerRadius(15)
                 }
+                .accessibilityIdentifier("onboarding-allocation-continue-button")
                 .disabled(needsPercent + wantsPercent > 100)
             }
             .padding(.horizontal, 40)
@@ -395,6 +401,7 @@ struct WelcomeView: View {
                         .background(.sage)
                         .cornerRadius(15)
                 }
+                .accessibilityIdentifier("onboarding-sync-continue-button")
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
@@ -473,6 +480,7 @@ struct WelcomeView: View {
                         .background(.sage)
                         .cornerRadius(15)
                 }
+                .accessibilityIdentifier("onboarding-tags-continue-button")
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
@@ -565,6 +573,7 @@ struct WelcomeView: View {
                         .background(.sage)
                         .cornerRadius(15)
                 }
+                .accessibilityIdentifier("onboarding-start-tracking-button")
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 40)

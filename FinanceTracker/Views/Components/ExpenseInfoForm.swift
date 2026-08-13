@@ -117,6 +117,7 @@ struct ExpenseInfoForm: View {
     private var nameHeader: some View {
         HStack(alignment: .center, spacing: 16) {
             TextField("New Expense", text: $name)
+                .accessibilityIdentifier("expense-name-field")
                 .font(.system(size: 34, weight: .bold))
                 .focused($focusedField, equals: .name)
                 .onChange(of: focusedField) { old, _ in
@@ -259,6 +260,7 @@ struct ExpenseInfoForm: View {
                     value: $amount,
                     format: .currency(code: Locale.current.currency?.identifier ?? "USD")
                 )
+                .accessibilityIdentifier("expense-amount-field")
                 .keyboardType(.decimalPad)
                 .font(.body)
                 .multilineTextAlignment(.trailing)
@@ -313,6 +315,7 @@ struct ExpenseInfoForm: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 TextField("Add a note", text: $note)
+                    .accessibilityIdentifier("expense-note-field")
                     .font(.subheadline)
                     .multilineTextAlignment(.trailing)
                     .focused($focusedField, equals: .note)
@@ -364,6 +367,7 @@ struct ExpenseInfoForm: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("expense-category-\(cat.rawValue.lowercased())")
             }
         }
         .padding(.horizontal)

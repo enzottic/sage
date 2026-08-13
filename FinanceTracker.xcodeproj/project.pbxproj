@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C62200012FFD000100000022 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
+		C62400012FFF002400000001 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C673106B2FD4932500A4C432 /* AppIntents.framework */; };
 		C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -18,6 +19,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		C62400022FFF002400000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C68EEE0E2FD7C7E8003C4FD6;
+			remoteInfo = SageKit;
+		};
 		C62200022FFD000100000022 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
@@ -91,6 +99,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C62400032FFF002400000003 /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C66031C62E8073C60078DD15 /* Sage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C673106B2FD4932500A4C432 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
@@ -117,7 +126,6 @@
 				Helpers/AppConfiguration.swift,
 				Services/ExpenseBackupService.swift,
 				Services/ReceiptParserService.swift,
-				Services/RecurringExpenseService.swift,
 				Services/TagSuggestionService.swift,
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
@@ -160,6 +168,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C62400042FFF002400000004 /* FinanceTrackerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FinanceTrackerTests;
+			sourceTree = "<group>";
+		};
 		C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FinanceTrackerUITests;
@@ -203,6 +216,14 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C62400052FFF002400000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C62400012FFF002400000001 /* SageKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C655B3A92EF8E4B300E1F50E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -252,6 +273,7 @@
 			children = (
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
+				C62400042FFF002400000004 /* FinanceTrackerTests */,
 				C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C6B4BA0B2FC214FB00882087 /* FinanceTrackerShareExtension */,
 				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
@@ -266,6 +288,7 @@
 			children = (
 				C66031C62E8073C60078DD15 /* Sage.app */,
 				C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */,
+				C62400032FFF002400000003 /* FinanceTrackerTests.xctest */,
 				C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */,
 				C6B4BA0A2FC214FB00882087 /* FinanceTrackerShareExtension.appex */,
 				C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */,
@@ -296,6 +319,29 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		C62400062FFF002400000006 /* FinanceTrackerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C624000C2FFF00240000000C /* Build configuration list for PBXNativeTarget "FinanceTrackerTests" */;
+			buildPhases = (
+				C62400082FFF002400000008 /* Sources */,
+				C62400052FFF002400000005 /* Frameworks */,
+				C62400072FFF002400000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C62400092FFF002400000009 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C62400042FFF002400000004 /* FinanceTrackerTests */,
+			);
+			name = FinanceTrackerTests;
+			packageProductDependencies = (
+			);
+			productName = FinanceTrackerTests;
+			productReference = C62400032FFF002400000003 /* FinanceTrackerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C655B3AB2EF8E4B300E1F50E /* FinanceTrackerUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C655B3B42EF8E4B300E1F50E /* Build configuration list for PBXNativeTarget "FinanceTrackerUITests" */;
@@ -425,6 +471,9 @@
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
+					C62400062FFF002400000006 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					C655B3AB2EF8E4B300E1F50E = {
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = C66031C52E8073C60078DD15;
@@ -462,6 +511,7 @@
 			targets = (
 				C66031C52E8073C60078DD15 /* FinanceTracker */,
 				C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */,
+				C62400062FFF002400000006 /* FinanceTrackerTests */,
 				C655B3AB2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C6B4BA092FC214FB00882087 /* FinanceTrackerShareExtension */,
 				C68EEE0E2FD7C7E8003C4FD6 /* SageKit */,
@@ -470,6 +520,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C62400072FFF002400000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C655B3AA2EF8E4B300E1F50E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -508,6 +565,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C62400082FFF002400000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C655B3A82EF8E4B300E1F50E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -546,6 +610,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C62400092FFF002400000009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = C68EEE0E2FD7C7E8003C4FD6 /* SageKit */;
+			targetProxy = C62400022FFF002400000002 /* PBXContainerItemProxy */;
+		};
 		C62200032FFD000100000022 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilter = ios;
@@ -576,6 +646,62 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C624000A2FFF00240000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C624000B2FFF00240000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		C655B3B52EF8E4B300E1F50E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1079,6 +1205,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C624000C2FFF00240000000C /* Build configuration list for PBXNativeTarget "FinanceTrackerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C624000A2FFF00240000000A /* Debug */,
+				C624000B2FFF00240000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C655B3B42EF8E4B300E1F50E /* Build configuration list for PBXNativeTarget "FinanceTrackerUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

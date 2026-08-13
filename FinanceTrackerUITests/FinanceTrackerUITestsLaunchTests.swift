@@ -1,17 +1,7 @@
-//
-//  FinanceTrackerUITestsLaunchTests.swift
-//  FinanceTrackerUITests
-//
-//  Created by Tyler McCormick on 12/21/25.
-//
-
 import XCTest
 
 final class FinanceTrackerUITestsLaunchTests: XCTestCase {
-
-    override class var runsForEachTargetApplicationUIConfiguration: Bool {
-        true
-    }
+    override class var runsForEachTargetApplicationUIConfiguration: Bool { true }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -20,13 +10,17 @@ final class FinanceTrackerUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        XCTAssertTrue(
+            app.tabBars.buttons["Expenses"].waitForExistence(timeout: 10),
+            "The main tabs did not appear after launch."
+        )
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Launch Screen"
+        attachment.name = "Main Screen"
         attachment.lifetime = .keepAlways
         add(attachment)
     }

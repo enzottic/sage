@@ -58,6 +58,7 @@ struct ExpenseDetailView: View {
                     saveItem()
                     dismiss()
                 }
+                .accessibilityIdentifier("save-expense-changes-button")
                 .tint(Color.sageAccent)
             }
         }

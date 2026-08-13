@@ -34,6 +34,7 @@ struct SageToolbar: ToolbarContent {
             addLabel
         }
         .accessibilityLabel("Add Expense")
+        .accessibilityIdentifier("add-expense-button")
         .tint(.sage)
         .buttonStyle(.borderedProminent)
     }

@@ -37,6 +37,22 @@ public enum SageModelContainer {
         defaults?.set(requestedValue, forKey: activeCloudKitPreferenceKey)
     }
 
+    public static nonisolated func makeInMemory() throws -> ModelContainer {
+        UIColorValueTransformer.register()
+
+        let schema = Schema(versionedSchema: SageSchemaV4.self)
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            cloudKitDatabase: .none
+        )
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: SageSchemaMigrationPlan.self,
+            configurations: [config]
+        )
+    }
+
     @MainActor
     public static let shared: ModelContainer = {
         do {
