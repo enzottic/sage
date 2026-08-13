@@ -33,10 +33,12 @@ struct AddExpenseView: View {
     @State private var showCamera = false
     @State private var showPhotoLibrary = false
     @State private var receiptPhotoItem: PhotosPickerItem?
+    private let initialReceiptData: Data?
 
     @Query private var allTags: [ExpenseTag]
     
-    init(expense: Expense?) {
+    init(expense: Expense?, receiptData: Data? = nil) {
+        initialReceiptData = receiptData
         if let expense = expense {
             _name = State(initialValue: expense.name)
             _amount = State(initialValue: expense.amount)
@@ -136,6 +138,14 @@ struct AddExpenseView: View {
                 onFailure: showReceiptError
             )
             .ignoresSafeArea()
+        }
+        .task {
+            guard let initialReceiptData else { return }
+            guard let image = UIImage(data: initialReceiptData) else {
+                showReceiptError("Sage couldn't open the shared receipt.")
+                return
+            }
+            await parseReceipt(image)
         }
         .gradientBackground()
     }

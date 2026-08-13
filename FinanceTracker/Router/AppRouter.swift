@@ -50,7 +50,21 @@ final class AppRouter {
 
     func navigate(to link: SageDeepLink) {
         switch link {
-        case .addExpense: presentSheet(.addExpense(nil))
+        case .addExpense(let importPendingReceipt):
+            guard importPendingReceipt else {
+                presentSheet(.addExpense(nil))
+                return
+            }
+
+            do {
+                guard let receiptData = try PendingReceiptStore.take() else {
+                    showToast(SageToast(message: "Sage could not find the shared receipt.", kind: .error))
+                    return
+                }
+                presentSheet(.addExpense(nil, receiptData: receiptData))
+            } catch {
+                showToast(SageToast(message: "Sage could not open the shared receipt.", kind: .error))
+            }
         }
     }
 

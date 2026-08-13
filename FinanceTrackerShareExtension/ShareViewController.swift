@@ -71,7 +71,7 @@ class ShareViewController: UIViewController {
         }
 
         let fileURL = containerURL.appendingPathComponent("pendingReceiptImage.jpg")
-        try data.write(to: fileURL)
+        try data.write(to: fileURL, options: .atomic)
     }
 
     @MainActor

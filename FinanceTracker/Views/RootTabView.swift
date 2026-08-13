@@ -52,9 +52,9 @@ struct RootTabView: View {
         .accessibilityIdentifier("main-tab-view")
         .sheet(item: $appRouter.presentedSheet) { sheet in
             switch sheet {
-            case .addExpense(let expense):
+            case .addExpense(let expense, let receiptData):
                 NavigationStack {
-                    AddExpenseView(expense: expense)
+                    AddExpenseView(expense: expense, receiptData: receiptData)
                 }
             }
         }

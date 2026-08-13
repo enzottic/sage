@@ -10,14 +10,18 @@ import WebKit
 import WidgetKit
 import Darwin
 import SageKit
+import UserNotifications
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
     @Environment(\.modelContext) private var modelContext
 
-    @State private var showDeleteAllConfirmation = false
-    @State private var isDeletingAll = false
+    @State private var showExpenseDeletionOptions = false
+    @State private var showFullResetConfirmation = false
+    @State private var activeDataOperation: DataOperation?
+
+    private var isChangingData: Bool { activeDataOperation != nil }
 
     private var feedbackURL: URL? {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -88,12 +92,22 @@ struct SettingsView: View {
 
                 Section {
                     Button(role: .destructive) {
-                        showDeleteAllConfirmation = true
+                        showExpenseDeletionOptions = true
                     } label: {
-                        SettingsListItem(text: "Delete All Expenses", icon: "trash.fill", color: .red)
+                        SettingsListItem(text: "Delete Expense Data", icon: "trash.fill", color: .red)
                             .foregroundStyle(.red)
                     }
-                    .disabled(isDeletingAll)
+                    .disabled(isChangingData)
+
+                    Button(role: .destructive) {
+                        showFullResetConfirmation = true
+                    } label: {
+                        SettingsListItem(text: "Reset All Data", icon: "arrow.counterclockwise.circle.fill", color: .red)
+                            .foregroundStyle(.red)
+                    }
+                    .disabled(isChangingData)
+                } footer: {
+                    Text("Delete expense records, or reset all user-created local app data.")
                 }
 
                 #if DEBUG
@@ -129,46 +143,105 @@ struct SettingsView: View {
                     PrivacyWebView()
                 }
             }
-            .alert("Delete All Expenses?", isPresented: $showDeleteAllConfirmation) {
-                Button("Delete All", role: .destructive) {
-                    Task { await deleteAllExpenses() }
+            .confirmationDialog(
+                "Choose What to Delete",
+                isPresented: $showExpenseDeletionOptions,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Expenses Only", role: .destructive) {
+                    Task { await performDataOperation(.expensesOnly) }
                 }
-                .disabled(isDeletingAll)
+                .disabled(isChangingData)
+                Button("Delete Expenses and Recurring Rules", role: .destructive) {
+                    Task { await performDataOperation(.expensesAndRecurringRules) }
+                }
+                .disabled(isChangingData)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This will permanently delete every expense. This cannot be undone.")
+                Text("Delete Expenses Only removes every expense, but recurring rules stay active and can create expenses again. Delete Expenses and Recurring Rules prevents those expenses from returning. Both actions are permanent.")
+            }
+            .alert("Reset All Data?", isPresented: $showFullResetConfirmation) {
+                Button("Reset All Data", role: .destructive) {
+                    Task { await performDataOperation(.fullReset) }
+                }
+                .disabled(isChangingData)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently removes all expenses, recurring rules, custom tags, accounts, settings, and temporary receipt files. This cannot be undone.")
             }
             .safeAreaInset(edge: .bottom) {
-                if isDeletingAll {
-                    ProgressView("Deleting expenses")
+                if let activeDataOperation {
+                    ProgressView(activeDataOperation.progressMessage)
                         .font(.subheadline)
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(.bar)
-                        .accessibilityLabel("Deleting expenses. In progress.")
+                        .accessibilityLabel("\(activeDataOperation.progressMessage). In progress.")
                 }
             }
         }
     }
 
-    private func deleteAllExpenses() async {
-        guard !isDeletingAll else { return }
-        isDeletingAll = true
-        router.showToast(SageToast(message: "Deleting expenses…", kind: .progress))
-        defer { isDeletingAll = false }
+    private func performDataOperation(_ operation: DataOperation) async {
+        guard activeDataOperation == nil else { return }
+        activeDataOperation = operation
+        router.showToast(SageToast(message: operation.progressMessage + "…", kind: .progress))
+        defer { activeDataOperation = nil }
 
         await Task.yield()
 
+        let deletionService = DataDeletionService(modelContext: modelContext)
         do {
-            try modelContext.delete(model: Expense.self)
-            try modelContext.save()
+            switch operation {
+            case .expensesOnly:
+                try deletionService.deleteExpenses(includeRecurringRules: false)
+            case .expensesAndRecurringRules:
+                try deletionService.deleteExpenses(includeRecurringRules: true)
+                UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+            case .fullReset:
+                try PendingReceiptStore.deleteIfPresent()
+                try deletionService.deleteAllUserData()
+                config.resetAllSettings()
+                UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+            }
+
             WidgetCenter.shared.reloadAllTimelines()
-            router.showToast(SageToast(message: "All expenses deleted", kind: .success))
+            router.showToast(SageToast(message: operation.successMessage, kind: .success))
         } catch {
-            modelContext.rollback()
+            deletionService.rollback()
             router.showToast(
-                SageToast(message: "Sage could not delete the expenses. Check storage and try again.", kind: .error)
+                SageToast(message: operation.failureMessage, kind: .error)
             )
+        }
+    }
+}
+
+private enum DataOperation {
+    case expensesOnly
+    case expensesAndRecurringRules
+    case fullReset
+
+    var progressMessage: String {
+        switch self {
+        case .expensesOnly: "Deleting expenses"
+        case .expensesAndRecurringRules: "Deleting expenses and recurring rules"
+        case .fullReset: "Resetting all data"
+        }
+    }
+
+    var successMessage: String {
+        switch self {
+        case .expensesOnly: "All expenses deleted. Recurring rules are still active."
+        case .expensesAndRecurringRules: "All expenses and recurring rules deleted."
+        case .fullReset: "All user data and settings reset."
+        }
+    }
+
+    var failureMessage: String {
+        switch self {
+        case .expensesOnly: "Sage could not delete the expenses. Check storage and try again."
+        case .expensesAndRecurringRules: "Sage could not delete the expenses and recurring rules. Check storage and try again."
+        case .fullReset: "Sage could not reset all data. Check storage and try again."
         }
     }
 }

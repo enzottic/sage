@@ -31,7 +31,7 @@ enum AppRoute: Hashable {
 
 /// Modally presented flows, hosted once at `RootTabView` so they appear above any tab.
 enum SageSheet: Identifiable, Hashable {
-    case addExpense(Expense?)            // nil = blank, non-nil = duplicate prefill
+    case addExpense(Expense?, receiptData: Data? = nil) // nil expense = blank or receipt import
 
     var id: Self { self }
 }
@@ -40,12 +40,15 @@ enum SageSheet: Identifiable, Hashable {
 
 /// External URLs the app can open. Unknown hosts return `nil`.
 enum SageDeepLink {
-    case addExpense
+    case addExpense(importPendingReceipt: Bool)
 
     init?(url: URL) {
         guard url.scheme == "sage" || url.scheme == "sage-dev" else { return nil }
         switch url.host {
-        case "add-expense": self = .addExpense
+        case "add-expense":
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let source = components?.queryItems?.first(where: { $0.name == "source" })?.value
+            self = .addExpense(importPendingReceipt: source == "receipt")
         default: return nil
         }
     }

@@ -69,6 +69,23 @@ class AppConfiguration {
         static let savingsColor = "categoryColorSavings"
         // Stored locally only — notifications are per-device and don't sync to iCloud KVS
         static let billRemindersEnabled = "billRemindersEnabled"
+
+        static let syncedSettings = [
+            appearance,
+            totalMonthlyIncome,
+            needsPercent,
+            wantsPercent,
+            savingsPercent,
+            isCloudSyncEnabled,
+            smartTaggingMode,
+        ]
+
+        static let localSettings = syncedSettings + [
+            needsColor,
+            wantsColor,
+            savingsColor,
+            billRemindersEnabled,
+        ]
     }
     
     var selectedAppearance: Appearance {
@@ -174,6 +191,34 @@ class AppConfiguration {
         defaults.removeObject(forKey: Keys.needsColor)
         defaults.removeObject(forKey: Keys.wantsColor)
         defaults.removeObject(forKey: Keys.savingsColor)
+    }
+
+    /// Restores every user-configurable setting to the initial app defaults.
+    func resetAllSettings() {
+        selectedAppearance = .system
+        totalMonthlyIncome = 0
+        needsPercent = 0.5
+        wantsPercent = 0.3
+        savingsPercent = 0.2
+        isCloudSyncEnabled = false
+        smartTaggingMode = .history
+        needsColor = Color("NeedColor")
+        wantsColor = Color("WantColor")
+        savingsColor = Color("SavingColor")
+        billRemindersEnabled = false
+
+        for key in Keys.localSettings {
+            defaults.removeObject(forKey: key)
+        }
+
+        for key in Keys.syncedSettings {
+            cloudKVS.removeObject(forKey: key)
+        }
+
+        // Keep the next launch on the local store after the saved preference is removed.
+        SageModelContainer.setCloudKitPreference(false)
+        cloudKVS.synchronize()
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     var needsBudget: Double {
