@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import SwiftData
 
 public enum SageModelContainer {
@@ -23,6 +24,7 @@ public enum SageModelContainer {
     public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
     public nonisolated static let cloudKitPreferenceKey = "isCloudSyncEnabled"
     private nonisolated static let activeCloudKitPreferenceKey = "activeCloudSyncEnabled"
+    private nonisolated static let logger = Logger(subsystem: "me.enzottic.SageKit", category: "ModelContainer")
 
     /// The CloudKit setting used by every process that opens the shared store.
     ///
@@ -166,7 +168,7 @@ public enum SageModelContainer {
                 try context.save()
             }
         } catch {
-            print("Multi-tag backfill failed: \(error)")
+            logger.error("Multi-tag backfill failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
         }
     }
 }
