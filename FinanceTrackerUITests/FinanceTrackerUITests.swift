@@ -97,7 +97,7 @@ final class FinanceTrackerUITests: XCTestCase {
         nameField.tap()
         nameField.typeText(expenseName)
 
-        let amountField = app.textFields["Expense Amount Field"].firstMatch
+        let amountField = app.textFields["$0.00"].firstMatch
         XCTAssertTrue(
             amountField.waitForExistence(timeout: elementTimeout),
             "Expense amount field should be visible"
