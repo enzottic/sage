@@ -9,6 +9,12 @@ import SwiftUI
 import SwiftData
 import SageKit
 
+struct ReceiptImportConfiguration {
+    let isParsing: Bool
+    let onTakePhoto: () -> Void
+    let onChoosePhoto: () -> Void
+}
+
 struct ExpenseInfoForm: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
@@ -22,6 +28,7 @@ struct ExpenseInfoForm: View {
     @Binding var tags: [ExpenseTag]
     @Binding var note: String
     var isEditing: Bool
+    var receiptImport: ReceiptImportConfiguration?
 
     private let tagSuggestionService = TagSuggestionService()
     @FocusState private var focusedField: Field?
@@ -54,7 +61,8 @@ struct ExpenseInfoForm: View {
         category: Binding<ExpenseCategory>,
         tags: Binding<[ExpenseTag]>,
         note: Binding<String>,
-        isEditing: Bool = false
+        isEditing: Bool = false,
+        receiptImport: ReceiptImportConfiguration? = nil
     ) {
         self._name = name
         self._amount = amount
@@ -63,6 +71,7 @@ struct ExpenseInfoForm: View {
         self._tags = tags
         self._note = note
         self.isEditing = isEditing
+        self.receiptImport = receiptImport
     }
 
     var body: some View {
@@ -103,15 +112,57 @@ struct ExpenseInfoForm: View {
 
     private var nameHeader: some View {
         HStack(alignment: .center, spacing: 16) {
-        TextField("New Expense", text: $name)
-            .font(.system(size: 34, weight: .bold))
-            .focused($focusedField, equals: .name)
-            .onChange(of: focusedField) { old, _ in
-                if old == .name { suggestTagIfNeeded() }
-            }
+            TextField("New Expense", text: $name)
+                .font(.system(size: 34, weight: .bold))
+                .focused($focusedField, equals: .name)
+                .onChange(of: focusedField) { old, _ in
+                    if old == .name { suggestTagIfNeeded() }
+                }
+
             Spacer(minLength: 0)
+
+            if !isEditing, let receiptImport {
+                receiptButton(receiptImport)
+            }
         }
         .padding(.horizontal)
+    }
+
+    private func receiptButton(_ configuration: ReceiptImportConfiguration) -> some View {
+        Menu {
+            Button("Take Photo", systemImage: "camera", action: configuration.onTakePhoto)
+            Button(
+                "Choose from Photos",
+                systemImage: "photo.on.rectangle",
+                action: configuration.onChoosePhoto
+            )
+        } label: {
+            VStack(spacing: 6) {
+                if configuration.isParsing {
+                    ProgressView()
+                        .frame(width: 22, height: 22)
+                } else {
+                    Image(systemName: "receipt")
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("Receipt")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 72, height: 80)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(
+                        Color.secondary.opacity(0.4),
+                        style: StrokeStyle(lineWidth: 1, dash: [4])
+                    )
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .disabled(configuration.isParsing)
+        .accessibilityLabel("Receipt")
     }
 
     // MARK: - Past expense suggestions

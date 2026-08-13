@@ -7,6 +7,8 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import PhotosUI
+import UIKit
 import SageKit
 
 struct AddExpenseView: View {
@@ -31,6 +33,9 @@ struct AddExpenseView: View {
     @State private var availableGroups: [SplitwiseGroup] = []
     @State private var isLoadingGroups: Bool = false
     @State private var isParsingReceipt: Bool = false
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
+    @State private var receiptPhotoItem: PhotosPickerItem?
 
     @Query private var allTags: [ExpenseTag]
     
@@ -51,6 +56,10 @@ struct AddExpenseView: View {
         Locale.current.currency?.identifier ?? "USD"
     }
 
+    private var receiptImportEnabled: Bool {
+        if #available(iOS 26.0, *) { true } else { false }
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -60,7 +69,14 @@ struct AddExpenseView: View {
                     date: $date,
                     category: $category,
                     tags: $tags,
-                    note: $note
+                    note: $note,
+                    receiptImport: receiptImportEnabled
+                        ? ReceiptImportConfiguration(
+                            isParsing: isParsingReceipt,
+                            onTakePhoto: { showCamera = true },
+                            onChoosePhoto: { showPhotoLibrary = true }
+                        )
+                        : nil
                 )
 
                 optionsCard
@@ -83,6 +99,7 @@ struct AddExpenseView: View {
                     Button("Save") { Task { await saveItem() } }
                         .fontWeight(.semibold)
                         .tint(Color(red: 108 / 255, green: 138 / 255, blue: 78 / 255))
+                        .disabled(isParsingReceipt)
                 }
             }
         }
@@ -91,27 +108,24 @@ struct AddExpenseView: View {
         } message: {
             Text(errorMessage ?? "An unexpected error occurred")
         }
+        .photosPicker(
+            isPresented: $showPhotoLibrary,
+            selection: $receiptPhotoItem,
+            matching: .images
+        )
+        .onChange(of: receiptPhotoItem) { _, item in
+            guard let item else { return }
+            Task { await loadReceiptPhoto(item) }
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPickerView { image in
+                Task { await parseReceipt(image) }
+            }
+            .ignoresSafeArea()
+        }
         .task {
             if splitwise.isConnected {
                 await loadGroups()
-            }
-            await parseReceiptIfNeeded()
-        }
-        .overlay {
-            if isParsingReceipt {
-                ZStack {
-                    Color.black.opacity(0.3).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .tint(.white)
-                        Text("Reading receipt…")
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-                    }
-                    .padding(24)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
             }
         }
         .gradientBackground()
@@ -235,14 +249,35 @@ struct AddExpenseView: View {
 
     // MARK: - Logic
 
-    private func parseReceiptIfNeeded() async {
-        guard let image = ReceiptHandoffService.consumePendingImage() else { return }
+    private func loadReceiptPhoto(_ item: PhotosPickerItem) async {
+        defer { receiptPhotoItem = nil }
+
+        do {
+            guard
+                let data = try await item.loadTransferable(type: Data.self),
+                let image = UIImage(data: data)
+            else {
+                showReceiptError("Sage couldn't open that photo.")
+                return
+            }
+
+            await parseReceipt(image)
+        } catch {
+            showReceiptError("Sage couldn't open that photo: \(error.localizedDescription)")
+        }
+    }
+
+    private func parseReceipt(_ image: UIImage) async {
+        guard !isParsingReceipt else { return }
         isParsingReceipt = true
         defer { isParsingReceipt = false }
 
         if #available(iOS 26.0, *) {
             let service = ReceiptParserService()
-            guard let parsed = await service.parseReceipt(image: image, tags: allTags) else { return }
+            guard let parsed = await service.parseReceipt(image: image, tags: allTags) else {
+                showReceiptError("Sage couldn't read this receipt. Try a clearer photo.")
+                return
+            }
 
             name = parsed.name
             amount = parsed.price
@@ -258,7 +293,14 @@ struct AddExpenseView: View {
             if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
                 tags = [matched]
             }
+        } else {
+            showReceiptError("Receipt reading requires iOS 26 or later.")
         }
+    }
+
+    private func showReceiptError(_ message: String) {
+        errorMessage = message
+        showError = true
     }
 
     private func loadGroups() async {

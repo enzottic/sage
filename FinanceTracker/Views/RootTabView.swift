@@ -48,16 +48,6 @@ struct RootTabView: View {
                 SettingsView()
             }
 
-            if #available(iOS 27.0, *) {
-                Tab("Add Expense", systemImage: "plus", value: SageTab.addExpense, role: .prominent) {
-                    // Unreachable: selecting this tab presents the add sheet (see tabSelection).
-                    Color.clear
-                }
-            } else {
-                Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
-                    SearchExpensesView()
-                }
-            }
         }
         .sheet(item: $appRouter.presentedSheet) { sheet in
             switch sheet {

@@ -14,12 +14,6 @@ struct DashboardView: View {
     @Environment(AppConfiguration.self) var config
     
     @State private var selectedMonth: Date
-    @State private var receiptSource: ReceiptCaptureSource?
-
-    /// Receipt parsing is only available on iOS 26+, so only offer the menu entry there.
-    private var receiptImportEnabled: Bool {
-        if #available(iOS 26.0, *) { true } else { false }
-    }
 
     @State private var rows: [DashboardRowConfiguration] = [
         .init(widgets: [.monthlyOverview]),
@@ -64,13 +58,9 @@ struct DashboardView: View {
                     onAdd: { appRouter.presentSheet(.addExpense(nil)) },
                     onImportFromSplitwise: splitwiseService.isConfigured
                         ? { appRouter.presentSheet(.splitwiseImport) }
-                        : nil,
-                    onImportFromReceipt: receiptImportEnabled
-                        ? { source in receiptSource = source }
-                        : nil,
+                        : nil
                 )
             }
-            .receiptCapture(source: $receiptSource)
             .appRouteDestinations()
         }
     }
