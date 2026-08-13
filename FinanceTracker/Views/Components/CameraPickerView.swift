@@ -8,6 +8,7 @@ import UIKit
 
 struct CameraPickerView: UIViewControllerRepresentable {
     let onImagePicked: (UIImage) -> Void
+    let onFailure: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -17,7 +18,7 @@ struct CameraPickerView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
-        picker.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
+        picker.sourceType = .camera
         picker.delegate = context.coordinator
         return picker
     }
@@ -37,6 +38,8 @@ struct CameraPickerView: UIViewControllerRepresentable {
         ) {
             if let image = info[.originalImage] as? UIImage {
                 parent.onImagePicked(image)
+            } else {
+                parent.onFailure("Sage couldn't open this camera photo. Try again.")
             }
             parent.dismiss()
         }
