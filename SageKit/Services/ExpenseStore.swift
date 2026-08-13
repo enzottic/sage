@@ -15,13 +15,17 @@ final public class ExpenseStore {
     let modelContainer: ModelContainer
     var context: ModelContext
 
-    private init() {
+    private convenience init() {
         guard let container = try? SageModelContainer.make() else {
             fatalError("Failed to create the model container")
         }
-        
-        self.modelContainer = container
-        self.context = container.mainContext
+
+        self.init(modelContainer: container)
+    }
+
+    public init(modelContainer: ModelContainer) {
+        self.modelContainer = modelContainer
+        self.context = modelContainer.mainContext
     }
 
     // MARK: - Create

@@ -11,6 +11,22 @@ import SwiftData
 public enum SageModelContainer {
     public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
 
+    public static nonisolated func makeInMemory() throws -> ModelContainer {
+        UIColorValueTransformer.register()
+
+        let schema = Schema(versionedSchema: SageSchemaV4.self)
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            cloudKitDatabase: .none
+        )
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: SageSchemaMigrationPlan.self,
+            configurations: [config]
+        )
+    }
+
     public static nonisolated func make(cloudKitEnabled: Bool = false) throws -> ModelContainer {
         UIColorValueTransformer.register()
 

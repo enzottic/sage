@@ -21,6 +21,11 @@ struct SageApp: App {
         UIColorValueTransformer.register()
         configureNavigationBarAppearance()
 
+        if UITestConfiguration.isEnabled {
+            hasOpenedAppOnce = !UITestConfiguration.showsOnboarding
+            WhatsNewStore.markCurrentVersionSeen()
+        }
+
         // Pull latest iCloud KVS values before checking setup state
         NSUbiquitousKeyValueStore.default.synchronize()
 
@@ -28,7 +33,9 @@ struct SageApp: App {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 
         // Make ExpenseStore resolvable via @Dependency in App Intents.
-        let expenseStore = ExpenseStore.shared
+        let expenseStore = UITestConfiguration.isEnabled
+            ? ExpenseStore(modelContainer: appContainer)
+            : ExpenseStore.shared
         AppDependencyManager.shared.add(dependency: expenseStore)
 
         // Register App Shortcuts phrases with Siri

@@ -27,16 +27,19 @@ struct ExpenseList: View {
                     ExpenseRowItem(expense: expense, style: rowStyle)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("expense-row-\(expense.name)")
                 .swipeActions {
                     Button("Delete") {
                         expenseToDelete = expense
                         showingDeleteConfirmation = true
                     }
                     .tint(.red)
+                    .accessibilityIdentifier("delete-expense-action")
 
                     Button("Duplicate") {
                         appRouter.presentSheet(.addExpense(expense))
                     }
+                    .accessibilityIdentifier("duplicate-expense-action")
                 }
             }
         }
@@ -46,6 +49,7 @@ struct ExpenseList: View {
                     deleteExpense(expense)
                 }
             }
+            .accessibilityIdentifier("confirm-delete-expense-button")
             Button("Cancel", role: .cancel) {
                 expenseToDelete = nil
             }

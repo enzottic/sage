@@ -8,6 +8,14 @@ import Foundation
 import SwiftData
 import SageKit
 
+enum UITestConfiguration {
+    private static let environment = ProcessInfo.processInfo.environment
+
+    static var isEnabled: Bool { environment["SAGE_UI_TESTING"] == "1" }
+    static var showsOnboarding: Bool { environment["SAGE_UI_TEST_ONBOARDING"] == "1" }
+    static var seedExpenseName: String? { environment["SAGE_UI_TEST_SEED_EXPENSE"] }
+}
+
 // Copies SQLite files (main + WAL + SHM) from src to dst. Safe to call if src doesn't exist.
 private func copyStoreFiles(from src: URL, to dst: URL) {
     let fm = FileManager.default
@@ -53,6 +61,17 @@ private func migrateStoreToAppGroupIfNeeded(destination: URL) {
 @MainActor
 let appContainer: ModelContainer = {
     do {
+        if UITestConfiguration.isEnabled {
+            let container = try SageModelContainer.makeInMemory()
+            if let seedName = UITestConfiguration.seedExpenseName {
+                container.mainContext.insert(
+                    Expense(name: seedName, amount: 42.50, category: .wants, date: .now)
+                )
+                try container.mainContext.save()
+            }
+            return container
+        }
+
         #if !DEBUG
         // iCloud KVS is authoritative for the sync preference
         let cloudKVS = NSUbiquitousKeyValueStore.default
