@@ -102,12 +102,12 @@ struct SettingsView: View {
                     Button(role: .destructive) {
                         showFullResetConfirmation = true
                     } label: {
-                        SettingsListItem(text: "Reset All Data", icon: "arrow.counterclockwise.circle.fill", color: .red)
+                        SettingsListItem(text: "Delete All Data", icon: "trash.circle.fill", color: .red)
                             .foregroundStyle(.red)
                     }
                     .disabled(isChangingData)
                 } footer: {
-                    Text("Delete expense records, or reset all user-created local app data.")
+                    Text("Delete all expenses, recurring rules, and tags.")
                 }
 
                 #if DEBUG
@@ -143,11 +143,7 @@ struct SettingsView: View {
                     PrivacyWebView()
                 }
             }
-            .confirmationDialog(
-                "Choose What to Delete",
-                isPresented: $showExpenseDeletionOptions,
-                titleVisibility: .visible
-            ) {
+            .alert("Choose What to Delete", isPresented: $showExpenseDeletionOptions) {
                 Button("Delete Expenses Only", role: .destructive) {
                     Task { await performDataOperation(.expensesOnly) }
                 }
@@ -160,8 +156,8 @@ struct SettingsView: View {
             } message: {
                 Text("Delete Expenses Only removes every expense, but recurring rules stay active and can create expenses again. Delete Expenses and Recurring Rules prevents those expenses from returning. Both actions are permanent.")
             }
-            .alert("Reset All Data?", isPresented: $showFullResetConfirmation) {
-                Button("Reset All Data", role: .destructive) {
+            .alert("Delete All Data?", isPresented: $showFullResetConfirmation) {
+                Button("Delete All Data", role: .destructive) {
                     Task { await performDataOperation(.fullReset) }
                 }
                 .disabled(isChangingData)
@@ -225,7 +221,7 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "Deleting expenses"
         case .expensesAndRecurringRules: "Deleting expenses and recurring rules"
-        case .fullReset: "Resetting all data"
+        case .fullReset: "Deleting all data"
         }
     }
 
@@ -233,7 +229,7 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "All expenses deleted. Recurring rules are still active."
         case .expensesAndRecurringRules: "All expenses and recurring rules deleted."
-        case .fullReset: "All user data and settings reset."
+        case .fullReset: "All user data and settings deleted."
         }
     }
 
@@ -241,7 +237,7 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "Sage could not delete the expenses. Check storage and try again."
         case .expensesAndRecurringRules: "Sage could not delete the expenses and recurring rules. Check storage and try again."
-        case .fullReset: "Sage could not reset all data. Check storage and try again."
+        case .fullReset: "Sage could not delete all data. Check storage and try again."
         }
     }
 }
