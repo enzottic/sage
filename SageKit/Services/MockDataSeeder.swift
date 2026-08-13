@@ -35,14 +35,14 @@ public enum MockDataSeeder {
             return cal.date(from: comps)!
         }
 
-        let shopping      = ExpenseTag(name: "Shopping",          uiColor: .systemYellow, emoji: "🛍️")
-        let dining        = ExpenseTag(name: "Dining",            uiColor: .systemOrange, emoji: "🍽️")
-        let entertainment = ExpenseTag(name: "Entertainment",     uiColor: .systemPink,   emoji: "🍿")
-        let bills         = ExpenseTag(name: "Bills & Utilities", uiColor: .systemBlue,   emoji: "🏠")
-        let groceries     = ExpenseTag(name: "Groceries",         uiColor: .systemGreen,  emoji: "🥗")
-        let subscriptions = ExpenseTag(name: "Subscriptions",     uiColor: .systemTeal,   emoji: "💻")
-        let travel        = ExpenseTag(name: "Travel",            uiColor: .systemPurple, emoji: "✈️")
-        let other         = ExpenseTag(name: "Other",             uiColor: .systemGray,   emoji: "🔖")
+        let shopping      = ExpenseTag(name: "Shopping",          uiColor: .systemYellow, emoji: "🛍️", symbolName: "bag.fill")
+        let dining        = ExpenseTag(name: "Dining",            uiColor: .systemOrange, emoji: "🍽️", symbolName: "fork.knife")
+        let entertainment = ExpenseTag(name: "Entertainment",     uiColor: .systemPink,   emoji: "🍿", symbolName: "film.fill")
+        let bills         = ExpenseTag(name: "Bills & Utilities", uiColor: .systemBlue,   emoji: "🏠", symbolName: "house.fill")
+        let groceries     = ExpenseTag(name: "Groceries",         uiColor: .systemGreen,  emoji: "🥗", symbolName: "basket.fill")
+        let subscriptions = ExpenseTag(name: "Subscriptions",     uiColor: .systemTeal,   emoji: "💻", symbolName: "play.rectangle.fill")
+        let travel        = ExpenseTag(name: "Travel",            uiColor: .systemPurple, emoji: "✈️", symbolName: "airplane")
+        let other         = ExpenseTag(name: "Other",             uiColor: .systemGray,   emoji: "🔖", symbolName: "ellipsis.circle.fill")
 
         for tag in [shopping, dining, entertainment, bills, groceries, subscriptions, travel, other] {
             context.insert(tag)
