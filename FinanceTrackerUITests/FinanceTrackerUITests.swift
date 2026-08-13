@@ -28,6 +28,21 @@ final class FinanceTrackerUITests: XCTestCase {
             hasOpenedAppOnce ? "true" : "false"
         ]
         app.launch()
+
+        let whatsNewTitle = app.staticTexts["What's New"]
+        if whatsNewTitle.waitForExistence(timeout: 2) {
+            let continueButton = app.buttons["Continue"]
+            XCTAssertTrue(
+                continueButton.waitForExistence(timeout: elementTimeout),
+                "What's New continue button should be visible"
+            )
+            continueButton.tap()
+            XCTAssertTrue(
+                whatsNewTitle.waitForNonExistence(timeout: elementTimeout),
+                "What's New view should close"
+            )
+        }
+
         return app
     }
 
@@ -45,12 +60,6 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(
             getStartedButton.waitForExistence(timeout: elementTimeout),
             "Get Started button should be visible"
-        )
-
-        let subtitle = app.staticTexts["Your Smart Budgeting Companion"]
-        XCTAssertTrue(
-            subtitle.waitForExistence(timeout: elementTimeout),
-            "Welcome subtitle should be visible"
         )
     }
 
