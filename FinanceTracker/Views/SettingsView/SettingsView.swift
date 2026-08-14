@@ -193,7 +193,6 @@ struct SettingsView: View {
                 try deletionService.deleteExpenses(includeRecurringRules: true)
                 UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             case .fullReset:
-                try PendingReceiptStore.deleteIfPresent()
                 try deletionService.deleteAllUserData()
                 config.resetAllSettings()
                 UNUserNotificationCenter.current().removeAllPendingNotificationRequests()

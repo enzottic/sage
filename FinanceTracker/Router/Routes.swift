@@ -40,15 +40,13 @@ enum SageSheet: Identifiable, Hashable {
 
 /// External URLs the app can open. Unknown hosts return `nil`.
 enum SageDeepLink {
-    case addExpense(importPendingReceipt: Bool)
+    case addExpense
 
     init?(url: URL) {
         guard url.scheme == "sage" || url.scheme == "sage-dev" else { return nil }
         switch url.host {
         case "add-expense":
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let source = components?.queryItems?.first(where: { $0.name == "source" })?.value
-            self = .addExpense(importPendingReceipt: source == "receipt")
+            self = .addExpense
         default: return nil
         }
     }

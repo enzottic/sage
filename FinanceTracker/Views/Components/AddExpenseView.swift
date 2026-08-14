@@ -251,10 +251,6 @@ struct AddExpenseView: View {
                 if let tagName = parsed.tag, let matched = allTags.first(where: { $0.name == tagName }) {
                     tags = [matched]
                 }
-
-                appRouter.showToast(
-                    SageToast(message: "Receipt details added. Review them before saving.", kind: .success)
-                )
             } catch let error as ReceiptParserError {
                 showReceiptError(error.localizedDescription)
             } catch {

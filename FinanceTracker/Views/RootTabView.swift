@@ -81,7 +81,9 @@ struct RootTabView: View {
         .background(.background)
         .tint(.sage)
         .onOpenURL { url in
-            if let link = SageDeepLink(url: url) {
+            if url.isFileURL {
+                appRouter.importReceipt(from: url)
+            } else if let link = SageDeepLink(url: url) {
                 appRouter.navigate(to: link)
             }
         }
@@ -94,6 +96,7 @@ struct RootTabView: View {
             WhatsNewSheet(release: release)
         }
     }
+
 }
 
 
