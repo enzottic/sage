@@ -103,6 +103,7 @@ struct SingleCategoryUtilizationWidget: View {
 
             ProgressView(value: min(max(utilization, 0), 1))
                 .tint(tint)
+                .accessibilityHidden(true)
 
             HStack {
                 HStack(spacing: 5) {

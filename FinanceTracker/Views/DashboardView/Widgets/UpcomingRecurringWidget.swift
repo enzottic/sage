@@ -71,6 +71,25 @@ private struct UpcomingRecurringCard: View {
         rule.tags?.first ?? rule.tag
     }
 
+    private var relativeDateDescription: String {
+        switch daysAway {
+        case 0: "Today"
+        case 1: "Tomorrow"
+        default: "\(daysAway) days away"
+        }
+    }
+
+    private var accessibilityDescription: String {
+        [
+            rule.name,
+            tag?.name,
+            rule.amount.currencyString,
+            relativeDateDescription
+        ]
+        .compactMap { $0 }
+        .joined(separator: ". ")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -105,6 +124,8 @@ private struct UpcomingRecurringCard: View {
         .frame(width: 150)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
     }
 }
 

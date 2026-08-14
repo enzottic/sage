@@ -91,7 +91,7 @@ struct ExpenseRowItem: View {
 
             Spacer()
 
-            Text("-\(expense.amount.currencyString)")
+            Text(expense.amount.currencyString)
                 .font(.body)
                 .fontWeight(.medium)
         }
@@ -131,7 +131,7 @@ struct ExpenseRowItem: View {
                 .foregroundStyle(.secondary)
                 .fixedSize()
 
-            Text("-\(expense.amount.currencyString)")
+            Text(expense.amount.currencyString)
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .fixedSize()
