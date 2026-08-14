@@ -254,7 +254,7 @@ struct SettingsListItem: View {
                         .foregroundStyle(color)
                     Image(systemName: icon)
                         .foregroundStyle(.white)
-                        .fontWeight(.black)
+                        .font(.system(size: 14, weight: .semibold))
                 }
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 10))
             } else {
@@ -264,7 +264,7 @@ struct SettingsListItem: View {
                         .foregroundStyle(color)
                     Image(systemName: icon)
                         .foregroundStyle(.white)
-                        .fontWeight(.black)
+                        .font(.system(size: 14, weight: .semibold))
                 }
             }
             Text(text)

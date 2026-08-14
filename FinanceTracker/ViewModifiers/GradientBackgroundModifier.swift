@@ -37,6 +37,7 @@ extension View {
     /// Applies the Sage background treatment used by Settings lists.
     func settingsBackground() -> some View {
         scrollContentBackground(.hidden)
+            .textCase(nil)
             .background(.sageBackground)
             .gradientBackground()
     }

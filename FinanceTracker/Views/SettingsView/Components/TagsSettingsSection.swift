@@ -79,9 +79,10 @@ struct TagsSettingsSection: View {
                 Text("Smart Tagging")
             } footer: {
                 VStack(alignment: .leading) {
-                    let aiSection = TagSuggestionService.isAIAvailable ? "AI mode uses Apple Intelligence to determine a tag for the expense. \nHistory + AI starts by searching for a matching expense, and falls back to AI if a match is not found." : ""
                     Text("Automatically suggests tags when creating a new expense.")
-                    Text(aiSection)
+                    if TagSuggestionService.isAIAvailable {
+                        Text("AI mode uses Apple Intelligence to determine a tag. History + AI starts by searching for a matching expense, then uses AI if no match is found.")
+                    }
                 }
             }
 
@@ -112,6 +113,7 @@ struct TagsSettingsSection: View {
                             }
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                 }
                 .onDelete { indexSet in
                     let visible = expenseTags.filter { !$0.isDeleted }
@@ -146,7 +148,7 @@ struct TagsSettingsSection: View {
         .sheet(item: $tagToEdit) { tag in
             AddExpenseTagSheet(tagToEdit: tag)
                 .presentationBackground(.background)
-                .presentationDetents([.medium])
+                .presentationDetents([.large])
         }
         .alert("Remove Tag from Expenses?", isPresented: Binding(
             get: { tagPendingDelete != nil },

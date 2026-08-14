@@ -54,7 +54,7 @@ struct AddExpenseView: View {
                 : "Receipt reading requires Apple Intelligence on this device."
         }
 
-        return "Receipt reading requires iOS 26 or later."
+        return nil
     }
 
     private var receiptImportConfiguration: ReceiptImportConfiguration? {
@@ -104,7 +104,7 @@ struct AddExpenseView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if isSaving {
-                    ProgressView("Saving expense")
+                    ProgressView()
                         .controlSize(.small)
                         .accessibilityLabel("Saving expense")
                 } else {

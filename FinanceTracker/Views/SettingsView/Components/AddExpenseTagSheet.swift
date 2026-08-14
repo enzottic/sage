@@ -124,6 +124,8 @@ struct AddExpenseTagSheet: View {
                             Text("Cap how much you spend on this tag each month")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .tint(color)

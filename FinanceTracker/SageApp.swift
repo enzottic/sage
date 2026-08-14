@@ -84,6 +84,7 @@ struct SageApp: App {
                 RootTabView()
             }
         }
+        .textCase(nil)
         .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
             if !UITestConfiguration.isEnabled,

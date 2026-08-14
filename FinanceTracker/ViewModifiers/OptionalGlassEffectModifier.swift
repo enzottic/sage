@@ -11,8 +11,7 @@ extension View {
         if #available(iOS 26.0, *) {
             glassEffect(.regular, in: shape)
         } else {
-            self
+            self.background(.regularMaterial, in: shape)
         }
     }
 }
-

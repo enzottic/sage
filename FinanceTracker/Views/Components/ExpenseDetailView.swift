@@ -58,7 +58,7 @@ struct ExpenseDetailView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 if isSaving {
-                    ProgressView("Saving expense")
+                    ProgressView()
                         .controlSize(.small)
                         .accessibilityLabel("Saving expense")
                 } else {

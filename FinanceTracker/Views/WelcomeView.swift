@@ -182,7 +182,7 @@ struct WelcomeView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .frame(height: 52)
                         .background(.cardBackground)
                         .cornerRadius(15)
                 }
@@ -284,7 +284,7 @@ struct WelcomeView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .frame(height: 52)
                         .background(.cardBackground)
                         .cornerRadius(15)
                 }
@@ -560,7 +560,7 @@ struct WelcomeView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .frame(height: 52)
                         .background(.cardBackground)
                         .cornerRadius(15)
                 }
@@ -572,7 +572,7 @@ struct WelcomeView: View {
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .frame(height: 52)
                         .background(.sage)
                         .cornerRadius(15)
                 }
@@ -683,6 +683,8 @@ struct FeatureRow: View {
                 Text(description)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -705,6 +707,8 @@ struct BudgetSummaryRow: View {
             Text(title)
                 .font(isTotal ? .title3 : .body)
                 .fontWeight(isTotal ? .bold : .regular)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Spacer()
 
@@ -712,6 +716,8 @@ struct BudgetSummaryRow: View {
                 .font(isTotal ? .title2 : .body)
                 .fontWeight(isTotal ? .bold : .semibold)
                 .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
         .accessibilityElement(children: .combine)
     }
