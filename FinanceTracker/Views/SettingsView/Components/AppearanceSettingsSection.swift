@@ -121,6 +121,9 @@ struct AppearanceSettingsSection: View {
                         }
                     }
                     .foregroundStyle(.primary)
+                    .accessibilityLabel(appearance.rawValue)
+                    .accessibilityValue(config.selectedAppearance == appearance ? "Selected" : "Not selected")
+                    .accessibilityAddTraits(config.selectedAppearance == appearance ? .isSelected : [])
                 }
             } header: {
                 Text("App Theme")
@@ -152,6 +155,7 @@ struct AppearanceSettingsSection: View {
                                 .background(Color(.cardBackground), in: RoundedRectangle(cornerRadius: 10))
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("\(palette.name) color palette")
                         }
                     }
                     .padding(.horizontal, 4)
@@ -168,13 +172,13 @@ struct AppearanceSettingsSection: View {
                         Spacer()
                         switch category {
                         case .needs:
-                            ColorPicker("", selection: $config.needsColor, supportsOpacity: false)
+                            ColorPicker("Needs color", selection: $config.needsColor, supportsOpacity: false)
                                 .labelsHidden()
                         case .wants:
-                            ColorPicker("", selection: $config.wantsColor, supportsOpacity: false)
+                            ColorPicker("Wants color", selection: $config.wantsColor, supportsOpacity: false)
                                 .labelsHidden()
                         case .savings:
-                            ColorPicker("", selection: $config.savingsColor, supportsOpacity: false)
+                            ColorPicker("Savings color", selection: $config.savingsColor, supportsOpacity: false)
                                 .labelsHidden()
                         @unknown default:
                             EmptyView()

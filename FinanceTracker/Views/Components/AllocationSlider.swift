@@ -38,6 +38,9 @@ struct AllocationSlider: View {
                 }
             ), in: 0...100, step: 5)
                 .tint(color)
+                .accessibilityLabel(title)
+                .accessibilityValue(Text(percentage / 100, format: .percent.precision(.fractionLength(0))))
+                .accessibilityHint("Adjusts in five percent steps")
         }
         .onChange(of: percentage) {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()

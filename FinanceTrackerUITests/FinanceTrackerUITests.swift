@@ -50,6 +50,25 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testOnboardingSupportsLargestAccessibilityTextSize() {
+        let app = XCUIApplication()
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "1"
+        app.launchArguments += [
+            "-UIPreferredContentSizeCategoryName",
+            "UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge"
+        ]
+        app.launch()
+
+        let welcomeTitle = app.staticTexts["onboarding-welcome-title"]
+        XCTAssertTrue(welcomeTitle.waitForExistence(timeout: timeout))
+
+        let getStartedButton = app.buttons["onboarding-get-started-button"]
+        XCTAssertTrue(getStartedButton.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: getStartedButton, in: app))
+        XCTAssertTrue(getStartedButton.isHittable)
+    }
+
     func testAddsExpense() {
         let app = launchApp()
         openExpenses(in: app)

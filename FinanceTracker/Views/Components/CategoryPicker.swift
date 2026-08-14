@@ -13,8 +13,22 @@ struct CategoryPicker: View {
     @Binding var selectedCategory: ExpenseCategory
 
     var body: some View {
-        HStack {
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                categoryButtons
+            }
+
+            VStack {
+                categoryButtons
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var categoryButtons: some View {
             ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                let isSelected = selectedCategory == category
                 Button {
                     selectedCategory = category
                 } label: {
@@ -28,12 +42,12 @@ struct CategoryPicker: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(selectedCategory == category ? Color.secondary : .cardBackground)
+                .background(isSelected ? Color.secondary : .cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 15))
                 .foregroundStyle(.primary)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityValue(isSelected ? "Selected" : "Not selected")
             }
-        }
-        .padding(.horizontal)
     }
 }
 

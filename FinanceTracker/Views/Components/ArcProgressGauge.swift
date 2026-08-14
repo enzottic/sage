@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ArcProgressGauge<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let progress: Double
     var tint: Color = .sage
     var lineWidthRatio: CGFloat = 0.073
@@ -28,7 +30,7 @@ struct ArcProgressGauge<Content: View>: View {
                 ArcShape(lineWidth: lineWidth)
                     .trim(from: 0, to: clampedProgress)
                     .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .animation(.easeInOut, value: clampedProgress)
+                    .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
 
                 content()
                     .padding(.horizontal, lineWidth)

@@ -10,6 +10,8 @@ import SwiftData
 import SageKit
 
 struct TagCapsule: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let tag: ExpenseTag?
     let size: TagCapsuleSize
     var aiSuggested: Bool = false
@@ -89,14 +91,22 @@ struct TagCapsule: View {
                 }
                 .overlay { rainbowGlow }
                 .onAppear {
-                    if aiSuggested { playGlow() }
+                    if aiSuggested, !reduceMotion { playGlow() }
                 }
                 .onChange(of: aiSuggested) { _, newValue in
-                    if newValue {
+                    if newValue, !reduceMotion {
                         playGlow()
                     } else {
                         glowTask?.cancel()
                         withAnimation(.easeOut(duration: 0.3)) { glowOpacity = 0 }
+                    }
+                }
+                .onChange(of: reduceMotion) { _, shouldReduceMotion in
+                    if shouldReduceMotion {
+                        glowTask?.cancel()
+                        glowOpacity = 0
+                    } else if aiSuggested {
+                        playGlow()
                     }
                 }
         }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import SageKit
 
 struct ExpenseRowItem: View {
@@ -20,6 +21,23 @@ struct ExpenseRowItem: View {
     var style: Style = .regular
 
     private var tags: [ExpenseTag] { expense.tags ?? [] }
+
+    private var accessibilityDescription: String {
+        var parts = [
+            expense.name,
+            expense.amount.currencyString,
+            expense.category.rawValue,
+            expense.date.relative()
+        ]
+        let tagNames = tags.filter { !$0.isDeleted }.map(\.name)
+        if !tagNames.isEmpty {
+            parts.append("Tags: \(tagNames.joined(separator: ", "))")
+        }
+        if expense.recurringExpenseId != nil {
+            parts.append("Recurring expense")
+        }
+        return parts.joined(separator: ", ")
+    }
 
     var body: some View {
         switch style {
@@ -73,12 +91,13 @@ struct ExpenseRowItem: View {
 
             Spacer()
 
-            Text("-\(expense.amount.currencyString)")
+            Text(expense.amount.currencyString)
                 .font(.body)
                 .fontWeight(.medium)
         }
         .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
     }
 
     private var condensedContent: some View {
@@ -112,12 +131,13 @@ struct ExpenseRowItem: View {
                 .foregroundStyle(.secondary)
                 .fixedSize()
 
-            Text("-\(expense.amount.currencyString)")
+            Text(expense.amount.currencyString)
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .fixedSize()
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
     }
 }
 
