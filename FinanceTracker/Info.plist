@@ -4,6 +4,21 @@
 <dict>
 	<key>CFBundleSpokenName</key>
 	<string>Sage</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Receipt Image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.image</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Sage uses the camera to photograph receipts and add expenses automatically.</string>
 	<key>CFBundleURLTypes</key>
