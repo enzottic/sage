@@ -81,6 +81,7 @@ struct SettingsView: View {
                         Link(destination: feedbackURL) {
                             SettingsListItem(text: "Feedback", icon: "envelope.fill", color: .yellow)
                         }
+                        .tint(.primary)
                     } else {
                         SettingsListItem(text: "Feedback unavailable", icon: "envelope.fill", color: .gray)
                     }
@@ -246,25 +247,13 @@ struct SettingsListItem: View {
 
     var body: some View {
         HStack {
-            if #available(iOS 26.0, *) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .frame(width: 35, height: 35)
-                        .foregroundStyle(color)
-                    Image(systemName: icon)
-                        .foregroundStyle(.white)
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 10))
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .frame(width: 35, height: 35)
-                        .foregroundStyle(color)
-                    Image(systemName: icon)
-                        .foregroundStyle(.white)
-                        .font(.system(size: 14, weight: .semibold))
-                }
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .frame(width: 35, height: 35)
+                    .foregroundStyle(color)
+                Image(systemName: icon)
+                    .foregroundStyle(.white)
+                    .font(.system(size: 14, weight: .semibold))
             }
             Text(text)
         }

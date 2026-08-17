@@ -13,6 +13,7 @@ struct RootTabView: View {
 
     @State private var appRouter = AppRouter()
     @State private var whatsNewRelease: WhatsNewRelease?
+    @State private var query: String? = nil
 
     /// Intercepts selection of the prominent "Add Expense" tab (iOS 27+): it presents the
     /// add sheet instead of switching tabs, and never writes `.addExpense` to `selectedTab`.
@@ -47,8 +48,13 @@ struct RootTabView: View {
             Tab("Settings", systemImage: "gear", value: SageTab.settings) {
                 SettingsView()
             }
+            
+            Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
+                SearchExpensesView()
+            }
 
         }
+        .tabViewSearchActivation(.searchTabSelection)
         .accessibilityIdentifier("main-tab-view")
         .sheet(item: $appRouter.presentedSheet) { sheet in
             switch sheet {

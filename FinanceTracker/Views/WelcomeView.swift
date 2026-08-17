@@ -18,13 +18,12 @@ struct WelcomeView: View {
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
 
     @State private var currentStep: OnboardingStep = .welcome
-    @State private var monthlyIncome: String = ""
+    @State private var monthlyIncome: Double?
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled: Bool = false
     @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
     @State private var selectedTagNames: Set<String> = []
-    @FocusState private var isInputFocused: Bool
 
     enum OnboardingStep {
         case welcome
@@ -48,22 +47,22 @@ struct WelcomeView: View {
 
                 VStack(spacing: 0) {
                     TabView(selection: $currentStep) {
-                        ScrollView { welcomePage }
+                        welcomePage
                             .tag(OnboardingStep.welcome)
 
-                        ScrollView { budgetPage }
+                        budgetPage
                             .tag(OnboardingStep.budget)
 
-                        ScrollView { allocationPage }
+                        allocationPage
                             .tag(OnboardingStep.allocation)
 
-                        ScrollView { syncPage }
+                        syncPage
                             .tag(OnboardingStep.sync)
 
-                        ScrollView { tagsPage }
+                        tagsPage
                             .tag(OnboardingStep.tags)
 
-                        ScrollView { completePage }
+                        completePage
                             .tag(OnboardingStep.complete)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
@@ -92,12 +91,17 @@ struct WelcomeView: View {
                     .accessibilityIdentifier("onboarding-welcome-title")
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
+                Text("A simple personal expense tracking app")
+                    .accessibilityIdentifier("onboarding-welcome-subtitle")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
             }
 
             VStack(alignment: .leading, spacing: 20) {
-                FeatureRow(icon: "chart.bar.fill", title: "Track Expenses", description: "Monitor spending across three basic categories: wants, needs, and savings")
-                FeatureRow(icon: "percent", title: "Smart Allocation", description: "Set custom budget percentages that work for you")
-                FeatureRow(icon: "eye.fill", title: "Visual Insights", description: "See your budget utilization at a glance")
+                FeatureRow(icon: "chart.bar.fill", title: "Wants and Needs", description: "Track your expenses by assigning each a category: wants, needs, or savings.")
+                FeatureRow(icon: "chart.pie.fill", title: "Smart Allocation", description: "Set custom category percentages that work for you")
+                FeatureRow(icon: "receipt.fill", title: "Receipt Parsing", description: "Parse receipts using on-device AI models")
+                FeatureRow(icon: "lock.fill", title: "Privacy First", description: "All data is stored on device or in iCloud if you choose. No login required.")
             }
             .padding(.horizontal, 40)
             .padding(.top, 30)
@@ -113,7 +117,7 @@ struct WelcomeView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(height: 52)
                     .background(.sage)
                     .cornerRadius(15)
             }
@@ -129,46 +133,26 @@ struct WelcomeView: View {
         VStack(spacing: 30) {
             Spacer()
 
-            VStack(spacing: 12) {
-                Image(systemName: "dollarsign.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.sage)
-
-                Text("Set Your Monthly Budget")
+            VStack(spacing: 30) {
+                Text("How much do you make a month?")
                     .font(.title.bold())
                     .multilineTextAlignment(.center)
 
-                Text("Enter your total monthly spendable income")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
+                VStack(spacing: 8) {
+                    CentsFirstCurrencyField(
+                        amount: $monthlyIncome,
+                        accessibilityIdentifier: "onboarding-income-field",
+                        keyboardDoneAccessibilityIdentifier: "onboarding-keyboard-done-button",
+                        textAlignment: .center
+                    )
 
-            VStack(spacing: 8) {
-                TextField("0", text: $monthlyIncome)
-                    .accessibilityIdentifier("onboarding-income-field")
-                    .keyboardType(.numberPad)
-                    .font(.largeTitle.bold())
-                    .multilineTextAlignment(.center)
-                    .focused($isInputFocused)
-                    .padding()
-                    .background(.cardBackground)
-                    .cornerRadius(15)
-                    .toolbar {
-                        ToolbarItem(placement: .keyboard) {
-                            Button("Done") {
-                                isInputFocused = false
-                            }
-                            .accessibilityIdentifier("onboarding-keyboard-done-button")
-                        }
-                    }
-
-                Text("\(Locale.current.currency?.identifier ?? "USD") per month")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    Text("\(Locale.current.currency?.identifier ?? "USD") per month")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 40)
             }
-            .padding(.horizontal, 40)
+            .frame(maxWidth: .infinity)
 
             Spacer()
 
@@ -188,8 +172,7 @@ struct WelcomeView: View {
                 }
 
                 Button {
-                    if let income = Int(monthlyIncome), income > 0 {
-                        isInputFocused = false
+                    if let monthlyIncome, monthlyIncome > 0 {
                         withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
                             currentStep = .allocation
                         }
@@ -200,11 +183,11 @@ struct WelcomeView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Int(monthlyIncome) ?? 0 > 0 ? .sage : Color.gray)
+                        .background(monthlyIncome ?? 0 > 0 ? .sage : Color.gray)
                         .cornerRadius(15)
                 }
                 .accessibilityIdentifier("onboarding-budget-continue-button")
-                .disabled((Int(monthlyIncome) ?? 0) <= 0)
+                .disabled((monthlyIncome ?? 0) <= 0)
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
@@ -425,7 +408,7 @@ struct WelcomeView: View {
                     .font(.title.bold())
                     .multilineTextAlignment(.center)
 
-                Text("Tags help you categorize expenses. Pick the ones you'd like to start with. You can always add or remove them later.")
+                Text("Tags help you categorize expenses further. Pick the ones you'd like to start with. You can always add or remove them later.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -514,7 +497,7 @@ struct WelcomeView: View {
             VStack(spacing: 15) {
                 BudgetSummaryRow(
                     title: "Monthly Budget",
-                    amount: Double(Int(monthlyIncome) ?? 0),
+                    amount: monthlyIncome ?? 0,
                     color: .primary,
                     isTotal: true
                 )
@@ -524,21 +507,21 @@ struct WelcomeView: View {
 
                 BudgetSummaryRow(
                     title: "Wants (\(Int(wantsPercent))%)",
-                    amount: Double(Int(monthlyIncome) ?? 0) * (wantsPercent / 100),
+                    amount: (monthlyIncome ?? 0) * (wantsPercent / 100),
                     color: .want,
                     icon: "cart.fill"
                 )
 
                 BudgetSummaryRow(
                     title: "Needs (\(Int(needsPercent))%)",
-                    amount: Double(Int(monthlyIncome) ?? 0) * (needsPercent / 100),
+                    amount: (monthlyIncome ?? 0) * (needsPercent / 100),
                     color: .need,
                     icon: "house.fill"
                 )
 
                 BudgetSummaryRow(
                     title: "Savings (\(Int(savingsPercent))%)",
-                    amount: Double(Int(monthlyIncome) ?? 0) * (savingsPercent / 100),
+                    amount: (monthlyIncome ?? 0) * (savingsPercent / 100),
                     color: .teal,
                     icon: "banknote.fill"
                 )
@@ -586,7 +569,7 @@ struct WelcomeView: View {
     // MARK: - Helper Functions
 
     func completeOnboarding() {
-        config.totalMonthlyIncome = Int(monthlyIncome) ?? 0
+        config.totalMonthlyIncome = Int(monthlyIncome ?? 0)
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
         config.savingsPercent = savingsPercent / 100

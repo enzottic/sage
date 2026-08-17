@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CentsFirstCurrencyField: View {
     @Binding var amount: Double?
+    var accessibilityIdentifier: String = "Expense Amount Field"
+    var keyboardDoneAccessibilityIdentifier: String = "currency-keyboard-done-button"
+    var textAlignment: Alignment = .leading
 
     @State private var centsValue: String = "0"
     @FocusState private var isFocused: Bool
@@ -53,16 +56,24 @@ struct CentsFirstCurrencyField: View {
                         amount = nil
                     }
                 }
-                .accessibilityIdentifier("Expense Amount Field")
+                .accessibilityIdentifier(accessibilityIdentifier)
                 .accessibilityLabel("Amount")
                 .accessibilityValue(displayValue)
                 .accessibilityHint("Enter expense amount using number keys")
+                .toolbar {
+                    ToolbarItem(placement: .keyboard) {
+                        Button("Done") {
+                            isFocused = false
+                        }
+                        .accessibilityIdentifier(keyboardDoneAccessibilityIdentifier)
+                    }
+                }
 
 
             Text(displayValue)
                 .font(.system(size: 52, weight: .bold))
                 .foregroundStyle(Color.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: textAlignment)
                 .onTapGesture { isFocused = true }
                 .accessibilityHidden(true)
 
