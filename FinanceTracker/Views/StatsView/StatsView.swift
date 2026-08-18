@@ -181,6 +181,14 @@ struct StatsView: View {
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
+                    
+                    spendingChart
+                        .padding(.horizontal)
+                    
+                    if currentPartialTotal > 0 && selectedTag == nil {
+                        TopSpendingBreakdown(expenses: currentPeriodExpenses, accentColor: accentColor)
+                            .padding(.horizontal)
+                    }
 
                     SpendingComparisonCard(
                         currentPartialTotal: currentPartialTotal,
@@ -191,13 +199,6 @@ struct StatsView: View {
                     )
                     .padding(.horizontal)
 
-                    if currentPartialTotal > 0 {
-                        TopSpendingBreakdown(expenses: currentPeriodExpenses, accentColor: accentColor)
-                            .padding(.horizontal)
-                    }
-
-                    spendingChart
-                        .padding(.horizontal)
                 }
                 .padding(.vertical)
             }
@@ -209,11 +210,8 @@ struct StatsView: View {
 
     private var spendingChart: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(timeframe == .monthly ? "Spending by Month" : "Spending by Week")
+            Text(timeframe == .monthly ? "Total Spending by Month" : "Total Spending by Week")
                 .font(.headline)
-            Text(timeframe == .monthly ? "Comparing the last 6 months" : "Comparing the last 6 weeks")
-                .font(.caption)
-                .foregroundStyle(.secondary)
                 .padding(.bottom, 8)
 
             Chart {

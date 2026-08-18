@@ -43,18 +43,19 @@ struct CategoryDetailView: View {
     var body: some View {
         List {
             SingleCategoryUtilizationWidget(category: category, layout: .full, selectedMonth: month, isNavigable: false)
+            
+//            Text()
 
             if !expenses.isEmpty {
                 Section {
                     TopSpendingBreakdown(
                         expenses: expenses,
                         accentColor: category.color(in: categoryColors),
-                        title: "Top Tags",
                         untaggedLabel: "Untagged"
                     )
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                } header: {
+                    Text("Top Tags")
+                        .font(.subheadline)
                 }
             }
 
@@ -62,6 +63,7 @@ struct CategoryDetailView: View {
                 ExpenseList(expenses: expenses)
             } header: {
                 Text("Recent Purchases")
+                    .font(.subheadline)
             }
         }
         .navigationTitle(category.rawValue)

@@ -103,6 +103,7 @@ struct SageApp: App {
             }
         }
         .textCase(nil)
+        .fontDesign(.rounded)
         .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
             if !UITestConfiguration.isEnabled,

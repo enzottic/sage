@@ -17,6 +17,7 @@ enum DashboardWidgetLayout {
 
 enum DashboardWidget: Hashable, Codable {
     case monthlyOverview
+    case mostSpentTags
     case categoryUtilization
     case upcomingRecurring
     case recentExpenses(ExpenseRowItem.Style)

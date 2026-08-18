@@ -19,6 +19,7 @@ struct DashboardView: View {
         .init(widgets: [.singleCategoryUtilization(.needs)]),
         .init(widgets: [.singleCategoryUtilization(.wants)]),
         .init(widgets: [.singleCategoryUtilization(.savings)]),
+        .init(widgets: [.mostSpentTags]),
         .init(widgets: [.upcomingRecurring]),
         .init(widgets: [.recentExpenses(.regular)]),
     ]
@@ -65,6 +66,7 @@ struct DashboardView: View {
     func widgetView(for widget: DashboardWidget, layout: DashboardWidgetLayout) -> some View {
         switch widget {
         case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: selectedMonth)
+        case .mostSpentTags: MostSpentTagsWidget(selectedMonth: selectedMonth)
         case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth)
         case .upcomingRecurring: UpcomingRecurringWidget()
         case .recentExpenses(let rowStyle): RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle)
