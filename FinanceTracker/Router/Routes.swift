@@ -31,9 +31,17 @@ enum AppRoute: Hashable {
 
 /// Modally presented flows, hosted once at `RootTabView` so they appear above any tab.
 enum SageSheet: Identifiable, Hashable {
-    case addExpense(Expense?, receiptData: Data? = nil) // nil expense = blank or receipt import
+    case addExpense(
+        Expense?,
+        receiptData: Data? = nil,
+        presentationID: UUID = UUID()
+    ) // nil expense = blank or receipt import
 
-    var id: Self { self }
+    var id: UUID {
+        switch self {
+        case .addExpense(_, _, let presentationID): presentationID
+        }
+    }
 }
 
 // MARK: - Deep links

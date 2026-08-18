@@ -15,6 +15,7 @@ import SageKit
 struct AddExpenseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AppRouter.self) private var appRouter
 
     @State private var name: String = ""
@@ -28,6 +29,10 @@ struct AddExpenseView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var isSaving = false
+    @State private var isNameFieldFocused = false
+    @State private var keyboardDismissalRequest = 0
+    @State private var debouncedName = ""
+    @State private var nameDebounceTask: Task<Void, Never>?
 
     @State private var isParsingReceipt: Bool = false
     @State private var showCamera = false
@@ -36,6 +41,7 @@ struct AddExpenseView: View {
     private let initialReceiptData: Data?
 
     @Query private var allTags: [ExpenseTag]
+    @Query(sort: \Expense.date, order: .reverse) private var pastExpenses: [Expense]
     
     init(expense: Expense?, receiptData: Data? = nil) {
         initialReceiptData = receiptData
@@ -84,17 +90,34 @@ struct AddExpenseView: View {
                     category: $category,
                     tags: $tags,
                     note: $note,
+                    isNameFieldFocused: $isNameFieldFocused,
+                    keyboardDismissalRequest: $keyboardDismissalRequest,
                     receiptImport: receiptImportConfiguration,
                     receiptImportUnavailableMessage: receiptImportUnavailableMessage
                 )
 
                 optionsCard
+                    .simultaneousGesture(
+                        TapGesture().onEnded { keyboardDismissalRequest += 1 }
+                    )
             }
             .padding(.top, 20)
             .padding(.bottom, 40)
         }
         .background(.sageBackground)
         .scrollDismissesKeyboard(.immediately)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if showsPastExpenseSuggestions {
+                pastExpenseSuggestionList
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(
+            reduceMotion ? nil : .spring(duration: 0.32, bounce: 0.18),
+            value: showsPastExpenseSuggestions
+        )
         .navigationTitle("New Expense")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -130,6 +153,17 @@ struct AddExpenseView: View {
             guard let item else { return }
             Task { await loadReceiptPhoto(item) }
         }
+        .onChange(of: name) { _, newValue in
+            nameDebounceTask?.cancel()
+            nameDebounceTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
+                guard !Task.isCancelled else { return }
+                debouncedName = newValue
+            }
+        }
+        .onDisappear {
+            nameDebounceTask?.cancel()
+        }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPickerView(
                 onImagePicked: { image in
@@ -148,6 +182,95 @@ struct AddExpenseView: View {
             await parseReceipt(image)
         }
         .gradientBackground()
+    }
+
+    private var pastExpenseSuggestions: [Expense] {
+        let trimmedName = debouncedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return [] }
+
+        let lowercasedName = trimmedName.lowercased()
+        var seenNames = Set<String>()
+        return pastExpenses.filter { expense in
+            let key = expense.name.lowercased()
+            guard key.contains(lowercasedName), !seenNames.contains(key) else { return false }
+            seenNames.insert(key)
+            return true
+        }
+        .prefix(3)
+        .map { $0 }
+    }
+
+    private var showsPastExpenseSuggestions: Bool {
+        isNameFieldFocused && !pastExpenseSuggestions.isEmpty
+    }
+
+    private var pastExpenseSuggestionList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(pastExpenseSuggestions.enumerated()), id: \.element.id) { index, expense in
+                if index > 0 {
+                    Divider().padding(.leading, 56)
+                }
+
+                Button {
+                    name = expense.name
+                    amount = expense.amount
+                    category = expense.category
+                    tags = expense.tags ?? []
+                    isNameFieldFocused = false
+                } label: {
+                    HStack(spacing: 12) {
+                        if let tag = expense.tags?.first {
+                            TagGlyphView(tag: tag)
+                                .font(.system(size: 20))
+                                .foregroundStyle(tag.color)
+                                .frame(width: 36, height: 36)
+                                .background(Color.secondary.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } else {
+                            Image(systemName: "clock")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 36, height: 36)
+                                .background(Color.secondary.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(expense.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
+                            HStack(spacing: 4) {
+                                Text(expense.category.rawValue)
+                                let tagNames = (expense.tags ?? []).map(\.name).joined(separator: ", ")
+                                if !tagNames.isEmpty {
+                                    Text("·")
+                                    Text(tagNames)
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
+        .accessibilityIdentifier("past-expense-suggestions")
     }
 
     // MARK: - Options card

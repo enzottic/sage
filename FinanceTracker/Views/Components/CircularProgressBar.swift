@@ -34,7 +34,7 @@ struct CircularProgressBar: View {
                 .trim(from: 0, to: clampedProgress)
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90)) // Start from top
-                .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
+                .animation(reduceMotion ? nil : .dashboardProgress, value: clampedProgress)
             
             Text(clampedProgress.formatted(.percent.precision(.fractionLength(0))))
                 .font(.caption)

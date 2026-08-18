@@ -12,6 +12,7 @@ struct SingleCategoryUtilizationWidget: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(AppRouter.self) private var appRouter
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let category: ExpenseCategory
     let layout: DashboardWidgetLayout
@@ -48,6 +49,10 @@ struct SingleCategoryUtilizationWidget: View {
 
     private var utilization: Double {
         budget == 0 ? 0 : spent / budget
+    }
+
+    private var clampedUtilization: Double {
+        min(max(utilization, 0), 1)
     }
 
     private var remaining: Double { max(budget - spent, 0) }
@@ -101,8 +106,11 @@ struct SingleCategoryUtilizationWidget: View {
                     .foregroundStyle(.secondary)
             }
 
-            ProgressView(value: min(max(utilization, 0), 1))
-                .tint(tint)
+            DashboardLinearProgressBar(
+                progress: clampedUtilization,
+                tint: tint,
+                animation: reduceMotion ? nil : .dashboardProgress
+            )
                 .accessibilityHidden(true)
 
             HStack {
@@ -138,6 +146,25 @@ struct SingleCategoryUtilizationWidget: View {
                 .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+private struct DashboardLinearProgressBar: View {
+    let progress: Double
+    let tint: Color
+    let animation: Animation?
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(.secondary.opacity(0.2))
+
+            Capsule()
+                .fill(tint)
+                .scaleEffect(x: CGFloat(progress), anchor: .leading)
+                .animation(animation, value: progress)
+        }
+        .frame(height: 4)
     }
 }
 

@@ -24,7 +24,6 @@ struct ArcProgressGauge<Content: View>: View {
                 .clamped(to: lineWidthRange)
             let markerDiameter = (lineWidth * 1.75).clamped(to: 38...48)
             let arcInset = max(lineWidth / 2, markerDiameter / 2)
-            let tip = progressTip(in: proxy.size, inset: arcInset)
 
             ZStack(alignment: .bottom) {
                 ArcShape(inset: arcInset)
@@ -33,27 +32,21 @@ struct ArcProgressGauge<Content: View>: View {
                 ArcShape(inset: arcInset)
                     .trim(from: 0, to: clampedProgress)
                     .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
+                    .animation(reduceMotion ? nil : .dashboardProgress, value: clampedProgress)
 
                 content()
                     .padding(.horizontal, lineWidth)
                     .frame(width: proxy.size.width, height: proxy.size.height - lineWidth / 2, alignment: .center)
                     .offset(y: lineWidth / 4)
 
-                Text(progress, format: .percent.precision(.fractionLength(0)))
-                    .font(.caption2.bold())
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.65)
-                    .frame(width: markerDiameter, height: markerDiameter)
-                    .background(tint, in: Circle())
-                    .overlay {
-                        Circle()
-                            .stroke(.background, lineWidth: 2)
-                    }
-                    .shadow(color: .black.opacity(0.16), radius: 3, y: 1)
-                    .position(tip)
-                    .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
+                ArcProgressMarker(
+                    progress: progress,
+                    tint: tint,
+                    diameter: markerDiameter,
+                    gaugeSize: proxy.size,
+                    arcInset: arcInset
+                )
+                    .animation(reduceMotion ? nil : .dashboardProgress, value: progress)
                     .accessibilityHidden(true)
             }
         }
@@ -62,15 +55,6 @@ struct ArcProgressGauge<Content: View>: View {
         .accessibilityValue(Text(clampedProgress, format: .percent.precision(.fractionLength(0))))
     }
 
-    private func progressTip(in size: CGSize, inset: CGFloat) -> CGPoint {
-        let radius = max(min(size.width / 2, size.height) - inset, 0)
-        let angle = Angle.degrees(180 + (180 * clampedProgress)).radians
-
-        return CGPoint(
-            x: size.width / 2 + radius * cos(angle),
-            y: size.height - inset + radius * sin(angle)
-        )
-    }
 }
 
 private extension Comparable {
@@ -93,6 +77,46 @@ private struct ArcShape: Shape {
             clockwise: false
         )
         return path
+    }
+}
+
+private struct ArcProgressMarker: View, Animatable {
+    var progress: Double
+    let tint: Color
+    let diameter: CGFloat
+    let gaugeSize: CGSize
+    let arcInset: CGFloat
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        Text(progress, format: .percent.precision(.fractionLength(0)))
+            .font(.caption2.bold())
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+            .frame(width: diameter, height: diameter)
+            .background(tint, in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(.background, lineWidth: 2)
+            }
+            .shadow(color: .black.opacity(0.16), radius: 3, y: 1)
+            .position(tip)
+    }
+
+    private var tip: CGPoint {
+        let clampedProgress = min(max(progress, 0), 1)
+        let radius = max(min(gaugeSize.width / 2, gaugeSize.height) - arcInset, 0)
+        let angle = Angle.degrees(180 + (180 * clampedProgress)).radians
+
+        return CGPoint(
+            x: gaugeSize.width / 2 + radius * cos(angle),
+            y: gaugeSize.height - arcInset + radius * sin(angle)
+        )
     }
 }
 

@@ -29,6 +29,8 @@ struct ExpenseInfoForm: View {
     @Binding var category: ExpenseCategory
     @Binding var tags: [ExpenseTag]
     @Binding var note: String
+    @Binding var isNameFieldFocused: Bool
+    @Binding var keyboardDismissalRequest: Int
     var isEditing: Bool
     var receiptImport: ReceiptImportConfiguration?
     var receiptImportUnavailableMessage: String?
@@ -41,22 +43,6 @@ struct ExpenseInfoForm: View {
     private enum Field: Hashable { case name, amount, note }
 
     @State private var showDatePicker = false
-    @State private var debouncedName: String = ""
-    @State private var debounceTask: Task<Void, Never>? = nil
-
-    private var nameSuggestions: [Expense] {
-        let trimmed = debouncedName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return [] }
-        let lower = trimmed.lowercased()
-        var seen = Set<String>()
-        return expenses.filter { expense in
-            let key = expense.name.lowercased()
-            guard key.contains(lower), !seen.contains(key) else { return false }
-            seen.insert(key)
-            return true
-        }.prefix(4).map { $0 }
-    }
-
     init(
         name: Binding<String>,
         amount: Binding<Double?>,
@@ -64,6 +50,8 @@ struct ExpenseInfoForm: View {
         category: Binding<ExpenseCategory>,
         tags: Binding<[ExpenseTag]>,
         note: Binding<String>,
+        isNameFieldFocused: Binding<Bool> = .constant(false),
+        keyboardDismissalRequest: Binding<Int> = .constant(0),
         isEditing: Bool = false,
         receiptImport: ReceiptImportConfiguration? = nil,
         receiptImportUnavailableMessage: String? = nil
@@ -74,6 +62,8 @@ struct ExpenseInfoForm: View {
         self._category = category
         self._tags = tags
         self._note = note
+        self._isNameFieldFocused = isNameFieldFocused
+        self._keyboardDismissalRequest = keyboardDismissalRequest
         self.isEditing = isEditing
         self.receiptImport = receiptImport
         self.receiptImportUnavailableMessage = receiptImportUnavailableMessage
@@ -82,26 +72,17 @@ struct ExpenseInfoForm: View {
     var body: some View {
         VStack(spacing: 20) {
             nameHeader
-            if !isEditing && focusedField == .name && !nameSuggestions.isEmpty {
-                pastExpenseSuggestions
-                    .transition(.opacity.combined(with: .offset(y: -8)))
-            }
             detailsCard
             sectionHeader(title: "Category") {
                 inlineCategoryPicker
             }
             sectionHeader(title: "Tags") {
-                TagPicker(selectedTags: $tags, aiSuggestedTagIDs: aiSuggestedTagIDs)
+                TagPicker(
+                    selectedTags: $tags,
+                    aiSuggestedTagIDs: aiSuggestedTagIDs,
+                    onInteraction: dismissKeyboard
+                )
                     .padding(.horizontal, 8)
-            }
-        }
-        .animation(reduceMotion ? nil : .spring(duration: 0.35, bounce: 0.2), value: focusedField == .name && !nameSuggestions.isEmpty)
-        .onChange(of: name) { _, newValue in
-            debounceTask?.cancel()
-            debounceTask = Task {
-                try? await Task.sleep(for: .seconds(0.5))
-                guard !Task.isCancelled else { return }
-                await MainActor.run { debouncedName = newValue }
             }
         }
         .onChange(of: tags) { _, newValue in
@@ -111,6 +92,14 @@ struct ExpenseInfoForm: View {
         }
         .sensoryFeedback(.selection, trigger: category)
         .sensoryFeedback(.selection, trigger: tags.map(\.id))
+        .onChange(of: isNameFieldFocused) { _, isFocused in
+            if !isFocused, focusedField == .name {
+                focusedField = nil
+            }
+        }
+        .onChange(of: keyboardDismissalRequest) {
+            dismissKeyboard()
+        }
     }
 
     // MARK: - Name header
@@ -121,7 +110,8 @@ struct ExpenseInfoForm: View {
                 .accessibilityIdentifier("expense-name-field")
                 .font(.largeTitle.bold())
                 .focused($focusedField, equals: .name)
-                .onChange(of: focusedField) { old, _ in
+                .onChange(of: focusedField) { old, new in
+                    isNameFieldFocused = new == .name
                     if old == .name { suggestTagIfNeeded() }
                 }
 
@@ -182,73 +172,6 @@ struct ExpenseInfoForm: View {
         .accessibilityValue(configuration.isParsing ? "In progress" : "")
     }
 
-    // MARK: - Past expense suggestions
-
-    private var pastExpenseSuggestions: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(nameSuggestions.enumerated()), id: \.element.id) { index, expense in
-                if index > 0 {
-                    Divider().padding(.leading, 56)
-                }
-                Button {
-                    name = expense.name
-                    amount = expense.amount
-                    category = expense.category
-                    tags = expense.tags ?? []
-                    aiSuggestedTagIDs = []
-                    focusedField = nil
-                } label: {
-                    HStack(spacing: 12) {
-                        if let tag = expense.tags?.first {
-                            TagGlyphView(tag: tag)
-                                .font(.system(size: 20))
-                                .foregroundStyle(tag.color)
-                                .frame(width: 36, height: 36)
-                                .background(Color.secondary.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        } else {
-                            Image(systemName: "clock")
-                                .font(.system(size: 15))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 36, height: 36)
-                                .background(Color.secondary.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(expense.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.primary)
-                            HStack(spacing: 4) {
-                                Text(expense.category.rawValue)
-                                let tagNames = (expense.tags ?? []).map(\.name).joined(separator: ", ")
-                                if !tagNames.isEmpty {
-                                    Text("·")
-                                    Text(tagNames)
-                                }
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 11)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .background(.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
-    }
-
     // MARK: - Details card
 
     private var detailsCard: some View {
@@ -281,6 +204,7 @@ struct ExpenseInfoForm: View {
             Divider().padding(.leading, 52)
 
             Button {
+                dismissKeyboard()
                 withAnimation(reduceMotion ? nil : .spring(duration: 0.3)) { showDatePicker.toggle() }
             } label: {
                 HStack(spacing: 12) {
@@ -342,6 +266,11 @@ struct ExpenseInfoForm: View {
             .frame(width: 24, alignment: .center)
     }
 
+    private func dismissKeyboard() {
+        focusedField = nil
+        isNameFieldFocused = false
+    }
+
     // MARK: - Category picker (inline)
 
     private var inlineCategoryPicker: some View {
@@ -363,6 +292,7 @@ struct ExpenseInfoForm: View {
             ForEach(ExpenseCategory.allCases, id: \.self) { cat in
                 let isSelected = category == cat
                 Button {
+                    dismissKeyboard()
                     category = cat
                 } label: {
                     HStack(spacing: 8) {

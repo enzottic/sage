@@ -15,6 +15,7 @@ struct TagPicker: View {
     @Binding var selectedTags: [ExpenseTag]
     /// IDs of currently-selected tags that were suggested by the AI (shows rainbow border).
     var aiSuggestedTagIDs: Set<UUID> = []
+    var onInteraction: () -> Void = {}
 
     @State private var newTagSheetIsPresented: Bool = false
 
@@ -41,6 +42,7 @@ struct TagPicker: View {
             ForEach(expenseTags, id: \.self) { option in
                 let selected = isSelected(option)
                 Button {
+                    onInteraction()
                     withAnimation(reduceMotion ? nil : .spring(duration: 0.2)) {
                         toggle(option)
                     }
@@ -58,6 +60,7 @@ struct TagPicker: View {
             }
 
             Button {
+                onInteraction()
                 newTagSheetIsPresented.toggle()
             } label: {
                 HStack(spacing: 4) {
