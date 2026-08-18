@@ -150,9 +150,6 @@ struct StatsView: View {
         max(0, projectedTotal - currentPartialTotal)
     }
 
-    /// Budget to compare the projection against, when meaningful.
-    /// Only for the monthly timeframe with income set and no tag filter
-    /// (tags have no budget; weekly proration would distort the 50/30/20 model).
     private var periodBudget: Double? {
         guard timeframe == .monthly, config.totalMonthlyIncome > 0, selectedTag == nil else { return nil }
         switch selectedCategory {
@@ -186,8 +183,12 @@ struct StatsView: View {
                         .padding(.horizontal)
                     
                     if currentPartialTotal > 0 && selectedTag == nil {
-                        TopSpendingBreakdown(expenses: currentPeriodExpenses, accentColor: accentColor)
-                            .padding(.horizontal)
+                        TopSpendingBreakdown(
+                            expenses: currentPeriodExpenses,
+                            accentColor: accentColor,
+                            contentPadding: 16
+                        )
+                        .padding(.horizontal)
                     }
 
                     SpendingComparisonCard(

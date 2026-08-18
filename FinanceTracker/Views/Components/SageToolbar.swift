@@ -11,6 +11,7 @@ struct SageToolbar: ToolbarContent {
     var onPrevious: () -> Void
     var onNext: () -> Void
     var onAdd: () -> Void
+    var isNextDisabled: Bool = false
 
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarLeading) {
@@ -21,6 +22,7 @@ struct SageToolbar: ToolbarContent {
             Button(action: onNext) {
                 Label("Next Month", systemImage: "chevron.right")
             }
+            .disabled(isNextDisabled)
         }
 
         ToolbarItem(placement: .topBarTrailing) {

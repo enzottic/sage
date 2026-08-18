@@ -14,6 +14,7 @@ struct TopSpendingBreakdown: View {
     let accentColor: Color
     var maximumRows: Int = 5
     var includesUntaggedExpenses: Bool = true
+    var contentPadding: CGFloat = 0
     var untaggedLabel: String? = nil
 
     private struct Row: Identifiable {
@@ -59,9 +60,12 @@ struct TopSpendingBreakdown: View {
     }
 
     var body: some View {
-        ForEach(rows) { row in
-            rowView(row)
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(rows) { row in
+                rowView(row)
+            }
         }
+        .padding(contentPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 15).fill(.cardBackground))
     }

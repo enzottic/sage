@@ -28,6 +28,10 @@ struct DashboardView: View {
         _selectedMonth = State(initialValue: .now)
     }
 
+    private var isCurrentMonth: Bool {
+        Calendar.current.isDate(selectedMonth, equalTo: .now, toGranularity: .month)
+    }
+
     var body: some View {
         @Bindable var appRouter = appRouter
         NavigationStack(path: $appRouter.homePath) {
@@ -55,7 +59,8 @@ struct DashboardView: View {
                     onNext: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
                     },
-                    onAdd: { appRouter.presentSheet(.addExpense(nil)) }
+                    onAdd: { appRouter.presentSheet(.addExpense(nil)) },
+                    isNextDisabled: isCurrentMonth
                 )
             }
             .appRouteDestinations()
