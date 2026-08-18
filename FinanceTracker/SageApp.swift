@@ -16,11 +16,11 @@ import UserNotifications
 struct SageApp: App {
     @State private var appConfiguration = AppConfiguration()
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
+    private let containerResult: Result<ModelContainer, any Error>
     
     @MainActor
     init() {
-        UIColorValueTransformer.register()
-        configureNavigationBarAppearance()
+        Self.configureNavigationBarAppearance()
 
         if UITestConfiguration.isEnabled {
             hasOpenedAppOnce = !UITestConfiguration.showsOnboarding
@@ -34,16 +34,35 @@ struct SageApp: App {
         // the next app launch.
         SageModelContainer.activateCloudKitPreference()
 
+        let containerResult: Result<ModelContainer, any Error>
+        if UITestConfiguration.isEnabled {
+            containerResult = Result {
+                let container = try SageModelContainer.make(for: .test)
+                if let seedName = UITestConfiguration.seedExpenseName {
+                    container.mainContext.insert(
+                        Expense(name: seedName, amount: 42.50, category: .wants, date: .now)
+                    )
+                    try container.mainContext.save()
+                }
+                return container
+            }
+        } else {
+            containerResult = SageModelContainer.shared
+        }
+        self.containerResult = containerResult
+
         // Present notifications that fire while the app is foreground
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
 
         // Make ExpenseStore resolvable via @Dependency in App Intents.
-        if UITestConfiguration.isEnabled,
-           case let .success(container) = appContainerResult {
+        if case let .success(container) = containerResult {
             let expenseStore = ExpenseStore(modelContainer: container)
             AppDependencyManager.shared.add(dependency: expenseStore)
-        } else if let expenseStore = ExpenseStore.shared {
-            AppDependencyManager.shared.add(dependency: expenseStore)
+
+            #if !DEBUG
+            let recurringService = RecurringExpenseService(modelContext: container.mainContext)
+            recurringService.generateAllExpenses(through: Date())
+            #endif
         }
 
         // Register App Shortcuts phrases with Siri
@@ -60,7 +79,7 @@ struct SageApp: App {
     
     var body: some Scene {
         WindowGroup {
-            switch appContainerResult {
+            switch containerResult {
             case let .success(container):
                 mainContent
                     .modelContainer(container)
@@ -95,7 +114,7 @@ struct SageApp: App {
         }
     }
     
-    private func configureNavigationBarAppearance() {
+    private static func configureNavigationBarAppearance() {
         if let largeDescriptor = UIFont.systemFont(ofSize: 34, weight: .bold).fontDescriptor.withDesign(.rounded) {
             UINavigationBar.appearance().largeTitleTextAttributes = [.font: UIFont(descriptor: largeDescriptor, size: 34)]
         }

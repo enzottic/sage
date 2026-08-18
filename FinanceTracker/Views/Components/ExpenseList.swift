@@ -103,6 +103,6 @@ struct ExpenseList: View {
             ExpenseList(expenses: [Expense.example, Expense.example])
         }
     }
-    .modelContainer(previewAppContainer)
+    .modelContainer(SageModelContainer.preview)
     .environment(AppRouter())
 }

@@ -7,7 +7,7 @@ import Testing
 struct RecurringExpenseServiceTests {
     @Test @MainActor
     func dailyRuleGeneratesEachOccurrenceOnlyOnce() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         let calendar = utcCalendar()
         let start = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 10, hour: 12)))
@@ -37,7 +37,7 @@ struct RecurringExpenseServiceTests {
 
     @Test @MainActor
     func ruleStopsAtEndDate() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         let calendar = utcCalendar()
         let start = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 1, hour: 12)))

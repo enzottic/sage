@@ -76,6 +76,6 @@ struct MonthExpensesList: View {
     NavigationStack {
         MonthExpensesList(month: month)
     }
-    .modelContainer(previewAppContainer)
+    .modelContainer(SageModelContainer.preview)
     .environment(AppRouter())
 }

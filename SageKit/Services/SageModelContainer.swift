@@ -10,6 +10,12 @@ import OSLog
 import SwiftData
 
 public enum SageModelContainer {
+    public enum Purpose: Sendable {
+        case app
+        case test
+        case preview
+    }
+
     public enum Error: LocalizedError, Equatable {
         case appGroupUnavailable
 
@@ -46,37 +52,73 @@ public enum SageModelContainer {
         defaults?.set(requestedValue, forKey: activeCloudKitPreferenceKey)
     }
 
-    public static nonisolated func makeInMemory() throws -> ModelContainer {
+    public static nonisolated func make(for purpose: Purpose = .app) throws -> ModelContainer {
         UIColorValueTransformer.register()
 
         let schema = Schema(versionedSchema: SageSchemaV4.self)
-        let config = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: true,
-            cloudKitDatabase: .none
-        )
-        return try ModelContainer(
+        let config = try configuration(for: purpose, schema: schema)
+        let container = try ModelContainer(
             for: schema,
             migrationPlan: SageSchemaMigrationPlan.self,
             configurations: [config]
         )
+
+        if case .app = purpose {
+            backfillMultiTags(container)
+        }
+
+        #if DEBUG
+        if case .test = purpose {
+            return container
+        }
+
+        let seedContext = ModelContext(container)
+        MockDataSeeder.seed(into: seedContext)
+        try seedContext.save()
+        #endif
+
+        return container
     }
 
     // The shared store result. Callers handle a failed store open instead of terminating.
     @MainActor
-    public static let shared: Result<ModelContainer, any Swift.Error> = Result(catching: make)
+    public static let shared: Result<ModelContainer, any Swift.Error> = Result {
+        try make(for: .app)
+    }
 
-    private static nonisolated func make() throws -> ModelContainer {
-        UIColorValueTransformer.register()
+    @MainActor
+    public static let preview: ModelContainer = {
+        do {
+            return try make(for: .preview)
+        } catch {
+            fatalError("Failed to create preview container: \(error)")
+        }
+    }()
 
-        let schema = Schema(versionedSchema: SageSchemaV4.self)
+    private static nonisolated func configuration(
+        for purpose: Purpose,
+        schema: Schema
+    ) throws -> ModelConfiguration {
+        switch purpose {
+        case .test, .preview:
+            return ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: true,
+                cloudKitDatabase: .none
+            )
+        case .app:
+            return try appConfiguration(schema: schema)
+        }
+    }
+
+    private static nonisolated func appConfiguration(schema: Schema) throws -> ModelConfiguration {
         guard let groupURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
             throw Error.appGroupUnavailable
         }
 
         #if DEBUG
-        let config = ModelConfiguration(
+        return ModelConfiguration(
             "SageDev",
             schema: schema,
             url: groupURL.appending(path: "SageDev.sqlite"),
@@ -85,24 +127,12 @@ public enum SageModelContainer {
         #else
         let storeURL = groupURL.appending(path: "Sage.sqlite")
         migrateStoreToAppGroupIfNeeded(destination: storeURL)
-        let config = ModelConfiguration(
+        return ModelConfiguration(
             schema: schema,
             url: storeURL,
             cloudKitDatabase: isCloudKitEnabled ? .automatic : .none
         )
         #endif
-
-        let container = try ModelContainer(for: schema, migrationPlan: SageSchemaMigrationPlan.self, configurations: [config])
-
-        backfillMultiTags(container)
-
-        #if DEBUG
-        let seedContext = ModelContext(container)
-        MockDataSeeder.seed(into: seedContext)
-        try seedContext.save()
-        #endif
-
-        return container
     }
 
     private static nonisolated func migrateStoreToAppGroupIfNeeded(destination: URL) {

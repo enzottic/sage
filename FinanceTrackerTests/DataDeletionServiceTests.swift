@@ -8,7 +8,7 @@ import UIKit
 struct DataDeletionServiceTests {
     @Test @MainActor
     func expensesOnlyKeepsRecurringRules() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         let rule = RecurringExpenseRule(
             name: "Rent",
@@ -30,7 +30,7 @@ struct DataDeletionServiceTests {
 
     @Test @MainActor
     func expensesAndRulesCannotGenerateNewExpenses() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         context.insert(Expense(name: "Rent", amount: 1_000, category: .needs))
         context.insert(
@@ -54,7 +54,7 @@ struct DataDeletionServiceTests {
 
     @Test @MainActor
     func fullResetDeletesEveryUserModel() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         let tag = ExpenseTag(name: "Custom", uiColor: .systemBlue, emoji: "💵")
         let account = ExpenseAccount(id: UUID(), name: "Checking", type: .bankAccount)

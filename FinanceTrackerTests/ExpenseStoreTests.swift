@@ -6,7 +6,7 @@ import Testing
 struct ExpenseStoreTests {
     @Test @MainActor
     func deleteRemovesSavedExpense() throws {
-        let container = try SageModelContainer.makeInMemory()
+        let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         let expense = Expense(name: "Delete Me", amount: 18, category: .needs)
 

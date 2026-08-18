@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import SageKit
 
 extension View {
     func environmentInjection() -> some View {
@@ -19,7 +20,7 @@ struct EnvironmentInjection: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .modelContainer(previewAppContainer)
+            .modelContainer(SageModelContainer.preview)
             .environment(config)
             .environment(appRouter)
     }

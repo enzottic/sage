@@ -357,5 +357,5 @@ private struct WebView: UIViewRepresentable {
     SettingsView()
         .environment(appConfig)
         .environment(AppRouter())
-        .modelContainer(previewAppContainer)
+        .modelContainer(SageModelContainer.preview)
 }

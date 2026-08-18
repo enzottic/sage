@@ -79,5 +79,5 @@ struct StatsFilterBar: View {
     @Previewable @State var category: ExpenseCategory? = nil
     @Previewable @State var tag: ExpenseTag? = nil
     StatsFilterBar(selectedCategory: $category, selectedTag: $tag)
-        .modelContainer(previewAppContainer)
+        .modelContainer(SageModelContainer.preview)
 }
