@@ -11,7 +11,10 @@ import SageKit
 
 final class ExpenseBackupService: Sendable {
     static let shared = ExpenseBackupService()
-    private static let logger = Logger(subsystem: "me.enzottic.FinanceTracker", category: "ExpenseBackup")
+    nonisolated private static let logger = Logger(
+        subsystem: "me.enzottic.FinanceTracker",
+        category: "ExpenseBackup"
+    )
 
     func exportExpenses(expenses: [ExportableExpense]) async -> Result<Void, ExpenseExportServiceError> {
         await Task.detached(priority: .userInitiated) {
@@ -25,7 +28,7 @@ final class ExpenseBackupService: Sendable {
         }.value
     }
 
-    private static func writeExport(expenses: [ExportableExpense]) -> Result<Void, ExpenseExportServiceError> {
+    nonisolated private static func writeExport(expenses: [ExportableExpense]) -> Result<Void, ExpenseExportServiceError> {
         do {
             let csvContent = ExpenseCSVCodec.encode(expenses)
             let fileName = "sage-export.csv"
@@ -50,7 +53,7 @@ final class ExpenseBackupService: Sendable {
     }
     
     // Returns an array of ExportableExpense, to be inserted into the SwiftData model on import
-    private static func readExport(from filePath: URL) -> Result<[ExportableExpense], ExpenseExportServiceError> {
+    nonisolated private static func readExport(from filePath: URL) -> Result<[ExportableExpense], ExpenseExportServiceError> {
         guard let fileContents = try? String(contentsOf: filePath, encoding: .utf8) else {
             return .failure(.fileReadError("Could not read the CSV. Choose another file and try again."))
         }

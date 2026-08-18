@@ -79,7 +79,7 @@ struct ExpenseList: View {
         // otherwise update the row after its attribute faults are removed.
         expenseToDelete = nil
         withAnimation {
-            deletingExpenseIDs.insert(expenseID)
+            _ = deletingExpenseIDs.insert(expenseID)
         }
         modelContext.delete(expense)
 
@@ -90,7 +90,7 @@ struct ExpenseList: View {
         } catch {
             modelContext.rollback()
             withAnimation {
-                deletingExpenseIDs.remove(expenseID)
+                _ = deletingExpenseIDs.remove(expenseID)
             }
             deleteErrorMessage = error.localizedDescription
         }

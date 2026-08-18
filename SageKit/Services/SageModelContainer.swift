@@ -26,11 +26,7 @@ public enum SageModelContainer {
     private nonisolated static let activeCloudKitPreferenceKey = "activeCloudSyncEnabled"
     private nonisolated static let logger = Logger(subsystem: "me.enzottic.SageKit", category: "ModelContainer")
 
-    /// The CloudKit setting used by every process that opens the shared store.
-    ///
-    /// The user-facing preference is copied to this value when the main app launches. Keeping
-    /// the active value stable until the next launch prevents a widget or App Intent from opening
-    /// the store with a different configuration while the app is still running.
+    // The CloudKit setting used by every process that opens the shared store.
     public nonisolated static var isCloudKitEnabled: Bool {
         let defaults = UserDefaults(suiteName: appGroupIdentifier)
         if defaults?.object(forKey: activeCloudKitPreferenceKey) != nil {
@@ -66,7 +62,7 @@ public enum SageModelContainer {
         )
     }
 
-    /// The shared store result. Callers handle a failed store open instead of terminating.
+    // The shared store result. Callers handle a failed store open instead of terminating.
     @MainActor
     public static let shared: Result<ModelContainer, any Swift.Error> = Result(catching: make)
 
@@ -136,17 +132,7 @@ public enum SageModelContainer {
         }
     }
 
-    /// Migrates legacy single-tag data into the V3 `tags` array.
-    ///
-    /// The V2→V3 schema change is lightweight/additive (CloudKit-safe), so the actual data copy
-    /// happens here in code: every expense/rule that still has a legacy `tag` but an empty `tags`
-    /// gets `tags = [tag]`.
-    ///
-    /// This runs on every launch rather than being gated by a one-shot flag. The per-record
-    /// emptiness check makes it idempotent, and a `save()` only happens when something actually
-    /// changed, so a fully-migrated store adds just one cheap fetch at startup. Running every
-    /// launch is important for CloudKit: legacy records may sync down *after* the first V3 launch,
-    /// and a one-shot flag would leave those permanently untagged.
+    // Migrates legacy single-tag data into the V3 `tags` array.
     private static nonisolated func backfillMultiTags(_ container: ModelContainer) {
         let context = ModelContext(container)
         do {

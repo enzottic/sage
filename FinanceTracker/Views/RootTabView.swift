@@ -14,24 +14,10 @@ struct RootTabView: View {
     @State private var appRouter = AppRouter()
     @State private var whatsNewRelease: WhatsNewRelease?
     @State private var query: String? = nil
-
-    /// Intercepts selection of the prominent "Add Expense" tab (iOS 27+): it presents the
-    /// add sheet instead of switching tabs, and never writes `.addExpense` to `selectedTab`.
-    private var tabSelection: Binding<SageTab> {
-        Binding(
-            get: { appRouter.selectedTab },
-            set: { newValue in
-                if newValue == .addExpense {
-                    appRouter.presentSheet(.addExpense(nil))
-                } else {
-                    appRouter.selectedTab = newValue
-                }
-            }
-        )
-    }
+    @State private var tabSelection: SageTab = .home
 
     var body: some View {
-        TabView(selection: tabSelection) {
+        TabView(selection: $tabSelection) {
 
             Tab("Home", systemImage: "house", value: SageTab.home) {
                 DashboardView()
@@ -95,7 +81,6 @@ struct RootTabView: View {
         }
         .task {
             whatsNewRelease = WhatsNewStore.releaseToPresent()
-            // Marked seen at presentation, so dismissing by swipe counts the same as the button.
             WhatsNewStore.markCurrentVersionSeen()
         }
         .sheet(item: $whatsNewRelease) { release in

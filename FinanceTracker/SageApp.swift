@@ -17,6 +17,7 @@ struct SageApp: App {
     @State private var appConfiguration = AppConfiguration()
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     
+    @MainActor
     init() {
         UIColorValueTransformer.register()
         configureNavigationBarAppearance()
@@ -39,7 +40,8 @@ struct SageApp: App {
         // Make ExpenseStore resolvable via @Dependency in App Intents.
         if UITestConfiguration.isEnabled,
            case let .success(container) = appContainerResult {
-            AppDependencyManager.shared.add(dependency: ExpenseStore(modelContainer: container))
+            let expenseStore = ExpenseStore(modelContainer: container)
+            AppDependencyManager.shared.add(dependency: expenseStore)
         } else if let expenseStore = ExpenseStore.shared {
             AppDependencyManager.shared.add(dependency: expenseStore)
         }
@@ -52,7 +54,6 @@ struct SageApp: App {
            !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
            AppConfiguration.hasCompletedSetupOnAnotherDevice {
             UserDefaults.standard.set(true, forKey: "hasOpenedAppOnce")
-            // Still a fresh install here — skip What's New, the same as after onboarding.
             WhatsNewStore.markCurrentVersionSeen()
         }
     }
@@ -74,12 +75,10 @@ struct SageApp: App {
     @ViewBuilder
     private var mainContent: some View {
         Group {
-            // UI tests control their initial screen through launch environment.
-            // Do not let persisted onboarding state from an earlier test change it.
             if UITestConfiguration.isEnabled, !UITestConfiguration.showsOnboarding {
                 RootTabView()
             } else if !hasOpenedAppOnce {
-                WelcomeView()
+                OnboardingView()
             } else {
                 RootTabView()
             }

@@ -1,5 +1,5 @@
 //
-//  WelcomeView.swift
+//  OnboardingView.swift
 //  FinanceTracker
 //
 //  Created by Tyler McCormick on 10/21/25.
@@ -10,7 +10,7 @@ import WidgetKit
 import SwiftData
 import SageKit
 
-struct WelcomeView: View {
+struct OnboardingView: View {
     @Environment(AppConfiguration.self) var config
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -24,8 +24,12 @@ struct WelcomeView: View {
     @State private var cloudSyncEnabled: Bool = false
     @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
     @State private var selectedTagNames: Set<String> = []
+    
+    let mainSpacing: CGFloat = 24
+    let titleBottomSpacing: CGFloat = 20
+    let titleSubtitleSpacing: CGFloat = 14
 
-    enum OnboardingStep {
+    enum OnboardingStep: CaseIterable, Hashable {
         case welcome
         case budget
         case allocation
@@ -37,6 +41,10 @@ struct WelcomeView: View {
     var savingsPercent: Double {
         let calculated = 100 - needsPercent - wantsPercent
         return round(max(0, calculated))
+    }
+
+    init(step: OnboardingStep = .welcome) {
+        _currentStep = State(initialValue: step)
     }
 
     var body: some View {
@@ -66,6 +74,7 @@ struct WelcomeView: View {
                             .tag(OnboardingStep.complete)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
+                    .scrollDisabled(true)
                     .animation(reduceMotion ? nil : .easeInOut, value: currentStep)
                 }
             }
@@ -76,35 +85,29 @@ struct WelcomeView: View {
     // MARK: - Welcome Page
 
     var welcomePage: some View {
-        VStack(spacing: 30) {
+        VStack(alignment: .leading) {
+
             Spacer()
 
             Image("LaunchIcon")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 120, height: 120)
-                .padding(.bottom, 20)
+                .frame(width: 160)
                 .accessibilityHidden(true)
+                .padding([.bottom], 40)
 
-            VStack(spacing: 12) {
-                Text("Welcome to Sage")
-                    .accessibilityIdentifier("onboarding-welcome-title")
-                    .font(.largeTitle.bold())
-                    .multilineTextAlignment(.center)
-                Text("A simple personal expense tracking app")
-                    .accessibilityIdentifier("onboarding-welcome-subtitle")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-            }
 
-            VStack(alignment: .leading, spacing: 20) {
-                FeatureRow(icon: "chart.bar.fill", title: "Wants and Needs", description: "Track your expenses by assigning each a category: wants, needs, or savings.")
-                FeatureRow(icon: "chart.pie.fill", title: "Smart Allocation", description: "Set custom category percentages that work for you")
-                FeatureRow(icon: "receipt.fill", title: "Receipt Parsing", description: "Parse receipts using on-device AI models")
-                FeatureRow(icon: "lock.fill", title: "Privacy First", description: "All data is stored on device or in iCloud if you choose. No login required.")
-            }
-            .padding(.horizontal, 40)
-            .padding(.top, 30)
+            Text("Welcome to Sage")
+                .accessibilityIdentifier("onboarding-welcome-title")
+                .font(.largeTitle.bold())
+                .fontDesign(.rounded)
+                .padding([.bottom], 3)
+
+            Text("A simple, personal expense tracking app")
+                .accessibilityIdentifier("onboarding-welcome-subtitle")
+                .font(.title2.bold())
+                .fontDesign(.rounded)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
@@ -114,45 +117,37 @@ struct WelcomeView: View {
                 }
             } label: {
                 Text("Get Started")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(.sage)
-                    .cornerRadius(15)
+                    .onboardingButton()
             }
             .accessibilityIdentifier("onboarding-get-started-button")
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
+        .padding(35)
+        .background(Color.sageBackground)
     }
 
     // MARK: - Budget Page
 
     var budgetPage: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: mainSpacing) {
             Spacer()
-
-            VStack(spacing: 30) {
+            VStack {
                 Text("How much do you make a month?")
-                    .font(.title.bold())
-                    .multilineTextAlignment(.center)
+                    .font(.largeTitle.bold())
+                    .fontDesign(.rounded)
+                    .padding([.bottom], titleBottomSpacing)
 
-                VStack(spacing: 8) {
-                    CentsFirstCurrencyField(
-                        amount: $monthlyIncome,
-                        accessibilityIdentifier: "onboarding-income-field",
-                        keyboardDoneAccessibilityIdentifier: "onboarding-keyboard-done-button",
-                        textAlignment: .center
-                    )
+                CentsFirstCurrencyField(
+                    amount: $monthlyIncome,
+                    accessibilityIdentifier: "onboarding-income-field",
+                    keyboardDoneAccessibilityIdentifier: "onboarding-keyboard-done-button",
+                    textAlignment: .center
+                )
+                .fontDesign(.rounded)
 
-                    Text("\(Locale.current.currency?.identifier ?? "USD") per month")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 40)
+                Text("\(Locale.current.currency?.identifier ?? "USD")")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
 
             Spacer()
 
@@ -163,12 +158,10 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Back")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(.cardBackground)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            foregroundColor: .primary,
+                            backgroundColor: .cardBackground
+                        )
                 }
 
                 Button {
@@ -179,56 +172,41 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(monthlyIncome ?? 0 > 0 ? .sage : Color.gray)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            backgroundColor: monthlyIncome ?? 0 > 0 ? .sage : .gray
+                        )
                 }
                 .accessibilityIdentifier("onboarding-budget-continue-button")
                 .disabled((monthlyIncome ?? 0) <= 0)
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
+        .padding(20)
     }
 
     // MARK: - Allocation Page
 
     var allocationPage: some View {
-        VStack(spacing: 25) {
+        VStack(spacing: mainSpacing) {
             Spacer()
 
-            VStack(spacing: 12) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.sage)
-
-                Text("Budget Allocation")
-                    .font(.title.bold())
-                    .multilineTextAlignment(.center)
-
-                Text("Customize your wants, needs, and savings percentages")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
+            Text("How do you want to allocate your budget?")
+                .font(.largeTitle.bold())
+                .padding([.bottom], titleBottomSpacing)
 
             VStack(spacing: 25) {
-                AllocationSlider(
-                    title: "Wants",
-                    color: .want,
-                    icon: "cart.fill",
-                    percentage: $wantsPercent
-                )
 
                 AllocationSlider(
                     title: "Needs",
                     color: .need,
                     icon: "house.fill",
                     percentage: $needsPercent
+                )
+
+                AllocationSlider(
+                    title: "Wants",
+                    color: .want,
+                    icon: "cart.fill",
+                    percentage: $wantsPercent
                 )
 
                 HStack {
@@ -248,6 +226,11 @@ struct WelcomeView: View {
                 }
             }
             .padding(.horizontal, 40)
+            
+            Text("50/30/20 is great for most people, but feel free to customize the allocation to fit your goals.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
 
             if needsPercent + wantsPercent > 100 {
                 Text("Total percentage cannot exceed \(100, format: .percent)")
@@ -264,12 +247,10 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Back")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(.cardBackground)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            foregroundColor: .primary,
+                            backgroundColor: .cardBackground
+                        )
                 }
 
                 Button {
@@ -278,19 +259,16 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(needsPercent + wantsPercent <= 100 ? .sage : Color.gray)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            backgroundColor: needsPercent + wantsPercent <= 100 ? .sage : .gray
+                        )
                 }
                 .accessibilityIdentifier("onboarding-allocation-continue-button")
                 .disabled(needsPercent + wantsPercent > 100)
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
+            .padding()
         }
+
         .onChange(of: needsPercent) { oldValue, newValue in
             // Ensure total doesn't exceed 100%
             if needsPercent + wantsPercent > 100 {
@@ -310,23 +288,18 @@ struct WelcomeView: View {
     // MARK: - Sync Page
 
     var syncPage: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: mainSpacing) {
             Spacer()
 
-            VStack(spacing: 12) {
-                Image(systemName: "icloud.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.sage)
+            VStack(spacing: titleSubtitleSpacing) {
+                Text("Want to enable Sync?")
+                    .font(.largeTitle.bold())
+                    .fontDesign(.rounded)
 
-                Text("iCloud Sync")
-                    .font(.title.bold())
-                    .multilineTextAlignment(.center)
-
-                Text("Sync your expenses across all your devices using iCloud")
+                Text("You can choose to optionally sync your expenses between all your devices")
                     .font(.body)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal)
             }
 
             Toggle(isOn: $cloudSyncEnabled) {
@@ -338,23 +311,15 @@ struct WelcomeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Enable iCloud Sync")
                             .font(.headline)
-                        Text("Your choice takes effect the next time you open the app")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .padding()
-            .background(.cardBackground)
-            .cornerRadius(15)
-            .padding(.horizontal, 40)
-
-            if cloudSyncEnabled {
-                Label("Sync will activate the next time you open the app.", systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 40)
-            }
+            .cardBackground()
+            
+            Text("Sync is handled via iCloud. Your data is never collected nor shared.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
 
             Spacer()
 
@@ -365,12 +330,10 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Back")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.cardBackground)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            foregroundColor: .primary,
+                            backgroundColor: .cardBackground
+                        )
                 }
 
                 Button {
@@ -379,12 +342,7 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.sage)
-                        .cornerRadius(15)
+                        .onboardingButton()
                 }
                 .accessibilityIdentifier("onboarding-sync-continue-button")
             }
@@ -396,23 +354,18 @@ struct WelcomeView: View {
     // MARK: - Tags Page
 
     var tagsPage: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: mainSpacing) {
             Spacer()
 
-            VStack(spacing: 12) {
-                Image(systemName: "tag.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.sage)
-
-                Text("Add Some Tags")
-                    .font(.title.bold())
-                    .multilineTextAlignment(.center)
+            VStack(spacing: titleSubtitleSpacing) {
+                Text("How about some tags?")
+                    .font(.largeTitle.bold())
+                    .fontDesign(.rounded)
 
                 Text("Tags help you categorize expenses further. Pick the ones you'd like to start with. You can always add or remove them later.")
                     .font(.body)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal)
             }
 
             HStack {
@@ -444,12 +397,10 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Back")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.cardBackground)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            foregroundColor: .primary,
+                            backgroundColor: .cardBackground
+                        )
                 }
 
                 Button {
@@ -458,12 +409,7 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.sage)
-                        .cornerRadius(15)
+                        .onboardingButton()
                 }
                 .accessibilityIdentifier("onboarding-tags-continue-button")
             }
@@ -540,24 +486,17 @@ struct WelcomeView: View {
                     }
                 } label: {
                     Text("Back")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(.cardBackground)
-                        .cornerRadius(15)
+                        .onboardingButton(
+                            foregroundColor: .primary,
+                            backgroundColor: .cardBackground
+                        )
                 }
 
                 Button {
                     completeOnboarding()
                 } label: {
                     Text("Start Tracking")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(.sage)
-                        .cornerRadius(15)
+                        .onboardingButton()
                 }
                 .accessibilityIdentifier("onboarding-start-tracking-button")
             }
@@ -706,7 +645,55 @@ struct BudgetSummaryRow: View {
     }
 }
 
-#Preview {
-    WelcomeView()
-        .environmentInjection()
+struct OnboardingButtonModifier: ViewModifier {
+    let foregroundColor: Color
+    let backgroundColor: Color
+
+    func body(content: Content) -> some View {
+        content
+            .font(.headline)
+            .foregroundColor(foregroundColor)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(backgroundColor)
+            .cornerRadius(15)
+    }
+}
+
+struct CardBackgroundModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding()
+            .background(.cardBackground)
+            .cornerRadius(15)
+            .padding(.horizontal, 40)
+    }
+}
+
+extension View {
+    func onboardingButton(
+        foregroundColor: Color = .white,
+        backgroundColor: Color = .sage
+    ) -> some View {
+        modifier(
+            OnboardingButtonModifier(
+                foregroundColor: foregroundColor,
+                backgroundColor: backgroundColor
+            )
+        )
+    }
+    
+    func cardBackground() -> some View {
+        modifier(CardBackgroundModifier())
+    }
+}
+
+struct WelcomeViewPreviews: PreviewProvider {
+    static var previews: some View {
+        ForEach(OnboardingView.OnboardingStep.allCases, id: \.self) { step in
+            OnboardingView(step: step)
+                .environmentInjection()
+                .previewDisplayName(String(describing: step))
+        }
+    }
 }
