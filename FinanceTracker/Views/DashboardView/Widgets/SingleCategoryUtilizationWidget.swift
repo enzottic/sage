@@ -64,10 +64,13 @@ struct SingleCategoryUtilizationWidget: View {
         case .full:
             Section {
                 if isNavigable {
-                    NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
+                    Button {
+                        appRouter.push(.categoryDetail(category, selectedMonth))
+                    } label: {
                         fullContent
+                            .contentShape(Rectangle())
                     }
-                    .tint(.primary)
+                    .buttonStyle(.plain)
                     .listRowSeparator(.hidden)
                 } else {
                     fullContent

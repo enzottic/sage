@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleSpokenName</key>
-	<string>Sage</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -19,8 +17,8 @@
 			</array>
 		</dict>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Sage uses the camera to photograph receipts and add expenses automatically.</string>
+	<key>CFBundleSpokenName</key>
+	<string>Sage</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
