@@ -11,6 +11,8 @@ import SageKit
 
 struct CategoryDetailView: View {
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(AppConfiguration.self) private var config
+    
     let category: ExpenseCategory
     let utilization: Double
     let used: Double
@@ -39,12 +41,20 @@ struct CategoryDetailView: View {
     var expenses: [Expense] {
         monthExpenses.filter { $0.category == category }
     }
-
+    
     var body: some View {
         List {
-            SingleCategoryUtilizationWidget(category: category, layout: .full, selectedMonth: month, isNavigable: false)
-            
-//            Text()
+            Section {
+                VStack(spacing: 12) {
+                    Text("Spending")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(used.currencyString)
+                        .font(.largeTitle.bold())
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .listRowBackground(Color.clear)
+            }
 
             if !expenses.isEmpty {
                 Section {
@@ -67,42 +77,12 @@ struct CategoryDetailView: View {
             }
         }
         .navigationTitle(category.rawValue)
+        .navigationSubtitle(month.formatted(.dateTime.month(.wide).year()))
         .navigationBarTitleDisplayMode(.large)
         .listSectionSpacing(.compact)
-        .monthScope(month)
+        .scrollContentBackground(.hidden)
+        .background(.sageBackground)
         .gradientBackground(color: category.color(in: categoryColors))
-    }
-}
-
-/// Shows which month a screen is scoped to, using the navigation subtitle where it
-/// exists and a toolbar pill on older systems.
-private struct MonthScopeModifier: ViewModifier {
-    let month: Date
-
-    private var label: String { month.formatted(.dateTime.month(.wide).year()) }
-
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.navigationSubtitle(label)
-        } else {
-            content.toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Text(label)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(.quaternary))
-                }
-            }
-        }
-    }
-}
-
-private extension View {
-    func monthScope(_ month: Date) -> some View {
-        modifier(MonthScopeModifier(month: month))
     }
 }
 

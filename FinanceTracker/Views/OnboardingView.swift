@@ -100,13 +100,11 @@ struct OnboardingView: View {
             Text("Welcome to Sage")
                 .accessibilityIdentifier("onboarding-welcome-title")
                 .font(.largeTitle.bold())
-                .fontDesign(.rounded)
                 .padding([.bottom], 3)
 
             Text("A simple, personal expense tracking app")
                 .accessibilityIdentifier("onboarding-welcome-subtitle")
                 .font(.title2.bold())
-                .fontDesign(.rounded)
                 .foregroundStyle(.secondary)
 
             Spacer()
@@ -133,7 +131,6 @@ struct OnboardingView: View {
             VStack {
                 Text("How much do you make a month?")
                     .font(.largeTitle.bold())
-                    .fontDesign(.rounded)
                     .padding([.bottom], titleBottomSpacing)
 
                 CentsFirstCurrencyField(
@@ -142,7 +139,6 @@ struct OnboardingView: View {
                     keyboardDoneAccessibilityIdentifier: "onboarding-keyboard-done-button",
                     textAlignment: .center
                 )
-                .fontDesign(.rounded)
 
                 Text("\(Locale.current.currency?.identifier ?? "USD")")
                     .font(.subheadline)
@@ -294,7 +290,6 @@ struct OnboardingView: View {
             VStack(spacing: titleSubtitleSpacing) {
                 Text("Want to enable Sync?")
                     .font(.largeTitle.bold())
-                    .fontDesign(.rounded)
 
                 Text("You can choose to optionally sync your expenses between all your devices")
                     .font(.body)

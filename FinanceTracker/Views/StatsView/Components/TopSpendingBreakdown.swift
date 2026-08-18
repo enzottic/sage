@@ -72,10 +72,12 @@ struct TopSpendingBreakdown: View {
             if let glyph = row.glyph {
                 TagGlyphView(glyph)
                     .foregroundStyle(row.tintColor ?? accentColor)
+                    .frame(width: 24, alignment: .center)
             } else {
                 Circle()
                     .fill(accentColor)
                     .frame(width: 10, height: 10)
+                    .frame(width: 24, alignment: .center)
             }
 
             Text(row.label)

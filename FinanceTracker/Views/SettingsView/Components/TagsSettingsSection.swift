@@ -81,7 +81,7 @@ struct TagsSettingsSection: View {
                 VStack(alignment: .leading) {
                     Text("Automatically suggests tags when creating a new expense.")
                     if TagSuggestionService.isAIAvailable {
-                        Text("AI mode uses Apple Intelligence to determine a tag. History + AI starts by searching for a matching expense, then uses AI if no match is found.")
+                        Text("AI mode uses an on-device AI model to determine a tag. History + AI starts by searching for a matching expense, then uses AI if no match is found.")
                     }
                 }
             }
@@ -113,6 +113,7 @@ struct TagsSettingsSection: View {
                             }
                         }
                     }
+                    .tint(.primary)
                     .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                 }
                 .onDelete { indexSet in
