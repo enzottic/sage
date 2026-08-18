@@ -93,12 +93,10 @@ struct MonthlyOverviewWidget: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)
 
-                Divider()
-
                 HStack {
                     Text(isOverBudget
                          ? "\((totalSpent - totalBudget).currencyString) over"
-                         : "\(remaining.currencyString) left")
+                         : "\(remaining.currencyString) remaining")
                         .font(.subheadline)
                         .foregroundStyle(isOverBudget ? .red : .secondary)
 
@@ -114,15 +112,15 @@ struct MonthlyOverviewWidget: View {
 
     private var gaugeLabel: some View {
         VStack(spacing: 2) {
+            Text("Total Spent")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            
             Text(totalSpent.currencyString)
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-
-            Text("\(totalUtilization.formatted(.percent.precision(.fractionLength(0)))) of \(totalBudget.currencyString)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }

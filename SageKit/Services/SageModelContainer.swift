@@ -14,6 +14,7 @@ public enum SageModelContainer {
         case app
         case test
         case preview
+        case previewEmpty
     }
 
     public enum Error: LocalizedError, Equatable {
@@ -71,6 +72,10 @@ public enum SageModelContainer {
         if case .test = purpose {
             return container
         }
+        
+        if case .previewEmpty = purpose {
+            return container
+        }
 
         let seedContext = ModelContext(container)
         MockDataSeeder.seed(into: seedContext)
@@ -94,13 +99,22 @@ public enum SageModelContainer {
             fatalError("Failed to create preview container: \(error)")
         }
     }()
+    
+    @MainActor
+    public static let previewEmpty: ModelContainer = {
+        do {
+            return try make(for: .previewEmpty)
+        } catch {
+            fatalError("Failed to create empty preview container: \(error)")
+        }
+    }()
 
     private static nonisolated func configuration(
         for purpose: Purpose,
         schema: Schema
     ) throws -> ModelConfiguration {
         switch purpose {
-        case .test, .preview:
+        case .test, .preview, .previewEmpty:
             return ModelConfiguration(
                 schema: schema,
                 isStoredInMemoryOnly: true,

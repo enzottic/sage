@@ -22,12 +22,15 @@ struct ArcProgressGauge<Content: View>: View {
         GeometryReader { proxy in
             let lineWidth = (proxy.size.width * lineWidthRatio)
                 .clamped(to: lineWidthRange)
+            let markerDiameter = (lineWidth * 1.75).clamped(to: 38...48)
+            let arcInset = max(lineWidth / 2, markerDiameter / 2)
+            let tip = progressTip(in: proxy.size, inset: arcInset)
 
             ZStack(alignment: .bottom) {
-                ArcShape(lineWidth: lineWidth)
+                ArcShape(inset: arcInset)
                     .stroke(tint.opacity(0.18), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
-                ArcShape(lineWidth: lineWidth)
+                ArcShape(inset: arcInset)
                     .trim(from: 0, to: clampedProgress)
                     .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
@@ -36,11 +39,37 @@ struct ArcProgressGauge<Content: View>: View {
                     .padding(.horizontal, lineWidth)
                     .frame(width: proxy.size.width, height: proxy.size.height - lineWidth / 2, alignment: .center)
                     .offset(y: lineWidth / 4)
+
+                Text(progress, format: .percent.precision(.fractionLength(0)))
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+                    .frame(width: markerDiameter, height: markerDiameter)
+                    .background(tint, in: Circle())
+                    .overlay {
+                        Circle()
+                            .stroke(.background, lineWidth: 2)
+                    }
+                    .shadow(color: .black.opacity(0.16), radius: 3, y: 1)
+                    .position(tip)
+                    .animation(reduceMotion ? nil : .easeInOut, value: clampedProgress)
+                    .accessibilityHidden(true)
             }
         }
         .aspectRatio(2, contentMode: .fit)
         .accessibilityElement(children: .combine)
         .accessibilityValue(Text(clampedProgress, format: .percent.precision(.fractionLength(0))))
+    }
+
+    private func progressTip(in size: CGSize, inset: CGFloat) -> CGPoint {
+        let radius = max(min(size.width / 2, size.height) - inset, 0)
+        let angle = Angle.degrees(180 + (180 * clampedProgress)).radians
+
+        return CGPoint(
+            x: size.width / 2 + radius * cos(angle),
+            y: size.height - inset + radius * sin(angle)
+        )
     }
 }
 
@@ -51,10 +80,9 @@ private extension Comparable {
 }
 
 private struct ArcShape: Shape {
-    let lineWidth: CGFloat
+    let inset: CGFloat
 
     func path(in rect: CGRect) -> Path {
-        let inset = lineWidth / 2
         let radius = max(min(rect.width / 2, rect.height) - inset, 0)
         var path = Path()
         path.addArc(

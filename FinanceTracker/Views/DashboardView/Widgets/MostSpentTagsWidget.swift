@@ -17,12 +17,16 @@ struct MostSpentTagsWidget: View {
 
     var body: some View {
         Section {
-            TopSpendingBreakdown(
-                expenses: monthlyExpenses,
-                accentColor: .sage,
-                maximumRows: 3,
-                includesUntaggedExpenses: false
-            )
+            if !monthlyExpenses.isEmpty {
+                TopSpendingBreakdown(
+                    expenses: monthlyExpenses,
+                    accentColor: .sage,
+                    maximumRows: 3,
+                    includesUntaggedExpenses: false
+                )
+            } else {
+                ContentUnavailableView("No expenses yet", systemImage: "receipt")
+            }
         } header: {
             Text("Top Tags")
                 .font(.subheadline)
@@ -34,4 +38,9 @@ struct MostSpentTagsWidget: View {
 #Preview {
     MostSpentTagsWidget(selectedMonth: .now)
         .environmentInjection()
+}
+
+#Preview("Empty State") {
+    MostSpentTagsWidget(selectedMonth: .now)
+        .environmentInjection(empty: true)
 }

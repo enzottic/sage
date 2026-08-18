@@ -116,3 +116,8 @@ func expenseQuery(start: Date, end: Date, limit: Int? = nil) -> Query<Expense, [
     DashboardView()
         .environmentInjection()
 }
+
+#Preview("Empty State") {
+    DashboardView()
+        .environmentInjection(empty: true)
+}
