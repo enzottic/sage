@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import SageKit
+import TipKit
 
 struct ReceiptImportConfiguration {
     let isParsing: Bool
@@ -41,6 +42,8 @@ struct ExpenseInfoForm: View {
     @State private var aiSuggestedTagIDs: Set<UUID> = []
 
     private enum Field: Hashable { case name, amount, note }
+    
+    var parseReceiptTip = ParseReceiptTip()
 
     @State private var showDatePicker = false
     init(
@@ -133,13 +136,15 @@ struct ExpenseInfoForm: View {
     private func receiptButton(_ configuration: ReceiptImportConfiguration) -> some View {
         Menu {
             if configuration.canUseCamera {
-                Button("Take Photo", systemImage: "camera", action: configuration.onTakePhoto)
+                Button("Take Photo", systemImage: "camera") {
+                    parseReceiptTip.invalidate(reason: .actionPerformed)
+                    configuration.onTakePhoto()
+                }
             }
-            Button(
-                "Choose from Photos",
-                systemImage: "photo.on.rectangle",
-                action: configuration.onChoosePhoto
-            )
+            Button("Choose from Photos", systemImage: "photo.on.rectangle") {
+                parseReceiptTip.invalidate(reason: .actionPerformed)
+                configuration.onChoosePhoto()
+            }
         } label: {
             VStack(spacing: 6) {
                 if configuration.isParsing {
@@ -170,6 +175,12 @@ struct ExpenseInfoForm: View {
         .disabled(configuration.isParsing)
         .accessibilityLabel(configuration.isParsing ? "Reading receipt" : "Receipt")
         .accessibilityValue(configuration.isParsing ? "In progress" : "")
+        .popoverTip(parseReceiptTip)
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                parseReceiptTip.invalidate(reason: .actionPerformed)
+            }
+        )
     }
 
     // MARK: - Details card

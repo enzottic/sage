@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct SageToolbar: ToolbarContent {
     var onPrevious: () -> Void
     var onNext: () -> Void
     var onAdd: () -> Void
     var isNextDisabled: Bool = false
+    
+    var addExpenseTip = AddExpenseTip()
 
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarLeading) {
@@ -26,19 +29,25 @@ struct SageToolbar: ToolbarContent {
         }
 
         ToolbarItem(placement: .topBarTrailing) {
-            addButton
+            HStack {
+                addButton
+            }
         }
     }
 
     @ViewBuilder
     private var addButton: some View {
-        Button(action: onAdd) {
+        Button {
+            addExpenseTip.invalidate(reason: .actionPerformed)
+            onAdd()
+        } label: {
             addLabel
         }
         .accessibilityLabel("Add Expense")
         .accessibilityIdentifier("add-expense-button")
         .tint(.sage)
         .buttonStyle(.borderedProminent)
+        .popoverTip(addExpenseTip)
     }
 
     private var addLabel: some View {
