@@ -78,6 +78,7 @@ struct OnboardingView: View {
                     .animation(reduceMotion ? nil : .easeInOut, value: currentStep)
                 }
             }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
 
         }
     }
