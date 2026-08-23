@@ -68,7 +68,7 @@ struct CategorySpotlightWidget: Widget {
         AppIntentConfiguration(kind: kind, intent: CategorySpotlightAppIntent.self, provider: CategorySpotlightProvider()) { entry in
             CategorySpotlightEntryView(entry: entry)
                 .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("Category Spotlight")
         .description(Text("Track spending for a specific budget category"))

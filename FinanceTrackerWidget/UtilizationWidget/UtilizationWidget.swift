@@ -28,17 +28,17 @@ struct UtilizationEntryView: View {
             Spacer()
 
             VStack(spacing: 10) {
-                utilizationView(for: .wants, value: entry.wantsUtilization)
                 utilizationView(for: .needs, value: entry.needsUtilization)
+                utilizationView(for: .wants, value: entry.wantsUtilization)
             }
         }
+        .fontDesign(.rounded)
     }
 
     func utilizationView(for category: ExpenseCategory, value: Double) -> some View {
         VStack(spacing: 5) {
             HStack {
-                Text(category.rawValue.uppercased())
-                    .foregroundStyle(.secondary)
+                Text(category.rawValue)
                 Spacer()
                 Text(value, format: .percent.precision(.fractionLength(0)))
             }
@@ -60,7 +60,7 @@ struct ExpenseUtilizationWidget: Widget {
         AppIntentConfiguration(kind: kind, intent: UtilizationAppIntent.self, provider: UtilizationProvider()) { entry in
             UtilizationEntryView(entry: entry)
                 .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("View Expense Utilization")
         .description(Text("View total spent this month, and wants and needs utilization"))

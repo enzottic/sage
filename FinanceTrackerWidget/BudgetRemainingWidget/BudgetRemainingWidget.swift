@@ -58,7 +58,7 @@ struct BudgetRemainingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: BudgetRemainingProvider()) { entry in
             BudgetRemainingEntryView(entry: entry)
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("Budget Remaining")
         .description(Text("See how much of your monthly budget remains"))

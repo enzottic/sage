@@ -19,14 +19,17 @@ class ReceiptParserService {
             throw ReceiptParserError.languageModelUnavailable
         }
 
+#if compiler(>=6.4)
         if #available(iOS 27.0, *) {
             return try await parseReceiptMultimodal(image: image, tags: tags)
-        } else {
-            let text = try await recognizeTextInImage(image: image)
-            return try await extractExpenseDataFromText(receiptText: text, tags: tags)
         }
+#endif
+        
+        let text = try await recognizeTextInImage(image: image)
+        return try await extractExpenseDataFromText(receiptText: text, tags: tags)
     }
     
+#if compiler(>=6.4)
     @available(iOS 27.0, *)
     private func parseReceiptMultimodal(image: UIImage, tags: [ExpenseTag]) async throws -> ParsedExpense {
         let session = LanguageModelSession()
@@ -59,6 +62,7 @@ class ReceiptParserService {
             throw ReceiptParserError.parsingFailed
         }
     }
+#endif
 
     // Uses the Vision framework to pull text out of the image
     private func recognizeTextInImage(image: UIImage) async throws -> String {

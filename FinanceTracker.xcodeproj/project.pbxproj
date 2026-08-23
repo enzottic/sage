@@ -108,6 +108,7 @@
 		C6B09FD22E92CF5200899162 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		C6B09FD42E92CF5200899162 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinanceTrackerWidgetExtension.entitlements; sourceTree = "<group>"; };
+		C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-Dev.xctestplan"; sourceTree = "<group>"; };
 		C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FinanceTracker.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -119,16 +120,6 @@
 				Info.plist,
 			);
 			target = C66031C52E8073C60078DD15 /* FinanceTracker */;
-		};
-		C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Helpers/AppConfiguration.swift,
-				Services/ExpenseBackupService.swift,
-				Services/ReceiptParserService.swift,
-				Services/TagSuggestionService.swift,
-			);
-			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 		};
 		C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -175,7 +166,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */,
-				C673B23D2E94DE2D00EF0DD3 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWidgetExtension" target */,
 			);
 			path = FinanceTracker;
 			sourceTree = "<group>";
@@ -249,6 +239,7 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
+				C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */,
 				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
@@ -590,7 +581,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -618,7 +609,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -646,7 +637,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -671,7 +662,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -934,7 +925,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -978,7 +969,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1020,7 +1011,7 @@
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1056,7 +1047,7 @@
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -38,7 +38,7 @@ struct ExpensePieChartWidget: Widget {
         StaticConfiguration(kind: kind, provider: PieChartProvider()) { entry in
             ExpensePieChartEntryView(entry: entry)
                 .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("Expenses Breakdown")
         .description(Text("View expense breakdown as a pie chart"))

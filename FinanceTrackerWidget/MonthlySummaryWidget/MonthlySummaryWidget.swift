@@ -194,7 +194,7 @@ struct MonthlySummaryWidget: Widget {
         StaticConfiguration(kind: kind, provider: MonthlySummaryProvider()) { entry in
             MonthlySummaryEntryView(entry: entry)
                 .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("Monthly Summary")
         .description(Text("View spending across all budget categories"))

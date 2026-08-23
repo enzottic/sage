@@ -58,7 +58,7 @@ struct RecentExpensesWidget: Widget {
         StaticConfiguration(kind: kind, provider: RecentExpensesProvider()) { entry in
             RecentExpensesEntryView(entry: entry)
                 .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("Background"), for: .widget)
+                .containerBackground(Color("WidgetBackground"), for: .widget)
         }
         .configurationDisplayName("Recent Expenses")
         .description(Text("View your most recent expenses"))
