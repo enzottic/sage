@@ -32,7 +32,7 @@ public struct GetMonthlySpendingIntent: AppIntent {
         if let tag, let total = try? expenseStore.monthlyTotal(tagId: tag.id) {
             return .result(dialog: "You've spent \(total.currencyString) on \(tag.name.lowercased()) this month.")
         } else if let category, let total = try? expenseStore.monthlyTotal(category: category) {
-            return .result(dialog: "You've spent \(total.currencyString) on \(category.rawValue.lowercased()) this moonth.")
+            return .result(dialog: "You've spent \(total.currencyString) on \(category.rawValue.lowercased()) this month.")
         }
         
         if let total = try? expenseStore.monthlyTotal() {

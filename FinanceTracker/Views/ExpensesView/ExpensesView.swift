@@ -20,7 +20,7 @@ struct ExpensesView: View {
     let formatter: DateFormatter
 
     init(month: Date = Date()) {
-        _selectedMonth = State(initialValue: Date())
+        _selectedMonth = State(initialValue: month)
         formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
     }

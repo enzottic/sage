@@ -84,13 +84,25 @@ struct ExpenseDetailView: View {
     
     private func saveItem() async {
         guard !isSaving else { return }
+
+        let trimmedName = workingExpense.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            saveErrorMessage = "Enter an expense name."
+            return
+        }
+
+        guard let amount = workingExpense.amount, amount.isFinite, amount > 0 else {
+            saveErrorMessage = "Enter an amount greater than zero."
+            return
+        }
+
         isSaving = true
         defer { isSaving = false }
 
         await Task.yield()
 
-        expense.name = workingExpense.name
-        expense.amount = workingExpense.amount ?? 0
+        expense.name = trimmedName
+        expense.amount = amount
         expense.date = workingExpense.date
         expense.category = workingExpense.category
         expense.tags = workingExpense.tags

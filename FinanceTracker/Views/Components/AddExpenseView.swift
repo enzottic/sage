@@ -289,6 +289,7 @@ struct AddExpenseView: View {
                 Spacer()
                 Toggle("", isOn: $isRecurring.animation(.spring(duration: 0.3)))
                     .labelsHidden()
+                    .accessibilityLabel("Recurring")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -313,6 +314,7 @@ struct AddExpenseView: View {
                     }
                     .pickerStyle(.menu)
                     .tint(.primary)
+                    .accessibilityLabel("Frequency")
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)

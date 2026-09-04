@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import TipKit
 
 struct SageToolbar: ToolbarContent {
     var onPrevious: () -> Void
@@ -14,8 +13,6 @@ struct SageToolbar: ToolbarContent {
     var onAdd: () -> Void
     var isNextDisabled: Bool = false
     
-    var addExpenseTip = AddExpenseTip()
-
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarLeading) {
             Button(action: onPrevious) {
@@ -38,7 +35,6 @@ struct SageToolbar: ToolbarContent {
     @ViewBuilder
     private var addButton: some View {
         Button {
-            addExpenseTip.invalidate(reason: .actionPerformed)
             onAdd()
         } label: {
             addLabel
@@ -47,7 +43,6 @@ struct SageToolbar: ToolbarContent {
         .accessibilityIdentifier("add-expense-button")
         .tint(.sage)
         .buttonStyle(.borderedProminent)
-        .popoverTip(addExpenseTip)
     }
 
     private var addLabel: some View {

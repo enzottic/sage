@@ -16,6 +16,7 @@ import TipKit
 @main
 struct SageApp: App {
     @State private var appConfiguration = AppConfiguration()
+    @State private var didCompleteUITestOnboarding = false
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     private let containerResult: Result<ModelContainer, any Error>
     
@@ -24,7 +25,6 @@ struct SageApp: App {
         Self.configureNavigationBarAppearance()
 
         if UITestConfiguration.isEnabled {
-            hasOpenedAppOnce = !UITestConfiguration.showsOnboarding
             WhatsNewStore.markCurrentVersionSeen()
         }
 
@@ -95,8 +95,14 @@ struct SageApp: App {
     @ViewBuilder
     private var mainContent: some View {
         Group {
-            if UITestConfiguration.isEnabled, !UITestConfiguration.showsOnboarding {
-                RootTabView()
+            if UITestConfiguration.isEnabled {
+                if UITestConfiguration.showsOnboarding, !didCompleteUITestOnboarding {
+                    OnboardingView {
+                        didCompleteUITestOnboarding = true
+                    }
+                } else {
+                    RootTabView()
+                }
             } else if !hasOpenedAppOnce {
                 OnboardingView()
             } else {

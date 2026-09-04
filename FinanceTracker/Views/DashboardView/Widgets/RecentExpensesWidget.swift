@@ -13,12 +13,12 @@ struct RecentExpensesWidget: View {
     @Environment(AppRouter.self) var appRouter
     
     @Query var recentExpenses: [Expense]
-    @State private var selectedMonth: Date
+    let selectedMonth: Date
     let rowStyle: ExpenseRowItem.Style
 
     init(selectedMonth: Date = .now, rowStyle: ExpenseRowItem.Style = .condensed) {
         _recentExpenses = expenseQuery(for: selectedMonth, limit: 5)
-        _selectedMonth = .init(initialValue: selectedMonth)
+        self.selectedMonth = selectedMonth
         self.rowStyle = rowStyle
     }
 
@@ -49,4 +49,3 @@ struct RecentExpensesWidget: View {
             .environmentInjection()
     }
 }
-

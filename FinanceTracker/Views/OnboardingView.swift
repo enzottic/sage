@@ -24,6 +24,9 @@ struct OnboardingView: View {
     @State private var cloudSyncEnabled: Bool = false
     @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
     @State private var selectedTagNames: Set<String> = []
+    @State private var completionErrorMessage: String?
+
+    private let onCompletion: (() -> Void)?
     
     let mainSpacing: CGFloat = 24
     let titleBottomSpacing: CGFloat = 20
@@ -43,8 +46,9 @@ struct OnboardingView: View {
         return round(max(0, calculated))
     }
 
-    init(step: OnboardingStep = .welcome) {
+    init(step: OnboardingStep = .welcome, onCompletion: (() -> Void)? = nil) {
         _currentStep = State(initialValue: step)
+        self.onCompletion = onCompletion
     }
 
     var body: some View {
@@ -77,6 +81,14 @@ struct OnboardingView: View {
                     .scrollDisabled(true)
                     .animation(reduceMotion ? nil : .easeInOut, value: currentStep)
                 }
+            }
+            .alert("Could not finish setup", isPresented: Binding(
+                get: { completionErrorMessage != nil },
+                set: { if !$0 { completionErrorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(completionErrorMessage ?? "Check available storage and try again.")
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
 
@@ -504,6 +516,19 @@ struct OnboardingView: View {
     // MARK: - Helper Functions
 
     func completeOnboarding() {
+        // Insert only the tags the user selected.
+        for tag in tagTemplates where selectedTagNames.contains(tag.name) {
+            modelContext.insert(tag)
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            completionErrorMessage = "Sage could not save your setup. Check available storage and try again."
+            return
+        }
+
         config.totalMonthlyIncome = Int(monthlyIncome ?? 0)
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
@@ -514,16 +539,11 @@ struct OnboardingView: View {
         // Fresh install — the current release's highlights are all new to this user already.
         WhatsNewStore.markCurrentVersionSeen()
 
-        // Insert only the tags the user selected
-        for tag in tagTemplates where selectedTagNames.contains(tag.name) {
-            modelContext.insert(tag)
-        }
-        try? modelContext.save()
-
         WidgetCenter.shared.reloadAllTimelines()
 
         withAnimation(reduceMotion ? nil : .default) {
             hasOpenedAppOnce = true
+            onCompletion?()
         }
     }
 

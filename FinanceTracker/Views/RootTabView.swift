@@ -14,7 +14,6 @@ struct RootTabView: View {
     @State private var appRouter = AppRouter()
     @State private var whatsNewRelease: WhatsNewRelease?
     @State private var query: String? = nil
-    @State private var tabSelection: SageTab = .home
     @State private var isShowingSettings = false
 
     private var isPad: Bool {
@@ -22,7 +21,9 @@ struct RootTabView: View {
     }
 
     var body: some View {
-        TabView(selection: $tabSelection) {
+        @Bindable var appRouter = appRouter
+
+        TabView(selection: $appRouter.selectedTab) {
 
             Tab("Home", systemImage: "house", value: SageTab.home) {
                 DashboardView()
@@ -47,7 +48,7 @@ struct RootTabView: View {
             }
 
         }
-        .tabViewStyle(.sidebarAdaptable)
+        .modifier(PlatformTabViewStyle(isPad: isPad))
         .tabViewSidebarHeader {
             if isPad {
                 HStack {
@@ -117,6 +118,19 @@ struct RootTabView: View {
         }
     }
 
+}
+
+private struct PlatformTabViewStyle: ViewModifier {
+    let isPad: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isPad {
+            content.tabViewStyle(.sidebarAdaptable)
+        } else {
+            content
+        }
+    }
 }
 
 

@@ -1009,7 +1009,7 @@
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sage Widgets";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1017,7 +1017,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "me.enzottic.FinanceTracker-debug.FinanceTrackerWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1045,7 +1045,7 @@
 				DEVELOPMENT_TEAM = 2XM9FQAP3J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinanceTrackerWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FinanceTrackerWidget;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sage Widgets";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1053,7 +1053,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker.FinanceTrackerWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

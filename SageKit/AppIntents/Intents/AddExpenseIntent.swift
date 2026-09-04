@@ -38,7 +38,7 @@ public struct AddExpenseAppIntent: AppIntent {
         let expense = Expense(
             name: name,
             amount: amount,
-            category: .wants,
+            category: category ?? .wants,
             date: date ?? .now
         )
         

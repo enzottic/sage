@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 import SageKit
-import TipKit
 
 struct ReceiptImportConfiguration {
     let isParsing: Bool
@@ -43,8 +42,6 @@ struct ExpenseInfoForm: View {
 
     private enum Field: Hashable { case name, amount, note }
     
-    var parseReceiptTip = ParseReceiptTip()
-
     @State private var showDatePicker = false
     init(
         name: Binding<String>,
@@ -137,12 +134,10 @@ struct ExpenseInfoForm: View {
         Menu {
             if configuration.canUseCamera {
                 Button("Take Photo", systemImage: "camera") {
-                    parseReceiptTip.invalidate(reason: .actionPerformed)
                     configuration.onTakePhoto()
                 }
             }
             Button("Choose from Photos", systemImage: "photo.on.rectangle") {
-                parseReceiptTip.invalidate(reason: .actionPerformed)
                 configuration.onChoosePhoto()
             }
         } label: {
@@ -175,12 +170,6 @@ struct ExpenseInfoForm: View {
         .disabled(configuration.isParsing)
         .accessibilityLabel(configuration.isParsing ? "Reading receipt" : "Receipt")
         .accessibilityValue(configuration.isParsing ? "In progress" : "")
-        .popoverTip(parseReceiptTip)
-        .simultaneousGesture(
-            TapGesture().onEnded {
-                parseReceiptTip.invalidate(reason: .actionPerformed)
-            }
-        )
     }
 
     // MARK: - Details card
