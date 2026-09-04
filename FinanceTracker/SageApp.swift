@@ -19,6 +19,7 @@ struct SageApp: App {
     @State private var didCompleteUITestOnboarding = false
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     private let containerResult: Result<ModelContainer, any Error>
+    private let recurringExpenseCoordinator: RecurringExpenseCoordinator?
     
     @MainActor
     init() {
@@ -59,12 +60,22 @@ struct SageApp: App {
         if case let .success(container) = containerResult {
             let expenseStore = ExpenseStore(modelContainer: container)
             AppDependencyManager.shared.add(dependency: expenseStore)
-
-            #if !DEBUG
-            let recurringService = RecurringExpenseService(modelContext: container.mainContext)
-            recurringService.generateAllExpenses(through: Date())
-            #endif
         }
+
+        #if !DEBUG
+        if case let .success(container) = containerResult {
+            recurringExpenseCoordinator = RecurringExpenseCoordinator(
+                modelContainer: container,
+                cloudKitEnabled: SageModelContainer.isCloudKitEnabled
+            )
+        } else {
+            recurringExpenseCoordinator = nil
+        }
+        #else
+        recurringExpenseCoordinator = nil
+        #endif
+
+        recurringExpenseCoordinator?.start()
 
         // Register App Shortcuts phrases with Siri
         SageShortcutsProvider.updateAppShortcutParameters()

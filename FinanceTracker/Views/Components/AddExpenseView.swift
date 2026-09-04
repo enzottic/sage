@@ -410,6 +410,7 @@ struct AddExpenseView: View {
         await Task.yield()
 
         var recurringId: UUID? = nil
+        var recurringOccurrenceKey: String? = nil
         if isRecurring {
             let rule = RecurringExpenseRule(
                 name: name,
@@ -422,6 +423,10 @@ struct AddExpenseView: View {
                 lastGeneratedDate: date
             )
             recurringId = rule.id
+            recurringOccurrenceKey = RecurringExpenseOccurrence.key(
+                ruleID: rule.id,
+                scheduledDate: date
+            )
             modelContext.insert(rule)
         }
 
@@ -432,7 +437,8 @@ struct AddExpenseView: View {
             date: date,
             tags: tags,
             note: note,
-            recurringExpenseId: recurringId
+            recurringExpenseId: recurringId,
+            recurringOccurrenceKey: recurringOccurrenceKey
         )
 
         modelContext.insert(newExpense)

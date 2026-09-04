@@ -16,7 +16,7 @@ struct SchemaMigrationTests {
 
         try createV1Store(at: storeURL)
 
-        let schema = Schema(versionedSchema: SageSchemaV4.self)
+        let schema = Schema(versionedSchema: SageSchemaV5.self)
         let configuration = ModelConfiguration(
             "Migration",
             schema: schema,
@@ -37,6 +37,7 @@ struct SchemaMigrationTests {
         #expect(expense.category == .needs)
         #expect(expense.note == "V1 record")
         #expect(expense.account == nil)
+        #expect(expense.recurringOccurrenceKey == nil)
     }
 
     private func createV1Store(at url: URL) throws {

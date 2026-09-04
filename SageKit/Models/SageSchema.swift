@@ -563,13 +563,167 @@ public enum SageSchemaV4: VersionedSchema {
     }
 }
 
+public enum SageSchemaV5: VersionedSchema {
+    public static var versionIdentifier = Schema.Version(5, 0, 0)
+    public static var models: [any PersistentModel.Type] = [SageSchemaV5.Expense.self, SageSchemaV5.ExpenseTag.self, SageSchemaV5.RecurringExpenseRule.self, SageSchemaV5.ExpenseAccount.self]
+
+    @Model
+    public final class Expense {
+        public var id: UUID = UUID()
+        public var name: String = "New Expense"
+        public var amount: Double = 0.0
+        public var category: ExpenseCategory = ExpenseCategory.needs
+        public var date: Date = Date.now
+        public var note: String = ""
+
+        /// Legacy single-tag relationship retained for migration support.
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.expenses)
+        public var tag: ExpenseTag?
+
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.taggedExpenses)
+        public var tags: [ExpenseTag]? = []
+
+        public var recurringExpenseId: UUID? = nil
+
+        /// Stable identity for one scheduled occurrence of a recurring rule.
+        /// This stays unchanged when the user edits the expense date.
+        public var recurringOccurrenceKey: String? = nil
+
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseAccount.expenses)
+        public var account: ExpenseAccount? = nil
+
+        public init(
+            name: String,
+            amount: Double,
+            category: ExpenseCategory = .wants,
+            date: Date = Date.now,
+            tag: ExpenseTag? = nil,
+            tags: [ExpenseTag]? = nil,
+            note: String = "",
+            recurringExpenseId: UUID? = nil,
+            recurringOccurrenceKey: String? = nil,
+            account: ExpenseAccount? = nil
+        ) {
+            self.id = UUID()
+            self.name = name
+            self.amount = amount
+            self.category = category
+            self.date = date
+            self.tags = tags ?? tag.map { [$0] } ?? []
+            self.note = note
+            self.recurringExpenseId = recurringExpenseId
+            self.recurringOccurrenceKey = recurringOccurrenceKey
+            self.account = account
+        }
+    }
+
+    @Model
+    public final class ExpenseTag: Identifiable {
+        public var id: UUID = UUID()
+        public var name: String = "Tag"
+        public var emoji: String = "💰"
+        public var symbolName: String? = nil
+
+        @Attribute(.transformable(by: UIColorValueTransformer.self))
+        public var uiColor: UIColor = UIColor.blue
+
+        public var budget: Double? = nil
+
+        @Relationship public var expenses: [Expense]?
+        @Relationship public var recurringRules: [RecurringExpenseRule]?
+        @Relationship public var taggedExpenses: [Expense]?
+        @Relationship public var taggedRecurringRules: [RecurringExpenseRule]?
+
+        public var color: Color {
+            Color(uiColor: uiColor)
+        }
+
+        public var hasBudget: Bool { budget != nil }
+
+        public init(id: UUID = UUID(), name: String, uiColor: UIColor, emoji: String, symbolName: String? = nil, budget: Double? = nil) {
+            self.id = id
+            self.name = name
+            self.uiColor = uiColor
+            self.emoji = emoji
+            self.symbolName = symbolName
+            self.budget = budget
+        }
+    }
+
+    public enum RecurrenceFrequency: String, Codable, CaseIterable {
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case biweekly = "Bi-Weekly"
+        case monthly = "Monthly"
+    }
+
+    @Model
+    public final class RecurringExpenseRule: Identifiable {
+        public var id: UUID = UUID()
+        public var name: String = "New Expense"
+        public var amount: Double = 0.0
+        public var note: String = ""
+        public var category: ExpenseCategory = ExpenseCategory.needs
+
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.recurringRules)
+        public var tag: ExpenseTag?
+
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseTag.taggedRecurringRules)
+        public var tags: [ExpenseTag]? = []
+
+        @Relationship(deleteRule: .nullify, inverse: \ExpenseAccount.recurringRules)
+        public var account: ExpenseAccount?
+
+        public var frequency: RecurrenceFrequency = RecurrenceFrequency.monthly
+        public var startDate: Date = Date.now
+        public var endDate: Date?
+        public var lastGeneratedDate: Date?
+
+        public init(name: String, amount: Double, note: String, category: ExpenseCategory, tag: ExpenseTag? = nil, tags: [ExpenseTag]? = nil, frequency: RecurrenceFrequency, startDate: Date, endDate: Date? = nil, lastGeneratedDate: Date? = nil) {
+            self.id = UUID()
+            self.name = name
+            self.amount = amount
+            self.note = note
+            self.category = category
+            self.tags = tags ?? tag.map { [$0] } ?? []
+            self.frequency = frequency
+            self.startDate = startDate
+            self.endDate = endDate
+            self.lastGeneratedDate = lastGeneratedDate
+        }
+    }
+
+    @Model
+    public final class ExpenseAccount: Identifiable {
+        public var id: UUID = UUID()
+        public var name: String = "Account"
+        public var type: AccountType = AccountType.bankAccount
+
+        @Relationship public var expenses: [Expense]?
+        @Relationship public var recurringRules: [RecurringExpenseRule]?
+
+        public enum AccountType: String, Codable {
+            case bankAccount = "Bank Account"
+            case creditCard = "Credit Card"
+            case other = "Other"
+        }
+
+        public init(id: UUID, name: String, type: AccountType) {
+            self.id = id
+            self.name = name
+            self.type = type
+        }
+    }
+}
+
 public class SageSchemaMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] = [SageSchemaV1.self, SageSchemaV2.self, SageSchemaV3.self, SageSchemaV4.self]
+    public static var schemas: [any VersionedSchema.Type] = [SageSchemaV1.self, SageSchemaV2.self, SageSchemaV3.self, SageSchemaV4.self, SageSchemaV5.self]
 
     public static var stages: [MigrationStage] = [
         MigrationStage.lightweight(fromVersion: SageSchemaV1.self, toVersion: SageSchemaV2.self),
         MigrationStage.lightweight(fromVersion: SageSchemaV2.self, toVersion: SageSchemaV3.self),
-        MigrationStage.lightweight(fromVersion: SageSchemaV3.self, toVersion: SageSchemaV4.self)
+        MigrationStage.lightweight(fromVersion: SageSchemaV3.self, toVersion: SageSchemaV4.self),
+        MigrationStage.lightweight(fromVersion: SageSchemaV4.self, toVersion: SageSchemaV5.self)
     ]
 }
 
@@ -626,11 +780,11 @@ public extension [Expense] {
     }
 }
 
-public typealias Expense = SageSchemaV4.Expense
-public typealias ExpenseTag = SageSchemaV4.ExpenseTag
-public typealias RecurringExpenseRule = SageSchemaV4.RecurringExpenseRule
-public typealias RecurrenceFrequency = SageSchemaV4.RecurrenceFrequency
-public typealias ExpenseAccount = SageSchemaV4.ExpenseAccount
+public typealias Expense = SageSchemaV5.Expense
+public typealias ExpenseTag = SageSchemaV5.ExpenseTag
+public typealias RecurringExpenseRule = SageSchemaV5.RecurringExpenseRule
+public typealias RecurrenceFrequency = SageSchemaV5.RecurrenceFrequency
+public typealias ExpenseAccount = SageSchemaV5.ExpenseAccount
 
 public extension RecurrenceFrequency {
     /// The next occurrence date one interval after `date`, or nil if it can't be computed.

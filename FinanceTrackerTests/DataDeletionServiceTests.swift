@@ -46,7 +46,7 @@ struct DataDeletionServiceTests {
         try context.save()
 
         try DataDeletionService(modelContext: context).deleteExpenses(includeRecurringRules: true)
-        RecurringExpenseService(modelContext: context).generateAllExpenses(through: .now)
+        try RecurringExpenseService(modelContext: context).generateAllExpenses(through: .now)
 
         #expect(try context.fetch(FetchDescriptor<Expense>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<RecurringExpenseRule>()).isEmpty)
