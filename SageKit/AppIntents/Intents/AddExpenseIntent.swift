@@ -35,8 +35,16 @@ public struct AddExpenseAppIntent: AppIntent {
     
     @MainActor
     public func perform() async throws -> some ReturnsValue<ExpenseEntity> {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            throw $name.needsValueError("Enter an expense name.")
+        }
+        guard amount.isFinite, amount > 0 else {
+            throw $amount.needsValueError("Enter an amount greater than zero.")
+        }
+
         let expense = Expense(
-            name: name,
+            name: trimmedName,
             amount: amount,
             category: category ?? .wants,
             date: date ?? .now

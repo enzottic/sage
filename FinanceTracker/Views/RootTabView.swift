@@ -30,7 +30,7 @@ struct RootTabView: View {
             }
 
             Tab("Expenses", systemImage: "list.bullet", value: SageTab.expenses) {
-                ExpensesView()
+                ExpensesView(month: appRouter.expensesMonth)
             }
 
             Tab("Stats", systemImage: "chart.bar", value: SageTab.stats) {

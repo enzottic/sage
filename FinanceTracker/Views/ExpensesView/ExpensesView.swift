@@ -48,8 +48,9 @@ struct ExpensesView: View {
                     )
                 }
                 .gradientBackground()
-                .onChange(of: appRouter.expensesMonth) { _, month in
-                    selectedMonth = month
+                .onChange(of: appRouter.expensesRequestID) { _, _ in
+                    selectedMonth = appRouter.expensesMonth
+                    searchText = ""
                 }
         }
     }

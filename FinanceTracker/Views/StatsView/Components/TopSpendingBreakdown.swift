@@ -16,6 +16,9 @@ struct TopSpendingBreakdown: View {
     var includesUntaggedExpenses: Bool = true
     var contentPadding: CGFloat = 0
     var untaggedLabel: String? = nil
+    /// The Stats screen presents this breakdown as a standalone card, while
+    /// dashboard widgets supply their own container surface.
+    var showsCardBackground: Bool = true
 
     private struct Row: Identifiable {
         let id: String
@@ -67,7 +70,11 @@ struct TopSpendingBreakdown: View {
         }
         .padding(contentPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 15).fill(.cardBackground))
+        .background {
+            if showsCardBackground {
+                RoundedRectangle(cornerRadius: 15).fill(.cardBackground)
+            }
+        }
     }
 
     @ViewBuilder

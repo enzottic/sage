@@ -72,6 +72,44 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testShowAllRestoresMonthAndClearsDetail() {
+        let app = launchApp(seedExpense: "Navigation Expense")
+        let showAll = app.buttons["show-all-expenses-button"]
+        XCTAssertTrue(scrollToVisibility(of: showAll, in: app))
+        showAll.tap()
+        XCTAssertTrue(app.tabBars.buttons["Expenses"].isSelected)
+        let row = expenseRow(named: "Navigation Expense", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+
+        tap("Previous Month", in: app)
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(scrollToVisibility(of: showAll, in: app))
+        showAll.tap()
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+
+        row.tap()
+        XCTAssertTrue(app.textFields["expense-name-field"].waitForExistence(timeout: timeout))
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(scrollToVisibility(of: showAll, in: app))
+        showAll.tap()
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.textFields["expense-name-field"].exists)
+    }
+
+    func testIPhoneStaysPortraitWhenDeviceRotates() {
+        XCUIDevice.shared.orientation = .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let app = launchApp()
+        openExpenses(in: app)
+        for orientation in [UIDeviceOrientation.landscapeLeft, .landscapeRight] {
+            XCUIDevice.shared.orientation = orientation
+            XCTAssertTrue(app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout))
+            let frame = app.windows.firstMatch.frame
+            XCTAssertLessThan(frame.width, frame.height)
+            XCTAssertTrue(app.tabBars.buttons["Expenses"].isHittable)
+        }
+    }
+
     func testEditsExpense() {
         let app = launchApp(seedExpense: "Expense to Edit")
         openExpenses(in: app)

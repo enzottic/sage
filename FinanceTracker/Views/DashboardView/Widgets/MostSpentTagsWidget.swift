@@ -59,7 +59,8 @@ struct MostSpentTagsWidget: View {
             accentColor: .sage,
             maximumRows: 3,
             includesUntaggedExpenses: false,
-            contentPadding: layout == .compact ? 16 : 0
+            contentPadding: layout == .compact ? 16 : 0,
+            showsCardBackground: false
         )
     }
 }

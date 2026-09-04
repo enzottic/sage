@@ -23,12 +23,20 @@ final class AppRouter {
 
     /// "Show All" courier: hands the dashboard's month to the Expenses tab.
     var expensesMonth: Date = .now
+    var expensesRequestID = UUID()
 
     var toast: SageToast?
 
     private var dismissTask: Task<Void, Never>?
 
     // MARK: - Navigation
+
+    func showExpenses(for month: Date) {
+        expensesMonth = month
+        expensesPath.removeAll()
+        expensesRequestID = UUID()
+        selectedTab = .expenses
+    }
 
     /// Appends a route to the currently visible tab's stack.
     func push(_ route: AppRoute) {

@@ -33,9 +33,9 @@ struct RecentExpensesWidget: View {
                         .fontWeight(.semibold)
                     Spacer()
                     Button("Show All") {
-                        appRouter.expensesMonth = selectedMonth
-                        appRouter.selectedTab = .expenses
+                        appRouter.showExpenses(for: selectedMonth)
                     }
+                    .accessibilityIdentifier("show-all-expenses-button")
                     .font(.subheadline)
                 }
             }
