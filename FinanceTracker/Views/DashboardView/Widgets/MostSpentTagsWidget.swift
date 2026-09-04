@@ -11,27 +11,56 @@ import SageKit
 struct MostSpentTagsWidget: View {
     @Query private var monthlyExpenses: [Expense]
 
-    init(selectedMonth: Date) {
+    let layout: DashboardWidgetLayout
+
+    private var hasTaggedExpenses: Bool {
+        monthlyExpenses.contains { expense in
+            (expense.tags ?? []).contains { !$0.isDeleted }
+        }
+    }
+
+    init(
+        selectedMonth: Date,
+        layout: DashboardWidgetLayout = .full
+    ) {
         _monthlyExpenses = expenseQuery(for: selectedMonth)
+        self.layout = layout
     }
 
     var body: some View {
-        Section {
-            if !monthlyExpenses.isEmpty {
-                TopSpendingBreakdown(
-                    expenses: monthlyExpenses,
-                    accentColor: .sage,
-                    maximumRows: 3,
-                    includesUntaggedExpenses: false
-                )
+        if hasTaggedExpenses {
+            if layout == .compact {
+                VStack(alignment: .leading, spacing: 8) {
+                    header
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                    breakdown
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
-                ContentUnavailableView("No expenses yet", systemImage: "receipt")
+                Section {
+                    breakdown
+                } header: {
+                    header
+                }
             }
-        } header: {
-            Text("Top Tags")
-                .font(.subheadline)
-                .fontWeight(.semibold)
         }
+    }
+
+    private var header: some View {
+        Text("Top Tags")
+            .font(.subheadline)
+            .fontWeight(.semibold)
+    }
+
+    private var breakdown: some View {
+        TopSpendingBreakdown(
+            expenses: monthlyExpenses,
+            accentColor: .sage,
+            maximumRows: 3,
+            includesUntaggedExpenses: false,
+            contentPadding: layout == .compact ? 16 : 0
+        )
     }
 }
 

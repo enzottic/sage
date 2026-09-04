@@ -16,6 +16,9 @@ struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    var showsDismissButton = false
 
     @State private var showExpenseDeletionOptions = false
     @State private var showFullResetConfirmation = false
@@ -125,6 +128,15 @@ struct SettingsView: View {
                 #endif
             }
             .navigationTitle("Settings")
+            .toolbar {
+                if showsDismissButton {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            dismiss()
+                        }
+                    }
+                }
+            }
             .settingsBackground()
             .navigationDestination(for: SettingsPage.self) { page in
                 switch page {

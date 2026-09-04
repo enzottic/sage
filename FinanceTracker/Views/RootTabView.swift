@@ -15,6 +15,11 @@ struct RootTabView: View {
     @State private var whatsNewRelease: WhatsNewRelease?
     @State private var query: String? = nil
     @State private var tabSelection: SageTab = .home
+    @State private var isShowingSettings = false
+
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
 
     var body: some View {
         TabView(selection: $tabSelection) {
@@ -31,8 +36,10 @@ struct RootTabView: View {
                 StatsView()
             }
 
-            Tab("Settings", systemImage: "gear", value: SageTab.settings) {
-                SettingsView()
+            if !isPad {
+                Tab("Settings", systemImage: "gear", value: SageTab.settings) {
+                    SettingsView()
+                }
             }
             
             Tab("Search", systemImage: "magnifyingglass", value: SageTab.search, role: .search) {
@@ -40,8 +47,30 @@ struct RootTabView: View {
             }
 
         }
+        .tabViewStyle(.sidebarAdaptable)
+        .tabViewSidebarHeader {
+            if isPad {
+                HStack {
+                    Button {
+                        isShowingSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.circle)
+                    .accessibilityLabel("Settings")
+                    .accessibilityIdentifier("settings-button")
+
+                    Spacer()
+                }
+            }
+        }
         .tabViewSearchActivation(.searchTabSelection)
         .accessibilityIdentifier("main-tab-view")
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView(showsDismissButton: true)
+                .presentationSizing(.form)
+        }
         .sheet(item: $appRouter.presentedSheet) { sheet in
             switch sheet {
             case .addExpense(let expense, let receiptData, _):

@@ -7,10 +7,8 @@
 import Foundation
 import SageKit
 
-/// How a widget is being displayed, derived from its row — never stored:
-/// `.full` when it's alone in a row (rendered as a native list section),
-/// `.compact` when it shares the row with other widgets (rendered as a card).
-enum DashboardWidgetLayout {
+/// How a widget renders inside its dashboard column.
+enum DashboardWidgetLayout: Codable, Hashable {
     case full
     case compact
 }
@@ -24,8 +22,51 @@ enum DashboardWidget: Hashable, Codable {
     case singleCategoryUtilization(ExpenseCategory)
 }
 
-/// One dashboard row. A single widget stretches the full width; multiple
-/// widgets (2, 3, ...) share the row as equal-width cards.
-struct DashboardRowConfiguration: Codable, Hashable {
+/// One vertical group of widgets within a dashboard row.
+struct DashboardColumnConfiguration: Codable, Hashable {
     var widgets: [DashboardWidget]
+    var presentation: DashboardWidgetLayout
+
+    init(
+        widgets: [DashboardWidget],
+        presentation: DashboardWidgetLayout = .full
+    ) {
+        self.widgets = widgets
+        self.presentation = presentation
+    }
+}
+
+/// One dashboard row. Columns share the available width equally, and the
+/// widgets in each column are arranged vertically.
+struct DashboardRowConfiguration: Codable, Hashable {
+    var columns: [DashboardColumnConfiguration]
+
+    init(columns: [DashboardColumnConfiguration]) {
+        self.columns = columns
+    }
+
+    /// Convenience initializer for simple rows. One widget uses the full-width
+    /// presentation. Multiple widgets become equal compact columns.
+    init(widgets: [DashboardWidget]) {
+        switch widgets.count {
+        case 0:
+            columns = []
+        case 1:
+            columns = [.init(widgets: widgets)]
+        default:
+            columns = widgets.map {
+                .init(widgets: [$0], presentation: .compact)
+            }
+        }
+    }
+
+    var standaloneWidget: DashboardWidget? {
+        guard columns.count == 1,
+              let column = columns.first,
+              column.presentation == .full,
+              column.widgets.count == 1 else {
+            return nil
+        }
+        return column.widgets.first
+    }
 }

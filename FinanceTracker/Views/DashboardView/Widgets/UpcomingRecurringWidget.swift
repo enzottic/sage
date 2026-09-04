@@ -19,6 +19,8 @@ struct UpcomingRecurringWidget: View {
 
     @Query private var recurringRules: [RecurringExpenseRule]
 
+    let layout: DashboardWidgetLayout
+
     private let calendar = Calendar.current
 
     private var upcomingRules: [UpcomingRule] {
@@ -28,21 +30,52 @@ struct UpcomingRecurringWidget: View {
                 return UpcomingRule(rule: rule, date: date)
             }
             .sorted { $0.date < $1.date }
-            .prefix(5)
-            .map { $0 }
+    }
+
+    private var visibleRules: [UpcomingRule] {
+        Array(upcomingRules.prefix(layout == .compact ? 4 : 5))
+    }
+
+    init(layout: DashboardWidgetLayout = .full) {
+        self.layout = layout
     }
 
     var body: some View {
-        if !upcomingRules.isEmpty {
+        if !visibleRules.isEmpty {
             Section {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(upcomingRules) { upcoming in
-                            UpcomingRecurringCard(rule: upcoming.rule, nextDate: upcoming.date)
+                Group {
+                    if layout == .compact {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible()),
+                            ],
+                            spacing: 12
+                        ) {
+                            ForEach(visibleRules) { upcoming in
+                                UpcomingRecurringCard(
+                                    rule: upcoming.rule,
+                                    nextDate: upcoming.date
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(visibleRules) { upcoming in
+                                    UpcomingRecurringCard(
+                                        rule: upcoming.rule,
+                                        nextDate: upcoming.date
+                                    )
+                                    .frame(width: 150)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -121,7 +154,7 @@ private struct UpcomingRecurringCard: View {
                 .fontWeight(.bold)
         }
         .padding(14)
-        .frame(width: 150)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .accessibilityElement(children: .ignore)
