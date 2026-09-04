@@ -11,22 +11,15 @@ import SageKit
 
 struct CategoryDetailView: View {
     @Environment(\.categoryColors) private var categoryColors
-    @Environment(AppConfiguration.self) private var config
     
     let category: ExpenseCategory
-    let utilization: Double
-    let used: Double
-    let total: Double
     let month: Date
 
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)])
     private var monthExpenses: [Expense]
 
-    init(category: ExpenseCategory, utilization: Double, used: Double, total: Double, month: Date) {
+    init(category: ExpenseCategory, month: Date) {
         self.category = category
-        self.utilization = utilization
-        self.used = used
-        self.total = total
         self.month = month
 
         let cal = Calendar.current
@@ -49,7 +42,7 @@ struct CategoryDetailView: View {
                     Text("Spending")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text(used.currencyString)
+                    Text(expenses.total.currencyString)
                         .font(.largeTitle.bold())
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -88,7 +81,7 @@ struct CategoryDetailView: View {
 
 #Preview {
     NavigationStack {
-        CategoryDetailView(category: ExpenseCategory.wants, utilization: 0.3, used: 100, total: 300, month: .now)
+        CategoryDetailView(category: .wants, month: .now)
     }
     .environmentInjection()
 }

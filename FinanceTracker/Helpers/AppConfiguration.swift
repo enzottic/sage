@@ -183,16 +183,6 @@ class AppConfiguration {
         CategoryColors(needs: needsColor, wants: wantsColor, savings: savingsColor)
     }
 
-    func resetCategoryColors() {
-        needsColor = Color("NeedColor")
-        wantsColor = Color("WantColor")
-        savingsColor = Color("SavingColor")
-        // Remove persisted values so widgets fall back to asset catalog defaults on next load
-        defaults.removeObject(forKey: Keys.needsColor)
-        defaults.removeObject(forKey: Keys.wantsColor)
-        defaults.removeObject(forKey: Keys.savingsColor)
-    }
-
     /// Restores every user-configurable setting to the initial app defaults.
     func resetAllSettings() {
         selectedAppearance = .system

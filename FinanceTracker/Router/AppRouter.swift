@@ -44,10 +44,6 @@ final class AppRouter {
         presentedSheet = sheet
     }
 
-    func dismissSheet() {
-        presentedSheet = nil
-    }
-
     func navigate(to link: SageDeepLink) {
         switch link {
         case .addExpense:
@@ -82,10 +78,5 @@ final class AppRouter {
             guard !Task.isCancelled else { return }
             withAnimation(.spring(duration: 0.4)) { self.toast = nil }
         }
-    }
-
-    func dismissToast() {
-        dismissTask?.cancel()
-        withAnimation(.spring(duration: 0.4)) { toast = nil }
     }
 }

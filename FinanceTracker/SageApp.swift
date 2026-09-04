@@ -11,7 +11,6 @@ import AppIntents
 import SageKit
 import Combine
 import UserNotifications
-import TipKit
 
 @main
 struct SageApp: App {
@@ -129,17 +128,6 @@ struct SageApp: App {
                AppConfiguration.hasCompletedSetupOnAnotherDevice {
                 WhatsNewStore.markCurrentVersionSeen()
                 hasOpenedAppOnce = true
-            }
-        }
-        .task {
-            do {
-                #if DEBUG
-                try Tips.resetDatastore()
-                #endif
-                
-                try Tips.configure()
-            } catch {
-                print("Error initalizing TipKit \(error.localizedDescription)")
             }
         }
     }

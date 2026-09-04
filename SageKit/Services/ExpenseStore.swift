@@ -57,14 +57,6 @@ final public class ExpenseStore {
         return try context.fetch(descriptor)
     }
 
-    /// Finds and returns a single expense by its identifier
-    public func fetchExpense(with id: UUID) throws -> Expense? {
-        let descriptor = FetchDescriptor<Expense>(
-            predicate: #Predicate { $0.id == id}
-        )
-        return try context.fetch(descriptor).first
-    }
-    
     public func fetchRecentExpenses(limit: Int = 10) throws -> [Expense] {
         var descriptor = FetchDescriptor<Expense>(
             sortBy: [SortDescriptor(\.date)]

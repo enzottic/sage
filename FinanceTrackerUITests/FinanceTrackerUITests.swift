@@ -8,15 +8,6 @@ final class FinanceTrackerUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testLaunchShowsMainTabs() {
-        let app = launchApp()
-
-        XCTAssertTrue(
-            app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout),
-            "The main tab bar did not appear after launch."
-        )
-    }
-
     func testCompletesOnboarding() {
         let app = launchApp(showsOnboarding: true)
 

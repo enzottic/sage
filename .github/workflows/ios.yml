@@ -53,5 +53,4 @@ jobs:
             -project FinanceTracker.xcodeproj \
             -scheme FinanceTracker \
             -destination "platform=iOS Simulator,id=$simulator_id" \
-            -parallel-testing-enabled NO \
-            -skip-testing:FinanceTrackerUITests/FinanceTrackerUITests/testLaunchPerformance
+            -parallel-testing-enabled NO

@@ -79,7 +79,7 @@ extension View {
             case .expenseDetail(let expense):
                 ExpenseDetailView(expense: expense)
             case .categoryDetail(let category, let month):
-                CategoryDetailScreen(category: category, month: month)
+                CategoryDetailView(category: category, month: month)
             }
         }
     }
