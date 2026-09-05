@@ -15,6 +15,7 @@ enum DashboardWidgetLayout: Codable, Hashable {
 
 enum DashboardWidget: Hashable, Codable {
     case monthlyOverview
+    case expenseCalendar
     case mostSpentTags
     case categoryUtilization
     case upcomingRecurring

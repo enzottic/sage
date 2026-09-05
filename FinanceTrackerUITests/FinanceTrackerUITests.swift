@@ -324,6 +324,38 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertFalse(app.textFields["expense-name-field"].exists)
     }
 
+    func testExpenseCalendarShowsDailySpendingAndChangesMonth() {
+        let app = launchApp(seedExpense: "Calendar Expense")
+        let calendar = Calendar.current
+        let now = Date.now
+        let dayNumber = calendar.component(.day, from: now)
+        let today = app.descendants(matching: .any)["expense-calendar-day-\(dayNumber)"].firstMatch
+        XCTAssertTrue(scrollToVisibility(of: today, in: app))
+        XCTAssertEqual(today.value as? String, "\(42.50.formatted(.currency(code: "USD"))) spent, Today")
+
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Expense calendar - current month"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+
+        XCTAssertTrue(app.staticTexts["Expense Calendar"].exists)
+        tap("Previous Month", in: app)
+        let previousMonth = calendar.date(byAdding: .month, value: -1, to: now)!
+        let firstDay = app.descendants(matching: .any)["expense-calendar-day-1"].firstMatch
+        let monthStart = calendar.dateInterval(of: .month, for: previousMonth)!.start
+        XCTAssertEqual(firstDay.label, monthStart.formatted(date: .complete, time: .omitted))
+        XCTAssertEqual(firstDay.value as? String, "\(Double(0).formatted(.currency(code: "USD"))) spent")
+        tap("Next Month", in: app)
+        XCTAssertEqual(today.value as? String, "\(42.50.formatted(.currency(code: "USD"))) spent, Today")
+        XCTAssertFalse(app.buttons["Next Month"].isEnabled)
+
+        openExpenses(in: app)
+        addExpense(named: "Another Calendar Expense", amount: "12.34", in: app)
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(scrollToVisibility(of: today, in: app))
+        XCTAssertEqual(today.value as? String, "\(54.84.formatted(.currency(code: "USD"))) spent, Today")
+    }
+
     func testIPhoneStaysPortraitWhenDeviceRotates() {
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
