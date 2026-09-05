@@ -3,13 +3,26 @@ import Testing
 @testable import SageKit
 
 struct AmountInputTests {
-    @Test(arguments: ["en_US", "de_DE", "fr_FR", "ar_EG"])
+    @Test(arguments: ["en_US", "de_DE", "fr_FR", "ar_EG", "sv_SE", "fa_IR"])
     func unchangedAmountRoundTrips(localeIdentifier: String) {
         let locale = Locale(identifier: localeIdentifier)
-        for amount in [12.34, 100, 12.345] {
+        for amount in [12.34, 100, 12.345, -12.34, -100, -12.345] {
             let text = AmountInput.text(for: amount, locale: locale)
             #expect(AmountInput.parse(text, locale: locale) == amount)
         }
+    }
+
+    @Test
+    func rejectsMalformedGroupingRatherThanChangingMagnitude() {
+        let english = Locale(identifier: "en_US")
+        let german = Locale(identifier: "de_DE")
+        for text in ["12,34", "1,,234", "1,23,456", "1234,567", "1,234.5,6"] {
+            #expect(AmountInput.parse(text, locale: english) == nil)
+        }
+        #expect(AmountInput.parse("12.34", locale: german) == nil)
+        #expect(AmountInput.parse("1,234.56", locale: english) == 1234.56)
+        #expect(AmountInput.parse("1.234,56", locale: german) == 1234.56)
+        #expect(AmountInput.parse("12,34,567.89", locale: Locale(identifier: "en_IN")) == 1234567.89)
     }
 
     @Test
