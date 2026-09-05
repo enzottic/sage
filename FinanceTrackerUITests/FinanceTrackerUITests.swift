@@ -108,6 +108,71 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(shoppingTag.isSelected, "Tag selection must also survive returning from earlier steps.")
     }
 
+    func testOnboardingAllocationDividersSnapAndRetainBreakdown() {
+        let app = launchApp(showsOnboarding: true)
+        tap("onboarding-get-started-button", in: app)
+        let incomeField = app.textFields["onboarding-income-field"]
+        XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
+        incomeField.tap()
+        incomeField.typeText("5000")
+        tap("onboarding-keyboard-done-button", in: app)
+        tap("onboarding-budget-continue-button", in: app)
+
+        let bar = app.descendants(matching: .any)["onboarding-allocation-bar"].firstMatch
+        let needs = app.descendants(matching: .any)["onboarding-needs-divider"].firstMatch
+        let savings = app.descendants(matching: .any)["onboarding-savings-divider"].firstMatch
+        XCTAssertTrue(bar.waitForExistence(timeout: timeout))
+
+        func assertBreakdown(_ needsValue: Int, _ wantsValue: Int, _ savingsValue: Int) {
+            XCTAssertEqual(needs.value as? String, "Needs \(needsValue)%, Wants \(wantsValue)%")
+            XCTAssertEqual(savings.value as? String, "Wants \(wantsValue)%, Savings \(savingsValue)%")
+            XCTAssertEqual(needsValue + wantsValue + savingsValue, 100)
+        }
+
+        func drag(_ divider: XCUIElement, by percentage: Double) {
+            let start = divider.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            let end = start.withOffset(CGVector(dx: bar.frame.width * percentage / 100, dy: 0))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
+
+        assertBreakdown(50, 30, 20)
+        let initial = XCTAttachment(screenshot: app.screenshot())
+        initial.name = "Allocation - labeled bar"
+        initial.lifetime = .keepAlways
+        add(initial)
+
+        drag(needs, by: 13)
+        assertBreakdown(65, 15, 20)
+        drag(savings, by: -8)
+        assertBreakdown(65, 5, 30)
+        drag(needs, by: 15)
+        assertBreakdown(70, 0, 30)
+        // Both handles must remain draggable even when the middle segment is collapsed.
+        drag(savings, by: 10)
+        assertBreakdown(70, 10, 20)
+        drag(needs, by: -80)
+        assertBreakdown(0, 80, 20)
+        drag(needs, by: 35)
+        assertBreakdown(35, 45, 20)
+        drag(savings, by: 25)
+        assertBreakdown(35, 65, 0)
+        drag(savings, by: -20)
+        assertBreakdown(35, 45, 20)
+
+        tap("onboarding-allocation-continue-button", in: app)
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(bar.waitForExistence(timeout: timeout))
+        assertBreakdown(35, 45, 20)
+        tap("onboarding-allocation-continue-button", in: app)
+        tap("onboarding-sync-continue-button", in: app)
+        tap("onboarding-tags-continue-button", in: app)
+        XCTAssertTrue(app.staticTexts["onboarding-plan-total"].waitForExistence(timeout: timeout))
+        let summary = XCTAttachment(screenshot: app.screenshot())
+        summary.name = "Allocation - adjusted summary"
+        summary.lifetime = .keepAlways
+        add(summary)
+    }
+
     func testOnboardingSupportsLargestAccessibilityTextSize() {
         let app = XCUIApplication()
         app.launchEnvironment["SAGE_UI_TESTING"] = "1"
@@ -125,7 +190,7 @@ final class FinanceTrackerUITests: XCTestCase {
         let pages: [(String, XCUIElement)] = [
             ("onboarding-get-started-button", welcomeTitle),
             ("onboarding-budget-continue-button", incomeField),
-            ("onboarding-allocation-continue-button", app.sliders.firstMatch),
+            ("onboarding-allocation-continue-button", app.descendants(matching: .any)["onboarding-needs-divider"].firstMatch),
             ("onboarding-sync-continue-button", app.switches["onboarding-sync-toggle"]),
             ("onboarding-tags-continue-button", app.staticTexts["onboarding-tags-count"]),
             ("onboarding-start-tracking-button", app.staticTexts["onboarding-plan-total"])

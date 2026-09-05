@@ -100,12 +100,6 @@ struct OnboardingView: View {
             }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: currentStep)
             .task(id: currentStep) { headingFocused = true }
-            .onChange(of: needsPercent) { _, newValue in
-                if newValue + wantsPercent > 100 { wantsPercent = 100 - newValue }
-            }
-            .onChange(of: wantsPercent) { _, newValue in
-                if needsPercent + newValue > 100 { needsPercent = 100 - newValue }
-            }
             .alert("Could not finish setup", isPresented: Binding(
                 get: { completionErrorMessage != nil },
                 set: { if !$0 { completionErrorMessage = nil } }
@@ -235,12 +229,12 @@ struct OnboardingView: View {
 
     private var allocationPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Set your budget")
+            heading("Set your budget", subtitle: "Drag the dividers to adjust your budget.")
 
             VStack(alignment: .leading, spacing: 24) {
-                allocationBar
-                AllocationSlider(title: "Needs", color: categoryColors.needs, icon: "house.fill", percentage: $needsPercent)
-                AllocationSlider(title: "Wants", color: categoryColors.wants, icon: "cart.fill", percentage: $wantsPercent)
+                BudgetAllocationBar(needsPercent: $needsPercent, wantsPercent: $wantsPercent)
+                BudgetSummaryRow(title: "Needs (\(Int(needsPercent))%)", amount: income * needsPercent / 100, color: categoryColors.needs, icon: "house.fill")
+                BudgetSummaryRow(title: "Wants (\(Int(wantsPercent))%)", amount: income * wantsPercent / 100, color: categoryColors.wants, icon: "cart.fill")
                 BudgetSummaryRow(title: "Savings (\(Int(savingsPercent))%)", amount: income * savingsPercent / 100, color: categoryColors.savings, icon: "banknote.fill")
             }
         }
