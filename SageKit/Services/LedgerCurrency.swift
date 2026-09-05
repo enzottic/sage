@@ -52,8 +52,9 @@ public enum LedgerCurrency {
     }
 
     public static var currentCode: String? {
-        // UI tests use an in-memory ledger and must not change the real shared setting.
-        if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] == "1" { return "USD" }
+        // Previews and UI tests use USD without changing the real shared setting.
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            || ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] == "1" { return "USD" }
         return persistedCode()
     }
 
@@ -65,6 +66,7 @@ public enum LedgerCurrency {
 
     public static func requireCode() throws -> String {
         if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] != "1",
+           ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
            UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)?.bool(forKey: cloudConflictKey) == true {
             throw Error.cloudConflict
         }

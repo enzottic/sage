@@ -67,15 +67,14 @@ struct OnboardingView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                ViewThatFits(in: .vertical) {
-                    pageContent.fixedSize(horizontal: false, vertical: true)
-                    // Normal pages fit without scrolling; never shrink accessibility text to fit.
-                    ScrollView {
-                        pageContent
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .scrollDismissesKeyboard(.interactively)
+                // Keep one field instance when the keyboard changes the available height.
+                ScrollView {
+                    pageContent
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .defaultScrollAnchor(.center, for: .alignment)
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.interactively)
                 .id(currentStep)
                 .frame(maxWidth: 520, alignment: .leading)
                 .padding(.horizontal, 24)

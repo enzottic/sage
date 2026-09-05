@@ -47,6 +47,36 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testOnboardingIncomeKeyboardStaysOpenAndCanBeReopened() {
+        let app = launchApp(showsOnboarding: true)
+        tap("onboarding-get-started-button", in: app)
+
+        let incomeField = app.textFields["onboarding-income-field"]
+        XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
+        incomeField.tap()
+
+        // Tap software keys directly so typeText cannot recover lost field focus.
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        tap(keyboard.keys["5"], named: "5")
+        tap(keyboard.keys["0"], named: "0")
+        XCTAssertEqual(incomeField.value as? String, "50")
+        XCTAssertTrue(keyboard.exists)
+
+        tap("onboarding-keyboard-done-button", in: app)
+        XCTAssertTrue(keyboard.waitForNonExistence(timeout: timeout))
+        incomeField.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
+        tap(keyboard.keys["0"], named: "0")
+        XCTAssertEqual(incomeField.value as? String, "500")
+
+        tap("onboarding-budget-continue-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-allocation-continue-button"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(keyboard.waitForNonExistence(timeout: timeout))
+        tap("onboarding-back-button", in: app)
+        XCTAssertEqual(incomeField.value as? String, "500")
+    }
+
     func testOnboardingCurrencyDefaultsToRegionAndCanBeChangedWithIncome() {
         let app = XCUIApplication()
         app.launchEnvironment["SAGE_UI_TESTING"] = "1"
