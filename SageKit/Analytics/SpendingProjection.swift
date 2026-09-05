@@ -32,7 +32,7 @@ public enum SpendingProjection {
     ///   - historicalVariableTotals: variable (non-recurring) spend totals for
     ///     recent *complete* periods of the same length. Empty → falls back to
     ///     the current period's own pace.
-    ///   - calendar: calendar used for recurrence stepping.
+    ///   - calendar: calendar used for legacy rules; fixed rules use their persisted time zone.
     /// - Returns: projected total spend for the full period.
     public static func project(
         periodExpenses: [Expense],
@@ -80,12 +80,11 @@ public enum SpendingProjection {
         return spentSoFar + projectedVariableRemainder + futureRecurring
     }
 
-    /// Sum of recurring-rule occurrences scheduled after `start` and on/before `end`
+    /// Sum of recurring-rule occurrences scheduled after `start` and before `end`
     /// that have not yet been generated into `Expense` records.
     ///
-    /// Steps each rule's cadence from the same anchor the generator uses
-    /// (`lastGeneratedDate`, else the day before `startDate`) so the occurrences
-    /// counted here match those the generator will later create.
+    /// Uses the generator's pending occurrence and cadence, with an exclusive period end
+    /// but an inclusive rule end date.
     private static func futureRecurringTotal(
         rules: [RecurringExpenseRule],
         after start: Date,
@@ -96,20 +95,14 @@ public enum SpendingProjection {
         var total = 0.0
 
         for rule in rules {
-            let ruleEnd = rule.endDate.map { min($0, end) } ?? end
-            guard start < ruleEnd else { continue }
-
-            let anchor = rule.lastGeneratedDate
-                ?? calendar.date(byAdding: .day, value: -1, to: rule.startDate)
-                ?? rule.startDate
-
-            var next = rule.frequency.nextOccurrence(after: anchor, calendar: calendar)
+            let schedule = RecurringExpenseSchedule(rule: rule, legacyCalendar: calendar)
+            var next = schedule.firstPendingOccurrence()
             var iterations = 0
-            while let occurrence = next, occurrence <= ruleEnd, iterations < 10_000 {
+            while let occurrence = next, occurrence < end, iterations < 10_000 {
                 if occurrence > start {
                     total += rule.amount
                 }
-                next = rule.frequency.nextOccurrence(after: occurrence, calendar: calendar)
+                next = schedule.nextOccurrence(after: occurrence)
                 iterations += 1
             }
         }

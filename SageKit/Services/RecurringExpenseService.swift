@@ -33,57 +33,49 @@ public final class RecurringExpenseService {
     /// Repairs duplicates and generates missing expenses for all rules through the given date.
     /// An occurrence key, and not only the rule cursor, makes repeated calls safe.
     @discardableResult
-    public func generateAllExpenses(through date: Date) throws -> RecurringExpenseMaintenanceResult {
-        let repair = try RecurringExpenseRepairService(modelContext: modelContext).repair()
-        let rules = try modelContext.fetch(FetchDescriptor<RecurringExpenseRule>())
-        let expenses = try modelContext.fetch(FetchDescriptor<Expense>())
-        var existingKeys = Set(expenses.compactMap(\.recurringOccurrenceKey))
-        var generatedCount = 0
-        var skippedCount = 0
-
-        for rule in rules {
-            let result = generateExpenses(
-                for: rule,
-                through: date,
-                existingKeys: &existingKeys
-            )
-            generatedCount += result.generatedCount
-            skippedCount += result.skippedCount
-        }
-
+    public func generateAllExpenses(through date: Date, calendar: Calendar = .current) throws -> RecurringExpenseMaintenanceResult {
         do {
+            let repair = try RecurringExpenseRepairService(modelContext: modelContext).repair()
+            let rules = try modelContext.fetch(FetchDescriptor<RecurringExpenseRule>())
+            let expenses = try modelContext.fetch(FetchDescriptor<Expense>())
+            var existingKeys = Set(expenses.compactMap(\.recurringOccurrenceKey))
+            var generatedCount = 0
+            var skippedCount = 0
+
+            for rule in rules {
+                let result = generateExpenses(
+                    for: rule,
+                    through: date,
+                    calendar: calendar,
+                    existingKeys: &existingKeys
+                )
+                generatedCount += result.generatedCount
+                skippedCount += result.skippedCount
+            }
+
             if modelContext.hasChanges {
                 try modelContext.save()
             }
+            return RecurringExpenseMaintenanceResult(
+                generatedCount: generatedCount,
+                skippedCount: skippedCount,
+                repair: repair
+            )
         } catch {
             modelContext.rollback()
             throw error
         }
-
-        return RecurringExpenseMaintenanceResult(
-            generatedCount: generatedCount,
-            skippedCount: skippedCount,
-            repair: repair
-        )
     }
 
     private func generateExpenses(
         for rule: RecurringExpenseRule,
         through date: Date,
+        calendar: Calendar,
         existingKeys: inout Set<String>
     ) -> (generatedCount: Int, skippedCount: Int) {
-        let calendar = Calendar.current
-
-        if let endDate = rule.endDate,
-           let lastGeneratedDate = rule.lastGeneratedDate,
-           lastGeneratedDate >= endDate {
-            return (0, 0)
-        }
-
+        let schedule = RecurringExpenseSchedule(rule: rule, legacyCalendar: calendar)
         let effectiveEnd = rule.endDate.map { min($0, date) } ?? date
-        var nextDate: Date? = rule.lastGeneratedDate.flatMap {
-            rule.frequency.nextOccurrence(after: $0, calendar: calendar)
-        } ?? rule.startDate
+        var nextDate = schedule.firstPendingOccurrence()
         var generatedCount = 0
         var skippedCount = 0
 
@@ -113,7 +105,7 @@ public final class RecurringExpenseService {
             }
 
             rule.lastGeneratedDate = generationDate
-            nextDate = rule.frequency.nextOccurrence(after: generationDate, calendar: calendar)
+            nextDate = schedule.nextOccurrence(after: generationDate)
         }
 
         return (generatedCount, skippedCount)

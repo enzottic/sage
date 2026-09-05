@@ -56,7 +56,7 @@ public enum SageModelContainer {
     public static nonisolated func make(for purpose: Purpose = .app) throws -> ModelContainer {
         UIColorValueTransformer.register()
 
-        let schema = Schema(versionedSchema: SageSchemaV5.self)
+        let schema = Schema(versionedSchema: SageSchemaV6.self)
         let config = try configuration(for: purpose, schema: schema)
         let container = try ModelContainer(
             for: schema,
