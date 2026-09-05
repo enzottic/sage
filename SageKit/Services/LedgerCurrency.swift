@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// One denomination for all expenses, recurring rules, and budgets. Never converts amounts.
 public enum LedgerCurrency {
@@ -38,6 +39,18 @@ public enum LedgerCurrency {
         validatedCode(locale.currency?.identifier) ?? "USD"
     }
 
+    public static func hasMonetaryRecords(in context: ModelContext) throws -> Bool {
+        var expenses = FetchDescriptor<Expense>()
+        expenses.fetchLimit = 1
+        if try !context.fetch(expenses).isEmpty { return true }
+        var rules = FetchDescriptor<RecurringExpenseRule>()
+        rules.fetchLimit = 1
+        if try !context.fetch(rules).isEmpty { return true }
+        var budgets = FetchDescriptor<ExpenseTag>(predicate: #Predicate { $0.budget != nil })
+        budgets.fetchLimit = 1
+        return try !context.fetch(budgets).isEmpty
+    }
+
     public static var currentCode: String? {
         // UI tests use an in-memory ledger and must not change the real shared setting.
         if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] == "1" { return "USD" }
@@ -61,13 +74,15 @@ public enum LedgerCurrency {
 
     public static func establish(
         _ code: String,
-        defaults: UserDefaults? = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)
+        defaults: UserDefaults? = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier),
+        beforeSaving: () throws -> Void = {}
     ) throws {
         guard validatedCode(code) != nil else { throw Error.invalidCode(code) }
         guard let defaults else { throw Error.storageUnavailable }
         if let existing = persistedCode(defaults: defaults), existing != code {
             throw Error.alreadyEstablished(existing)
         }
+        try beforeSaving()
         defaults.set(code, forKey: storageKey)
     }
 

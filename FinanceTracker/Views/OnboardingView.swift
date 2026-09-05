@@ -22,6 +22,9 @@ struct OnboardingView: View {
 
     @State private var currentStep: OnboardingStep = .welcome
     @State private var incomeText = ""
+    @State private var selectedCurrencyCode = LedgerCurrency.suggestedCode()
+    @State private var didLoadCurrency = false
+    @State private var showExistingCurrencyConfirmation = false
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled = false
@@ -32,7 +35,10 @@ struct OnboardingView: View {
     @AccessibilityFocusState private var headingFocused: Bool
 
     private let onCompletion: (() -> Void)?
-    private var currencyCode: String { config.ledgerCurrencyCode ?? "XXX" }
+    private var currencyCode: String {
+        if !UITestConfiguration.isEnabled, let code = config.ledgerCurrencyCode { return code }
+        return selectedCurrencyCode
+    }
 
     enum OnboardingStep: Int, CaseIterable, Hashable {
         case welcome, budget, allocation, sync, tags, complete
@@ -111,6 +117,22 @@ struct OnboardingView: View {
         }
         .fontDesign(.rounded)
         .tint(.sage)
+        .sheet(isPresented: $showExistingCurrencyConfirmation) {
+            LedgerCurrencyConfirmationView()
+        }
+        .onChange(of: config.ledgerCurrencyCode) { _, code in
+            if let code {
+                selectedCurrencyCode = code
+                showExistingCurrencyConfirmation = false
+            }
+        }
+        .onAppear {
+            guard !didLoadCurrency else { return }
+            didLoadCurrency = true
+            if !UITestConfiguration.isEnabled {
+                selectedCurrencyCode = config.ledgerCurrencyCode ?? config.cloudLedgerCurrencyCode ?? LedgerCurrency.suggestedCode()
+            }
+        }
     }
 
     private var primaryAction: some View {
@@ -224,6 +246,28 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 16)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Picker("Currency", selection: $selectedCurrencyCode) {
+                    ForEach(LedgerCurrency.supportedCodes, id: \.self) { code in
+                        Text("\(code) - \(Locale.current.localizedString(forCurrencyCode: code) ?? code)")
+                            .tag(code)
+                            .accessibilityIdentifier("onboarding-currency-\(code)")
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("onboarding-currency-picker")
+                .accessibilityValue(currencyCode)
+                .disabled(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil)
+                .onChange(of: selectedCurrencyCode) { incomeFocused = false }
+                Text(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil
+                     ? "Your existing expenses and budgets use this currency. Sage does not convert amounts."
+                     : "Used for all expenses and budgets. You can change it here before finishing setup; it stays fixed afterward.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -233,9 +277,9 @@ struct OnboardingView: View {
 
             VStack(alignment: .leading, spacing: 24) {
                 BudgetAllocationBar(needsPercent: $needsPercent, wantsPercent: $wantsPercent)
-                BudgetSummaryRow(title: "Needs (\(Int(needsPercent))%)", amount: income * needsPercent / 100, color: categoryColors.needs, icon: "house.fill")
-                BudgetSummaryRow(title: "Wants (\(Int(wantsPercent))%)", amount: income * wantsPercent / 100, color: categoryColors.wants, icon: "cart.fill")
-                BudgetSummaryRow(title: "Savings (\(Int(savingsPercent))%)", amount: income * savingsPercent / 100, color: categoryColors.savings, icon: "banknote.fill")
+                BudgetSummaryRow(title: "Needs (\(Int(needsPercent))%)", amount: income * needsPercent / 100, currencyCode: currencyCode, color: categoryColors.needs, icon: "house.fill")
+                BudgetSummaryRow(title: "Wants (\(Int(wantsPercent))%)", amount: income * wantsPercent / 100, currencyCode: currencyCode, color: categoryColors.wants, icon: "cart.fill")
+                BudgetSummaryRow(title: "Savings (\(Int(savingsPercent))%)", amount: income * savingsPercent / 100, currencyCode: currencyCode, color: categoryColors.savings, icon: "banknote.fill")
             }
         }
     }
@@ -321,9 +365,9 @@ struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("onboarding-plan-total")
             allocationBar
-            BudgetSummaryRow(title: "Needs", amount: income * needsPercent / 100, color: categoryColors.needs, icon: "house.fill")
-            BudgetSummaryRow(title: "Wants", amount: income * wantsPercent / 100, color: categoryColors.wants, icon: "cart.fill")
-            BudgetSummaryRow(title: "Savings", amount: income * savingsPercent / 100, color: categoryColors.savings, icon: "banknote.fill")
+            BudgetSummaryRow(title: "Needs", amount: income * needsPercent / 100, currencyCode: currencyCode, color: categoryColors.needs, icon: "house.fill")
+            BudgetSummaryRow(title: "Wants", amount: income * wantsPercent / 100, currencyCode: currencyCode, color: categoryColors.wants, icon: "cart.fill")
+            BudgetSummaryRow(title: "Savings", amount: income * savingsPercent / 100, currencyCode: currencyCode, color: categoryColors.savings, icon: "banknote.fill")
         }
         .padding(24)
         .background(Color.cardBackground, in: .rect(cornerRadius: 24))
@@ -336,15 +380,29 @@ struct OnboardingView: View {
     }
 
     private func completeOnboarding() {
-        for tag in tagTemplates where selectedTagNames.contains(tag.name) {
-            modelContext.insert(tag)
-        }
-
+        guard (monthlyIncome ?? 0) > 0 else { return }
         do {
-            try modelContext.save()
+            // Cloud data may have arrived since the initial routing decision.
+            if !UITestConfiguration.isEnabled, config.ledgerCurrencyCode == nil,
+               try (config.totalMonthlyIncome != 0 || LedgerCurrency.hasMonetaryRecords(in: modelContext)) {
+                showExistingCurrencyConfirmation = true
+                return
+            }
+            let saveTags = {
+                for tag in tagTemplates where selectedTagNames.contains(tag.name) {
+                    modelContext.insert(tag)
+                }
+                try modelContext.save()
+            }
+            if UITestConfiguration.isEnabled {
+                try saveTags()
+            } else {
+                // Validate currency before writing tags; lock it only after the save succeeds.
+                try config.establishLedgerCurrency(currencyCode, savingSetup: saveTags)
+            }
         } catch {
             modelContext.rollback()
-            completionErrorMessage = "Sage could not save your setup. Check available storage and try again."
+            completionErrorMessage = "Sage could not finish setup. \(error.localizedDescription)"
             return
         }
 
@@ -464,6 +522,7 @@ struct FeatureRow: View {
 private struct BudgetSummaryRow: View {
     let title: LocalizedStringKey
     let amount: Double
+    let currencyCode: String
     let color: Color
     let icon: String
 
@@ -472,13 +531,13 @@ private struct BudgetSummaryRow: View {
             HStack(spacing: 12) {
                 Label(title, systemImage: icon)
                 Spacer(minLength: 12)
-                Text(amount.currencyString)
+                Text(amount, format: .currency(code: currencyCode))
                     .fontWeight(.semibold)
                     .fixedSize()
             }
             VStack(alignment: .leading, spacing: 8) {
                 Label(title, systemImage: icon)
-                Text(amount.currencyString)
+                Text(amount, format: .currency(code: currencyCode))
                     .fontWeight(.semibold)
             }
         }

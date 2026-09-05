@@ -1,9 +1,48 @@
 import Foundation
+import SwiftData
 import Testing
+import UIKit
 @testable import SageKit
 
 @Suite("Persistent ledger currency")
 struct LedgerCurrencyTests {
+    @Test
+    func failedSetupDoesNotLockCurrency() throws {
+        enum SetupError: Error { case failed }
+        let suite = "LedgerCurrencyTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(throws: SetupError.failed) {
+            try LedgerCurrency.establish("EUR", defaults: defaults) { throw SetupError.failed }
+        }
+        #expect(LedgerCurrency.persistedCode(defaults: defaults) == nil)
+        try LedgerCurrency.establish("GBP", defaults: defaults)
+        #expect(LedgerCurrency.persistedCode(defaults: defaults) == "GBP")
+    }
+
+    @Test @MainActor
+    func suggestedTagsDoNotRequireLegacyConfirmation() throws {
+        let container = try SageModelContainer.make(for: .test)
+        let context = container.mainContext
+        context.insert(ExpenseTag(name: "Food", uiColor: .blue, emoji: ""))
+        #expect(try !LedgerCurrency.hasMonetaryRecords(in: context))
+    }
+
+    @Test(arguments: ["expense", "rule", "budget"]) @MainActor
+    func existingMoneyRequiresLegacyConfirmation(kind: String) throws {
+        let container = try SageModelContainer.make(for: .test)
+        let context = container.mainContext
+        switch kind {
+        case "expense":
+            context.insert(Expense(name: "Coffee", amount: 4))
+        case "rule":
+            context.insert(RecurringExpenseRule(name: "Rent", amount: 100, note: "", category: .needs, frequency: .monthly, startDate: .now))
+        default:
+            context.insert(ExpenseTag(name: "Food", uiColor: .blue, emoji: "", budget: 100))
+        }
+        #expect(try LedgerCurrency.hasMonetaryRecords(in: context))
+    }
+
     @Test
     func establishingCurrencyPersistsWithoutUsingLaterLocaleSuggestions() throws {
         let suite = "LedgerCurrencyTests.\(UUID().uuidString)"

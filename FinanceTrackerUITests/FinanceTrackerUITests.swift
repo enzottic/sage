@@ -36,7 +36,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(planTotal.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: planTotal, in: app))
         let expectedTotal = Double(5000).formatted(
-            .currency(code: "USD").precision(.fractionLength(0))
+            .currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))
         )
         XCTAssertEqual(planTotal.label, expectedTotal, "Income should be interpreted as whole currency units.")
         tap("onboarding-start-tracking-button", in: app)
@@ -45,6 +45,40 @@ final class FinanceTrackerUITests: XCTestCase {
             app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout),
             "The main tabs did not appear after onboarding completed."
         )
+    }
+
+    func testOnboardingCurrencyDefaultsToRegionAndCanBeChangedWithIncome() {
+        let app = XCUIApplication()
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "1"
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_GB"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["onboarding-welcome-title"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(app.buttons["confirm-ledger-currency-button"].exists)
+        tap("onboarding-get-started-button", in: app)
+
+        let picker = app.buttons["onboarding-currency-picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: timeout))
+        XCTAssertEqual(picker.value as? String, "GBP")
+        let incomeField = app.textFields["onboarding-income-field"]
+        incomeField.tap()
+        incomeField.typeText("5000")
+        tap("onboarding-keyboard-done-button", in: app)
+        XCTAssertTrue(scrollToVisibility(of: picker, in: app))
+        picker.tap()
+        tap("onboarding-currency-EUR", in: app)
+        XCTAssertEqual(picker.value as? String, "EUR")
+        tap("onboarding-budget-continue-button", in: app)
+        tap("onboarding-back-button", in: app)
+        XCTAssertEqual(picker.value as? String, "EUR")
+        XCTAssertEqual(incomeField.value as? String, "5000")
+        tap("onboarding-budget-continue-button", in: app)
+        tap("onboarding-allocation-continue-button", in: app)
+        tap("onboarding-sync-continue-button", in: app)
+        tap("onboarding-tags-continue-button", in: app)
+        let total = app.staticTexts["onboarding-plan-total"]
+        XCTAssertTrue(total.waitForExistence(timeout: timeout))
+        XCTAssertEqual(total.label, Double(5000).formatted(.currency(code: "EUR").locale(Locale(identifier: "en_GB")).precision(.fractionLength(0))))
     }
 
     func testOnboardingValidatesIncomeAndRetainsStateWhenGoingBack() {

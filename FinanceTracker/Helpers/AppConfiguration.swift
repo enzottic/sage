@@ -49,13 +49,13 @@ class AppConfiguration {
         return "A currency conflict was previously detected, and Sage cannot currently verify the iCloud currency. Monetary screens remain blocked. No currency has been changed and no amounts have been converted."
     }
 
-    func establishLedgerCurrency(_ code: String) throws {
+    func establishLedgerCurrency(_ code: String, savingSetup: () throws -> Void = {}) throws {
         refreshCloudLedgerCurrency()
         guard !hasLedgerCurrencyConflict else { throw LedgerCurrency.Error.cloudConflict }
         if let cloud = cloudLedgerCurrencyCode, cloud != code {
             throw LedgerCurrency.Error.cloudConflict
         }
-        try LedgerCurrency.establish(code)
+        try LedgerCurrency.establish(code, beforeSaving: savingSetup)
         ledgerCurrencyCode = code
         refreshCloudLedgerCurrency()
         // A conflicting cloud setting is evidence of ambiguity, not permission to relabel data.

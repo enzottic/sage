@@ -92,7 +92,7 @@ struct SageApp: App {
         WindowGroup {
             switch containerResult {
             case let .success(container):
-                mainContent
+                mainContent(container: container)
                     .modelContainer(container)
             case let .failure(error):
                 DataStoreRecoveryView(error: error)
@@ -103,7 +103,7 @@ struct SageApp: App {
     }
 
     @ViewBuilder
-    private var mainContent: some View {
+    private func mainContent(container: ModelContainer) -> some View {
         Group {
             if UITestConfiguration.isEnabled {
                 if UITestConfiguration.showsOnboarding, !didCompleteUITestOnboarding {
@@ -115,7 +115,9 @@ struct SageApp: App {
                 }
             } else if let message = appConfiguration.ledgerCurrencyConflictMessage {
                 LedgerCurrencyConflictView(message: message)
-            } else if appConfiguration.ledgerCurrencyCode == nil {
+            } else if appConfiguration.ledgerCurrencyCode == nil,
+                      hasOpenedAppOnce || appConfiguration.totalMonthlyIncome != 0
+                        || ((try? LedgerCurrency.hasMonetaryRecords(in: container.mainContext)) ?? true) {
                 LedgerCurrencyConfirmationView()
             } else if !hasOpenedAppOnce {
                 OnboardingView()
