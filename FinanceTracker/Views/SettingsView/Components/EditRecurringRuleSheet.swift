@@ -125,6 +125,7 @@ struct EditRecurringRuleSheet: View {
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
         } catch {
+            modelContext.rollback()
             errorMessage = "Failed to save: \(error.localizedDescription)"
             showError = true
         }

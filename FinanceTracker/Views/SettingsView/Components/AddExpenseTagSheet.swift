@@ -28,6 +28,7 @@ struct AddExpenseTagSheet: View {
     @State private var budgetText: String = ""
 
     @State private var showingGlyphPicker: Bool = false
+    @State private var saveErrorMessage: String?
     /// The last emoji the user settled on. `emoji` stays populated on the model even while an
     /// icon is showing, so string-only surfaces (Shortcuts, entity subtitles) keep a mark and
     /// clearing the icon later restores something better than the default.
@@ -177,20 +178,25 @@ struct AddExpenseTagSheet: View {
                 // Only turning the toggle off clears a previously set cap.
                 let resolvedBudget = parsedBudget
                 let stored = storedGlyphFields
-                if let tag = tagToEdit {
-                    tag.name = name
-                    tag.uiColor = UIColor(color)
-                    tag.emoji = stored.emoji
-                    tag.symbolName = stored.symbolName
-                    tag.budget = resolvedBudget
-                    try? modelContext.save()
-                } else {
-                    let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: stored.emoji, symbolName: stored.symbolName, budget: resolvedBudget)
-                    modelContext.insert(newExpenseTag)
-                    try? modelContext.save()
-                    onTagAdded?(newExpenseTag)
+                do {
+                    if let tag = tagToEdit {
+                        tag.name = name
+                        tag.uiColor = UIColor(color)
+                        tag.emoji = stored.emoji
+                        tag.symbolName = stored.symbolName
+                        tag.budget = resolvedBudget
+                        try modelContext.save()
+                    } else {
+                        let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: stored.emoji, symbolName: stored.symbolName, budget: resolvedBudget)
+                        modelContext.insert(newExpenseTag)
+                        try modelContext.save()
+                        onTagAdded?(newExpenseTag)
+                    }
+                    dismiss()
+                } catch {
+                    modelContext.rollback()
+                    saveErrorMessage = "Sage could not save this tag. Check available storage and try again."
                 }
-                dismiss()
             } label: {
                 Text(isEditing ? "Save Tag" : "Add Tag")
                     .font(.headline)
@@ -205,6 +211,14 @@ struct AddExpenseTagSheet: View {
         }
         .sheet(isPresented: $showingGlyphPicker) {
             TagGlyphPickerSheet(glyph: $glyph, tint: color)
+        }
+        .alert("Could not save tag", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage ?? "Please try again.")
         }
         .onChange(of: glyph) { _, newValue in
             if case .emoji(let value) = newValue { fallbackEmoji = value }

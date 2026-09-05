@@ -18,6 +18,7 @@ struct TagsSettingsSection: View {
     @State private var showAddTagSheet = false
     @State private var tagToEdit: ExpenseTag? = nil
     @State private var tagPendingDelete: ExpenseTag? = nil
+    @State private var deleteErrorMessage: String?
 
     /// This month's spend against `tag` versus its cap. Over-budget reads in red.
     @ViewBuilder
@@ -121,7 +122,7 @@ struct TagsSettingsSection: View {
                     for index in indexSet {
                         let tag = visible[index]
                         if (tag.taggedExpenses ?? []).isEmpty {
-                            modelContext.delete(tag)
+                            deleteTag(tag)
                         } else {
                             tagPendingDelete = tag
                         }
@@ -157,9 +158,9 @@ struct TagsSettingsSection: View {
         )) {
             Button("Delete Tag", role: .destructive) {
                 if let tag = tagPendingDelete {
-                    modelContext.delete(tag)
+                    tagPendingDelete = nil
+                    deleteTag(tag)
                 }
-                tagPendingDelete = nil
             }
             Button("Cancel", role: .cancel) {
                 tagPendingDelete = nil
@@ -169,6 +170,24 @@ struct TagsSettingsSection: View {
                 let count = tag.taggedExpenses?.count ?? 0
                 Text("\(count) expenses have the \(tag.name) tag. Deleting it will remove the tag from those expenses.")
             }
+        }
+        .alert("Could not delete tag", isPresented: Binding(
+            get: { deleteErrorMessage != nil },
+            set: { if !$0 { deleteErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteErrorMessage ?? "Please try again.")
+        }
+    }
+
+    private func deleteTag(_ tag: ExpenseTag) {
+        modelContext.delete(tag)
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            deleteErrorMessage = "Sage could not delete this tag. Please try again."
         }
     }
 }

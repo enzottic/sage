@@ -78,9 +78,15 @@ struct RecurringExpensesSettingsSection: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("Delete Recurring Rule?", isPresented: $showDeleteConfirmation, presenting: ruleToDelete) { rule in
             Button("Delete Rule", role: .destructive) {
+                ruleToDelete = nil
                 modelContext.delete(rule)
-                try? modelContext.save()
-                router.showToast(SageToast(message: "Expense Recurrence Rule Deleted", kind: .success))
+                do {
+                    try modelContext.save()
+                    router.showToast(SageToast(message: "Expense Recurrence Rule Deleted", kind: .success))
+                } catch {
+                    modelContext.rollback()
+                    router.showToast(SageToast(message: "Sage could not delete this recurring rule. Please try again.", kind: .error))
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: { rule in
