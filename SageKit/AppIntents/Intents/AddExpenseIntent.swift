@@ -21,6 +21,9 @@ public struct AddExpenseAppIntent: AppIntent {
     @Dependency
     var expenseStore: ExpenseStore
 
+    // Tests supply their in-memory ledger's currency without touching shared preferences.
+    var currencyCodeProvider: @Sendable () throws -> String = { try LedgerCurrency.requireCode() }
+
     public static var parameterSummary: some ParameterSummary {
         Summary("Add \(\.$name) for \(\.$amount)") {
             \.$category
@@ -35,6 +38,7 @@ public struct AddExpenseAppIntent: AppIntent {
     
     @MainActor
     public func perform() async throws -> some ReturnsValue<ExpenseEntity> {
+        _ = try currencyCodeProvider()
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
             throw $name.needsValueError("Enter an expense name.")

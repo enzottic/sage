@@ -113,6 +113,10 @@ struct SageApp: App {
                 } else {
                     RootTabView()
                 }
+            } else if let message = appConfiguration.ledgerCurrencyConflictMessage {
+                LedgerCurrencyConflictView(message: message)
+            } else if appConfiguration.ledgerCurrencyCode == nil {
+                LedgerCurrencyConfirmationView()
             } else if !hasOpenedAppOnce {
                 OnboardingView()
             } else {

@@ -36,7 +36,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(planTotal.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: planTotal, in: app))
         let expectedTotal = Double(5000).formatted(
-            .currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))
+            .currency(code: "USD").precision(.fractionLength(0))
         )
         XCTAssertEqual(planTotal.label, expectedTotal, "Income should be interpreted as whole currency units.")
         tap("onboarding-start-tracking-button", in: app)

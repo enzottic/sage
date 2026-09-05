@@ -16,21 +16,21 @@ final class ExpenseBackupService: Sendable {
         category: "ExpenseBackup"
     )
 
-    func exportExpenses(expenses: [ExportableExpense]) async -> Result<Void, ExpenseExportServiceError> {
+    func exportExpenses(expenses: [ExportableExpense], currencyCode: String) async -> Result<Void, ExpenseExportServiceError> {
         await Task.detached(priority: .userInitiated) {
-            Self.writeExport(expenses: expenses)
+            Self.writeExport(expenses: expenses, currencyCode: currencyCode)
         }.value
     }
 
-    func readExpenses(from filePath: URL) async -> Result<[ExportableExpense], ExpenseExportServiceError> {
+    func readExpenses(from filePath: URL, currencyCode: String) async -> Result<[ExportableExpense], ExpenseExportServiceError> {
         await Task.detached(priority: .userInitiated) {
-            Self.readExport(from: filePath)
+            Self.readExport(from: filePath, currencyCode: currencyCode)
         }.value
     }
 
-    nonisolated private static func writeExport(expenses: [ExportableExpense]) -> Result<Void, ExpenseExportServiceError> {
+    nonisolated private static func writeExport(expenses: [ExportableExpense], currencyCode: String) -> Result<Void, ExpenseExportServiceError> {
         do {
-            let csvContent = ExpenseCSVCodec.encode(expenses)
+            let csvContent = try ExpenseCSVCodec.encode(expenses, currencyCode: currencyCode)
             let fileName = "sage-export.csv"
             
             let documentsDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
@@ -44,6 +44,8 @@ final class ExpenseBackupService: Sendable {
             
             logger.info("Expense export completed.")
             
+        } catch let error as ExpenseCSVError {
+            return .failure(.serializationError(error.localizedDescription))
         } catch {
             logger.error("Expense export failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
             return .failure(.filesystemError("Could not save the CSV. Check available storage and try again."))
@@ -53,13 +55,16 @@ final class ExpenseBackupService: Sendable {
     }
     
     // Returns an array of ExportableExpense, to be inserted into the SwiftData model on import
-    nonisolated private static func readExport(from filePath: URL) -> Result<[ExportableExpense], ExpenseExportServiceError> {
+    nonisolated private static func readExport(from filePath: URL, currencyCode: String) -> Result<[ExportableExpense], ExpenseExportServiceError> {
         guard let fileContents = try? String(contentsOf: filePath, encoding: .utf8) else {
             return .failure(.fileReadError("Could not read the CSV. Choose another file and try again."))
         }
         
         do {
-            return .success(try ExpenseCSVCodec.decode(fileContents))
+            let expenses = try ExpenseCSVCodec.decode(fileContents)
+            // Reading may stage legacy data; the UI still requires explicit confirmation before writing.
+            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: currencyCode, allowLegacy: true)
+            return .success(expenses)
         } catch let error as ExpenseCSVError {
             return .failure(.serializationError(error.localizedDescription))
         } catch {

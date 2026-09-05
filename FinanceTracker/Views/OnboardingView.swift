@@ -32,7 +32,7 @@ struct OnboardingView: View {
     @AccessibilityFocusState private var headingFocused: Bool
 
     private let onCompletion: (() -> Void)?
-    private let currencyCode = Locale.current.currency?.identifier ?? "USD"
+    private var currencyCode: String { config.ledgerCurrencyCode ?? "XXX" }
 
     enum OnboardingStep: Int, CaseIterable, Hashable {
         case welcome, budget, allocation, sync, tags, complete

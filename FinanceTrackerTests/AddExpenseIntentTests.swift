@@ -11,8 +11,9 @@ struct AddExpenseIntentTests {
     func savesSelectedCategoryAndDate() async throws {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
-        let intent = AddExpenseAppIntent()
+        var intent = AddExpenseAppIntent()
         intent.expenseStore = store
+        intent.currencyCodeProvider = { "USD" }
         intent.name = "  Groceries  "
         intent.amount = 24.50
         intent.category = .needs
@@ -31,8 +32,9 @@ struct AddExpenseIntentTests {
     func defaultsToWants() async throws {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
-        let intent = AddExpenseAppIntent()
+        var intent = AddExpenseAppIntent()
         intent.expenseStore = store
+        intent.currencyCodeProvider = { "USD" }
         intent.name = "Coffee"
         intent.amount = 4
 
@@ -48,8 +50,9 @@ struct AddExpenseIntentTests {
         let tag = ExpenseTag(name: "Dining", uiColor: .systemBlue, emoji: "")
         store.context.insert(tag)
         try store.save()
-        let intent = AddExpenseAppIntent()
+        var intent = AddExpenseAppIntent()
         intent.expenseStore = store
+        intent.currencyCodeProvider = { "USD" }
         intent.name = "Coffee"
         intent.amount = 4
         intent.tag = tag.entity
@@ -65,8 +68,9 @@ struct AddExpenseIntentTests {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         for (name, amount) in [("  ", 5.0), ("Coffee", 0), ("Coffee", -1), ("Coffee", Double.infinity), ("Coffee", Double.nan)] {
-            let intent = AddExpenseAppIntent()
+            var intent = AddExpenseAppIntent()
             intent.expenseStore = store
+            intent.currencyCodeProvider = { "USD" }
             intent.name = name
             intent.amount = amount
             do {
@@ -75,6 +79,23 @@ struct AddExpenseIntentTests {
             } catch {
                 #expect(try store.fetchExpenses().isEmpty)
             }
+        }
+    }
+
+    @Test @MainActor
+    func requiresConfirmedCurrencyBeforeWriting() async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { throw LedgerCurrency.Error.notEstablished }
+        intent.name = "Coffee"
+        intent.amount = 4
+        do {
+            _ = try await intent.perform()
+            Issue.record("An expense was accepted before currency confirmation.")
+        } catch LedgerCurrency.Error.notEstablished {
+            #expect(try store.fetchExpenses().isEmpty)
         }
     }
 }

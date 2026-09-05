@@ -254,7 +254,7 @@ struct AddExpenseView: View {
 
                         Spacer()
 
-                        Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                        Text(expense.amount.currencyString)
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
@@ -391,6 +391,11 @@ struct AddExpenseView: View {
 
     func saveItem() async {
         guard !isSaving else { return }
+        do { _ = try LedgerCurrency.requireCode() } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+            return
+        }
 
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Please enter an expense name"

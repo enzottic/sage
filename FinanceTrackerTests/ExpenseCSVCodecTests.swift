@@ -15,7 +15,7 @@ struct ExpenseCSVCodecTests {
             note: "First line\nSecond \"quoted\" line"
         )
 
-        let decoded = try ExpenseCSVCodec.decode(ExpenseCSVCodec.encode([source]))
+        let decoded = try ExpenseCSVCodec.decode(ExpenseCSVCodec.encode([source], currencyCode: "EUR"))
 
         #expect(decoded.count == 1)
         let expense = try #require(decoded.first)
@@ -25,6 +25,7 @@ struct ExpenseCSVCodecTests {
         #expect(expense.category == source.category)
         #expect(expense.tag == source.tag)
         #expect(expense.note == source.note)
+        #expect(expense.currencyCode == "EUR")
     }
 
     @Test
@@ -41,6 +42,73 @@ struct ExpenseCSVCodecTests {
         let expense = try #require(decoded.first)
         #expect(expense.name == "Dinner, with friends")
         #expect(expense.note == "She said \"hello\".\nThen we left.")
+        #expect(expense.currencyCode == nil)
+    }
+
+    @Test
+    func legacyImportRequiresExplicitCurrencyConsent() throws {
+        let csv = "name,date,amount,category,tag,note\nCoffee,2026-08-12T18:30:00Z,4.5,Wants,Food,"
+        let expenses = try ExpenseCSVCodec.decode(csv)
+        #expect(throws: ExpenseCSVError.legacyCurrencyConfirmationRequired) {
+            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "JPY")
+        }
+        try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "JPY", allowLegacy: true)
+        #expect(expenses.first?.amount == 4.5)
+        #expect(expenses.first?.currencyCode == nil)
+    }
+
+    @Test
+    func importAndExportRejectCurrencyMismatchWithoutConversion() throws {
+        let csv = "name,date,amount,category,tag,note,currency\nCoffee,2026-08-12T18:30:00Z,4.5,Wants,Food,,EUR"
+        let expenses = try ExpenseCSVCodec.decode(csv)
+        try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "EUR")
+        #expect(throws: ExpenseCSVError.currencyMismatch(expected: "USD", actual: "EUR")) {
+            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "USD", allowLegacy: true)
+        }
+        #expect(throws: ExpenseCSVError.currencyMismatch(expected: "USD", actual: "EUR")) {
+            try ExpenseCSVCodec.encode(expenses, currencyCode: "USD")
+        }
+        #expect(expenses.first?.amount == 4.5)
+    }
+
+    @Test
+    func decodeRejectsMixedCurrenciesAsOneBatch() {
+        let csv = """
+        name,date,amount,category,tag,note,currency
+        Coffee,2026-08-12T18:30:00Z,4.5,Wants,Food,,EUR
+        Rent,2026-08-01T12:00:00Z,1000,Needs,Housing,,USD
+        """
+        #expect(throws: ExpenseCSVError.mixedCurrencies) {
+            try ExpenseCSVCodec.decode(csv)
+        }
+    }
+
+    @Test(arguments: ["", "usd", "ZZZ", " US "])
+    func currencyColumnMustContainAValidCode(code: String) {
+        let csv = "name,date,amount,category,tag,note,currency\nCoffee,2026-08-12T18:30:00Z,4.5,Wants,Food,,\(code)"
+        #expect(throws: ExpenseCSVError.invalidCurrency(code)) {
+            try ExpenseCSVCodec.decode(csv)
+        }
+    }
+
+    @Test
+    func validationDoesNotTreatMixedLegacyAndDenominatedRowsAsConsent() {
+        let expenses = [nil, "EUR"].map { code in
+            ExportableExpense(name: "Coffee", date: .now, amount: 4.5, category: "Wants", tag: "", note: "", currencyCode: code)
+        }
+        #expect(throws: ExpenseCSVError.mixedCurrencies) {
+            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "EUR", allowLegacy: true)
+        }
+    }
+
+    @Test
+    func emptyExportHasCurrencyHeaderButDoesNotInferCurrencyOnImport() throws {
+        let csv = try ExpenseCSVCodec.encode([], currencyCode: "EUR")
+        #expect(csv == "name,date,amount,category,tag,note,currency")
+        #expect(try ExpenseCSVCodec.decode(csv).isEmpty)
+        #expect(throws: ExpenseCSVError.invalidCurrency("ZZZ")) {
+            try ExpenseCSVCodec.encode([], currencyCode: "ZZZ")
+        }
     }
 
     @Test

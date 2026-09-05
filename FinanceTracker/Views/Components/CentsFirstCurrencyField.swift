@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SageKit
 
 struct CentsFirstCurrencyField: View {
     @Binding var amount: Double?
@@ -16,13 +17,13 @@ struct CentsFirstCurrencyField: View {
     @State private var centsValue: String = "0"
     @FocusState private var isFocused: Bool
 
+    private var minorUnitScale: Double {
+        pow(10, Double(LedgerCurrency.fractionDigits(for: LedgerCurrency.currentCode ?? "XXX")))
+    }
+
     private var displayValue: String {
         let cents = Int(centsValue) ?? 0
-        let dollars = Double(cents) / 100.0
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = Locale.current.currency?.identifier ?? "USD"
-        return formatter.string(from: NSNumber(value: dollars)) ?? "$0.00"
+        return (Double(cents) / minorUnitScale).currencyString
     }
 
     private var isEmptyState: Bool {
@@ -51,7 +52,7 @@ struct CentsFirstCurrencyField: View {
                         centsValue = filtered
                     }
                     if let cents = Int(centsValue), cents > 0 {
-                        amount = Double(cents) / 100.0
+                        amount = Double(cents) / minorUnitScale
                     } else {
                         amount = nil
                     }
@@ -79,17 +80,16 @@ struct CentsFirstCurrencyField: View {
 
         }
         .onAppear {
-            if let amount = amount {
-                let cents = Int(amount * 100)
+            if let amount, let cents = Int(exactly: (amount * minorUnitScale).rounded()) {
                 centsValue = String(cents)
             }
         }
         .onChange(of: amount) { _, newAmount in
             let currentCents = Int(centsValue) ?? 0
-            let currentAmount = currentCents > 0 ? Double(currentCents) / 100.0 : nil
+            let currentAmount = currentCents > 0 ? Double(currentCents) / minorUnitScale : nil
             guard currentAmount != newAmount else { return }
-            if let newAmount {
-                centsValue = String(Int((newAmount * 100).rounded()))
+            if let newAmount, let units = Int(exactly: (newAmount * minorUnitScale).rounded()) {
+                centsValue = String(units)
             } else {
                 centsValue = "0"
             }

@@ -22,6 +22,7 @@ struct ExpenseBackupSettingsSection: View {
     @State private var showFileImporter: Bool = false
     @State private var showImportConfirmation: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
+    @State private var pendingImportCurrencyCode: String?
     @State private var pendingImportTags: [ExpenseTag] = []
     @State private var unknownTagNames: [String] = []
     @State private var showUnknownTagsSheet: Bool = false
@@ -106,7 +107,11 @@ struct ExpenseBackupSettingsSection: View {
                 clearPendingImport()
             }
         } message: {
-            Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") from this file?")
+            if pendingImportExpenses.contains(where: { $0.currencyCode == nil }) {
+                Text("This file has no currency information. Import \(pendingImportExpenses.count) expenses as \(pendingImportCurrencyCode ?? "unconfirmed")? Confirm these amounts were entered in that currency. No conversion will occur.")
+            } else {
+                Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") in \(pendingImportCurrencyCode ?? "unconfirmed") from this file? No conversion will occur.")
+            }
         }
         .sheet(isPresented: $showUnknownTagsSheet) {
             UnknownTagsSheet(
@@ -166,6 +171,10 @@ struct ExpenseBackupSettingsSection: View {
     
     private func importExpenses(filePickerResult: Result<[URL], any Error>) {
         guard !isWorking else { return }
+        guard let currencyCode = config.ledgerCurrencyCode else {
+            appRouter.showToast(SageToast(message: LedgerCurrency.Error.notEstablished.localizedDescription, kind: .error))
+            return
+        }
 
         switch filePickerResult {
         case .success(let urls):
@@ -182,13 +191,14 @@ struct ExpenseBackupSettingsSection: View {
             appRouter.showToast(SageToast(message: "Reading CSV import…", kind: .progress))
 
             Task {
-                let result = await expenseExporter.readExpenses(from: url)
+                let result = await expenseExporter.readExpenses(from: url, currencyCode: currencyCode)
                 url.stopAccessingSecurityScopedResource()
                 isReadingImport = false
 
                 switch result {
                 case .success(let importedExpenses):
                     pendingImportExpenses = importedExpenses
+                    pendingImportCurrencyCode = currencyCode
 
                     let knownNames = Set(expenseTags.map(\.name))
                     let unknown = importedExpenses
@@ -203,9 +213,9 @@ struct ExpenseBackupSettingsSection: View {
                         showUnknownTagsSheet = true
                     }
                     appRouter.showToast(SageToast(message: "CSV is ready to import.", kind: .success))
-                case .failure:
+                case .failure(let error):
                     appRouter.showToast(
-                        SageToast(message: "Sage could not read this CSV. Choose a valid Sage export and try again.", kind: .error)
+                        SageToast(message: error.localizedDescription, kind: .error)
                     )
                 }
             }
@@ -216,13 +226,17 @@ struct ExpenseBackupSettingsSection: View {
 
     private func exportExpenses() {
         guard !isWorking else { return }
+        guard let currencyCode = config.ledgerCurrencyCode else {
+            appRouter.showToast(SageToast(message: LedgerCurrency.Error.notEstablished.localizedDescription, kind: .error))
+            return
+        }
 
         let exportableExpenses = expenses.toExportable()
         isExporting = true
         appRouter.showToast(SageToast(message: "Creating CSV export…", kind: .progress))
 
         Task {
-            let result = await expenseExporter.exportExpenses(expenses: exportableExpenses)
+            let result = await expenseExporter.exportExpenses(expenses: exportableExpenses, currencyCode: currencyCode)
             isExporting = false
 
             switch result {
@@ -246,6 +260,18 @@ struct ExpenseBackupSettingsSection: View {
 
     private func importPendingExpenses() async {
         guard !isWorking else { return }
+        do {
+            let currentCode = try LedgerCurrency.requireCode()
+            guard pendingImportCurrencyCode == currentCode else {
+                throw ExpenseCSVError.currencyMismatch(expected: currentCode, actual: pendingImportCurrencyCode ?? "unconfirmed")
+            }
+            // Reached only from the confirmation alert, which explicitly labels legacy amounts.
+            try ExpenseCSVCodec.validateCurrency(pendingImportExpenses, ledgerCurrencyCode: currentCode, allowLegacy: true)
+        } catch {
+            appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
+            clearPendingImport()
+            return
+        }
 
         let expensesToInsert = toNormalExpenses(pendingImportExpenses)
         guard expensesToInsert.count == pendingImportExpenses.count else {
@@ -288,6 +314,7 @@ struct ExpenseBackupSettingsSection: View {
 
     private func clearPendingImport() {
         pendingImportExpenses = []
+        pendingImportCurrencyCode = nil
         pendingImportTags = []
         unknownTagNames = []
     }

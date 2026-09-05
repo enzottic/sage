@@ -17,6 +17,16 @@ struct BudgetSettingsSection: View {
         @Bindable var config = config
         List {
             Section {
+                LabeledContent("Ledger Currency", value: config.ledgerCurrencyCode ?? "Not confirmed")
+                if let message = config.ledgerCurrencyConflictMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("All expenses and budgets use this currency, even when your device region changes. Sage does not convert currencies.")
+            }
+            Section {
                 WholeNumberCurrencyField(amount: $config.totalMonthlyIncome, isFocused: $needsFocus)
                     .onChange(of: config.totalMonthlyIncome) { oldValue, newValue in
                         WidgetCenter.shared.reloadAllTimelines()

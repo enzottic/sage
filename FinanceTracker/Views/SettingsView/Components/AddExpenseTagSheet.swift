@@ -133,7 +133,7 @@ struct AddExpenseTagSheet: View {
                             Text("Limit")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            Text(Locale.current.currencySymbol ?? "$")
+                            Text(LedgerCurrency.currentCode ?? "Currency not confirmed")
                                 .foregroundStyle(.secondary)
                             // Fills the row so the whole right side is a tap target.
                             TextField("0.00", text: $budgetText)
@@ -175,6 +175,10 @@ struct AddExpenseTagSheet: View {
             // Add / Save button
             Button {
                 guard canSave else { return }
+                do { _ = try LedgerCurrency.requireCode() } catch {
+                    saveErrorMessage = error.localizedDescription
+                    return
+                }
                 // Only turning the toggle off clears a previously set cap.
                 let resolvedBudget = parsedBudget
                 let stored = storedGlyphFields

@@ -13,18 +13,21 @@ public struct ExportableExpense: Sendable {
     /// Pipe-joined tag names. This keeps the CSV format compatible with older Sage exports.
     public let tag: String
     public let note: String
+    /// Nil only for rows from legacy six-column exports or newly prepared export data.
+    public let currencyCode: String?
 
     public var tagNames: [String] {
         tag.split(separator: "|").map(String.init).filter { !$0.isEmpty }
     }
 
-    public init(name: String, date: Date, amount: Double, category: String, tag: String, note: String) {
+    public init(name: String, date: Date, amount: Double, category: String, tag: String, note: String, currencyCode: String? = nil) {
         self.name = name
         self.date = date
         self.amount = amount
         self.category = category
         self.tag = tag
         self.note = note
+        self.currencyCode = currencyCode
     }
 }
 
@@ -35,6 +38,10 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
     case invalidDate(row: Int, value: String)
     case invalidAmount(row: Int, value: String)
     case invalidCategory(row: Int, value: String)
+    case invalidCurrency(String)
+    case mixedCurrencies
+    case currencyMismatch(expected: String, actual: String)
+    case legacyCurrencyConfirmationRequired
 
     public var errorDescription: String? {
         switch self {
@@ -50,14 +57,24 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
             return "Row \(row): invalid amount '\(value)'."
         case .invalidCategory(let row, let value):
             return "Row \(row): invalid category '\(value)'."
+        case .invalidCurrency(let code):
+            return "Invalid CSV currency '\(code)'. Choose a file with a supported ISO currency code."
+        case .mixedCurrencies:
+            return "This CSV contains mixed currencies. Sage imports only one ledger currency and does not convert amounts."
+        case .currencyMismatch(let expected, let actual):
+            return "This CSV uses \(actual), but your ledger uses \(expected). No expenses were imported. Sage does not convert currencies."
+        case .legacyCurrencyConfirmationRequired:
+            return "This CSV has no currency information. Confirm the currency of its amounts before importing."
         }
     }
 }
 
 public enum ExpenseCSVCodec {
-    public static let header = ["name", "date", "amount", "category", "tag", "note"]
+    public static let legacyHeader = ["name", "date", "amount", "category", "tag", "note"]
+    public static let header = legacyHeader + ["currency"]
 
-    public static func encode(_ expenses: [ExportableExpense]) -> String {
+    public static func encode(_ expenses: [ExportableExpense], currencyCode: String) throws -> String {
+        try validateCurrency(expenses, ledgerCurrencyCode: currencyCode, allowLegacy: true)
         let dateStyle = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let rows = expenses.map { expense in
             [
@@ -66,7 +83,8 @@ public enum ExpenseCSVCodec {
                 String(expense.amount),
                 expense.category,
                 expense.tag,
-                expense.note
+                expense.note,
+                currencyCode
             ]
             .map(encodeField)
             .joined(separator: ",")
@@ -85,18 +103,19 @@ public enum ExpenseCSVCodec {
         if let first = actualHeader.first {
             actualHeader[0] = String(first.trimmingPrefix("\u{FEFF}"))
         }
-        guard actualHeader == header else {
+        guard actualHeader == header || actualHeader == legacyHeader else {
             throw ExpenseCSVError.invalidHeader(expected: header, actual: actualHeader)
         }
 
         var expenses: [ExportableExpense] = []
+        var fileCurrency: String?
         expenses.reserveCapacity(max(0, records.count - 1))
 
         for record in records.dropFirst() {
-            guard record.fields.count == header.count else {
+            guard record.fields.count == actualHeader.count else {
                 throw ExpenseCSVError.invalidColumnCount(
                     row: record.row,
-                    expected: header.count,
+                    expected: actualHeader.count,
                     actual: record.fields.count
                 )
             }
@@ -111,6 +130,17 @@ public enum ExpenseCSVCodec {
             guard ExpenseCategory(rawValue: fields[3]) != nil else {
                 throw ExpenseCSVError.invalidCategory(row: record.row, value: fields[3])
             }
+            var currencyCode: String?
+            if actualHeader == header {
+                guard let code = LedgerCurrency.validatedCode(fields[6]) else {
+                    throw ExpenseCSVError.invalidCurrency(fields[6])
+                }
+                if let fileCurrency, fileCurrency != code {
+                    throw ExpenseCSVError.mixedCurrencies
+                }
+                fileCurrency = code
+                currencyCode = code
+            }
 
             expenses.append(
                 ExportableExpense(
@@ -119,12 +149,38 @@ public enum ExpenseCSVCodec {
                     amount: amount,
                     category: fields[3],
                     tag: fields[4],
-                    note: fields[5]
+                    note: fields[5],
+                    currencyCode: currencyCode
                 )
             )
         }
 
         return expenses
+    }
+
+    /// Validate the complete batch before any model insertion. Legacy amounts need user consent.
+    public static func validateCurrency(
+        _ expenses: [ExportableExpense],
+        ledgerCurrencyCode: String,
+        allowLegacy: Bool = false
+    ) throws {
+        guard LedgerCurrency.validatedCode(ledgerCurrencyCode) != nil else {
+            throw ExpenseCSVError.invalidCurrency(ledgerCurrencyCode)
+        }
+        let codes = Set(expenses.compactMap(\.currencyCode))
+        for code in codes where LedgerCurrency.validatedCode(code) == nil {
+            throw ExpenseCSVError.invalidCurrency(code)
+        }
+        let hasLegacy = expenses.contains { $0.currencyCode == nil }
+        guard codes.count <= 1, !(hasLegacy && !codes.isEmpty) else {
+            throw ExpenseCSVError.mixedCurrencies
+        }
+        if let code = codes.first, code != ledgerCurrencyCode {
+            throw ExpenseCSVError.currencyMismatch(expected: ledgerCurrencyCode, actual: code)
+        }
+        if hasLegacy && !allowLegacy {
+            throw ExpenseCSVError.legacyCurrencyConfirmationRequired
+        }
     }
 
     private static func encodeField(_ value: String) -> String {

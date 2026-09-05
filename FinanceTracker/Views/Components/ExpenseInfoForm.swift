@@ -183,9 +183,9 @@ struct ExpenseInfoForm: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 TextField(
-                    "$0.00",
+                    Double(0).currencyString,
                     value: $amount,
-                    format: .currency(code: Locale.current.currency?.identifier ?? "USD")
+                    format: .currency(code: config.ledgerCurrencyCode ?? "XXX")
                 )
                 .accessibilityIdentifier("expense-amount-field")
                 .keyboardType(.decimalPad)

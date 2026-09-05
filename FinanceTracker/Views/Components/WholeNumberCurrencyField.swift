@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SageKit
 
 struct WholeNumberCurrencyField: View {
     @Binding var amount: Int
@@ -15,12 +16,7 @@ struct WholeNumberCurrencyField: View {
     private var displayValue: String {
         let value = Int(rawValue) ?? 0
 
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = Locale.current.currency?.identifier ?? "USD"
-        formatter.maximumFractionDigits = 0
-
-        return formatter.string(from: NSNumber(value: value)) ?? "$0"
+        return value.currencyString
     }
 
     var body: some View {

@@ -37,6 +37,60 @@ class AppConfiguration {
     private let cloudKVS = NSUbiquitousKeyValueStore.default
     private static let suite = "group.me.enzottic.SageAppGroup"
 
+    private(set) var ledgerCurrencyCode: String? = LedgerCurrency.currentCode
+    private(set) var cloudLedgerCurrencyCode: String?
+    private(set) var hasLedgerCurrencyConflict = false
+
+    var ledgerCurrencyConflictMessage: String? {
+        guard hasLedgerCurrencyConflict else { return nil }
+        if let local = ledgerCurrencyCode, let cloud = cloudLedgerCurrencyCode {
+            return "This device uses \(local), but iCloud reports \(cloud). Monetary screens are blocked because these currencies do not match. Sage has not changed your currency or converted any amounts."
+        }
+        return "A currency conflict was previously detected, and Sage cannot currently verify the iCloud currency. Monetary screens remain blocked. No currency has been changed and no amounts have been converted."
+    }
+
+    func establishLedgerCurrency(_ code: String) throws {
+        refreshCloudLedgerCurrency()
+        guard !hasLedgerCurrencyConflict else { throw LedgerCurrency.Error.cloudConflict }
+        if let cloud = cloudLedgerCurrencyCode, cloud != code {
+            throw LedgerCurrency.Error.cloudConflict
+        }
+        try LedgerCurrency.establish(code)
+        ledgerCurrencyCode = code
+        refreshCloudLedgerCurrency()
+        // A conflicting cloud setting is evidence of ambiguity, not permission to relabel data.
+        if cloudLedgerCurrencyCode == nil || cloudLedgerCurrencyCode == code {
+            cloudKVS.set(code, forKey: LedgerCurrency.storageKey)
+            cloudKVS.synchronize()
+            cloudLedgerCurrencyCode = code
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func refreshCloudLedgerCurrency() {
+        guard !UITestConfiguration.isEnabled else { return }
+        cloudLedgerCurrencyCode = LedgerCurrency.validatedCode(
+            cloudKVS.string(forKey: LedgerCurrency.storageKey)
+        )
+        let sharedDefaults = UserDefaults(suiteName: Self.suite)
+        let previousConflict = sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
+        if let local = ledgerCurrencyCode, let cloud = cloudLedgerCurrencyCode {
+            hasLedgerCurrencyConflict = local != cloud
+        } else {
+            // Missing or unavailable KVS data is not evidence that a known conflict is resolved.
+            hasLedgerCurrencyConflict = previousConflict
+        }
+        sharedDefaults?.set(hasLedgerCurrencyConflict, forKey: LedgerCurrency.cloudConflictKey)
+        if previousConflict != hasLedgerCurrencyConflict {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    func recheckLedgerCurrency() {
+        cloudKVS.synchronize()
+        refreshCloudLedgerCurrency()
+    }
+
     /// The defaults store local-only flags are persisted to. DEBUG uses .standard to match
     /// init(); release uses the shared app-group suite so widgets and background tasks read
     /// the same values the app writes.
@@ -99,6 +153,8 @@ class AppConfiguration {
     var totalMonthlyIncome: Int {
         didSet {
             defaults.set(totalMonthlyIncome, forKey: Keys.totalMonthlyIncome)
+            refreshCloudLedgerCurrency()
+            guard !hasLedgerCurrencyConflict else { return }
             cloudKVS.set(Int64(totalMonthlyIncome), forKey: Keys.totalMonthlyIncome)
             cloudKVS.synchronize()
         }
@@ -107,6 +163,8 @@ class AppConfiguration {
     var needsPercent: Double {
         didSet {
             defaults.set(needsPercent, forKey: Keys.needsPercent)
+            refreshCloudLedgerCurrency()
+            guard !hasLedgerCurrencyConflict else { return }
             cloudKVS.set(needsPercent, forKey: Keys.needsPercent)
             cloudKVS.synchronize()
         }
@@ -115,6 +173,8 @@ class AppConfiguration {
     var wantsPercent: Double {
         didSet {
             defaults.set(wantsPercent, forKey: Keys.wantsPercent)
+            refreshCloudLedgerCurrency()
+            guard !hasLedgerCurrencyConflict else { return }
             cloudKVS.set(wantsPercent, forKey: Keys.wantsPercent)
             cloudKVS.synchronize()
         }
@@ -123,6 +183,8 @@ class AppConfiguration {
     var savingsPercent: Double {
         didSet {
             defaults.set(savingsPercent, forKey: Keys.savingsPercent)
+            refreshCloudLedgerCurrency()
+            guard !hasLedgerCurrencyConflict else { return }
             cloudKVS.set(savingsPercent, forKey: Keys.savingsPercent)
             cloudKVS.synchronize()
         }
@@ -197,6 +259,14 @@ class AppConfiguration {
         savingsColor = Color("SavingColor")
         billRemindersEnabled = false
 
+        if !UITestConfiguration.isEnabled {
+            LedgerCurrency.reset()
+            ledgerCurrencyCode = nil
+            cloudLedgerCurrencyCode = nil
+            hasLedgerCurrencyConflict = false
+            cloudKVS.removeObject(forKey: LedgerCurrency.storageKey)
+        }
+
         for key in Keys.localSettings {
             defaults.removeObject(forKey: key)
         }
@@ -225,8 +295,18 @@ class AppConfiguration {
     
     init() {
         self.defaults = Self.localDefaults
+        let localCurrency = LedgerCurrency.currentCode
+        let cloudCurrency = LedgerCurrency.validatedCode(cloudKVS.string(forKey: LedgerCurrency.storageKey))
+        let currencyConflict: Bool
+        if UITestConfiguration.isEnabled {
+            currencyConflict = false
+        } else if let localCurrency, let cloudCurrency {
+            currencyConflict = localCurrency != cloudCurrency
+        } else {
+            currencyConflict = UserDefaults(suiteName: Self.suite)?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
+        }
         
-        // iCloud KVS is the source of truth for all settings.
+        // iCloud KVS is the source of truth for preferences, not the confirmed ledger currency.
         // Fall back to local UserDefaults if iCloud KVS hasn't synced yet.
         
         // Appearance
@@ -243,20 +323,20 @@ class AppConfiguration {
         // Monthly income
         let cloudIncome = cloudKVS.object(forKey: Keys.totalMonthlyIncome) as? Int
         let localIncome = defaults.object(forKey: Keys.totalMonthlyIncome) as? Int
-        self.totalMonthlyIncome = cloudIncome ?? localIncome ?? 0
+        self.totalMonthlyIncome = (currencyConflict ? nil : cloudIncome) ?? localIncome ?? 0
         
         // Budget percentages — use iCloud KVS if available, else local defaults, else 50/30/20
         let cloudNeeds = cloudKVS.object(forKey: Keys.needsPercent) as? Double
         let localNeeds = defaults.object(forKey: Keys.needsPercent) as? Double
-        self.needsPercent = cloudNeeds ?? localNeeds ?? 0.5
+        self.needsPercent = (currencyConflict ? nil : cloudNeeds) ?? localNeeds ?? 0.5
         
         let cloudWants = cloudKVS.object(forKey: Keys.wantsPercent) as? Double
         let localWants = defaults.object(forKey: Keys.wantsPercent) as? Double
-        self.wantsPercent = cloudWants ?? localWants ?? 0.3
+        self.wantsPercent = (currencyConflict ? nil : cloudWants) ?? localWants ?? 0.3
         
         let cloudSavings = cloudKVS.object(forKey: Keys.savingsPercent) as? Double
         let localSavings = defaults.object(forKey: Keys.savingsPercent) as? Double
-        self.savingsPercent = cloudSavings ?? localSavings ?? 0.2
+        self.savingsPercent = (currencyConflict ? nil : cloudSavings) ?? localSavings ?? 0.2
         
         // Cloud sync toggle — iCloud KVS is authoritative
         if cloudKVS.object(forKey: Keys.isCloudSyncEnabled) != nil {
@@ -284,6 +364,7 @@ class AppConfiguration {
         // Bill reminders — stored locally only (not synced to iCloud KVS)
         self.billRemindersEnabled = defaults.bool(forKey: Keys.billRemindersEnabled)
 
+        refreshCloudLedgerCurrency()
         // Push current values to local defaults so widgets stay in sync
         syncToLocalDefaults()
         
@@ -298,6 +379,8 @@ class AppConfiguration {
     
     @objc private func iCloudKVSDidChange(_ notification: Notification) {
         DispatchQueue.main.async { [self] in
+            refreshCloudLedgerCurrency()
+            guard ledgerCurrencyConflictMessage == nil else { return }
             // Update local properties from iCloud KVS when another device pushes changes
             if let cloudAppearance = cloudKVS.string(forKey: Keys.appearance),
                let appearance = Appearance(rawValue: cloudAppearance) {

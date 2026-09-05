@@ -84,6 +84,10 @@ struct ExpenseDetailView: View {
     
     private func saveItem() async {
         guard !isSaving else { return }
+        do { _ = try LedgerCurrency.requireCode() } catch {
+            saveErrorMessage = error.localizedDescription
+            return
+        }
 
         let trimmedName = workingExpense.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
