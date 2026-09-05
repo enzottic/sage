@@ -18,11 +18,13 @@ final class RecurringExpenseCoordinator {
     private var observers: [NSObjectProtocol] = []
     private var maintenanceTask: Task<Void, Never>?
     private var hasStarted = false
-    private var hasCompletedMaintenance = false
+    private var hasAttemptedMaintenance = false
+    private var retryDelay: UInt64 = 5_000_000_000
     private var importIsActive = false
 
     init(modelContainer: ModelContainer, cloudKitEnabled: Bool) {
         self.modelContext = ModelContext(modelContainer)
+        self.modelContext.autosaveEnabled = false
         self.cloudKitEnabled = cloudKitEnabled
     }
 
@@ -68,7 +70,7 @@ final class RecurringExpenseCoordinator {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.hasCompletedMaintenance, !self.importIsActive else { return }
+                guard let self, self.hasAttemptedMaintenance, !self.importIsActive else { return }
                 self.scheduleMaintenance(afterNanoseconds: 1_000_000_000)
             }
         }
@@ -85,7 +87,7 @@ final class RecurringExpenseCoordinator {
         importIsActive = false
         if event.succeeded {
             scheduleMaintenance(afterNanoseconds: 500_000_000)
-        } else if !hasCompletedMaintenance {
+        } else {
             scheduleMaintenance(afterNanoseconds: 5_000_000_000)
         }
     }
@@ -102,10 +104,13 @@ final class RecurringExpenseCoordinator {
     }
 
     private func runMaintenance() {
+        hasAttemptedMaintenance = true
         do {
+            // Do not create monetary records before confirmation or during a known conflict.
+            _ = try LedgerCurrency.requireCode()
             let result = try RecurringExpenseService(modelContext: modelContext)
                 .generateAllExpenses(through: .now)
-            hasCompletedMaintenance = true
+            retryDelay = 5_000_000_000
 
             Self.logger.info(
                 "Recurring maintenance completed. Generated: \(result.generatedCount), skipped: \(result.skippedCount), repaired: \(result.repair.removedCount), conflicts: \(result.repair.conflictingGroupCount)."
@@ -114,10 +119,18 @@ final class RecurringExpenseCoordinator {
             if result.generatedCount > 0 || result.repair.removedCount > 0 {
                 WidgetCenter.shared.reloadAllTimelines()
             }
+            // Also handles rules becoming due while the app stays in the foreground.
+            let now = Date.now
+            let rules = try modelContext.fetch(FetchDescriptor<RecurringExpenseRule>())
+            let nextDue = rules.compactMap { $0.nextOccurrence(after: now) }.min()
+            let seconds = min(3_600, max(1, nextDue?.timeIntervalSince(now) ?? 3_600))
+            scheduleMaintenance(afterNanoseconds: UInt64(seconds * 1_000_000_000))
         } catch {
             Self.logger.error(
                 "Recurring maintenance failed: \(error.localizedDescription, privacy: .private(mask: .hash))"
             )
+            scheduleMaintenance(afterNanoseconds: retryDelay)
+            retryDelay = min(retryDelay * 2, 300_000_000_000)
         }
     }
 }
