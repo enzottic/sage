@@ -67,7 +67,10 @@ struct AddExpenseIntentTests {
     func rejectsInvalidValuesWithoutSaving() async throws {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
-        for (name, amount) in [("  ", 5.0), ("Coffee", 0), ("Coffee", -1), ("Coffee", Double.infinity), ("Coffee", Double.nan)] {
+        for (name, amount) in [
+            ("  ", 5.0), ("Coffee", 0), ("Coffee", 0.004), ("Coffee", -0.004),
+            ("Coffee", 1_000_000_001), ("Coffee", Double.infinity), ("Coffee", Double.nan)
+        ] {
             var intent = AddExpenseAppIntent()
             intent.expenseStore = store
             intent.currencyCodeProvider = { "USD" }
@@ -79,6 +82,40 @@ struct AddExpenseIntentTests {
             } catch {
                 #expect(try store.fetchExpenses().isEmpty)
             }
+        }
+    }
+
+    @Test(arguments: [("USD", -12.34), ("JPY", -123.0), ("KWD", -12.345)]) @MainActor
+    func savesRefundWithoutChangingAmount(currencyCode: String, amount: Double) async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { currencyCode }
+        intent.name = "Refund"
+        intent.amount = amount
+
+        _ = try await intent.perform()
+
+        let expense = try #require(store.fetchExpenses().first)
+        #expect(expense.amount == amount)
+    }
+
+    @Test(arguments: [("USD", 12.345), ("JPY", 12.34), ("KWD", 12.3456)]) @MainActor
+    func rejectsCurrencyPrecisionBeforeSaving(currencyCode: String, amount: Double) async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { currencyCode }
+        intent.name = "Coffee"
+        intent.amount = amount
+
+        do {
+            _ = try await intent.perform()
+            Issue.record("Extra currency precision was accepted.")
+        } catch {
+            #expect(try store.fetchExpenses().isEmpty)
         }
     }
 

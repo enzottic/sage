@@ -38,10 +38,7 @@ struct ExpenseDetailView: View {
         ScrollView {
             ExpenseInfoForm(
                 name: $workingExpense.name,
-                amount: Binding<Double?>(
-                    get: { workingExpense.amount },
-                    set: { workingExpense.amount = $0 ?? 0 }
-                ),
+                amount: $workingExpense.amount,
                 date: $workingExpense.date,
                 category: $workingExpense.category,
                 tags: $workingExpense.tags,
@@ -84,7 +81,8 @@ struct ExpenseDetailView: View {
     
     private func saveItem() async {
         guard !isSaving else { return }
-        do { _ = try LedgerCurrency.requireCode() } catch {
+        let currencyCode: String
+        do { currencyCode = try LedgerCurrency.requireCode() } catch {
             saveErrorMessage = error.localizedDescription
             return
         }
@@ -95,8 +93,10 @@ struct ExpenseDetailView: View {
             return
         }
 
-        guard let amount = workingExpense.amount, amount.isFinite, amount > 0 else {
-            saveErrorMessage = "Enter an amount greater than zero."
+        guard let amount = workingExpense.amount,
+              MonetaryAmount.isValid(amount, currencyCode: currencyCode) else {
+            saveErrorMessage = "Correct the amount before saving any changes, including notes. "
+                + MonetaryAmount.validationMessage(currencyCode: currencyCode)
             return
         }
 

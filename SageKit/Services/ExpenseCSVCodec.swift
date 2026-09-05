@@ -54,7 +54,7 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
         case .invalidDate(let row, let value):
             return "Row \(row): invalid date '\(value)'."
         case .invalidAmount(let row, let value):
-            return "Row \(row): invalid amount '\(value)'."
+            return "Row \(row): invalid amount '\(value)'. Use a finite, nonzero amount (negative for refunds), no more than 1 billion in magnitude, with no extra decimal places beyond the currency's minor units. Amounts are not rounded."
         case .invalidCategory(let row, let value):
             return "Row \(row): invalid category '\(value)'."
         case .invalidCurrency(let code):
@@ -124,7 +124,8 @@ public enum ExpenseCSVCodec {
             guard let date = parseDate(fields[1]) else {
                 throw ExpenseCSVError.invalidDate(row: record.row, value: fields[1])
             }
-            guard let amount = Double(fields[2]), amount.isFinite else {
+            guard let amount = Double(fields[2]), amount.isFinite, amount != 0,
+                  abs(amount) <= MonetaryAmount.maximumMagnitude else {
                 throw ExpenseCSVError.invalidAmount(row: record.row, value: fields[2])
             }
             guard ExpenseCategory(rawValue: fields[3]) != nil else {
@@ -140,6 +141,10 @@ public enum ExpenseCSVCodec {
                 }
                 fileCurrency = code
                 currencyCode = code
+            }
+            if let currencyCode,
+               !MonetaryAmount.isValid(amount, currencyCode: currencyCode) {
+                throw ExpenseCSVError.invalidAmount(row: record.row, value: fields[2])
             }
 
             expenses.append(
@@ -180,6 +185,12 @@ public enum ExpenseCSVCodec {
         }
         if hasLegacy && !allowLegacy {
             throw ExpenseCSVError.legacyCurrencyConfirmationRequired
+        }
+        // Legacy rows acquire precision rules only after the user confirms their currency.
+        for (index, expense) in expenses.enumerated() {
+            guard MonetaryAmount.isValid(expense.amount, currencyCode: ledgerCurrencyCode) else {
+                throw ExpenseCSVError.invalidAmount(row: index + 2, value: String(expense.amount))
+            }
         }
     }
 

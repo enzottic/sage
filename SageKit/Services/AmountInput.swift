@@ -1,6 +1,18 @@
 import Foundation
 
 public enum AmountInput {
+    public static func parse(
+        _ text: String,
+        currencyCode: String,
+        requiresPositive: Bool = false,
+        locale: Locale = .current
+    ) -> Double? {
+        guard let amount = parse(text, locale: locale),
+              MonetaryAmount.isValid(amount, currencyCode: currencyCode,
+                                     requiresPositive: requiresPositive) else { return nil }
+        return amount
+    }
+
     public static func text(for amount: Double, locale: Locale = .current) -> String {
         amount.formatted(.number.locale(locale).grouping(.never).precision(.fractionLength(0...16)))
     }

@@ -391,7 +391,8 @@ struct AddExpenseView: View {
 
     func saveItem() async {
         guard !isSaving else { return }
-        do { _ = try LedgerCurrency.requireCode() } catch {
+        let currencyCode: String
+        do { currencyCode = try LedgerCurrency.requireCode() } catch {
             errorMessage = error.localizedDescription
             showError = true
             return
@@ -403,8 +404,9 @@ struct AddExpenseView: View {
             return
         }
 
-        guard let total = amount, total > 0 else {
-            errorMessage = "Please enter a valid amount"
+        guard let total = amount,
+              MonetaryAmount.isValid(total, currencyCode: currencyCode, requiresPositive: isRecurring) else {
+            errorMessage = MonetaryAmount.validationMessage(currencyCode: currencyCode, requiresPositive: isRecurring)
             showError = true
             return
         }

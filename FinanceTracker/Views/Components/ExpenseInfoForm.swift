@@ -25,6 +25,7 @@ struct ExpenseInfoForm: View {
 
     @Binding var name: String
     @Binding var amount: Double?
+    @State private var amountText: String
     @Binding var date: Date
     @Binding var category: ExpenseCategory
     @Binding var tags: [ExpenseTag]
@@ -58,6 +59,7 @@ struct ExpenseInfoForm: View {
     ) {
         self._name = name
         self._amount = amount
+        self._amountText = State(initialValue: amount.wrappedValue.map { AmountInput.text(for: $0) } ?? "")
         self._date = date
         self._category = category
         self._tags = tags
@@ -99,6 +101,11 @@ struct ExpenseInfoForm: View {
         }
         .onChange(of: keyboardDismissalRequest) {
             dismissKeyboard()
+        }
+        .onChange(of: amount) { _, value in
+            // Our own text edits already match parsedAmount, including invalid text -> nil.
+            guard value != parsedAmount else { return }
+            amountText = value.map { AmountInput.text(for: $0) } ?? ""
         }
     }
 
@@ -174,6 +181,21 @@ struct ExpenseInfoForm: View {
 
     // MARK: - Details card
 
+    private var parsedAmount: Double? {
+        guard let code = config.ledgerCurrencyCode else { return nil }
+        return AmountInput.parse(amountText, currencyCode: code)
+    }
+
+    private var amountTextBinding: Binding<String> {
+        Binding(
+            get: { amountText },
+            set: {
+                amountText = $0
+                amount = parsedAmount
+            }
+        )
+    }
+
     private var detailsCard: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -184,19 +206,13 @@ struct ExpenseInfoForm: View {
                 Spacer()
                 TextField(
                     Double(0).currencyString,
-                    value: $amount,
-                    format: .currency(code: config.ledgerCurrencyCode ?? "XXX")
+                    text: amountTextBinding
                 )
                 .accessibilityIdentifier("expense-amount-field")
-                .keyboardType(.decimalPad)
+                .keyboardType(.numbersAndPunctuation)
                 .font(.body)
                 .multilineTextAlignment(.trailing)
                 .focused($focusedField, equals: .amount)
-                .onChange(of: focusedField) { _, newField in
-                    if newField == .amount, (amount ?? 0) == 0 {
-                        amount = nil
-                    }
-                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)

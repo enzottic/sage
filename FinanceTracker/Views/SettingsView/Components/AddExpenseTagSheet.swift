@@ -54,11 +54,16 @@ struct AddExpenseTagSheet: View {
             && (!hasBudget || parsedBudget != nil)
     }
 
-    /// The budget the user typed, or nil if the toggle is off or the text isn't a positive number.
+    /// Invalid text never clears an existing budget; only turning the toggle off does.
     private var parsedBudget: Double? {
-        guard hasBudget else { return nil }
-        guard let value = AmountInput.parse(budgetText), value > 0 else { return nil }
-        return value
+        guard hasBudget, let code = LedgerCurrency.currentCode else { return nil }
+        return AmountInput.parse(budgetText, currencyCode: code, requiresPositive: true)
+    }
+
+    private var budgetValidationMessage: String {
+        guard let code = LedgerCurrency.currentCode else { return "Confirm your ledger currency first." }
+        return MonetaryAmount.validationMessage(currencyCode: code, requiresPositive: true)
+            + " Turn off Monthly Budget to remove the limit."
     }
     
     var body: some View {
@@ -146,7 +151,7 @@ struct AddExpenseTagSheet: View {
                         .background(RoundedRectangle(cornerRadius: 10).fill(.cardBackground))
                         .transition(.opacity.combined(with: .move(edge: .top)))
                         if parsedBudget == nil {
-                            Text("Enter a budget greater than zero, or turn off Monthly Budget to remove the limit.")
+                            Text(budgetValidationMessage)
                                 .font(.caption)
                                 .foregroundStyle(.red)
                         }
@@ -175,12 +180,20 @@ struct AddExpenseTagSheet: View {
             // Add / Save button
             Button {
                 guard canSave else { return }
-                do { _ = try LedgerCurrency.requireCode() } catch {
+                let currencyCode: String
+                do { currencyCode = try LedgerCurrency.requireCode() } catch {
                     saveErrorMessage = error.localizedDescription
                     return
                 }
                 // Only turning the toggle off clears a previously set cap.
                 let resolvedBudget = parsedBudget
+                if hasBudget {
+                    guard let resolvedBudget,
+                          MonetaryAmount.isValid(resolvedBudget, currencyCode: currencyCode, requiresPositive: true) else {
+                        saveErrorMessage = budgetValidationMessage
+                        return
+                    }
+                }
                 let stored = storedGlyphFields
                 do {
                     if let tag = tagToEdit {
@@ -233,7 +246,7 @@ struct AddExpenseTagSheet: View {
                 glyph = tag.glyph
                 fallbackEmoji = tag.emoji
                 color = Color(tag.uiColor)
-                hasBudget = tag.hasBudget
+                hasBudget = tag.budget != nil
                 budgetText = tag.budget.map { AmountInput.text(for: $0) } ?? ""
             }
         }

@@ -137,8 +137,17 @@ struct EditRecurringRuleSheet: View {
             showError = true
             return
         }
-        guard let expenseAmount = amount, expenseAmount > 0 else {
-            errorMessage = "Please enter a valid amount"
+        let currencyCode: String
+        do {
+            currencyCode = try LedgerCurrency.requireCode()
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+            return
+        }
+        guard let expenseAmount = amount,
+              MonetaryAmount.isValid(expenseAmount, currencyCode: currencyCode, requiresPositive: true) else {
+            errorMessage = MonetaryAmount.validationMessage(currencyCode: currencyCode, requiresPositive: true)
             showError = true
             return
         }
