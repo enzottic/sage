@@ -7,6 +7,7 @@
 
 import Foundation
 import AppIntents
+import SageKit
 
 public struct SageShortcutsProvider: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] = [

@@ -21,24 +21,91 @@ final class FinanceTrackerUITests: XCTestCase {
 
         let incomeField = app.textFields["onboarding-income-field"]
         XCTAssertTrue(incomeField.waitForExistence(timeout: timeout), "The income field did not appear.")
+        XCTAssertTrue(scrollToVisibility(of: incomeField, in: app))
         incomeField.tap()
         incomeField.typeText("5000")
 
-        let keyboardDone = app.buttons["onboarding-keyboard-done-button"]
-        if keyboardDone.waitForExistence(timeout: 2) {
-            keyboardDone.tap()
-        }
+        tap("onboarding-keyboard-done-button", in: app)
 
         tap("onboarding-budget-continue-button", in: app)
         tap("onboarding-allocation-continue-button", in: app)
         tap("onboarding-sync-continue-button", in: app)
         tap("onboarding-tags-continue-button", in: app)
+
+        let planTotal = app.staticTexts["onboarding-plan-total"]
+        XCTAssertTrue(planTotal.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: planTotal, in: app))
+        let expectedTotal = Double(5000).formatted(
+            .currency(code: Locale.current.currency?.identifier ?? "USD").precision(.fractionLength(0))
+        )
+        XCTAssertEqual(planTotal.label, expectedTotal, "Income should be interpreted as whole currency units.")
         tap("onboarding-start-tracking-button", in: app)
 
         XCTAssertTrue(
             app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout),
             "The main tabs did not appear after onboarding completed."
         )
+    }
+
+    func testOnboardingValidatesIncomeAndRetainsStateWhenGoingBack() {
+        let app = launchApp(showsOnboarding: true)
+        tap("onboarding-get-started-button", in: app)
+
+        let incomeField = app.textFields["onboarding-income-field"]
+        let budgetContinue = app.buttons["onboarding-budget-continue-button"]
+        XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
+        XCTAssertTrue(budgetContinue.waitForExistence(timeout: timeout))
+        XCTAssertFalse(budgetContinue.isEnabled, "Empty income must not allow continuing.")
+        XCTAssertTrue(scrollToVisibility(of: incomeField, in: app))
+        incomeField.tap()
+        incomeField.typeText("0")
+        XCTAssertFalse(budgetContinue.isEnabled, "Zero income must not allow continuing.")
+        incomeField.clearAndTypeText("5000")
+        XCTAssertTrue(budgetContinue.isEnabled)
+        incomeField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4))
+        XCTAssertFalse(budgetContinue.isEnabled, "Clearing valid income must disable continuing again.")
+        incomeField.typeText("5000")
+        tap("onboarding-keyboard-done-button", in: app)
+        tap("onboarding-budget-continue-button", in: app)
+        tap("onboarding-allocation-continue-button", in: app)
+
+        let syncToggle = app.switches["onboarding-sync-toggle"]
+        XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: syncToggle, in: app))
+        XCTAssertEqual(syncToggle.value as? String, "0")
+        tap(syncToggle, named: "onboarding-sync-toggle")
+        XCTAssertEqual(syncToggle.value as? String, "1")
+        tap("onboarding-sync-continue-button", in: app)
+
+        let shoppingTag = app.buttons["onboarding-tag-Shopping"]
+        XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: shoppingTag, in: app))
+        XCTAssertFalse(shoppingTag.isSelected)
+        tap(shoppingTag, named: "onboarding-tag-Shopping")
+        XCTAssertTrue(shoppingTag.isSelected)
+        tap("onboarding-tags-continue-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-start-tracking-button"].waitForExistence(timeout: timeout))
+
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
+        XCTAssertTrue(shoppingTag.isSelected, "Tag selection must survive returning from the summary.")
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
+        XCTAssertEqual(syncToggle.value as? String, "1", "Sync selection must survive going back.")
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-allocation-continue-button"].waitForExistence(timeout: timeout))
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
+        XCTAssertEqual(incomeField.value as? String, "5000")
+        XCTAssertTrue(budgetContinue.isEnabled)
+
+        tap("onboarding-budget-continue-button", in: app)
+        tap("onboarding-allocation-continue-button", in: app)
+        XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
+        XCTAssertEqual(syncToggle.value as? String, "1")
+        tap("onboarding-sync-continue-button", in: app)
+        XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
+        XCTAssertTrue(shoppingTag.isSelected, "Tag selection must also survive returning from earlier steps.")
     }
 
     func testOnboardingSupportsLargestAccessibilityTextSize() {
@@ -54,10 +121,42 @@ final class FinanceTrackerUITests: XCTestCase {
         let welcomeTitle = app.staticTexts["onboarding-welcome-title"]
         XCTAssertTrue(welcomeTitle.waitForExistence(timeout: timeout))
 
-        let getStartedButton = app.buttons["onboarding-get-started-button"]
-        XCTAssertTrue(getStartedButton.waitForExistence(timeout: timeout))
-        XCTAssertTrue(scrollToVisibility(of: getStartedButton, in: app))
-        XCTAssertTrue(getStartedButton.isHittable)
+        let incomeField = app.textFields["onboarding-income-field"]
+        let pages: [(String, XCUIElement)] = [
+            ("onboarding-get-started-button", welcomeTitle),
+            ("onboarding-budget-continue-button", incomeField),
+            ("onboarding-allocation-continue-button", app.sliders.firstMatch),
+            ("onboarding-sync-continue-button", app.switches["onboarding-sync-toggle"]),
+            ("onboarding-tags-continue-button", app.staticTexts["onboarding-tags-count"]),
+            ("onboarding-start-tracking-button", app.staticTexts["onboarding-plan-total"])
+        ]
+        for (identifier, content) in pages {
+            let button = app.buttons[identifier]
+            XCTAssertTrue(button.waitForExistence(timeout: timeout))
+            XCTAssertTrue(content.waitForExistence(timeout: timeout))
+            XCTAssertTrue(scrollToVisibility(of: content, in: app))
+            if identifier == "onboarding-budget-continue-button" {
+                tap(incomeField, named: "onboarding-income-field")
+                incomeField.typeText("5000")
+                tap("onboarding-keyboard-done-button", in: app)
+            }
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(button.frame))
+            if identifier != "onboarding-get-started-button" {
+                let back = app.buttons["onboarding-back-button"]
+                XCTAssertTrue(back.isHittable)
+                XCTAssertEqual(back.frame.midY, button.frame.midY, accuracy: 2, "Back belongs beside Continue.")
+            }
+            XCTAssertTrue(button.isEnabled, "The primary action on \(identifier) must be enabled.")
+            XCTAssertTrue(button.waitForHittability(timeout: timeout), "The primary action on \(identifier) must remain reachable.")
+
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Largest text - \(identifier)"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+            button.tap()
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout))
     }
 
     func testAddsExpense() {

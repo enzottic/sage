@@ -1,0 +1,72 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Add a new expense to ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Add a new expense to ${applicationName}",
+              "Add an expense to ${applicationName}",
+              "Create a new ${applicationName} expense",
+              "Add expense in ${applicationName}",
+              "Create a new expense in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "How much budget do I have left this month in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "How much budget do I have left this month in ${applicationName}",
+              "How much budget do I have left for ${category} this month in ${applicationName}",
+              "How much spending do I have left this month in ${applicationName}",
+              "How much spending do I have left for ${category} this month in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "How much did I spend ${timePeriod} in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "How much did I spend ${timePeriod} in ${applicationName}",
+              "What did I pay for ${tag} in ${applicationName}",
+              "How much did I spend on ${category} in ${applicationName}",
+              "Find my expenses in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "How much have I spent in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "How much have I spent in ${applicationName}",
+              "How much have I spent this month in ${applicationName}",
+              "How much have I spent on ${category} in ${applicationName}",
+              "Check my spending this month in ${applicationName}",
+              "Check my spending on ${category} this month in ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

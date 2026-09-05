@@ -13,38 +13,45 @@ import SageKit
 struct OnboardingView: View {
     @Environment(AppConfiguration.self) var config
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.categoryColors) private var categoryColors
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @ScaledMetric(relativeTo: .largeTitle) private var incomeFontSize = 64
 
-    @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
+    @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce = false
 
     @State private var currentStep: OnboardingStep = .welcome
-    @State private var monthlyIncome: Double?
+    @State private var incomeText = ""
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
-    @State private var cloudSyncEnabled: Bool = false
-    @State private var tagTemplates: [ExpenseTag] = ExpenseTag.suggestedTags
+    @State private var cloudSyncEnabled = false
+    @State private var tagTemplates = ExpenseTag.suggestedTags
     @State private var selectedTagNames: Set<String> = []
     @State private var completionErrorMessage: String?
+    @FocusState private var incomeFocused: Bool
+    @AccessibilityFocusState private var headingFocused: Bool
 
     private let onCompletion: (() -> Void)?
-    
-    let mainSpacing: CGFloat = 24
-    let titleBottomSpacing: CGFloat = 20
-    let titleSubtitleSpacing: CGFloat = 14
+    private let currencyCode = Locale.current.currency?.identifier ?? "USD"
 
-    enum OnboardingStep: CaseIterable, Hashable {
-        case welcome
-        case budget
-        case allocation
-        case sync
-        case tags
-        case complete
+    enum OnboardingStep: Int, CaseIterable, Hashable {
+        case welcome, budget, allocation, sync, tags, complete
+
+        var buttonIdentifier: String {
+            switch self {
+            case .welcome: "onboarding-get-started-button"
+            case .budget: "onboarding-budget-continue-button"
+            case .allocation: "onboarding-allocation-continue-button"
+            case .sync: "onboarding-sync-continue-button"
+            case .tags: "onboarding-tags-continue-button"
+            case .complete: "onboarding-start-tracking-button"
+            }
+        }
     }
 
-    var savingsPercent: Double {
-        let calculated = 100 - needsPercent - wantsPercent
-        return round(max(0, calculated))
-    }
+    private var savingsPercent: Double { round(max(0, 100 - needsPercent - wantsPercent)) }
+    private var monthlyIncome: Int? { Int(incomeText) }
+    private var income: Double { Double(monthlyIncome ?? 0) }
 
     init(step: OnboardingStep = .welcome, onCompletion: (() -> Void)? = nil) {
         _currentStep = State(initialValue: step)
@@ -53,34 +60,51 @@ struct OnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.sageBackground
-                    .ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    TabView(selection: $currentStep) {
-                        welcomePage
-                            .tag(OnboardingStep.welcome)
-
-                        budgetPage
-                            .tag(OnboardingStep.budget)
-
-                        allocationPage
-                            .tag(OnboardingStep.allocation)
-
-                        syncPage
-                            .tag(OnboardingStep.sync)
-
-                        tagsPage
-                            .tag(OnboardingStep.tags)
-
-                        completePage
-                            .tag(OnboardingStep.complete)
+            VStack(spacing: 0) {
+                ViewThatFits(in: .vertical) {
+                    pageContent.fixedSize(horizontal: false, vertical: true)
+                    // Normal pages fit without scrolling; never shrink accessibility text to fit.
+                    ScrollView {
+                        pageContent
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .scrollDisabled(true)
-                    .animation(reduceMotion ? nil : .easeInOut, value: currentStep)
+                    .scrollDismissesKeyboard(.interactively)
                 }
+                .id(currentStep)
+                .frame(maxWidth: 520, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .background {
+                ZStack(alignment: .topTrailing) {
+                    Color.sageBackground
+                    if !reduceTransparency {
+                        Ellipse()
+                            .fill(Color.sage.opacity(0.24))
+                            .frame(width: 360, height: 420)
+                            .blur(radius: 85)
+                            .offset(x: 120, y: -150)
+                    }
+                }
+                .ignoresSafeArea()
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) { primaryAction }
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { incomeFocused = false }
+                        .accessibilityIdentifier("onboarding-keyboard-done-button")
+                }
+            }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: currentStep)
+            .task(id: currentStep) { headingFocused = true }
+            .onChange(of: needsPercent) { _, newValue in
+                if newValue + wantsPercent > 100 { wantsPercent = 100 - newValue }
+            }
+            .onChange(of: wantsPercent) { _, newValue in
+                if needsPercent + newValue > 100 { needsPercent = 100 - newValue }
             }
             .alert("Could not finish setup", isPresented: Binding(
                 get: { completionErrorMessage != nil },
@@ -90,433 +114,234 @@ struct OnboardingView: View {
             } message: {
                 Text(completionErrorMessage ?? "Check available storage and try again.")
             }
-            .ignoresSafeArea(.keyboard, edges: .bottom)
+        }
+        .fontDesign(.rounded)
+        .tint(.sage)
+    }
 
+    private var primaryAction: some View {
+        HStack(spacing: 12) {
+            if currentStep != .welcome {
+                Button {
+                    move(to: OnboardingStep(rawValue: currentStep.rawValue - 1) ?? .welcome)
+                } label: {
+                    Text("Back")
+                        .font(.headline)
+                        .frame(minWidth: 52, minHeight: 44)
+                }
+                .buttonStyle(.glass)
+                .buttonBorderShape(.roundedRectangle(radius: 22))
+                .accessibilityIdentifier("onboarding-back-button")
+            }
+            Button {
+                if currentStep == .complete {
+                    completeOnboarding()
+                } else if let next = OnboardingStep(rawValue: currentStep.rawValue + 1) {
+                    move(to: next)
+                }
+            } label: {
+                Text(currentStep == .welcome ? "Get Started" : currentStep == .complete ? "Start Tracking" : "Continue")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .foregroundStyle(Color(red: 0.10, green: 0.17, blue: 0.07))
+            }
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.roundedRectangle(radius: 22))
+            .tint(.sage)
+            .disabled(currentStep == .budget && (monthlyIncome ?? 0) <= 0)
+            .accessibilityIdentifier(currentStep.buttonIdentifier)
+        }
+        .frame(maxWidth: 520)
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
+        .background {
+            LinearGradient(
+                colors: [Color.sageBackground.opacity(0), .sageBackground, .sageBackground],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 
-    // MARK: - Welcome Page
+    @ViewBuilder
+    private var pageContent: some View {
+        switch currentStep {
+        case .welcome: welcomePage
+        case .budget: budgetPage
+        case .allocation: allocationPage
+        case .sync: syncPage
+        case .tags: tagsPage
+        case .complete: completePage
+        }
+    }
 
-    var welcomePage: some View {
-        VStack(alignment: .leading) {
+    private func heading(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.largeTitle.bold())
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityFocused($headingFocused)
+                .accessibilityIdentifier(currentStep == .welcome ? "onboarding-welcome-title" : "onboarding-step-title")
+            if let subtitle {
+                Text(subtitle)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(currentStep == .welcome ? "onboarding-welcome-subtitle" : "onboarding-step-subtitle")
+            }
+        }
+    }
 
-            Spacer()
-
+    private var welcomePage: some View {
+        VStack(alignment: .leading, spacing: 28) {
             Image("LaunchIcon")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 160)
+                .frame(width: 140, height: 140)
                 .accessibilityHidden(true)
-                .padding([.bottom], 40)
-
-
-            Text("Welcome to Sage")
-                .accessibilityIdentifier("onboarding-welcome-title")
-                .font(.largeTitle.bold())
-                .padding([.bottom], 3)
-
-            Text("A simple, personal expense tracking app")
-                .accessibilityIdentifier("onboarding-welcome-subtitle")
-                .font(.title2.bold())
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Button {
-                withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                    currentStep = .budget
-                }
-            } label: {
-                Text("Get Started")
-                    .onboardingButton()
-            }
-            .accessibilityIdentifier("onboarding-get-started-button")
+            heading("Welcome to Sage", subtitle: "A simple personal expense tracking app")
         }
-        .padding(35)
-        .background(Color.sageBackground)
     }
 
-    // MARK: - Budget Page
+    private var budgetPage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Monthly income", subtitle: "How much do you take home each month?")
 
-    var budgetPage: some View {
-        VStack(spacing: mainSpacing) {
-            Spacer()
-            VStack {
-                Text("How much do you make a month?")
-                    .font(.largeTitle.bold())
-                    .padding([.bottom], titleBottomSpacing)
-
-                CentsFirstCurrencyField(
-                    amount: $monthlyIncome,
-                    accessibilityIdentifier: "onboarding-income-field",
-                    keyboardDoneAccessibilityIdentifier: "onboarding-keyboard-done-button",
-                    textAlignment: .center
-                )
-
-                Text("\(Locale.current.currency?.identifier ?? "USD")")
+            VStack(spacing: 12) {
+                TextField("0", text: $incomeText)
+                    .font(.system(size: incomeFontSize, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+                    .keyboardType(.numberPad)
+                    .focused($incomeFocused)
+                    .tint(.sage)
+                    .accessibilityLabel("Monthly take-home income")
+                    .accessibilityHint("Enter your monthly income in whole currency units")
+                    .accessibilityIdentifier("onboarding-income-field")
+                    .onChange(of: incomeText) { _, newValue in
+                        incomeText = String(newValue.filter { $0.isASCII && $0.isNumber }.prefix(8))
+                    }
+                Text("\(currencyCode) per month, after tax")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
-
-            HStack(spacing: 15) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .welcome
-                    }
-                } label: {
-                    Text("Back")
-                        .onboardingButton(
-                            foregroundColor: .primary,
-                            backgroundColor: .cardBackground
-                        )
-                }
-
-                Button {
-                    if let monthlyIncome, monthlyIncome > 0 {
-                        withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                            currentStep = .allocation
-                        }
-                    }
-                } label: {
-                    Text("Continue")
-                        .onboardingButton(
-                            backgroundColor: monthlyIncome ?? 0 > 0 ? .sage : .gray
-                        )
-                }
-                .accessibilityIdentifier("onboarding-budget-continue-button")
-                .disabled((monthlyIncome ?? 0) <= 0)
-            }
+            .padding(.vertical, 16)
         }
-        .padding(20)
     }
 
-    // MARK: - Allocation Page
+    private var allocationPage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Set your budget")
 
-    var allocationPage: some View {
-        VStack(spacing: mainSpacing) {
-            Spacer()
+            VStack(alignment: .leading, spacing: 24) {
+                allocationBar
+                AllocationSlider(title: "Needs", color: categoryColors.needs, icon: "house.fill", percentage: $needsPercent)
+                AllocationSlider(title: "Wants", color: categoryColors.wants, icon: "cart.fill", percentage: $wantsPercent)
+                BudgetSummaryRow(title: "Savings (\(Int(savingsPercent))%)", amount: income * savingsPercent / 100, color: categoryColors.savings, icon: "banknote.fill")
+            }
+        }
+    }
 
-            Text("How do you want to allocate your budget?")
-                .font(.largeTitle.bold())
-                .padding([.bottom], titleBottomSpacing)
+    private var syncPage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Sync your expenses", subtitle: "Keep expenses up to date across your devices.")
 
-            VStack(spacing: 25) {
+            HStack(spacing: 24) {
+                Image(systemName: "iphone")
+                Image(systemName: "icloud")
+                    .foregroundStyle(.sage)
+                Image(systemName: "ipad.landscape")
+            }
+            .font(.system(size: 40, weight: .light))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .accessibilityHidden(true)
 
-                AllocationSlider(
-                    title: "Needs",
-                    color: .need,
-                    icon: "house.fill",
-                    percentage: $needsPercent
-                )
+            VStack(alignment: .leading, spacing: 16) {
+                Toggle("Enable iCloud Sync", isOn: $cloudSyncEnabled)
+                    .font(.headline)
+                    .tint(.sage)
+                    .accessibilityIdentifier("onboarding-sync-toggle")
+                Text(cloudSyncEnabled ? "Expense sync will start the next time you open Sage." : "Your expenses will stay on this device.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .modifier(OnboardingSurface())
+        }
+    }
 
-                AllocationSlider(
-                    title: "Wants",
-                    color: .want,
-                    icon: "cart.fill",
-                    percentage: $wantsPercent
-                )
+    private var tagsPage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Choose your tags", subtitle: "Organize your expenses. You can add more later.")
 
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Image(systemName: "banknote.fill")
-                        .foregroundStyle(.teal)
-                        .frame(width: 30)
-
-                    Text("Savings")
-                        .font(.headline)
-
+                    Text("\(selectedTagNames.count) selected")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("onboarding-tags-count")
                     Spacer()
-
-                    Text(savingsPercent / 100, format: .percent.precision(.fractionLength(0)))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.teal)
-                }
-            }
-            .padding(.horizontal, 40)
-            
-            Text("50/30/20 is great for most people, but feel free to customize the allocation to fit your goals.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-
-            if needsPercent + wantsPercent > 100 {
-                Text("Total percentage cannot exceed \(100, format: .percent)")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-
-            Spacer()
-
-            HStack(spacing: 15) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .budget
+                    Button(selectedTagNames.count == tagTemplates.count ? "Clear" : "Select all") {
+                        selectedTagNames = selectedTagNames.count == tagTemplates.count ? [] : Set(tagTemplates.map(\.name))
                     }
-                } label: {
-                    Text("Back")
-                        .onboardingButton(
-                            foregroundColor: .primary,
-                            backgroundColor: .cardBackground
-                        )
+                    .font(.subheadline.weight(.semibold))
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("onboarding-select-all-tags-button")
                 }
-
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .sync
-                    }
-                } label: {
-                    Text("Continue")
-                        .onboardingButton(
-                            backgroundColor: needsPercent + wantsPercent <= 100 ? .sage : .gray
-                        )
-                }
-                .accessibilityIdentifier("onboarding-allocation-continue-button")
-                .disabled(needsPercent + wantsPercent > 100)
-            }
-            .padding()
-        }
-
-        .onChange(of: needsPercent) { oldValue, newValue in
-            // Ensure total doesn't exceed 100%
-            if needsPercent + wantsPercent > 100 {
-                let newWants = max(0, 100 - needsPercent)
-                wantsPercent = round(newWants / 5) * 5
-            }
-        }
-        .onChange(of: wantsPercent) { oldValue, newValue in
-            // Ensure total doesn't exceed 100%
-            if needsPercent + wantsPercent > 100 {
-                let newNeeds = max(0, 100 - wantsPercent)
-                needsPercent = round(newNeeds / 5) * 5
+                TagFlowGrid(tags: tagTemplates, selectedTagNames: $selectedTagNames)
             }
         }
     }
 
-    // MARK: - Sync Page
-
-    var syncPage: some View {
-        VStack(spacing: mainSpacing) {
-            Spacer()
-
-            VStack(spacing: titleSubtitleSpacing) {
-                Text("Want to enable Sync?")
-                    .font(.largeTitle.bold())
-
-                Text("You can choose to optionally sync your expenses between all your devices")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-            }
-
-            Toggle(isOn: $cloudSyncEnabled) {
-                HStack {
-                    Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
-                        .foregroundStyle(.sage)
-                        .frame(width: 30)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Enable iCloud Sync")
-                            .font(.headline)
-                    }
-                }
-            }
-            .cardBackground()
-            
-            Text("Sync is handled via iCloud. Your data is never collected nor shared.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-
-            Spacer()
-
-            HStack(spacing: 15) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .allocation
-                    }
-                } label: {
-                    Text("Back")
-                        .onboardingButton(
-                            foregroundColor: .primary,
-                            backgroundColor: .cardBackground
-                        )
-                }
-
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .tags
-                    }
-                } label: {
-                    Text("Continue")
-                        .onboardingButton()
-                }
-                .accessibilityIdentifier("onboarding-sync-continue-button")
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
+    private var completePage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Your budget is ready", subtitle: "Here's your monthly breakdown.")
+            budgetCard
         }
     }
 
-    // MARK: - Tags Page
-
-    var tagsPage: some View {
-        VStack(spacing: mainSpacing) {
-            Spacer()
-
-            VStack(spacing: titleSubtitleSpacing) {
-                Text("How about some tags?")
-                    .font(.largeTitle.bold())
-                    .fontDesign(.rounded)
-
-                Text("Tags help you categorize expenses further. Pick the ones you'd like to start with. You can always add or remove them later.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
+    private var allocationBar: some View {
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                categoryColors.needs.frame(width: geometry.size.width * needsPercent / 100)
+                categoryColors.wants.frame(width: geometry.size.width * wantsPercent / 100)
+                categoryColors.savings.frame(width: geometry.size.width * savingsPercent / 100)
             }
-
-            HStack {
-                Button("Select All") {
-                    selectedTagNames = Set(tagTemplates.map(\.name))
-                }
-                .font(.subheadline)
-                .foregroundStyle(.sage)
-
-                Spacer()
-
-                Button("Select None") {
-                    selectedTagNames = []
-                }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 40)
-
-            TagFlowGrid(tags: tagTemplates, selectedTagNames: $selectedTagNames)
-                .padding(.horizontal, 24)
-
-            Spacer()
-
-            HStack(spacing: 15) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .sync
-                    }
-                } label: {
-                    Text("Back")
-                        .onboardingButton(
-                            foregroundColor: .primary,
-                            backgroundColor: .cardBackground
-                        )
-                }
-
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .complete
-                    }
-                } label: {
-                    Text("Continue")
-                        .onboardingButton()
-                }
-                .accessibilityIdentifier("onboarding-tags-continue-button")
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
         }
+        .frame(height: 10)
+        .clipShape(.capsule)
+        .accessibilityHidden(true)
     }
 
-    // MARK: - Complete Page
-
-    var completePage: some View {
-        VStack(spacing: 30) {
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(Color.green)
-                .accessibilityHidden(true)
-
-            VStack(spacing: 12) {
-                Text("You're All Set!")
-                    .font(.largeTitle.bold())
-                    .multilineTextAlignment(.center)
-
-                Text("Here's your budget breakdown")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            VStack(spacing: 15) {
-                BudgetSummaryRow(
-                    title: "Monthly Budget",
-                    amount: monthlyIncome ?? 0,
-                    color: .primary,
-                    isTotal: true
-                )
-
-                Divider()
-                    .padding(.vertical, 5)
-
-                BudgetSummaryRow(
-                    title: "Wants (\(Int(wantsPercent))%)",
-                    amount: (monthlyIncome ?? 0) * (wantsPercent / 100),
-                    color: .want,
-                    icon: "cart.fill"
-                )
-
-                BudgetSummaryRow(
-                    title: "Needs (\(Int(needsPercent))%)",
-                    amount: (monthlyIncome ?? 0) * (needsPercent / 100),
-                    color: .need,
-                    icon: "house.fill"
-                )
-
-                BudgetSummaryRow(
-                    title: "Savings (\(Int(savingsPercent))%)",
-                    amount: (monthlyIncome ?? 0) * (savingsPercent / 100),
-                    color: .teal,
-                    icon: "banknote.fill"
-                )
-            }
-            .padding(25)
-            .background(.cardBackground)
-            .cornerRadius(20)
-            .padding(.horizontal, 40)
-
-            Spacer()
-
-            HStack(spacing: 15) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8)) {
-                        currentStep = .tags
-                    }
-                } label: {
-                    Text("Back")
-                        .onboardingButton(
-                            foregroundColor: .primary,
-                            backgroundColor: .cardBackground
-                        )
-                }
-
-                Button {
-                    completeOnboarding()
-                } label: {
-                    Text("Start Tracking")
-                        .onboardingButton()
-                }
-                .accessibilityIdentifier("onboarding-start-tracking-button")
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
+    private var budgetCard: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(income, format: .currency(code: currencyCode).precision(.fractionLength(0)))
+                .font(.largeTitle.bold())
+                .monospacedDigit()
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("onboarding-plan-total")
+            allocationBar
+            BudgetSummaryRow(title: "Needs", amount: income * needsPercent / 100, color: categoryColors.needs, icon: "house.fill")
+            BudgetSummaryRow(title: "Wants", amount: income * wantsPercent / 100, color: categoryColors.wants, icon: "cart.fill")
+            BudgetSummaryRow(title: "Savings", amount: income * savingsPercent / 100, color: categoryColors.savings, icon: "banknote.fill")
         }
+        .padding(24)
+        .background(Color.cardBackground, in: .rect(cornerRadius: 24))
     }
 
-    // MARK: - Helper Functions
+    private func move(to step: OnboardingStep) {
+        incomeFocused = false
+        headingFocused = false
+        currentStep = step
+    }
 
-    func completeOnboarding() {
-        // Insert only the tags the user selected.
+    private func completeOnboarding() {
         for tag in tagTemplates where selectedTagNames.contains(tag.name) {
             modelContext.insert(tag)
         }
@@ -529,16 +354,13 @@ struct OnboardingView: View {
             return
         }
 
-        config.totalMonthlyIncome = Int(monthlyIncome ?? 0)
+        config.totalMonthlyIncome = monthlyIncome ?? 0
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
         config.savingsPercent = savingsPercent / 100
         config.isCloudSyncEnabled = cloudSyncEnabled
         config.markSetupComplete()
-
-        // Fresh install — the current release's highlights are all new to this user already.
         WhatsNewStore.markCurrentVersionSeen()
-
         WidgetCenter.shared.reloadAllTimelines()
 
         withAnimation(reduceMotion ? nil : .default) {
@@ -546,59 +368,76 @@ struct OnboardingView: View {
             onCompletion?()
         }
     }
-
 }
 
-// MARK: - Supporting Views
+private struct OnboardingSurface: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    func body(content: Content) -> some View {
+        if reduceTransparency {
+            content
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.cardBackground, in: .rect(cornerRadius: 24))
+        } else {
+            content
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+        }
+    }
+}
 
 struct TagFlowGrid: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     let tags: [ExpenseTag]
     @Binding var selectedTagNames: Set<String>
 
     var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(tags, id: \.name) { tag in
-                tagChip(tag)
+        VStack(spacing: 12) {
+            ForEach(Array(stride(from: 0, to: tags.count, by: 2)), id: \.self) { index in
+                HStack(spacing: 12) {
+                    tagButton(tags[index])
+                    if index + 1 < tags.count {
+                        tagButton(tags[index + 1])
+                    }
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    @ViewBuilder
-    private func tagChip(_ tag: ExpenseTag) -> some View {
+    private func tagButton(_ tag: ExpenseTag) -> some View {
         let isSelected = selectedTagNames.contains(tag.name)
-        Button {
+        return Button {
             if isSelected {
                 selectedTagNames.remove(tag.name)
             } else {
                 selectedTagNames.insert(tag.name)
             }
         } label: {
-            HStack(spacing: 6) {
-                TagGlyphView(tag: tag)
-                    .font(.subheadline)
+            HStack(spacing: 8) {
+                Image(systemName: tag.symbolName ?? "tag")
+                    .accessibilityHidden(true)
                 Text(tag.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.subheadline.weight(.medium))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+                    .accessibilityHidden(true)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(isSelected ? Color(tag.uiColor).opacity(0.15) : Color(.cardBackground).opacity(0.5))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(isSelected ? Color(tag.uiColor) : Color.secondary.opacity(0.3), lineWidth: 1.5)
-                    )
-            )
-            .foregroundStyle(isSelected ? Color(tag.uiColor) : .primary)
+            .foregroundStyle(.primary)
+            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+            .background(isSelected ? Color.sage.opacity(0.2) : Color.cardBackground, in: .rect(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(isSelected ? Color.sage : Color.primary.opacity(0.08), lineWidth: 1)
+            }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("onboarding-tag-\(tag.name)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
-        .animation(reduceMotion ? nil : .spring(duration: 0.2), value: isSelected)
     }
 }
 
@@ -628,79 +467,47 @@ struct FeatureRow: View {
     }
 }
 
-struct BudgetSummaryRow: View {
-    let title: String
+private struct BudgetSummaryRow: View {
+    let title: LocalizedStringKey
     let amount: Double
     let color: Color
-    var icon: String? = nil
-    var isTotal: Bool = false
+    let icon: String
 
     var body: some View {
-        HStack {
-            if let icon = icon {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                Label(title, systemImage: icon)
+                Spacer(minLength: 12)
+                Text(amount.currencyString)
+                    .fontWeight(.semibold)
+                    .fixedSize()
             }
-
-            Text(title)
-                .font(isTotal ? .title3 : .body)
-                .fontWeight(isTotal ? .bold : .regular)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-
-            Spacer()
-
-            Text(amount.currencyString)
-                .font(isTotal ? .title2 : .body)
-                .fontWeight(isTotal ? .bold : .semibold)
-                .foregroundStyle(color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+            VStack(alignment: .leading, spacing: 8) {
+                Label(title, systemImage: icon)
+                Text(amount.currencyString)
+                    .fontWeight(.semibold)
+            }
         }
+        .font(.body)
+        .monospacedDigit()
+        .textSelection(.enabled)
+        .labelStyle(OnboardingCategoryLabelStyle(color: color))
         .accessibilityElement(children: .combine)
     }
 }
 
-struct OnboardingButtonModifier: ViewModifier {
-    let foregroundColor: Color
-    let backgroundColor: Color
+private struct OnboardingCategoryLabelStyle: LabelStyle {
+    let color: Color
 
-    func body(content: Content) -> some View {
-        content
-            .font(.headline)
-            .foregroundColor(foregroundColor)
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(backgroundColor)
-            .cornerRadius(15)
-    }
-}
-
-struct CardBackgroundModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .padding()
-            .background(.cardBackground)
-            .cornerRadius(15)
-            .padding(.horizontal, 40)
-    }
-}
-
-extension View {
-    func onboardingButton(
-        foregroundColor: Color = .white,
-        backgroundColor: Color = .sage
-    ) -> some View {
-        modifier(
-            OnboardingButtonModifier(
-                foregroundColor: foregroundColor,
-                backgroundColor: backgroundColor
-            )
-        )
-    }
-    
-    func cardBackground() -> some View {
-        modifier(CardBackgroundModifier())
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 12) {
+            configuration.icon
+                .font(.subheadline)
+                .foregroundStyle(color)
+                .frame(width: 32, height: 32)
+                .background(color.opacity(0.12), in: .rect(cornerRadius: 8))
+            configuration.title
+        }
     }
 }
 
