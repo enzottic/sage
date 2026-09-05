@@ -29,6 +29,32 @@ final public class ExpenseStore {
         context.insert(expense)
     }
 
+    func addExpenseAndSave(
+        _ expense: Expense,
+        tagID: UUID?,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws -> ExpenseEntity {
+        // Shortcut writes must not save or roll back pending edits in the app's context.
+        let writeContext = ModelContext(modelContainer)
+        writeContext.autosaveEnabled = false
+        do {
+            if let tagID {
+                let descriptor = FetchDescriptor<ExpenseTag>(
+                    predicate: #Predicate { $0.id == tagID }
+                )
+                if let tag = try writeContext.fetch(descriptor).first {
+                    expense.tags = [tag]
+                }
+            }
+            writeContext.insert(expense)
+            try save(writeContext)
+            return expense.entity
+        } catch {
+            writeContext.rollback()
+            throw error
+        }
+    }
+
     // MARK: - Read
 
     /// Returns all expenses for a given month, if provided. If not, fetches all expenses

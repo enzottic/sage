@@ -1,6 +1,8 @@
 import AppIntents
 import Foundation
+import SwiftData
 import Testing
+import UIKit
 @testable import SageKit
 
 @Suite("Add expense shortcut", .serialized)
@@ -37,6 +39,25 @@ struct AddExpenseIntentTests {
         _ = try await intent.perform()
 
         #expect(try store.fetchExpenses().first?.category == .wants)
+    }
+
+    @Test @MainActor
+    func savesSelectedTag() async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        let tag = ExpenseTag(name: "Dining", uiColor: .systemBlue, emoji: "")
+        store.context.insert(tag)
+        try store.save()
+        let intent = AddExpenseAppIntent()
+        intent.expenseStore = store
+        intent.name = "Coffee"
+        intent.amount = 4
+        intent.tag = tag.entity
+
+        _ = try await intent.perform()
+
+        let expense = try #require(store.fetchExpenses().first)
+        #expect(expense.tags?.map(\.id) == [tag.id])
     }
 
     @Test @MainActor

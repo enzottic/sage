@@ -50,12 +50,7 @@ public struct AddExpenseAppIntent: AppIntent {
             date: date ?? .now
         )
         
-        if let tagEntity = tag, let resolved = try? expenseStore.fetchTag(id: tagEntity.id) {
-            expense.tags = [resolved]
-        }
-        
-        expenseStore.addExpense(expense)
-        try expenseStore.save()
-        return .result(value: expense.entity)
+        let entity = try expenseStore.addExpenseAndSave(expense, tagID: tag?.id)
+        return .result(value: entity)
     }
 }
