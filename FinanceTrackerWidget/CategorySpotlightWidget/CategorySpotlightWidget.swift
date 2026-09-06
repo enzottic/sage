@@ -13,7 +13,12 @@ struct CategorySpotlightEntryView: View {
     @Environment(\.categoryColors) private var categoryColors
     let entry: CategorySpotlightEntry
 
-    var isOverBudget: Bool { entry.utilization > 1 }
+    var isOverBudget: Bool { entry.spent > entry.budget }
+    var budgetStatus: String {
+        if isOverBudget { return "\(entry.currencyString(entry.spent - entry.budget)) over budget" }
+        if entry.budget <= 0 { return "No budget" }
+        return "\(entry.currencyString(entry.remaining)) left"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -23,41 +28,51 @@ struct CategorySpotlightEntryView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(entry.category.color(in: categoryColors))
                 Spacer()
-                Text(entry.utilization, format: .percent.precision(.fractionLength(0)))
+                Text(entry.budget > 0 ? entry.utilization.formatted(.percent.precision(.fractionLength(0))) : "No budget")
                     .font(.caption2)
                     .foregroundStyle(isOverBudget ? .red : .secondary)
             }
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
 
-            Text(entry.spent.currencyString)
+            Text(entry.currencyString(entry.spent))
                 .font(.title2)
                 .fontWeight(.black)
+                .foregroundStyle(isOverBudget ? .red : .primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
             Spacer()
 
-            VStack(spacing: 3) {
-                ProgressView(value: min(entry.utilization, 1), total: 1)
-                    .overlay(
-                        LinearGradient(colors: [entry.category.color(in: categoryColors)], startPoint: .leading, endPoint: .trailing)
-                            .mask(ProgressView(value: min(entry.utilization, 1), total: 1))
-                    )
-                HStack {
-                    Text("of \(entry.budget.currencyString)")
+            VStack(alignment: .leading, spacing: 6) {
+                ProgressView(value: min(max(entry.utilization, 0), 1), total: 1)
+                    .tint(isOverBudget ? .red : entry.category.color(in: categoryColors))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("of \(entry.currencyString(entry.budget))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Spacer()
                     Group {
                         if isOverBudget {
                             Text("over budget")
                                 .foregroundStyle(.red)
+                        } else if entry.budget <= 0 {
+                            Text("No budget")
+                                .foregroundStyle(.secondary)
                         } else {
-                            Text("\(entry.remaining.currencyString) left")
+                            Text("\(entry.currencyString(entry.remaining)) left")
                                 .foregroundStyle(.secondary)
                         }
                     }
                     .font(.caption2)
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(entry.category.rawValue)
+        .accessibilityValue("\(entry.currencyString(entry.spent)) spent, budget \(entry.currencyString(entry.budget)), \(budgetStatus)")
     }
 }
 
@@ -66,9 +81,32 @@ struct CategorySpotlightWidget: Widget {
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: CategorySpotlightAppIntent.self, provider: CategorySpotlightProvider()) { entry in
-            CategorySpotlightEntryView(entry: entry)
-                .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("WidgetBackground"), for: .widget)
+            Group {
+                if entry.isUnavailable {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .accessibilityHidden(true)
+                        Text("Spending unavailable")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to reload your data.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if entry.currencyCode == nil {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Confirm currency")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to confirm your currency.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    CategorySpotlightEntryView(entry: entry)
+                }
+            }
+            .fontDesign(.rounded)
+            .environment(\.categoryColors, CategoryColors.load())
+            .containerBackground(.sageBackground, for: .widget)
         }
         .configurationDisplayName("Category Spotlight")
         .description(Text("Track spending for a specific budget category"))

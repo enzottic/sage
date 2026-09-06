@@ -27,16 +27,16 @@ struct MonthlySummaryEntryView: View {
         }
     }
 
-    // MARK: - Small: remaining + compact category bars
+    // MARK: - Small: spending + compact category bars
 
     var smallBody: some View {
         VStack(alignment: .leading, spacing: 5) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(Date.now.formatted(.dateTime.month(.wide).year()))
+                Text(entry.date.formatted(.dateTime.month(.wide).year()))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline) {
-                    Text(abs(entry.totalSpent).currencyString)
+                    Text(entry.currencyString(entry.totalSpent))
                         .font(.title3)
                         .fontWeight(.black)
                         .foregroundStyle(isOverBudget ? .red : .primary)
@@ -44,6 +44,7 @@ struct MonthlySummaryEntryView: View {
                         .lineLimit(1)
                     Text("spent")
                         .font(.caption)
+                        .fixedSize()
                 }
             }
 
@@ -59,6 +60,7 @@ struct MonthlySummaryEntryView: View {
 
     func compactCategoryRow(name: String, spent: Double, budget: Double, color: Color) -> some View {
         let utilization = budget > 0 ? spent / budget : 0
+        let isOverBudget = spent > budget
         return VStack(spacing: 3) {
             HStack {
                 Circle()
@@ -68,23 +70,29 @@ struct MonthlySummaryEntryView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(utilization, format: .percent.precision(.fractionLength(0)))
+                Text(budget > 0 ? utilization.formatted(.percent.precision(.fractionLength(0))) : (isOverBudget ? "Over budget" : "No budget"))
                     .font(.caption2)
                     .fontWeight(.medium)
-                    .foregroundStyle(utilization > 1 ? .red : .primary)
+                    .foregroundStyle(isOverBudget ? .red : .primary)
             }
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(color.opacity(0.15))
                         .frame(height: 4)
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(color)
-                        .frame(width: geo.size.width * min(utilization, 1), height: 4)
+                        .fill(isOverBudget ? .red : color)
+                        .frame(width: geo.size.width * min(max(utilization, 0), 1), height: 4)
                 }
             }
             .frame(height: 4)
+            .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityValue(categoryAccessibilityValue(spent: spent, budget: budget))
     }
 
     // MARK: - Medium/Large: header + full category rows
@@ -93,16 +101,19 @@ struct MonthlySummaryEntryView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(Date.now.formatted(.dateTime.month(.wide).year()))
+                    Text(entry.date.formatted(.dateTime.month(.wide).year()))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(entry.totalSpent.currencyString)
+                        Text(entry.currencyString(entry.totalSpent))
                             .font(.title2)
                             .fontWeight(.black)
+                            .foregroundStyle(isOverBudget ? .red : .primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                         Text("spent")
+                            .fixedSize()
                     }
-                    .fontDesign(.rounded)
                 }
                 Spacer()
             }
@@ -118,16 +129,19 @@ struct MonthlySummaryEntryView: View {
     var largeBody: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(Date.now.formatted(.dateTime.month(.wide).year()))
+                Text(entry.date.formatted(.dateTime.month(.wide).year()))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(entry.totalSpent.currencyString)
+                    Text(entry.currencyString(entry.totalSpent))
                         .font(.title)
                         .fontWeight(.black)
+                        .foregroundStyle(isOverBudget ? .red : .primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     Text("spent")
+                        .fixedSize()
                 }
-                .fontDesign(.rounded)
             }
             
             Spacer()
@@ -152,11 +166,16 @@ struct MonthlySummaryEntryView: View {
                         Text(expense.name)
                             .font(.caption)
                             .lineLimit(1)
+                            .layoutPriority(-1)
                         Spacer()
-                        Text(expense.amount.currencyString)
+                        Text(entry.currencyString(expense.amount))
                             .font(.caption)
                             .fontWeight(.medium)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(expense.name), \(entry.currencyString(expense.amount)), \(expense.category.rawValue), \(expense.date.formatted(date: .abbreviated, time: .omitted))")
                 }
 
             }
@@ -165,25 +184,43 @@ struct MonthlySummaryEntryView: View {
 
     func fullCategoryRow(name: String, spent: Double, budget: Double, color: Color) -> some View {
         let utilization = budget > 0 ? spent / budget : 0
+        let isOverBudget = spent > budget
         return VStack(spacing: 4) {
             HStack {
-                Text(name)
+                Text(isOverBudget ? "\(name) (over)" : name)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isOverBudget ? .red : .secondary)
+                    .layoutPriority(-1)
                 Spacer()
-                Text(spent.currencyString)
+                Text(entry.currencyString(spent))
                     .font(.caption)
                     .fontWeight(.medium)
-                Text("/ \(budget.currencyString)")
+                    .foregroundStyle(isOverBudget ? .red : .primary)
+                Text(budget > 0 ? "/ \(entry.currencyString(budget))" : "No budget")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            ProgressView(value: min(utilization, 1), total: 1)
-                .overlay(
-                    LinearGradient(colors: [color], startPoint: .leading, endPoint: .trailing)
-                        .mask(ProgressView(value: min(utilization, 1), total: 1))
-                )
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            ProgressView(value: min(max(utilization, 0), 1), total: 1)
+                .tint(isOverBudget ? .red : color)
+                .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityValue(categoryAccessibilityValue(spent: spent, budget: budget))
+    }
+
+    func categoryAccessibilityValue(spent: Double, budget: Double) -> String {
+        let status: String
+        if spent > budget {
+            status = "\(entry.currencyString(spent - budget)) over budget"
+        } else if budget <= 0 {
+            status = "No budget"
+        } else {
+            status = "\(entry.currencyString(budget - spent)) left"
+        }
+        return "\(entry.currencyString(spent)) spent, budget \(entry.currencyString(budget)), \(status)"
     }
 }
 
@@ -192,9 +229,32 @@ struct MonthlySummaryWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthlySummaryProvider()) { entry in
-            MonthlySummaryEntryView(entry: entry)
-                .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("WidgetBackground"), for: .widget)
+            Group {
+                if entry.isUnavailable {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .accessibilityHidden(true)
+                        Text("Spending unavailable")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to reload your data.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if entry.currencyCode == nil {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Confirm currency")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to confirm your currency.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    MonthlySummaryEntryView(entry: entry)
+                }
+            }
+            .fontDesign(.rounded)
+            .environment(\.categoryColors, CategoryColors.load())
+            .containerBackground(.sageBackground, for: .widget)
         }
         .configurationDisplayName("Monthly Summary")
         .description(Text("View spending across all budget categories"))

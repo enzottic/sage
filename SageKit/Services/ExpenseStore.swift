@@ -68,7 +68,7 @@ final public class ExpenseStore {
             let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
             let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
             descriptor.predicate = #Predicate { expense in
-                startOfMonth <= expense.date && expense.date <= endOfMonth
+                startOfMonth <= expense.date && expense.date < endOfMonth
             }
         }
         
@@ -85,7 +85,7 @@ final public class ExpenseStore {
 
     public func fetchRecentExpenses(limit: Int = 10) throws -> [Expense] {
         var descriptor = FetchDescriptor<Expense>(
-            sortBy: [SortDescriptor(\.date)]
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         descriptor.fetchLimit = limit
         

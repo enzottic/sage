@@ -15,7 +15,7 @@ struct RecentExpensesEntryView: View {
 
     let entry: RecentExpensesEntry
 
-    var displayCount: Int { family == .systemSmall ? 3 : 5 }
+    var displayCount: Int { family == .systemSmall ? 2 : 5 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -39,15 +39,30 @@ struct RecentExpensesEntryView: View {
                         Text(expense.name)
                             .font(.caption)
                             .lineLimit(1)
-                        Spacer()
-                        Text(expense.amount.currencyString)
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .layoutPriority(-1)
+                        if family != .systemSmall {
+                            Spacer()
+                            Text(entry.currencyString(expense.amount))
+                                .font(.caption.weight(.medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(expense.name), \(entry.currencyString(expense.amount)), \(expense.category.rawValue), \(expense.date.formatted(date: .abbreviated, time: .omitted))")
+                    if family == .systemSmall {
+                        Text(entry.currencyString(expense.amount))
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .padding(.leading, 14)
+                            .accessibilityHidden(true)
                     }
                 }
             }
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
@@ -56,9 +71,32 @@ struct RecentExpensesWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: RecentExpensesProvider()) { entry in
-            RecentExpensesEntryView(entry: entry)
-                .environment(\.categoryColors, CategoryColors.load())
-                .containerBackground(Color("WidgetBackground"), for: .widget)
+            Group {
+                if entry.isUnavailable {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .accessibilityHidden(true)
+                        Text("Spending unavailable")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to reload your data.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if entry.currencyCode == nil {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Confirm currency")
+                            .font(.caption.weight(.semibold))
+                        Text("Open Sage to confirm your currency.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    RecentExpensesEntryView(entry: entry)
+                }
+            }
+            .fontDesign(.rounded)
+            .environment(\.categoryColors, CategoryColors.load())
+            .containerBackground(.sageBackground, for: .widget)
         }
         .configurationDisplayName("Recent Expenses")
         .description(Text("View your most recent expenses"))

@@ -73,6 +73,55 @@ struct ExpenseStoreTests {
     }
 
     @Test @MainActor
+    func monthlyFetchAndSnapshotUseHalfOpenMonthInterval() throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        let calendar = Calendar.current
+        let month = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 15)))
+        let interval = try #require(calendar.dateInterval(of: .month, for: month))
+        let beforeMonth = Expense(name: "Before month", amount: 100, category: .needs, date: interval.start.addingTimeInterval(-1))
+        let atStart = Expense(name: "Month start", amount: 10, category: .needs, date: interval.start)
+        let middle = Expense(name: "Midmonth", amount: 20, category: .wants, date: month)
+        let beforeEnd = Expense(name: "Month end", amount: 30, category: .savings, date: interval.end.addingTimeInterval(-1))
+        let atEnd = Expense(name: "Next month start", amount: 200, category: .wants, date: interval.end)
+        for expense in [middle, atEnd, beforeMonth, atStart, beforeEnd] {
+            store.addExpense(expense)
+        }
+        try store.save()
+
+        let expenses = try store.fetchExpenses(for: month)
+        #expect(expenses.map(\.id) == [beforeEnd.id, middle.id, atStart.id])
+        #expect(try store.fetchExpenses(for: interval.end).map(\.id) == [atEnd.id])
+
+        let snapshot = try store.monthlySnapshot(for: month)
+        #expect(snapshot.totalSpent == 60)
+        #expect(snapshot.needsSpent == 10)
+        #expect(snapshot.wantsSpent == 20)
+        #expect(snapshot.savingsSpent == 30)
+        #expect(snapshot.recentExpenses.map(\.id) == [beforeEnd.id, middle.id, atStart.id])
+    }
+
+    @Test @MainActor
+    func recentExpensesSelectNewestAcrossMonthsBeforeApplyingLimit() throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        let calendar = Calendar.current
+        let month = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 15)))
+        let boundary = try #require(calendar.dateInterval(of: .month, for: month)).end
+        let oldest = Expense(name: "Oldest", amount: 1, date: month)
+        let previousMonth = Expense(name: "Previous month", amount: 2, date: boundary.addingTimeInterval(-1))
+        let atBoundary = Expense(name: "Month start", amount: 3, date: boundary)
+        let newest = Expense(name: "Newest", amount: 4, date: boundary.addingTimeInterval(1))
+        for expense in [previousMonth, newest, oldest, atBoundary] {
+            store.addExpense(expense)
+        }
+        try store.save()
+
+        let expenses = try store.fetchRecentExpenses(limit: 3)
+        #expect(expenses.map(\.id) == [newest.id, atBoundary.id, previousMonth.id])
+    }
+
+    @Test @MainActor
     func deleteRemovesSavedExpense() throws {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)

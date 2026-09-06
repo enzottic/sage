@@ -11,10 +11,8 @@ import SwiftUI
 @main
 struct SageWidgetBundle: WidgetBundle {
     var body: some Widget {
-        ExpenseUtilizationWidget()
-        ExpensePieChartWidget()
+        DailyChartWidget()
         RecentExpensesWidget()
-        BudgetRemainingWidget()
         CategorySpotlightWidget()
         MonthlySummaryWidget()
     }
