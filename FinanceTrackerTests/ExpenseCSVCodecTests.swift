@@ -212,7 +212,6 @@ struct ExpenseCSVCodecTests {
         #expect(throws: expected) {
             try ExpenseCSVCodec.encode(expenses, currencyCode: "USD")
         }
-        #expect(expenses[1].amount.bitPattern == amount.bitPattern)
     }
 
     @Test

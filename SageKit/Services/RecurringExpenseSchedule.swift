@@ -63,12 +63,18 @@ public struct RecurringExpenseSchedule {
         let time = calendar.dateComponents([.hour, .minute, .second], from: rule.startDate)
         // Preserve smaller components only on the intended day (New York 02:30 -> 03:30).
         // Otherwise use the next valid time (Lord Howe 02:15 -> 02:30), never another day.
-        // Overlaps use the first time under either policy.
+        // Foundation can skip partial-hour gaps under both policies when minutes are
+        // specified; matching just the hour finds its first valid time on that day.
+        // Overlaps use the first time under every attempt.
         var resolvedTime: Date?
-        for policy in [Calendar.MatchingPolicy.nextTimePreservingSmallerComponents, .nextTime] {
+        for (components, policy) in [
+            (time, Calendar.MatchingPolicy.nextTimePreservingSmallerComponents),
+            (time, .nextTime),
+            (DateComponents(hour: time.hour), .nextTime)
+        ] {
             if let candidate = calendar.nextDate(
                 after: calendar.startOfDay(for: targetDay).addingTimeInterval(-1),
-                matching: time,
+                matching: components,
                 matchingPolicy: policy,
                 repeatedTimePolicy: .first
             ), calendar.isDate(candidate, inSameDayAs: targetDay) {

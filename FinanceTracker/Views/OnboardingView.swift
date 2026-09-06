@@ -308,7 +308,9 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .modifier(OnboardingSurface())
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.cardBackground, in: .rect(cornerRadius: 24))
         }
     }
 
@@ -417,24 +419,6 @@ struct OnboardingView: View {
         withAnimation(reduceMotion ? nil : .default) {
             hasOpenedAppOnce = true
             onCompletion?()
-        }
-    }
-}
-
-private struct OnboardingSurface: ViewModifier {
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    func body(content: Content) -> some View {
-        if reduceTransparency {
-            content
-                .padding(24)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.cardBackground, in: .rect(cornerRadius: 24))
-        } else {
-            content
-                .padding(24)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .glassEffect(.regular, in: .rect(cornerRadius: 24))
         }
     }
 }

@@ -186,7 +186,7 @@ final public class ExpenseStore {
             needsBudget: budget(for: .needs),
             wantsBudget: budget(for: .wants),
             savingsBudget: budget(for: .savings),
-            recentExpenses: Array(recentExpenses)
+            recentExpenses: recentExpenses
         )
     }
 

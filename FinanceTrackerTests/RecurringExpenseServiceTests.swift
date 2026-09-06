@@ -385,19 +385,36 @@ struct RecurringExpenseServiceTests {
     func cancelledConversionRollsBackOnlyUnsavedScheduleChanges() throws {
         let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
+        context.autosaveEnabled = false
         let start = Date(timeIntervalSince1970: 1_786_368_000)
         let rule = RecurringExpenseRule(name: "Legacy", amount: 1, note: "", category: .needs, frequency: .monthly, startDate: start, lastGeneratedDate: start, recurrenceTimeZoneIdentifier: nil)
         let expense = Expense(name: "Legacy", amount: 1, date: start, recurringExpenseId: rule.id)
         context.insert(rule)
         context.insert(expense)
         try context.save()
+        #expect(!context.hasChanges)
         rule.enableFixedSchedule(in: utcCalendar().timeZone, after: start, existingExpenses: [expense])
+        #expect(context.hasChanges)
+        #expect(rule.recurrenceTimeZoneIdentifier == "GMT")
+        #expect(rule.recurrenceEffectiveDate == start)
         context.rollback()
+        #expect(!context.hasChanges)
+
+        // SwiftData refreshes cached model values on fetch after rollback.
+        let fetched = try #require(context.fetch(FetchDescriptor<RecurringExpenseRule>()).first)
+        #expect(fetched === rule)
         #expect(rule.recurrenceTimeZoneIdentifier == nil)
         #expect(rule.recurrenceEffectiveDate == nil)
         #expect(rule.lastGeneratedDate == start)
         #expect(expense.recurringOccurrenceKey == nil)
         #expect(try context.fetch(FetchDescriptor<Expense>()).count == 1)
+
+        try context.save()
+        let verificationContext = ModelContext(container)
+        let persisted = try #require(verificationContext.fetch(FetchDescriptor<RecurringExpenseRule>()).first)
+        #expect(persisted.recurrenceTimeZoneIdentifier == nil)
+        #expect(persisted.recurrenceEffectiveDate == nil)
+        #expect(persisted.lastGeneratedDate == start)
     }
 
     @Test @MainActor

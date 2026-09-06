@@ -17,7 +17,7 @@ struct ToastPill: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .optionalGlassEffect(in: .capsule)
+        .glassEffect(.regular, in: .capsule)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(accessibilityPrefix): \(toast.message)")
     }

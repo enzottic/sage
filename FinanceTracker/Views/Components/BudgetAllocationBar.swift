@@ -69,8 +69,11 @@ struct BudgetAllocationBar: View {
 
     private func divider(first: Bool, width: CGFloat) -> some View {
         let boundary = first ? needsPercent : secondBoundary
+        // Keep the full grab targets inside the bar, including at 0% and 100%.
+        let firstX = min(max(width * needsPercent / 100, 22), width - 22)
+        let secondX = min(max(width * secondBoundary / 100, 22), width - 22)
         // Separate the grab targets when Wants is narrow or zero so both remain reachable.
-        let crowded = width * wantsPercent / 100 < 44
+        let crowded = secondX - firstX < 44
         let targetHeight = crowded ? barHeight / 2 : barHeight
         let y = crowded ? barHeight * (first ? 0.25 : 0.75) : barHeight / 2
 
@@ -117,7 +120,7 @@ struct BudgetAllocationBar: View {
                     }
                 }
                 .accessibilityIdentifier(first ? "onboarding-needs-divider" : "onboarding-savings-divider")
-                .position(x: width * boundary / 100, y: y)
+                .position(x: first ? firstX : secondX, y: y)
         }
     }
 

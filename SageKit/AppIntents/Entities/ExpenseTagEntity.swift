@@ -35,12 +35,12 @@ public struct ExpenseTagEntityQuery: EntityQuery {
         let all = try expenseStore.context.fetch(FetchDescriptor<ExpenseTag>())
         return all
             .filter { identifiers.contains($0.id) }
-            .map { ExpenseTagEntity(id: $0.id, name: $0.name, emoji: $0.emoji, symbolName: $0.symbolName) }
+            .map(\.entity)
     }
 
     public func suggestedEntities() async throws -> [ExpenseTagEntity] {
         let all = try expenseStore.context.fetch(FetchDescriptor<ExpenseTag>(sortBy: [SortDescriptor(\.name)]))
-        return all.map { ExpenseTagEntity(id: $0.id, name: $0.name, emoji: $0.emoji, symbolName: $0.symbolName) }
+        return all.map(\.entity)
     }
     
     public nonisolated init() { }

@@ -4,12 +4,10 @@
 //
 import SwiftUI
 import SwiftData
-import UserNotifications
 import SageKit
 
 struct RecurringExpensesSettingsSection: View {
     @Environment(AppRouter.self) var router
-    @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(\.modelContext) private var modelContext
 
     @Query private var rules: [RecurringExpenseRule]
@@ -25,7 +23,6 @@ struct RecurringExpensesSettingsSection: View {
     @State private var ruleToEdit: RecurringExpenseRule? = nil
     @State private var ruleToDelete: RecurringExpenseRule? = nil
     @State private var showDeleteConfirmation = false
-    @State private var notificationAuthStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
         List {
@@ -61,14 +58,6 @@ struct RecurringExpensesSettingsSection: View {
             }
         }
         .settingsBackground()
-        .task {
-            notificationAuthStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            Task {
-                notificationAuthStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-            }
-        }
         .sheet(item: $ruleToEdit) { rule in
             EditRecurringRuleSheet(rule: rule)
                 .presentationBackground(.sageBackground)

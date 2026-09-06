@@ -7,10 +7,6 @@ import SwiftUI
 import SageKit
 
 /// Lets the user pick a tag's mark as either an SF Symbol or an emoji.
-///
-/// Both tabs are the same interaction — a searchable grid over the same category sections — so
-/// switching between them doesn't change how picking works. Each tab remembers its own choice
-/// while the sheet is open, and only the active tab's value is committed on dismiss.
 struct TagGlyphPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
 

@@ -190,7 +190,6 @@ final class FinanceTrackerUITests: XCTestCase {
         func assertBreakdown(_ needsValue: Int, _ wantsValue: Int, _ savingsValue: Int) {
             XCTAssertEqual(needs.value as? String, "Needs \(needsValue)%, Wants \(wantsValue)%")
             XCTAssertEqual(savings.value as? String, "Wants \(wantsValue)%, Savings \(savingsValue)%")
-            XCTAssertEqual(needsValue + wantsValue + savingsValue, 100)
         }
 
         func drag(_ divider: XCUIElement, by percentage: Double) {

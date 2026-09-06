@@ -34,10 +34,12 @@ public struct DailySpendingChart: View {
 
     public var body: some View {
         Chart {
-            ForEach(averageDays) { point in
+            ForEach(stableLinePoints(averageDays), id: \.id) { item in
+                let point = item.point
                 LineMark(x: .value("Day", point.day), y: .value("Spent", point.total), series: .value("Series", "Average"))
                     .foregroundStyle(Color.secondary.opacity(0.65))
                     .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                    .accessibilityHidden(item.id >= averageDays.count)
             }
             ForEach(series) { line in
                 spendingLine(line)
@@ -67,17 +69,28 @@ public struct DailySpendingChart: View {
 
     @ChartContentBuilder
     private func spendingLine(_ line: SpendingChartSeries) -> some ChartContent {
-        ForEach(line.points) { point in
+        ForEach(stableLinePoints(line.points), id: \.id) { item in
+            let point = item.point
             LineMark(x: .value("Day", point.day), y: .value("Spent", point.total), series: .value("Series", line.id))
                 .foregroundStyle(line.color)
                 .lineStyle(StrokeStyle(lineWidth: line.category == nil ? 3 : 2))
                 .accessibilityLabel("\(line.id), day \(point.day)")
                 .accessibilityValue(currencyLabel(point.total))
+                .accessibilityHidden(item.id >= line.points.count)
         }
         if let point = line.points.first(where: { $0.day == selectedDay }) ?? line.points.last {
             PointMark(x: .value("Day", point.day), y: .value("Spent", point.total))
                 .foregroundStyle(line.color)
                 .symbolSize(selectedDay == nil ? 25 : 65)
+        }
+    }
+
+    private func stableLinePoints(_ points: [SpendingMonthSummary.Point]) -> [(id: Int, point: SpendingMonthSummary.Point)] {
+        guard let last = points.last else { return [] }
+        // Keep all 31 marks alive across months; unused marks collapse onto the endpoint.
+        // Removing marks instead leaves the old line visible during Charts' removal transition.
+        return (0..<31).map { index in
+            (id: index, point: index < points.count ? points[index] : last)
         }
     }
 

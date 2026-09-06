@@ -37,17 +37,11 @@ struct SageToolbar: ToolbarContent {
         Button {
             onAdd()
         } label: {
-            addLabel
+            Image(systemName: "plus")
         }
         .accessibilityLabel("Add Expense")
         .accessibilityIdentifier("add-expense-button")
         .tint(.sage)
         .buttonStyle(.borderedProminent)
-    }
-
-    private var addLabel: some View {
-        Image(systemName: "plus")
-//            .font(.title3.weight(.semibold))
-//            .foregroundStyle(.white)
     }
 }

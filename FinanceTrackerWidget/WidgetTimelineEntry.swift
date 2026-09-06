@@ -28,7 +28,6 @@ struct RecentExpensesEntry: WidgetCurrencyEntry {
     var isUnavailable = false
     var currencyCode: String? = LedgerCurrency.currentCode
 
-    static let placeholder = RecentExpensesEntry(date: .now, expenses: [])
     static let preview = RecentExpensesEntry(date: .now, expenses: [
         ExpenseSnapshot(id: UUID(), name: "Groceries", amount: 87.43, category: .needs, date: .now),
         ExpenseSnapshot(id: UUID(), name: "Netflix", amount: 15.99, category: .wants, date: .now),
@@ -48,10 +47,6 @@ struct CategorySpotlightEntry: WidgetCurrencyEntry {
 
     var utilization: Double { budget > 0 ? spent / budget : 0 }
     var remaining: Double { budget - spent }
-
-    static func placeholder(category: ExpenseCategory) -> CategorySpotlightEntry {
-        CategorySpotlightEntry(date: .now, category: category, spent: 0, budget: 0)
-    }
 
     static func preview(category: ExpenseCategory) -> CategorySpotlightEntry {
         switch category {
@@ -78,13 +73,6 @@ struct MonthlySummaryEntry: WidgetCurrencyEntry {
     var isUnavailable = false
     var currencyCode: String? = LedgerCurrency.currentCode
 
-    static let placeholder = MonthlySummaryEntry(
-        date: .now, totalSpent: 0, totalIncome: 0,
-        wantsSpent: 0, wantsBudget: 0,
-        needsSpent: 0, needsBudget: 0,
-        savingsSpent: 0, savingsBudget: 0,
-        recentExpenses: []
-    )
     static let preview = MonthlySummaryEntry(
         date: .now, totalSpent: 3562.23, totalIncome: 7000,
         wantsSpent: 1045.32, wantsBudget: 2100,

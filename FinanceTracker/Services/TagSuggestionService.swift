@@ -56,7 +56,7 @@ class TagSuggestionService {
         #if canImport(FoundationModels)
         if #available(iOS 26, *) {
             if smartTaggingMode == .ai || smartTaggingMode == .both {
-                if let match = await suggestTagWithAI(trimmed, existingExpenses, tagNames) {
+                if let match = await suggestTagWithAI(trimmed, tagNames) {
                     return (match, .ai)
                 }
             }
@@ -86,7 +86,6 @@ class TagSuggestionService {
     @available(iOS 26, *)
     private func suggestTagWithAI(
         _ expenseName: String,
-        _ existingExpenses: [(name: String, tagName: String?)],
         _ tagNames: [String]
     ) async -> String? {
         let model = SystemLanguageModel.default

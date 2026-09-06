@@ -17,7 +17,9 @@ private struct SpendingPeriodData: Identifiable {
 }
 
 struct StatsView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var allExpenses: [Expense]
     @State private var selectedMonth = Calendar.current.dateInterval(of: .month, for: Date())!.start
     @State private var timeframe: StatsTimeframe = .monthly
@@ -208,6 +210,9 @@ struct StatsView: View {
                                averageDays: isolatedLine == nil ? summary.averageDays : [],
                                daysInMonth: daysInMonth, currencyCode: LedgerCurrency.currentCode,
                                selectedDay: selectedDay)
+                .chartYScale(domain: 0...Double(max(config.totalMonthlyIncome, 1)))
+                .chartPlotStyle { plot in plot.clipped() }
+                .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: selectedMonth)
                 .chartOverlay { proxy in
                     chartInteractionOverlay(summary, proxy: proxy, series: visibleSeries)
                 }
@@ -234,9 +239,22 @@ struct StatsView: View {
                     .accessibilityAddTraits(isolatedLine == line.id ? .isSelected : [])
                     .accessibilityHint(isolatedLine == line.id ? "Show all lines" : "Isolate this line")
                 }
-            }
-            if isolatedLine == nil {
-                chartLegend(summary)
+                if isolatedLine == nil, summary.historicalMonthCount > 0 {
+                    HStack(spacing: 4) {
+                        HStack(spacing: 2) {
+                            Capsule().frame(width: 4, height: 2)
+                            Capsule().frame(width: 4, height: 2)
+                        }
+                        Text("Average")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint("Average cumulative spending by calendar day. Shorter months carry their final total forward.")
+                }
             }
             if summary.expenses.isEmpty {
                 Text("No expenses recorded for this month\(selectedCategory != nil || selectedTag != nil ? " with these filters" : "").")
@@ -399,21 +417,6 @@ struct StatsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("stats-day-details")
-    }
-
-    @ViewBuilder private func chartLegend(_ summary: SpendingMonthSummary) -> some View {
-        if summary.historicalMonthCount > 0 {
-            Label {
-                Text("Average")
-            } icon: {
-                HStack(spacing: 2) {
-                    Capsule().frame(width: 7, height: 2)
-                    Capsule().frame(width: 7, height: 2)
-                }.foregroundStyle(.secondary)
-            }
-            .font(.caption).foregroundStyle(.secondary)
-            .accessibilityHint("Average cumulative spending by calendar day. Shorter months carry their final total forward.")
-        }
     }
 
     private func topTags(_ summary: SpendingMonthSummary) -> some View {

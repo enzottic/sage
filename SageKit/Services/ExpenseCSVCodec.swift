@@ -17,7 +17,7 @@ public struct ExportableExpense: Sendable {
     public let currencyCode: String?
 
     public var tagNames: [String] {
-        tag.split(separator: "|").map(String.init).filter { !$0.isEmpty }
+        tag.split(separator: "|").map(String.init)
     }
 
     public init(name: String, date: Date, amount: Double, category: String, tag: String, note: String, currencyCode: String? = nil) {
