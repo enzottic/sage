@@ -1,94 +1,45 @@
-//
-//  SpendingComparisonCard.swift
-//  FinanceTracker
-//
-//  Created on 3/13/26.
-//
-
 import SwiftUI
 import SageKit
 
+/// Observations about recorded spending, with equal visual weight and no forecasts.
 struct SpendingComparisonCard: View {
-    let currentPartialTotal: Double
-    let previousPartialTotal: Double
-    let projectedTotal: Double
-    var periodBudget: Double? = nil
-    let timeframe: StatsTimeframe
-
-    private var percentageChange: Double {
-        guard previousPartialTotal > 0 else { return 0 }
-        return ((currentPartialTotal - previousPartialTotal) / previousPartialTotal) * 100
-    }
-
-    private var isSpendingMore: Bool { percentageChange > 0 }
+    let summary: SpendingMonthSummary
+    let isCurrentMonth: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if previousPartialTotal > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
-                        .foregroundStyle(isSpendingMore ? .red : .green)
-
-                    Text(abs(percentageChange) / 100, format: .percent.precision(.fractionLength(0)))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(isSpendingMore ? .red : .green)
-
-                    switch timeframe {
-                    case .monthly:
-                        Text(isSpendingMore ? "more than last month" : "less than last month")
-                    case .weekly:
-                        Text(isSpendingMore ? "more than last week" : "less than last week")
-                    }
-                }
-
-                switch timeframe {
-                case .monthly:
-                    Text("So far: \(currentPartialTotal.currencyString) vs \(previousPartialTotal.currencyString) at this point last month")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                case .weekly:
-                    Text("So far: \(currentPartialTotal.currencyString) vs \(previousPartialTotal.currencyString) at this point last week")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Insights").font(.headline)
+            if summary.previousTotal > 0 {
+                let change = (summary.total - summary.previousTotal) / summary.previousTotal
+                let percent = abs(change).formatted(.percent.precision(.fractionLength(0)))
+                let comparison = isCurrentMonth ? "at this point last month" : "the previous month"
+                insight(icon: change == 0 ? "equal" : "arrow.left.arrow.right",
+                        text: change == 0 ? "You spent the same amount as \(comparison)." : "You spent \(percent) \(change > 0 ? "more" : "less") than \(comparison).")
+            } else {
+                insight(icon: "calendar", text: "No spending recorded for the previous comparison period.")
             }
-
-            if projectedTotal > 0 {
-                if previousPartialTotal > 0 {
-                    Divider()
+            if !summary.expenses.isEmpty {
+                let average = summary.total / Double(max(1, summary.days.count))
+                insight(icon: "chart.bar", text: "You spent \(average.currencyString) per day on average\(isCurrentMonth ? " so far" : "").")
+                if let largest = summary.expenses.max(by: { $0.amount < $1.amount }), largest.amount > 0 {
+                    insight(icon: "receipt", text: "Your largest expense was \(largest.name), at \(largest.amount.currencyString).")
                 }
-
-                HStack(spacing: 6) {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .foregroundStyle(.secondary)
-                    switch timeframe {
-                    case .monthly:
-                        Text("On pace to spend \(projectedTotal.currencyString) this month")
-                    case .weekly:
-                        Text("On pace to spend \(projectedTotal.currencyString) this week")
-                    }
-                }
-                .font(.subheadline)
-
-                if let periodBudget {
-                    let difference = projectedTotal - periodBudget
-                    let isOver = difference > 0
-                    HStack(spacing: 6) {
-                        Image(systemName: isOver ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                        if isOver {
-                            Text("\(difference.currencyString) over your \(periodBudget.currencyString) budget")
-                        } else {
-                            Text("\(abs(difference).currencyString) under your \(periodBudget.currencyString) budget")
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(isOver ? .red : .green)
-                }
+            } else {
+                insight(icon: "receipt", text: "Add expenses to see patterns in your spending.")
             }
         }
-        .padding()
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 15).fill(.cardBackground))
+        .background(.cardBackground, in: .rect(cornerRadius: 15))
+    }
+
+    private func insight(icon: String, text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: icon).foregroundStyle(.secondary).frame(width: 20)
+                .accessibilityHidden(true)
+            Text(text).fixedSize(horizontal: false, vertical: true)
+        }
+        .font(.subheadline)
+        .accessibilityElement(children: .combine)
     }
 }
