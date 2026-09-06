@@ -103,9 +103,33 @@ struct StatsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    if let tag = selectedTag, !tag.isDeleted {
+                        Button { selectedTag = nil } label: {
+                            HStack(spacing: 8) {
+                                Text(glyph: tag.glyph, name: tag.name)
+                                    .lineLimit(1)
+                                Image(systemName: "xmark")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(tag.color)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(tag.color.quaternary, in: Capsule())
+                            .overlay { Capsule().strokeBorder(tag.color, lineWidth: 1.5) }
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Filtered by tag: \(tag.name)")
+                        .accessibilityHint("Remove tag filter")
+                        .accessibilityIdentifier("stats-tag-filter-pill")
+                    }
                     monthlyChart(monthSummary)
                     SpendingComparisonCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
-                    topTags(monthSummary)
+                    if selectedTag == nil || selectedTag?.isDeleted == true {
+                        topTags(monthSummary)
+                    }
                     historyChart
                 }
                 .padding()
