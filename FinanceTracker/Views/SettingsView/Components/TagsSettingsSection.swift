@@ -193,7 +193,7 @@ struct TagsSettingsSection: View {
 }
 
 #Preview {
-    @Previewable @State var config = AppConfiguration()
+    @Previewable @State var config = AppConfiguration.preview
     TagsSettingsSection()
         .environment(config)
         .modelContainer(SageModelContainer.preview)

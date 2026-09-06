@@ -122,6 +122,17 @@ struct ExpenseCalendarWidget: View {
 }
 
 #Preview {
-    DashboardView()
-        .environmentInjection()
+    @Previewable @State var container: ModelContainer = {
+        let container = try! SageModelContainer.make(for: .previewEmpty)
+        let monthStart = Calendar.current.dateInterval(of: .month, for: .now)!.start
+        container.mainContext.insert(Expense(name: "Rent", amount: 1400, category: .needs, date: monthStart))
+        container.mainContext.insert(Expense(name: "Groceries", amount: 88.75, category: .needs))
+        try! container.mainContext.save()
+        return container
+    }()
+
+    List {
+        ExpenseCalendarWidget(selectedMonth: .now)
+    }
+    .environmentInjection(container: container)
 }

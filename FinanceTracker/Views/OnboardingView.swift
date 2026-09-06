@@ -567,7 +567,7 @@ struct WelcomeViewPreviews: PreviewProvider {
     static var previews: some View {
         ForEach(OnboardingView.OnboardingStep.allCases, id: \.self) { step in
             OnboardingView(step: step)
-                .environmentInjection()
+                .environmentInjection(empty: true)
                 .previewDisplayName(String(describing: step))
         }
     }

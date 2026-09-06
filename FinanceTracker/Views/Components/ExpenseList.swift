@@ -104,11 +104,21 @@ struct ExpenseList: View {
 }
 
 #Preview {
+    @Previewable @State var fixture = {
+        let container = try! SageModelContainer.make(for: .previewEmpty)
+        let expenses = [
+            Expense(name: "Car Insurance", amount: 123.43, category: .needs, tag: .billsAndUtils),
+            Expense(name: "Coffee", amount: 6.50, tag: .dining),
+        ]
+        expenses.forEach { container.mainContext.insert($0) }
+        try! container.mainContext.save()
+        return (container: container, expenses: expenses)
+    }()
+
     NavigationStack {
         List {
-            ExpenseList(expenses: [Expense.example, Expense.example])
+            ExpenseList(expenses: fixture.expenses)
         }
     }
-    .modelContainer(SageModelContainer.preview)
-    .environment(AppRouter())
+    .environmentInjection(container: fixture.container)
 }

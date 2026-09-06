@@ -88,10 +88,18 @@ struct TagPicker: View {
 }
 
 #Preview {
-    @Previewable @State var selectedTags: [ExpenseTag] = [.dining]
+    @Previewable @State var fixture = {
+        let container = try! SageModelContainer.make(for: .previewEmpty)
+        let dining = ExpenseTag.dining
+        let tags = [dining, ExpenseTag.groceries, ExpenseTag.shopping]
+        tags.forEach { container.mainContext.insert($0) }
+        try! container.mainContext.save()
+        return (container: container, selectedTags: [dining])
+    }()
+
     VStack(spacing: 20) {
-        TagPicker(selectedTags: $selectedTags)
+        TagPicker(selectedTags: $fixture.selectedTags)
         Text("Item down here)")
     }
-    .environmentInjection()
+    .environmentInjection(container: fixture.container)
 }

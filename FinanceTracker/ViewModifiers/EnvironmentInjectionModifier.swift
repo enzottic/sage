@@ -9,26 +9,23 @@ import SwiftData
 import SageKit
 
 extension View {
-    func environmentInjection(empty: Bool = false) -> some View {
-        modifier(EnvironmentInjection(empty))
+    func environmentInjection(empty: Bool = false, container: ModelContainer? = nil) -> some View {
+        modifier(EnvironmentInjection(container: container ?? (empty ? SageModelContainer.previewEmpty : SageModelContainer.preview)))
     }
 }
 
 struct EnvironmentInjection: ViewModifier {
-    @State var config = AppConfiguration()
+    @State var config = AppConfiguration.preview
     @State var appRouter = AppRouter()
     
-    let empty: Bool
-    
-    init(_ empty: Bool = false) {
-        self.empty = empty
-    }
+    let container: ModelContainer
     
     func body(content: Content) -> some View {
         content
-            .modelContainer(empty ? SageModelContainer.previewEmpty : SageModelContainer.preview)
+            .modelContainer(container)
             .environment(config)
             .environment(appRouter)
+            .environment(\.categoryColors, config.categoryColors)
             .fontDesign(.rounded)
     }
 }

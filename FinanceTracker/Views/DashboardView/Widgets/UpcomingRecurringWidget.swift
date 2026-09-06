@@ -180,8 +180,10 @@ private struct UpcomingRecurringCard: View {
 }
 
 #Preview {
+    @Previewable @State var container = try! SageModelContainer.makeRecurringPreview()
+
     List {
         UpcomingRecurringWidget()
     }
-    .environmentInjection()
+    .environmentInjection(container: container)
 }

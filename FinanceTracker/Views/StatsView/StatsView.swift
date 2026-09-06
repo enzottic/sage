@@ -16,13 +16,6 @@ private struct SpendingPeriodData: Identifiable {
     var id: Date { periodStart }
 }
 
-private struct SpendingChartSeries: Identifiable {
-    let category: ExpenseCategory?
-    let points: [SpendingMonthSummary.Point]
-    let color: Color
-    var id: String { category?.rawValue ?? "Total" }
-}
-
 struct StatsView: View {
     @Environment(\.categoryColors) private var categoryColors
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var allExpenses: [Expense]
@@ -104,26 +97,7 @@ struct StatsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     if let tag = selectedTag, !tag.isDeleted {
-                        Button { selectedTag = nil } label: {
-                            HStack(spacing: 8) {
-                                Text(glyph: tag.glyph, name: tag.name)
-                                    .lineLimit(1)
-                                Image(systemName: "xmark")
-                                    .font(.caption.weight(.semibold))
-                            }
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(tag.color)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(tag.color.quaternary, in: Capsule())
-                            .overlay { Capsule().strokeBorder(tag.color, lineWidth: 1.5) }
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Filtered by tag: \(tag.name)")
-                        .accessibilityHint("Remove tag filter")
-                        .accessibilityIdentifier("stats-tag-filter-pill")
+                        tagFilterButton(tag)
                     }
                     monthlyChart(monthSummary)
                     SpendingComparisonCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
@@ -139,30 +113,7 @@ struct StatsView: View {
             .navigationTitle("Stats")
             .navigationSubtitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
             .gradientBackground(color: accentColor)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    Button { changeMonth(by: -1) } label: { Label("Previous Month", systemImage: "chevron.left") }
-                        .accessibilityIdentifier("stats-previous-month")
-                    Button { changeMonth(by: 1) } label: { Label("Next Month", systemImage: "chevron.right") }
-                        .disabled(isCurrentMonth)
-                        .accessibilityIdentifier("stats-next-month")
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    StatsFilterMenu(selectedCategory: $selectedCategory, selectedTag: $selectedTag,
-                                    showsMonthPicker: $showsMonthPicker)
-                    Menu {
-                        Section("Category Lines") {
-                            Toggle("Needs", isOn: $showsNeedsLine)
-                            Toggle("Wants", isOn: $showsWantsLine)
-                            Toggle("Savings", isOn: $showsSavingsLine)
-                        }
-                    } label: {
-                        Label("Chart Options", systemImage: "ellipsis")
-                    }
-                    .menuActionDismissBehavior(.disabled)
-                    .accessibilityIdentifier("stats-chart-options")
-                }
-            }
+            .toolbar { statsToolbar }
             .onChange(of: selectedBar) { _, label in
                 if timeframe == .monthly, let item = chartData.first(where: { $0.label == label }) {
                     selectedMonth = item.periodStart
@@ -187,6 +138,55 @@ struct StatsView: View {
         selectedMonth = min(calendar.date(byAdding: .month, value: offset, to: selectedMonth)!, currentMonth)
     }
 
+    private func tagFilterButton(_ tag: ExpenseTag) -> some View {
+        Button { selectedTag = nil } label: {
+            HStack(spacing: 8) {
+                Text(glyph: tag.glyph, name: tag.name)
+                    .lineLimit(1)
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.semibold))
+            }
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(tag.color)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(tag.color.quaternary, in: Capsule())
+            .overlay { Capsule().strokeBorder(tag.color, lineWidth: 1.5) }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Filtered by tag: \(tag.name)")
+        .accessibilityHint("Remove tag filter")
+        .accessibilityIdentifier("stats-tag-filter-pill")
+    }
+
+    @ToolbarContentBuilder
+    private var statsToolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarLeading) {
+            Button { changeMonth(by: -1) } label: { Label("Previous Month", systemImage: "chevron.left") }
+                .accessibilityIdentifier("stats-previous-month")
+            Button { changeMonth(by: 1) } label: { Label("Next Month", systemImage: "chevron.right") }
+                .disabled(isCurrentMonth)
+                .accessibilityIdentifier("stats-next-month")
+        }
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            StatsFilterMenu(selectedCategory: $selectedCategory, selectedTag: $selectedTag,
+                            showsMonthPicker: $showsMonthPicker)
+            Menu {
+                Section("Category Lines") {
+                    Toggle("Needs", isOn: $showsNeedsLine)
+                    Toggle("Wants", isOn: $showsWantsLine)
+                    Toggle("Savings", isOn: $showsSavingsLine)
+                }
+            } label: {
+                Label("Chart Options", systemImage: "ellipsis")
+            }
+            .menuActionDismissBehavior(.disabled)
+            .accessibilityIdentifier("stats-chart-options")
+        }
+    }
+
     private func monthlyChart(_ summary: SpendingMonthSummary) -> some View {
         let series = [SpendingChartSeries(category: nil, points: summary.days, color: .primary)] +
             visibleCategories.filter { selectedCategory == nil || $0 == selectedCategory }.map {
@@ -204,84 +204,15 @@ struct StatsView: View {
                 Text(isCurrentMonth ? "Spent so far" : "Total spent")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
-            Chart {
-                if isolatedLine == nil {
-                    ForEach(summary.averageDays) { point in
-                        LineMark(x: .value("Day", point.day), y: .value("Spent", point.total), series: .value("Series", "Average"))
-                            .foregroundStyle(Color.secondary.opacity(0.65))
-                            .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 4]))
-                    }
+            DailySpendingChart(series: visibleSeries,
+                               averageDays: isolatedLine == nil ? summary.averageDays : [],
+                               daysInMonth: daysInMonth, currencyCode: LedgerCurrency.currentCode,
+                               selectedDay: selectedDay)
+                .chartOverlay { proxy in
+                    chartInteractionOverlay(summary, proxy: proxy, series: visibleSeries)
                 }
-                ForEach(visibleSeries) { line in
-                    ForEach(line.points) { point in
-                        LineMark(x: .value("Day", point.day), y: .value("Spent", point.total), series: .value("Series", line.id))
-                            .foregroundStyle(line.color)
-                            .lineStyle(StrokeStyle(lineWidth: line.category == nil ? 3 : 2))
-                            .accessibilityLabel("\(line.id), day \(point.day)")
-                            .accessibilityValue(point.total.currencyString)
-                    }
-                    if let point = line.points.first(where: { $0.day == selectedDay }) ?? line.points.last {
-                        PointMark(x: .value("Day", point.day), y: .value("Spent", point.total))
-                            .foregroundStyle(line.color)
-                            .symbolSize(selectedDay == nil ? 25 : 65)
-                    }
-                }
-                if let selectedDay {
-                    RuleMark(x: .value("Day", selectedDay))
-                        .foregroundStyle(.secondary)
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                }
-            }
-            .chartXScale(domain: 1...daysInMonth)
-            .chartXAxis {
-                AxisMarks(values: [1, 5, 10, 15, 20, 25, daysInMonth]) { _ in AxisValueLabel() }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine()
-                    AxisValueLabel { if let amount = value.as(Double.self) { Text(amount.currencyStringRounded).font(.caption2) } }
-                }
-            }
-            .chartOverlay { proxy in
-                GeometryReader { geometry in
-                    if let plotFrame = proxy.plotFrame {
-                        let frame = geometry[plotFrame]
-                        Rectangle()
-                            .fill(.clear)
-                            .contentShape(Rectangle())
-                            .frame(width: frame.width, height: frame.height)
-                            .gesture(
-                                LongPressGesture(minimumDuration: 0.25)
-                                    .sequenced(before: DragGesture(minimumDistance: 0))
-                                    .updating($chartTouch) { value, touch, _ in
-                                        guard case let .second(true, drag?) = value,
-                                              let lastDay = summary.days.last?.day,
-                                              let chartDay = proxy.value(atX: min(max(drag.location.x, 0), frame.width), as: Double.self)
-                                        else { return }
-                                        // Gesture coordinates are local to the plot, not the chart axes.
-                                        let chartOrigin = geometry.frame(in: .named("stats-chart-card")).origin
-                                        let points = visibleSeries.flatMap(\.points) + (isolatedLine == nil ? summary.averageDays : [])
-                                        let highestLineY = points.compactMap { proxy.position(forY: $0.total) }.min() ?? 0
-                                        touch = (
-                                            day: min(max(Int(chartDay.rounded()), 1), lastDay),
-                                            location: CGPoint(x: chartOrigin.x + frame.minX + drag.location.x,
-                                                              y: chartOrigin.y + frame.minY + drag.location.y),
-                                            highestLineY: chartOrigin.y + frame.minY + highestLineY
-                                        )
-                                    }
-                            )
-                            .simultaneousGesture(
-                                SpatialTapGesture().onEnded { value in
-                                    isolateLine(at: value.location, proxy: proxy, series: visibleSeries)
-                                }
-                            )
-                            .position(x: frame.midX, y: frame.midY)
-                    }
-                }
-            }
-            .frame(height: 200)
-            .accessibilityLabel("Cumulative spending by day of the month")
-            .accessibilityIdentifier("stats-daily-chart")
+                .frame(height: 200)
+                .accessibilityIdentifier("stats-daily-chart")
             HStack(spacing: 8) {
                 ForEach(series) { line in
                     Button {
@@ -333,6 +264,45 @@ struct StatsView: View {
             .allowsHitTesting(false)
         }
         .zIndex(chartTouch == nil ? 0 : 1)
+    }
+
+    private func chartInteractionOverlay(_ summary: SpendingMonthSummary, proxy: ChartProxy,
+                                         series: [SpendingChartSeries]) -> some View {
+        GeometryReader { geometry in
+            if let plotFrame = proxy.plotFrame {
+                let frame = geometry[plotFrame]
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .frame(width: frame.width, height: frame.height)
+                    .gesture(
+                        LongPressGesture(minimumDuration: 0.25)
+                            .sequenced(before: DragGesture(minimumDistance: 0))
+                            .updating($chartTouch) { value, touch, _ in
+                                guard case let .second(true, drag?) = value,
+                                      let lastDay = summary.days.last?.day,
+                                      let chartDay = proxy.value(atX: min(max(drag.location.x, 0), frame.width), as: Double.self)
+                                else { return }
+                                // Gesture coordinates are local to the plot, not the chart axes.
+                                let chartOrigin = geometry.frame(in: .named("stats-chart-card")).origin
+                                let points = series.flatMap(\.points) + (isolatedLine == nil ? summary.averageDays : [])
+                                let highestLineY = points.compactMap { proxy.position(forY: $0.total) }.min() ?? 0
+                                touch = (
+                                    day: min(max(Int(chartDay.rounded()), 1), lastDay),
+                                    location: CGPoint(x: chartOrigin.x + frame.minX + drag.location.x,
+                                                      y: chartOrigin.y + frame.minY + drag.location.y),
+                                    highestLineY: chartOrigin.y + frame.minY + highestLineY
+                                )
+                            }
+                    )
+                    .simultaneousGesture(
+                        SpatialTapGesture().onEnded { value in
+                            isolateLine(at: value.location, proxy: proxy, series: series)
+                        }
+                    )
+                    .position(x: frame.midX, y: frame.midY)
+            }
+        }
     }
 
     private func dailyOverview(_ summary: SpendingMonthSummary, day: Int, category: ExpenseCategory?,

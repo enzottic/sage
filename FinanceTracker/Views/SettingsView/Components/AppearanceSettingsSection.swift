@@ -196,7 +196,7 @@ struct AppearanceSettingsSection: View {
 }
 
 #Preview {
-    @Previewable @State var appConfig = AppConfiguration()
+    @Previewable @State var appConfig = AppConfiguration.preview
     AppearanceSettingsSection()
         .environment(appConfig)
         .preferredColorScheme(appConfig.selectedAppearance.colorScheme)

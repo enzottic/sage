@@ -133,7 +133,19 @@ private struct EditableExpense {
 }
 
 #Preview {
-    @Previewable @State var expense = Expense.example
-    ExpenseDetailView(expense: expense)
-        .environmentInjection()
+    @Previewable @State var fixture = {
+        let container = try! SageModelContainer.make(for: .previewEmpty)
+        let expense = Expense(
+            name: "Car Insurance", amount: 123.43, category: .needs,
+            tag: .billsAndUtils, note: "Progressive Insurance"
+        )
+        container.mainContext.insert(expense)
+        try! container.mainContext.save()
+        return (container: container, expense: expense)
+    }()
+
+    NavigationStack {
+        ExpenseDetailView(expense: fixture.expense)
+    }
+    .environmentInjection(container: fixture.container)
 }

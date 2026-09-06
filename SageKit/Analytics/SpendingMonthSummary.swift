@@ -7,6 +7,11 @@ public struct SpendingMonthSummary {
         public let day: Int
         public let total: Double
         public var id: Int { day }
+
+        public init(day: Int, total: Double) {
+            self.day = day
+            self.total = total
+        }
     }
 
     public let expenses: [Expense]

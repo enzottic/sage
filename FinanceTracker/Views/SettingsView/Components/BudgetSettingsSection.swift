@@ -90,5 +90,6 @@ struct BudgetSettingsSection: View {
 
 #Preview {
     BudgetSettingsSection()
-        .environmentInjection()
+        .environment(AppConfiguration.preview)
+        .fontDesign(.rounded)
 }

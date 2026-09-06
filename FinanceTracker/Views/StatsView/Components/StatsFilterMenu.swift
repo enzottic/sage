@@ -55,9 +55,16 @@ struct StatsFilterMenu: View {
 }
 
 #Preview {
+    @Previewable @State var container = {
+        let container = try! SageModelContainer.make(for: .previewEmpty)
+        let tags: [ExpenseTag] = [.dining, .groceries, .subscriptions]
+        tags.forEach { container.mainContext.insert($0) }
+        try! container.mainContext.save()
+        return container
+    }()
     @Previewable @State var category: ExpenseCategory? = nil
     @Previewable @State var tag: ExpenseTag? = nil
     @Previewable @State var showsMonthPicker = false
     StatsFilterMenu(selectedCategory: $category, selectedTag: $tag, showsMonthPicker: $showsMonthPicker)
-        .modelContainer(SageModelContainer.preview)
+        .modelContainer(container)
 }

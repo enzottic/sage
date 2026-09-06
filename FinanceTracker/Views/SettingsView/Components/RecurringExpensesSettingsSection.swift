@@ -156,6 +156,10 @@ private struct RecurringRuleRow: View {
 }
 
 #Preview {
-    RecurringExpensesSettingsSection()
-        .environmentInjection()
+    @Previewable @State var container = try! SageModelContainer.makeRecurringPreview()
+
+    NavigationStack {
+        RecurringExpensesSettingsSection()
+    }
+    .environmentInjection(container: container)
 }

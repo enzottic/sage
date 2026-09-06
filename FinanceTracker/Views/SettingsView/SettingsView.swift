@@ -468,7 +468,7 @@ private struct WebView: UIViewRepresentable {
 }
 
 #Preview {
-    @Previewable @State var appConfig: AppConfiguration = AppConfiguration()
+    @Previewable @State var appConfig: AppConfiguration = .preview
     SettingsView()
         .environment(appConfig)
         .environment(AppRouter())

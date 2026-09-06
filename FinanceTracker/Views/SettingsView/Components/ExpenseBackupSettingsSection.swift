@@ -407,9 +407,10 @@ struct UnknownTagsSheet: View {
 }
 
 #Preview {
-    @Previewable @State var config = AppConfiguration()
-    @Previewable @State var router = AppRouter()
-    ExpenseBackupSettingsSection()
-        .environment(config)
-        .environment(router)
+    @Previewable @State var container = try! SageModelContainer.make(for: .previewEmpty)
+
+    NavigationStack {
+        ExpenseBackupSettingsSection()
+    }
+    .environmentInjection(container: container)
 }

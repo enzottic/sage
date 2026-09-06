@@ -254,5 +254,8 @@ struct AddExpenseTagSheet: View {
 }
 
 #Preview {
+    @Previewable @State var container = try! SageModelContainer.make(for: .previewEmpty)
+
     AddExpenseTagSheet()
+        .modelContainer(container)
 }

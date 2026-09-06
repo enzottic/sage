@@ -15,12 +15,14 @@ import UIKit
 
 public enum MockDataSeeder {
 
-    public static func seed(into context: ModelContext) {
+    public static func seed(into context: ModelContext, seedsAppConfiguration: Bool = true) {
         // Guards against re-seeding an already-populated store
         let existingCount = (try? context.fetchCount(FetchDescriptor<Expense>())) ?? 0
         guard existingCount == 0 else { return }
 
-        seedAppConfiguration()
+        if seedsAppConfiguration {
+            seedAppConfiguration()
+        }
 
         let cal = Calendar.current
         let today = Date()

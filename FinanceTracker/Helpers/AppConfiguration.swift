@@ -33,11 +33,12 @@ enum SmartTaggingMode: String, CaseIterable {
 
 @Observable
 class AppConfiguration {
+    private let isPreview: Bool
     private let defaults: UserDefaults
-    private let cloudKVS = NSUbiquitousKeyValueStore.default
+    private var cloudKVS: NSUbiquitousKeyValueStore { .default }
     private static let suite = "group.me.enzottic.SageAppGroup"
 
-    private(set) var ledgerCurrencyCode: String? = LedgerCurrency.currentCode
+    private(set) var ledgerCurrencyCode: String?
     private(set) var cloudLedgerCurrencyCode: String?
     private(set) var hasLedgerCurrencyConflict = false
 
@@ -50,6 +51,11 @@ class AppConfiguration {
     }
 
     func establishLedgerCurrency(_ code: String, savingSetup: () throws -> Void = {}) throws {
+        if isPreview {
+            try savingSetup()
+            ledgerCurrencyCode = code
+            return
+        }
         refreshCloudLedgerCurrency()
         guard !hasLedgerCurrencyConflict else { throw LedgerCurrency.Error.cloudConflict }
         if let cloud = cloudLedgerCurrencyCode, cloud != code {
@@ -68,7 +74,7 @@ class AppConfiguration {
     }
 
     private func refreshCloudLedgerCurrency() {
-        guard !UITestConfiguration.isEnabled,
+        guard !isPreview, !UITestConfiguration.isEnabled,
               ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
         cloudLedgerCurrencyCode = LedgerCurrency.validatedCode(
             cloudKVS.string(forKey: LedgerCurrency.storageKey)
@@ -88,6 +94,7 @@ class AppConfiguration {
     }
 
     func recheckLedgerCurrency() {
+        guard !isPreview else { return }
         cloudKVS.synchronize()
         refreshCloudLedgerCurrency()
     }
@@ -145,6 +152,7 @@ class AppConfiguration {
     
     var selectedAppearance: Appearance {
         didSet {
+            guard !isPreview else { return }
             defaults.set(selectedAppearance.rawValue, forKey: Keys.appearance)
             cloudKVS.set(selectedAppearance.rawValue, forKey: Keys.appearance)
             cloudKVS.synchronize()
@@ -153,6 +161,7 @@ class AppConfiguration {
     
     var totalMonthlyIncome: Int {
         didSet {
+            guard !isPreview else { return }
             defaults.set(totalMonthlyIncome, forKey: Keys.totalMonthlyIncome)
             refreshCloudLedgerCurrency()
             guard !hasLedgerCurrencyConflict else { return }
@@ -163,6 +172,7 @@ class AppConfiguration {
     
     var needsPercent: Double {
         didSet {
+            guard !isPreview else { return }
             defaults.set(needsPercent, forKey: Keys.needsPercent)
             refreshCloudLedgerCurrency()
             guard !hasLedgerCurrencyConflict else { return }
@@ -173,6 +183,7 @@ class AppConfiguration {
     
     var wantsPercent: Double {
         didSet {
+            guard !isPreview else { return }
             defaults.set(wantsPercent, forKey: Keys.wantsPercent)
             refreshCloudLedgerCurrency()
             guard !hasLedgerCurrencyConflict else { return }
@@ -183,6 +194,7 @@ class AppConfiguration {
     
     var savingsPercent: Double {
         didSet {
+            guard !isPreview else { return }
             defaults.set(savingsPercent, forKey: Keys.savingsPercent)
             refreshCloudLedgerCurrency()
             guard !hasLedgerCurrencyConflict else { return }
@@ -193,6 +205,7 @@ class AppConfiguration {
     
     var isCloudSyncEnabled: Bool {
         didSet {
+            guard !isPreview else { return }
             SageModelContainer.setCloudKitPreference(isCloudSyncEnabled)
             cloudKVS.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
             cloudKVS.synchronize()
@@ -204,11 +217,13 @@ class AppConfiguration {
     @discardableResult
     func updateCloudSyncEnabled(_ enabled: Bool) -> Bool {
         isCloudSyncEnabled = enabled
+        guard !isPreview else { return true }
         return cloudKVS.synchronize()
     }
 
     var smartTaggingMode: SmartTaggingMode {
         didSet {
+            guard !isPreview else { return }
             defaults.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
             cloudKVS.set(smartTaggingMode.rawValue, forKey: Keys.smartTaggingMode)
             cloudKVS.synchronize()
@@ -217,6 +232,7 @@ class AppConfiguration {
 
     var needsColor: Color {
         didSet {
+            guard !isPreview else { return }
             defaults.setSageColor(needsColor, forKey: Keys.needsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -224,6 +240,7 @@ class AppConfiguration {
 
     var wantsColor: Color {
         didSet {
+            guard !isPreview else { return }
             defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -231,6 +248,7 @@ class AppConfiguration {
 
     var savingsColor: Color {
         didSet {
+            guard !isPreview else { return }
             defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -238,6 +256,7 @@ class AppConfiguration {
 
     var billRemindersEnabled: Bool {
         didSet {
+            guard !isPreview else { return }
             defaults.set(billRemindersEnabled, forKey: Keys.billRemindersEnabled)
         }
     }
@@ -259,6 +278,13 @@ class AppConfiguration {
         wantsColor = Color("WantColor")
         savingsColor = Color("SavingColor")
         billRemindersEnabled = false
+
+        if isPreview {
+            ledgerCurrencyCode = nil
+            cloudLedgerCurrencyCode = nil
+            hasLedgerCurrencyConflict = false
+            return
+        }
 
         if !UITestConfiguration.isEnabled {
             LedgerCurrency.reset()
@@ -294,9 +320,35 @@ class AppConfiguration {
         Double(totalMonthlyIncome) * savingsPercent
     }
     
-    init() {
-        self.defaults = Self.localDefaults
+    convenience init() {
+        self.init(isPreview: false)
+    }
+
+    /// Fresh in-memory settings; preview interactions never persist or contact services.
+    static var preview: AppConfiguration { AppConfiguration(isPreview: true) }
+
+    private init(isPreview: Bool) {
+        self.isPreview = isPreview
+        self.defaults = isPreview ? .standard : Self.localDefaults
+        if isPreview {
+            ledgerCurrencyCode = "USD"
+            selectedAppearance = .system
+            totalMonthlyIncome = 5_000
+            needsPercent = 0.5
+            wantsPercent = 0.3
+            savingsPercent = 0.2
+            isCloudSyncEnabled = false
+            smartTaggingMode = .none
+            needsColor = Color("NeedColor")
+            wantsColor = Color("WantColor")
+            savingsColor = Color("SavingColor")
+            billRemindersEnabled = false
+            return
+        }
+
+        let cloudKVS = NSUbiquitousKeyValueStore.default
         let localCurrency = LedgerCurrency.currentCode
+        ledgerCurrencyCode = localCurrency
         let cloudCurrency = LedgerCurrency.validatedCode(cloudKVS.string(forKey: LedgerCurrency.storageKey))
         let currencyConflict: Bool
         if UITestConfiguration.isEnabled {
@@ -379,6 +431,7 @@ class AppConfiguration {
     }
     
     @objc private func iCloudKVSDidChange(_ notification: Notification) {
+        guard !isPreview else { return }
         DispatchQueue.main.async { [self] in
             refreshCloudLedgerCurrency()
             guard ledgerCurrencyConflictMessage == nil else { return }
@@ -419,6 +472,7 @@ class AppConfiguration {
     
     /// Push current values to local UserDefaults (for widget access via app group)
     private func syncToLocalDefaults() {
+        guard !isPreview else { return }
         defaults.set(selectedAppearance.rawValue, forKey: Keys.appearance)
         defaults.set(totalMonthlyIncome, forKey: Keys.totalMonthlyIncome)
         defaults.set(needsPercent, forKey: Keys.needsPercent)
@@ -432,6 +486,7 @@ class AppConfiguration {
     }
     
     func markSetupComplete() {
+        guard !isPreview else { return }
         cloudKVS.set(true, forKey: Keys.hasCompletedSetup)
         cloudKVS.synchronize()
     }
@@ -451,6 +506,7 @@ class AppConfiguration {
         wantsPercent = newWants
         savingsPercent = newSavings
 
+        guard !isPreview else { return }
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -465,6 +521,7 @@ class AppConfiguration {
         wantsPercent = clampedWants
         savingsPercent = newSavings
 
+        guard !isPreview else { return }
         WidgetCenter.shared.reloadAllTimelines()
     }
 }

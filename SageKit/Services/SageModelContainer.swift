@@ -78,7 +78,7 @@ public enum SageModelContainer {
         }
 
         let seedContext = ModelContext(container)
-        MockDataSeeder.seed(into: seedContext)
+        MockDataSeeder.seed(into: seedContext, seedsAppConfiguration: purpose == .app)
         try seedContext.save()
         #endif
 
@@ -108,6 +108,36 @@ public enum SageModelContainer {
             fatalError("Failed to create empty preview container: \(error)")
         }
     }()
+
+    /// Fresh, context-owned rules without invoking the debug app's sample-data seeder.
+    @MainActor
+    public static func makeRecurringPreview() throws -> ModelContainer {
+        let container = try make(for: .previewEmpty)
+        let calendar = Calendar.current
+        let now = Date.now
+        let bills = ExpenseTag.billsAndUtils
+        let subscriptions = ExpenseTag.subscriptions
+        container.mainContext.insert(bills)
+        container.mainContext.insert(subscriptions)
+
+        let rules = [
+            RecurringExpenseRule(
+                name: "Internet", amount: 55, note: "", category: .needs, tag: bills,
+                frequency: .monthly, startDate: calendar.date(byAdding: .day, value: 1, to: now)!
+            ),
+            RecurringExpenseRule(
+                name: "Music", amount: 10.99, note: "", category: .wants, tag: subscriptions,
+                frequency: .monthly, startDate: calendar.date(byAdding: .day, value: 3, to: now)!
+            ),
+            RecurringExpenseRule(
+                name: "Meal Delivery", amount: 65, note: "", category: .needs, tag: bills,
+                frequency: .weekly, startDate: calendar.date(byAdding: .day, value: 7, to: now)!
+            ),
+        ]
+        rules.forEach { container.mainContext.insert($0) }
+        try container.mainContext.save()
+        return container
+    }
 
     private static nonisolated func configuration(
         for purpose: Purpose,
