@@ -7,6 +7,10 @@
 import Foundation
 import SageKit
 
+enum DashboardCardStyle {
+    static let cornerRadius: CGFloat = 24
+}
+
 /// How a widget renders inside its dashboard column.
 enum DashboardWidgetLayout: Codable, Hashable {
     case full

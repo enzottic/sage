@@ -32,11 +32,15 @@ struct MostSpentTagsWidget: View {
             if layout == .compact {
                 VStack(alignment: .leading, spacing: 8) {
                     header
-                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
                     breakdown
                 }
+                .padding(.top, 16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(
+                    Color(.secondarySystemGroupedBackground),
+                    in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
+                )
             } else {
                 Section {
                     breakdown

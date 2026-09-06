@@ -27,7 +27,14 @@ struct DashboardView: View {
                         .singleCategoryUtilization(.savings),
                     ]),
                 ]),
-                .init(widgets: [.expenseCalendar]),
+                .init(columns: [
+                    .init(
+                        widgets: [.expenseCalendar]
+                    ),
+                    .init(
+                        widgets: [.recentExpenses(.regular)]
+                    )
+                ]),
                 .init(columns: [
                     .init(
                         widgets: [.mostSpentTags],
@@ -38,7 +45,6 @@ struct DashboardView: View {
                         presentation: .compact
                     ),
                 ]),
-                .init(widgets: [.recentExpenses(.regular)]),
             ]
         } else {
             overviewRows = [
@@ -71,19 +77,8 @@ struct DashboardView: View {
     var body: some View {
         @Bindable var appRouter = appRouter
         NavigationStack(path: $appRouter.homePath) {
-            List {
-                ForEach(rows, id: \.self) { row in
-                    if let widget = row.standaloneWidget {
-                        widgetView(for: widget, layout: .full)
-                    } else {
-                        Section {
-                            composedWidgetRow(row)
-                        }
-                    }
-                }
-            }
+            dashboardContent
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
-            .listSectionSpacing(12)
             .scrollContentBackground(.hidden)
             .background(.sageBackground)
             .gradientBackground()
@@ -104,6 +99,36 @@ struct DashboardView: View {
     }
 
     @ViewBuilder
+    private var dashboardContent: some View {
+        if isPad {
+            // Each card owns its corners; a grouped List clips the entire
+            // two-column row and rounds only its outside corners.
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(rows, id: \.self) { row in
+                        composedWidgetRow(row)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+            }
+        } else {
+            List {
+                ForEach(rows, id: \.self) { row in
+                    if let widget = row.standaloneWidget {
+                        widgetView(for: widget, layout: .full)
+                    } else {
+                        Section {
+                            composedWidgetRow(row)
+                        }
+                    }
+                }
+            }
+            .listSectionSpacing(12)
+        }
+    }
+
+    @ViewBuilder
     func widgetView(for widget: DashboardWidget, layout: DashboardWidgetLayout) -> some View {
         switch widget {
         case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: selectedMonth)
@@ -112,7 +137,8 @@ struct DashboardView: View {
             MostSpentTagsWidget(selectedMonth: selectedMonth, layout: layout)
         case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth)
         case .upcomingRecurring: UpcomingRecurringWidget(layout: layout)
-        case .recentExpenses(let rowStyle): RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle)
+        case .recentExpenses(let rowStyle):
+            RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle, embedsList: isPad)
         case .singleCategoryUtilization(let category):
             SingleCategoryUtilizationWidget(category: category, layout: layout, selectedMonth: selectedMonth)
         }
@@ -147,23 +173,30 @@ struct DashboardView: View {
         _ widget: DashboardWidget,
         presentation: DashboardWidgetLayout
     ) -> some View {
-        if widget == .mostSpentTags && presentation == .compact {
+        if presentation == .compact && (widget == .mostSpentTags || widget == .upcomingRecurring) {
+            // These widgets own their cards so empty content has no background.
             widgetView(for: widget, layout: presentation)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         } else if presentation == .full {
-            widgetView(for: widget, layout: presentation)
+            // Keep Section headers and rows in one card before applying sizing
+            // and backgrounds; otherwise SwiftUI styles each child separately.
+            VStack(alignment: .leading, spacing: 12) {
+                widgetView(for: widget, layout: presentation)
+            }
                 .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(
                     Color(.secondarySystemGroupedBackground),
-                    in: .rect(cornerRadius: 10)
+                    in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
                 )
         } else {
-            widgetView(for: widget, layout: presentation)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            VStack(alignment: .leading, spacing: 12) {
+                widgetView(for: widget, layout: presentation)
+            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(
                     Color(.secondarySystemGroupedBackground),
-                    in: .rect(cornerRadius: 10)
+                    in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
                 )
         }
     }

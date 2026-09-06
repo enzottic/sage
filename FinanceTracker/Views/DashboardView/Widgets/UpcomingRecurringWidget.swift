@@ -42,49 +42,66 @@ struct UpcomingRecurringWidget: View {
 
     var body: some View {
         if !visibleRules.isEmpty {
-            Section {
-                Group {
-                    if layout == .compact {
-                        LazyVGrid(
-                            columns: [
-                                GridItem(.flexible(), spacing: 12),
-                                GridItem(.flexible()),
-                            ],
-                            spacing: 12
-                        ) {
+            if layout == .compact {
+                VStack(alignment: .leading, spacing: 12) {
+                    section
+                }
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(
+                    Color(.secondarySystemGroupedBackground),
+                    in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
+                )
+            } else {
+                section
+            }
+        }
+    }
+
+    private var section: some View {
+        Section {
+            Group {
+                if layout == .compact {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: 12),
+                            GridItem(.flexible()),
+                        ],
+                        spacing: 12
+                    ) {
+                        ForEach(visibleRules) { upcoming in
+                            UpcomingRecurringCard(
+                                rule: upcoming.rule,
+                                nextDate: upcoming.date
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
                             ForEach(visibleRules) { upcoming in
                                 UpcomingRecurringCard(
                                     rule: upcoming.rule,
                                     nextDate: upcoming.date
                                 )
+                                .frame(width: 150)
                             }
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 4)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(visibleRules) { upcoming in
-                                    UpcomingRecurringCard(
-                                        rule: upcoming.rule,
-                                        nextDate: upcoming.date
-                                    )
-                                    .frame(width: 150)
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 4)
-                        }
                     }
                 }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } header: {
-                Text("Upcoming Expenses")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
             }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+        } header: {
+            Text("Upcoming Expenses")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.horizontal, layout == .compact ? 16 : 0)
         }
     }
 

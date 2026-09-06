@@ -16,6 +16,7 @@ struct ExpenseList: View {
 
     let expenses: [Expense]
     var rowStyle: ExpenseRowItem.Style = .regular
+    var onRowHeightChange: ((PersistentIdentifier, CGFloat) -> Void)? = nil
 
     @State private var expenseToDelete: Expense? = nil
     @State private var showingDeleteConfirmation: Bool = false
@@ -33,6 +34,11 @@ struct ExpenseList: View {
             ForEach(visibleExpenses) { expense in
                 NavigationLink(value: AppRoute.expenseDetail(expense)) {
                     ExpenseRowItem(expense: expense, style: rowStyle)
+                        .onGeometryChange(for: CGFloat.self) { geometry in
+                            geometry.size.height
+                        } action: { height in
+                            onRowHeightChange?(expense.persistentModelID, height)
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("expense-row-\(expense.name)")
