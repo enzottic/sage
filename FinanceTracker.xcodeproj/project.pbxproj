@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		C62200012FFD000100000022 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C62400012FFF002400000001 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
+		C62509062FFF002400000001 /* THIRD_PARTY_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */; };
 		C673106C2FD4932500A4C432 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C673106B2FD4932500A4C432 /* AppIntents.framework */; };
 		C68EEE152FD7C7E8003C4FD6 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C68EEE162FD7C7E8003C4FD6 /* SageKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -100,6 +101,7 @@
 
 /* Begin PBXFileReference section */
 		C62400032FFF002400000003 /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C66031C62E8073C60078DD15 /* Sage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C673106B2FD4932500A4C432 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
@@ -240,6 +242,7 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
+				C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */,
 				C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */,
 				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
@@ -481,6 +484,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C62509062FFF002400000001 /* THIRD_PARTY_NOTICES.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

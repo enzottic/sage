@@ -62,14 +62,12 @@ verification are being handled by the project owner.
 
 ## Priority 1: Data Integrity
 
-- [ ] **Make legacy store relocation failure-safe.** The database and sidecars
-  are copied independently with suppressed errors, and migration is marked
-  complete even after a skipped or failed copy. Use a consistent, restartable
-  relocation process; validate success before recording completion. Explicitly
-  handle legacy local records when CloudKit is enabled. This is a release gate
-  if beta or previous-version data must survive upgrades.
-  Acceptance: interrupted migration, failed copy, and WAL-resident records do
-  not produce an apparently successful empty or incomplete ledger.
+- [x] **Retire pre-TestFlight store-location migration.** The project owner
+  confirmed that relocation from `default.store`, `Sage.store`, and
+  `FinanceTracker.store` is no longer required. Removed relocation code and
+  its tests; Release opens the App Group's `Sage.sqlite` directly. Old files
+  are neither imported nor deleted. Database schema upgrades are a separate
+  compatibility decision and remain supported for now.
   Source: [SageModelContainer](SageKit/Services/SageModelContainer.swift).
 
 - [ ] **Prevent intentionally removed legacy tags from returning.** Startup

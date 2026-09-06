@@ -17,13 +17,13 @@ struct ExpenseBackupSettingsSection: View {
     @Environment(AppRouter.self) var appRouter
     
     @Query var expenses: [Expense]
-    @Query var expenseTags: [ExpenseTag]
 
     @State private var showFileImporter: Bool = false
     @State private var showImportConfirmation: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
     @State private var pendingImportCurrencyCode: String?
-    @State private var pendingImportTags: [ExpenseTag] = []
+    // Nil means unresolved/cancelled; an empty selection means explicitly skipping new tags.
+    @State private var pendingImportTagNames: [String]?
     @State private var unknownTagNames: [String] = []
     @State private var showUnknownTagsSheet: Bool = false
     @State private var isReadingImport = false
@@ -113,13 +113,18 @@ struct ExpenseBackupSettingsSection: View {
                 Text("Import \(pendingImportExpenses.count) expense\(pendingImportExpenses.count == 1 ? "" : "s") in \(pendingImportCurrencyCode ?? "unconfirmed") from this file? No conversion will occur.")
             }
         }
-        .sheet(isPresented: $showUnknownTagsSheet) {
+        .sheet(isPresented: $showUnknownTagsSheet, onDismiss: {
+            if pendingImportTagNames != nil {
+                showImportConfirmation = true
+            } else {
+                clearPendingImport()
+            }
+        }) {
             UnknownTagsSheet(
                 unknownTagNames: unknownTagNames,
-                onResolve: { createdTags in
-                    pendingImportTags = createdTags
-                    unknownTagNames = []
-                    showImportConfirmation = true
+                onResolve: { selectedNames in
+                    pendingImportTagNames = selectedNames
+                    showUnknownTagsSheet = false
                 }
             )
             .presentationDetents([.medium])
@@ -171,6 +176,7 @@ struct ExpenseBackupSettingsSection: View {
     
     private func importExpenses(filePickerResult: Result<[URL], any Error>) {
         guard !isWorking else { return }
+        clearPendingImport()
         guard let currencyCode = config.ledgerCurrencyCode else {
             appRouter.showToast(SageToast(message: LedgerCurrency.Error.notEstablished.localizedDescription, kind: .error))
             return
@@ -200,7 +206,17 @@ struct ExpenseBackupSettingsSection: View {
                     pendingImportExpenses = importedExpenses
                     pendingImportCurrencyCode = currencyCode
 
-                    let knownNames = Set(expenseTags.map(\.name))
+                    let knownNames: Set<String>
+                    do {
+                        // Only persisted tags can be resolved by the isolated import context.
+                        let readContext = ModelContext(modelContext.container)
+                        readContext.autosaveEnabled = false
+                        knownNames = Set(try readContext.fetch(FetchDescriptor<ExpenseTag>()).map(\.name))
+                    } catch {
+                        clearPendingImport()
+                        appRouter.showToast(SageToast(message: "Sage could not read your tags. Try importing again.", kind: .error))
+                        return
+                    }
                     let unknown = importedExpenses
                         .flatMap(\.tagNames)
                         .filter { !knownNames.contains($0) }
@@ -248,62 +264,42 @@ struct ExpenseBackupSettingsSection: View {
         }
     }
 
-    private func toNormalExpenses(_ importedExpenses: [ExportableExpense]) -> [Expense] {
-        importedExpenses.compactMap { e in
-            let availableTags = expenseTags + pendingImportTags
-            let tagsByName = Dictionary(availableTags.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
-            let tags = e.tagNames.compactMap { tagsByName[$0] }
-            guard let category = ExpenseCategory(rawValue: e.category) else { return nil }
-            return Expense(name: e.name, amount: e.amount, category: category, date: e.date, tags: tags, note: e.note)
-        }
-    }
-
     private func importPendingExpenses() async {
         guard !isWorking else { return }
+        let currentCode: String
         do {
-            let currentCode = try LedgerCurrency.requireCode()
+            currentCode = try LedgerCurrency.requireCode()
             guard pendingImportCurrencyCode == currentCode else {
                 throw ExpenseCSVError.currencyMismatch(expected: currentCode, actual: pendingImportCurrencyCode ?? "unconfirmed")
             }
-            // Reached only from the confirmation alert, which explicitly labels legacy amounts.
-            try ExpenseCSVCodec.validateCurrency(pendingImportExpenses, ledgerCurrencyCode: currentCode, allowLegacy: true)
         } catch {
             appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
             clearPendingImport()
             return
         }
 
-        let expensesToInsert = toNormalExpenses(pendingImportExpenses)
-        guard expensesToInsert.count == pendingImportExpenses.count else {
-            appRouter.showToast(SageToast(message: "The import contains an invalid expense category.", kind: .error))
-            clearPendingImport()
-            return
-        }
-
         isImporting = true
         importedExpenseCount = 0
-        importTotal = expensesToInsert.count
+        importTotal = pendingImportExpenses.count
         appRouter.showToast(SageToast(message: "Importing expenses…", kind: .progress))
         defer { isImporting = false }
 
-        pendingImportTags.forEach { modelContext.insert($0) }
-        for (index, expense) in expensesToInsert.enumerated() {
-            modelContext.insert(expense)
-            importedExpenseCount = index + 1
-
-            if index.isMultiple(of: 25) {
-                await Task.yield()
-            }
-        }
-
         do {
-            try modelContext.save()
+            // Reached only from the confirmation alert, which explicitly labels legacy amounts.
+            let count = try await ExpenseImportService(modelContainer: modelContext.container).importExpenses(
+                pendingImportExpenses,
+                ledgerCurrencyCode: currentCode,
+                allowLegacy: true,
+                creatingTagNames: pendingImportTagNames ?? [],
+                progress: { importedExpenseCount = $0 }
+            )
             WidgetCenter.shared.reloadAllTimelines()
             appRouter.showToast(
-                SageToast(message: "Imported \(expensesToInsert.count) expense\(expensesToInsert.count == 1 ? "" : "s").", kind: .success)
+                SageToast(message: "Imported \(count) expense\(count == 1 ? "" : "s").", kind: .success)
             )
+        } catch let error as ExpenseCSVError {
+            appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
         } catch {
-            modelContext.rollback()
             appRouter.showToast(
                 SageToast(message: "Sage could not import the CSV. No expenses were saved. Check storage and try again.", kind: .error)
             )
@@ -315,18 +311,19 @@ struct ExpenseBackupSettingsSection: View {
     private func clearPendingImport() {
         pendingImportExpenses = []
         pendingImportCurrencyCode = nil
-        pendingImportTags = []
+        pendingImportTagNames = nil
         unknownTagNames = []
+        showImportConfirmation = false
     }
 }
 
 struct UnknownTagsSheet: View {
     let unknownTagNames: [String]
-    let onResolve: ([ExpenseTag]) -> Void
+    let onResolve: ([String]) -> Void
 
     @State private var selectedNames: Set<String>
 
-    init(unknownTagNames: [String], onResolve: @escaping ([ExpenseTag]) -> Void) {
+    init(unknownTagNames: [String], onResolve: @escaping ([String]) -> Void) {
         self.unknownTagNames = unknownTagNames
         self.onResolve = onResolve
         _selectedNames = State(initialValue: Set(unknownTagNames))
@@ -380,10 +377,7 @@ struct UnknownTagsSheet: View {
 
             VStack(spacing: 10) {
                 Button {
-                    let newTags = unknownTagNames
-                        .filter { selectedNames.contains($0) }
-                        .map { ExpenseTag(name: $0, uiColor: .systemGray, emoji: "🏷️") }
-                    onResolve(newTags)
+                    onResolve(unknownTagNames.filter { selectedNames.contains($0) })
                 } label: {
                     Text(selectedNames.isEmpty ? "Continue Without Creating" : "Create \(selectedNames.count) Tag\(selectedNames.count == 1 ? "" : "s")")
                         .font(.headline)

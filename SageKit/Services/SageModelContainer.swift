@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OSLog
 import SwiftData
 
 public enum SageModelContainer {
@@ -31,7 +30,6 @@ public enum SageModelContainer {
     public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
     public nonisolated static let cloudKitPreferenceKey = "isCloudSyncEnabled"
     private nonisolated static let activeCloudKitPreferenceKey = "activeCloudSyncEnabled"
-    private nonisolated static let logger = Logger(subsystem: "me.enzottic.SageKit", category: "ModelContainer")
 
     // The CloudKit setting used by every process that opens the shared store.
     public nonisolated static var isCloudKitEnabled: Bool {
@@ -65,7 +63,7 @@ public enum SageModelContainer {
         )
 
         if case .app = purpose {
-            backfillMultiTags(container)
+            try backfillMultiTags(container)
         }
 
         #if DEBUG
@@ -170,7 +168,6 @@ public enum SageModelContainer {
         )
         #else
         let storeURL = groupURL.appending(path: "Sage.sqlite")
-        migrateStoreToAppGroupIfNeeded(destination: storeURL)
         return ModelConfiguration(
             schema: schema,
             url: storeURL,
@@ -179,56 +176,37 @@ public enum SageModelContainer {
         #endif
     }
 
-    private static nonisolated func migrateStoreToAppGroupIfNeeded(destination: URL) {
-        let defaults = UserDefaults(suiteName: appGroupIdentifier)
-        let migrationKey = "hasCompletedStoreMigration"
-        guard !(defaults?.bool(forKey: migrationKey) ?? false) else { return }
-        defer { defaults?.set(true, forKey: migrationKey) }
-
-        let fileManager = FileManager.default
-        guard !fileManager.fileExists(atPath: destination.path), !isCloudKitEnabled else { return }
-
-        let candidates = [
-            URL.applicationSupportDirectory.appending(path: "default.store"),
-            URL.applicationSupportDirectory.appending(path: "Sage.store"),
-            URL.applicationSupportDirectory.appending(path: "FinanceTracker.store"),
-        ]
-
-        guard let source = candidates.first(where: { fileManager.fileExists(atPath: $0.path) }) else {
-            return
-        }
-
-        for suffix in ["", "-wal", "-shm"] {
-            let sourceFile = URL(fileURLWithPath: source.path + suffix)
-            guard fileManager.fileExists(atPath: sourceFile.path) else { continue }
-            let destinationFile = URL(fileURLWithPath: destination.path + suffix)
-            try? fileManager.copyItem(at: sourceFile, to: destinationFile)
-        }
-    }
-
     // Migrates legacy single-tag data into the V3 `tags` array.
-    private static nonisolated func backfillMultiTags(_ container: ModelContainer) {
+    static nonisolated func backfillMultiTags(_ container: ModelContainer) throws {
         let context = ModelContext(container)
-        do {
-            let expenses = try context.fetch(FetchDescriptor<Expense>())
-            for expense in expenses where (expense.tags ?? []).isEmpty {
-                if let legacyTag = expense.tag {
+        context.autosaveEnabled = false
+        let expenses = try context.fetch(FetchDescriptor<Expense>())
+        for expense in expenses {
+            if let legacyTag = expense.tag {
+                if (expense.tags ?? []).isEmpty {
                     expense.tags = [legacyTag]
                 }
+                expense.tag = nil
             }
+        }
 
-            let rules = try context.fetch(FetchDescriptor<RecurringExpenseRule>())
-            for rule in rules where (rule.tags ?? []).isEmpty {
-                if let legacyTag = rule.tag {
+        let rules = try context.fetch(FetchDescriptor<RecurringExpenseRule>())
+        for rule in rules {
+            if let legacyTag = rule.tag {
+                if (rule.tags ?? []).isEmpty {
                     rule.tags = [legacyTag]
                 }
+                rule.tag = nil
             }
+        }
 
-            if context.hasChanges {
-                try context.save()
-            }
-        } catch {
-            logger.error("Multi-tag backfill failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
+        // Conversion and consumption are one transaction. An explicit modern selection
+        // wins; consuming its stale legacy value also prevents later tag resurrection.
+        // No global flag: legacy-only records arriving later still need conversion.
+        // Older clients can write `tag` again via CloudKit; without a per-record
+        // synchronized tombstone we cannot distinguish that from a late legacy record.
+        if context.hasChanges {
+            try context.save()
         }
     }
 }

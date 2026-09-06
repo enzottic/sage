@@ -111,7 +111,7 @@ struct SettingsView: View {
                     }
                     .disabled(isChangingData)
                 } footer: {
-                    Text("Delete all expenses, recurring rules, and tags.")
+                    Text("Delete All Data also removes settings and Sage's local CSV export. Copies saved or shared outside Sage are not deleted.")
                 }
 
                 #if DEBUG
@@ -174,7 +174,7 @@ struct SettingsView: View {
                 .disabled(isChangingData)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently removes all expenses, recurring rules, tags, and settings. This cannot be undone.")
+                Text("This permanently removes all expenses, recurring rules, tags, accounts, settings, and Sage's local CSV export. Copies saved to Files or shared outside Sage cannot be recalled and must be deleted separately. This cannot be undone.")
             }
             .safeAreaInset(edge: .bottom) {
                 if let activeDataOperation {
@@ -214,6 +214,7 @@ struct SettingsView: View {
             WidgetCenter.shared.reloadAllTimelines()
             router.showToast(SageToast(message: operation.successMessage, kind: .success))
         } catch {
+            // Only pending model changes can be rolled back, not an already-removed CSV.
             deletionService.rollback()
             router.showToast(
                 SageToast(message: operation.failureMessage, kind: .error)
@@ -239,7 +240,7 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "All expenses deleted. Recurring rules are still active."
         case .expensesAndRecurringRules: "All expenses and recurring rules deleted."
-        case .fullReset: "All user data and settings deleted."
+        case .fullReset: "Sage data, settings, and local export deleted. External copies are unchanged."
         }
     }
 
@@ -247,7 +248,7 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "Sage could not delete the expenses. Check storage and try again."
         case .expensesAndRecurringRules: "Sage could not delete the expenses and recurring rules. Check storage and try again."
-        case .fullReset: "Sage could not delete all data. Check storage and try again."
+        case .fullReset: "Sage could not finish deleting all data. Some data may already be removed. Check storage and try again."
         }
     }
 }
