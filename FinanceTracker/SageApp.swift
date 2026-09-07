@@ -42,6 +42,21 @@ struct SageApp: App {
                     )
                     try container.mainContext.save()
                 }
+                if UITestConfiguration.seedsCalendar {
+                    let calendar = Calendar.current
+                    let today = calendar.startOfDay(for: .now)
+                    let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+                    container.mainContext.insert(Expense(name: "Calendar Coffee", amount: 7.50, date: today))
+                    container.mainContext.insert(RecurringExpenseRule(
+                        name: "Calendar Subscription", amount: 15, note: "", category: .wants,
+                        frequency: .daily, startDate: tomorrow
+                    ))
+                    container.mainContext.insert(RecurringExpenseRule(
+                        name: "Expired Subscription", amount: 999, note: "", category: .wants,
+                        frequency: .daily, startDate: today, endDate: today, lastGeneratedDate: today
+                    ))
+                    try container.mainContext.save()
+                }
                 return container
             }
         } else {

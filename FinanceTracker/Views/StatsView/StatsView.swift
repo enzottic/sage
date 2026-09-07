@@ -119,6 +119,7 @@ struct StatsView: View {
                 }
                 .padding()
             }
+            .accessibilityIdentifier("stats-scroll-view")
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { statsViewport = $0 }
             .background(.sageBackground)
             .navigationTitle("Stats")
@@ -489,7 +490,6 @@ struct StatsView: View {
                 }
             }
             .frame(height: 180)
-            .accessibilityIdentifier("stats-history-chart")
             .accessibilityRepresentation {
                 ForEach(periods) { item in
                     if timeframe == .monthly {
@@ -501,6 +501,8 @@ struct StatsView: View {
                     }
                 }
             }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("stats-history-chart")
         }
         .padding(16)
         .background(.cardBackground, in: .rect(cornerRadius: 15))

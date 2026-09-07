@@ -94,15 +94,24 @@ struct OnboardingView: View {
                 }
                 .ignoresSafeArea()
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) { primaryAction }
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { incomeFocused = false }
-                        .accessibilityIdentifier("onboarding-keyboard-done-button")
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 0) {
+                    primaryAction
+                    // Keep dismissal in the safe-area layout instead of the keyboard toolbar.
+                    if incomeFocused {
+                        HStack {
+                            Spacer()
+                            Button("Done") { incomeFocused = false }
+                                .buttonStyle(.glass)
+                                .accessibilityIdentifier("onboarding-keyboard-done-button")
+                        }
+                        .frame(maxWidth: 520)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 12)
+                    }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: currentStep)
             .task(id: currentStep) { headingFocused = true }
             .alert("Could not finish setup", isPresented: Binding(

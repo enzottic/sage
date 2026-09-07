@@ -73,10 +73,10 @@ final class StatsViewUITests: XCTestCase {
 
         assertMonth(currentMonth, total: "42.50", in: app)
 
-        selectCategory("Needs", in: app)
+        selectCategory("needs", in: app)
         assertMonth(currentMonth, total: "0.00", in: app)
 
-        selectCategory("All Categories", in: app)
+        selectCategory("all", in: app)
         assertMonth(currentMonth, total: "42.50", in: app)
     }
 
@@ -93,7 +93,7 @@ final class StatsViewUITests: XCTestCase {
         let submenu = app.buttons["Category"]
         XCTAssertTrue(submenu.waitForExistence(timeout: timeout))
         submenu.tap()
-        let option = app.buttons[category]
+        let option = app.buttons["stats-category-\(category)"]
         XCTAssertTrue(option.waitForExistence(timeout: timeout))
         option.tap()
         XCTAssertTrue(option.waitForNonExistence(timeout: timeout))
@@ -102,12 +102,18 @@ final class StatsViewUITests: XCTestCase {
     private func tapPreviousMonthInHistory(in app: XCUIApplication) {
         let chart = app.descendants(matching: .any)
             .matching(identifier: "stats-history-chart").firstMatch
-        let window = app.windows.firstMatch
+        let scrollView = app.scrollViews["stats-scroll-view"]
+        XCTAssertTrue(scrollView.waitForExistence(timeout: timeout))
+        let viewport = scrollView.frame.intersection(app.windows.firstMatch.frame)
         for _ in 0..<6 {
-            if chart.exists, chart.isHittable, window.frame.contains(chart.frame) { break }
-            app.swipeUp()
+            if chart.exists, !chart.frame.isEmpty, viewport.contains(chart.frame) { break }
+            // Scroll along the card edge, away from the charts' interaction gestures.
+            scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.8))
+                .press(forDuration: 0.01, thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.25)))
         }
-        XCTAssertTrue(chart.exists && chart.isHittable, "The spending history chart did not become visible.")
+        // The chart is an accessibility container; its children, not the container, are actionable.
+        XCTAssertTrue(chart.exists && !chart.frame.isEmpty && viewport.contains(chart.frame),
+                      "The spending history chart did not become visible.\n\(app.debugDescription)")
         attachScreenshot(named: "Stats – monthly spending history", in: app)
 
         // The second-to-last slot is the prior month in the stable six-month window.
@@ -115,8 +121,9 @@ final class StatsViewUITests: XCTestCase {
         chart.coordinate(withNormalizedOffset: CGVector(dx: 0.77, dy: 0.5)).tap()
         for _ in 0..<6 {
             let total = app.staticTexts["stats-month-total"]
-            if total.exists, total.isHittable, window.frame.contains(total.frame) { break }
-            app.swipeDown()
+            if total.exists, total.isHittable, viewport.contains(total.frame) { break }
+            scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.25))
+                .press(forDuration: 0.01, thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.8)))
         }
     }
 

@@ -49,6 +49,9 @@ struct RecurringExpensesSettingsSection: View {
                 }
                 .disabled(!config.billRemindersEnabled)
                 .accessibilityIdentifier("bill-reminder-days")
+                .accessibilityValue(config.billReminderDaysBefore == 1
+                    ? Text("1 day before")
+                    : Text("\(config.billReminderDaysBefore) days before"))
 
                 ReminderTimePicker(minutes: $config.billReminderTimeMinutes)
                     .disabled(!config.billRemindersEnabled)

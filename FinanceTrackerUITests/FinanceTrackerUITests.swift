@@ -55,20 +55,25 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
         incomeField.tap()
 
-        // Tap software keys directly so typeText cannot recover lost field focus.
+        // Type through the app, not the field, so lost focus cannot be recovered.
+        // A hardware keyboard leaves an off-screen keypad preview in the AX tree.
         let keyboard = app.keyboards.firstMatch
+        let done = app.descendants(matching: .any)["onboarding-keyboard-done-button"].firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
-        tap(keyboard.keys["5"], named: "5")
-        tap(keyboard.keys["0"], named: "0")
+        app.typeText("5")
+        XCTAssertEqual(incomeField.value as? String, "5")
+        app.typeText("0")
         XCTAssertEqual(incomeField.value as? String, "50")
         XCTAssertTrue(keyboard.exists)
+        XCTAssertTrue(done.isHittable)
 
         tap("onboarding-keyboard-done-button", in: app)
         XCTAssertTrue(keyboard.waitForNonExistence(timeout: timeout))
         incomeField.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertTrue(keyboard.waitForExistence(timeout: timeout))
-        tap(keyboard.keys["0"], named: "0")
+        app.typeText("0")
         XCTAssertEqual(incomeField.value as? String, "500")
+        XCTAssertTrue(done.isHittable)
 
         tap("onboarding-budget-continue-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-allocation-continue-button"].waitForExistence(timeout: timeout))
@@ -168,6 +173,8 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
         XCTAssertEqual(syncToggle.value as? String, "1")
         tap("onboarding-sync-continue-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-tags-continue-button"].waitForExistence(timeout: timeout),
+                      "Continue did not leave the sync step.")
         XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
         XCTAssertTrue(shoppingTag.isSelected, "Tag selection must also survive returning from earlier steps.")
     }
@@ -312,7 +319,9 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertEqual(enabled.value as? String, "0")
         XCTAssertEqual(privacy.value as? String, "1")
         XCTAssertFalse(days.isEnabled)
-        enabled.tap()
+        // SwiftUI exposes the entire row as a switch; its center is empty space.
+        XCTAssertTrue(enabled.waitForHittability(timeout: timeout))
+        enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertEqual(enabled.value as? String, "1")
         XCTAssertTrue(days.isEnabled)
         XCTAssertEqual(days.value as? String, "1 day before")
@@ -320,13 +329,15 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertFalse(app.buttons["8 days before"].exists)
         app.buttons["7 days before"].tap()
         XCTAssertEqual(days.value as? String, "7 days before")
-        privacy.tap()
+        XCTAssertTrue(privacy.waitForHittability(timeout: timeout))
+        privacy.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertEqual(privacy.value as? String, "0")
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Recurring reminder settings"
         attachment.lifetime = .keepAlways
         add(attachment)
-        enabled.tap()
+        XCTAssertTrue(enabled.waitForHittability(timeout: timeout))
+        enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertFalse(days.isEnabled)
         XCTAssertEqual(days.value as? String, "7 days before")
     }
@@ -385,6 +396,72 @@ final class FinanceTrackerUITests: XCTestCase {
         app.tabBars.buttons["Home"].tap()
         XCTAssertTrue(scrollToVisibility(of: today, in: app))
         XCTAssertEqual(today.value as? String, "\(54.84.formatted(.currency(code: "USD"))) spent, Today")
+    }
+
+    func testCalendarPopupListsRecordedExpensesAndDismissesOutside() {
+        let app = launchApp(seedExpense: "Calendar Expense", seedCalendar: true)
+        let day = Calendar.current.component(.day, from: .now)
+        let today = app.buttons["expense-calendar-day-\(day)"]
+        XCTAssertTrue(scrollToVisibility(of: today, in: app))
+        today.tap()
+
+        let total = app.staticTexts["expense-calendar-day-total"]
+        XCTAssertTrue(total.waitForExistence(timeout: timeout))
+        XCTAssertEqual(total.label, "\(Double(50).formatted(.currency(code: "USD"))) spent this day")
+        XCTAssertTrue(app.otherElements["expense-calendar-day-details"].staticTexts["Calendar Expense"].isHittable)
+        XCTAssertTrue(app.otherElements["expense-calendar-day-details"].staticTexts["Calendar Coffee"].isHittable)
+        // A tap inside the popup must leave it open.
+        total.tap()
+        XCTAssertTrue(total.exists)
+        app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(total.waitForNonExistence(timeout: timeout))
+        XCTAssertTrue(app.tabBars.buttons["Home"].isSelected)
+        today.tap()
+        XCTAssertTrue(total.waitForExistence(timeout: timeout))
+    }
+
+    func testCalendarPopupShowsEmptyPastDay() {
+        let app = launchApp()
+        let today = app.buttons["expense-calendar-day-\(Calendar.current.component(.day, from: .now))"]
+        XCTAssertTrue(scrollToVisibility(of: today, in: app))
+        tap("Previous Month", in: app)
+        let firstDay = app.buttons["expense-calendar-day-1"]
+        XCTAssertTrue(scrollToVisibility(of: firstDay, in: app))
+        firstDay.tap()
+        XCTAssertTrue(app.staticTexts["No expenses recorded for this day."].waitForExistence(timeout: timeout))
+        XCTAssertEqual(app.staticTexts["expense-calendar-day-total"].label,
+                       "\(Double(0).formatted(.currency(code: "USD"))) spent this day")
+    }
+
+    func testCalendarShowsFutureRecurringAmountsAndUpcomingPopup() throws {
+        let calendar = Calendar.current
+        let now = Date.now
+        let tomorrow = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: now))
+        try XCTSkipUnless(calendar.isDate(now, equalTo: tomorrow, toGranularity: .month),
+                          "The dashboard only displays current and past months; run before the last day of the month.")
+        let app = launchApp(seedCalendar: true)
+        let tomorrowCell = app.buttons["expense-calendar-day-\(calendar.component(.day, from: tomorrow))"]
+        XCTAssertTrue(scrollToVisibility(of: tomorrowCell, in: app))
+        XCTAssertEqual(tomorrowCell.value as? String, "\(Double(15).formatted(.currency(code: "USD"))) upcoming")
+        tomorrowCell.tap()
+        let total = app.staticTexts["expense-calendar-day-total"]
+        XCTAssertTrue(total.waitForExistence(timeout: timeout))
+        XCTAssertEqual(total.label, "\(Double(15).formatted(.currency(code: "USD"))) expected this day")
+        let details = app.otherElements["expense-calendar-day-details"]
+        XCTAssertTrue(details.staticTexts["Calendar Subscription"].isHittable)
+        XCTAssertFalse(details.staticTexts["Expired Subscription"].exists)
+        app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(total.waitForNonExistence(timeout: timeout))
+        // Daily projections must continue beyond just the next occurrence.
+        if let following = calendar.date(byAdding: .day, value: 1, to: tomorrow),
+           calendar.isDate(now, equalTo: following, toGranularity: .month) {
+            let nextCell = app.buttons["expense-calendar-day-\(calendar.component(.day, from: following))"]
+            XCTAssertTrue(scrollToVisibility(of: nextCell, in: app))
+            XCTAssertEqual(nextCell.value as? String, "\(Double(15).formatted(.currency(code: "USD"))) upcoming")
+            nextCell.tap()
+            XCTAssertTrue(total.waitForExistence(timeout: timeout))
+            XCTAssertTrue(details.staticTexts["Calendar Subscription"].isHittable)
+        }
     }
 
     func testIPhoneStaysPortraitWhenDeviceRotates() {
@@ -494,13 +571,14 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
-    private func launchApp(showsOnboarding: Bool = false, seedExpense: String? = nil) -> XCUIApplication {
+    private func launchApp(showsOnboarding: Bool = false, seedExpense: String? = nil, seedCalendar: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["SAGE_UI_TESTING"] = "1"
         app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = showsOnboarding ? "1" : "0"
         if let seedExpense {
             app.launchEnvironment["SAGE_UI_TEST_SEED_EXPENSE"] = seedExpense
         }
+        app.launchEnvironment["SAGE_UI_TEST_SEED_CALENDAR"] = seedCalendar ? "1" : "0"
         app.launch()
         return app
     }
@@ -545,16 +623,20 @@ final class FinanceTrackerUITests: XCTestCase {
     private func scrollToVisibility(of element: XCUIElement, in app: XCUIApplication) -> Bool {
         let window = app.windows.firstMatch
         for _ in 0..<10 {
-            let frame = element.frame
-            if window.exists,
-               !frame.isNull,
-               !frame.isEmpty,
-               window.frame.contains(frame) {
-                return true
+            // Lazy list rows do not exist in the accessibility tree until scrolled into view.
+            if element.exists {
+                let frame = element.frame
+                if window.exists,
+                   !frame.isNull,
+                   !frame.isEmpty,
+                   window.frame.contains(frame),
+                   element.isHittable {
+                    return true
+                }
             }
             app.swipeUp()
         }
-        XCTFail("The element did not become visible.")
+        XCTFail("The element did not become visible.\n\(app.debugDescription)")
         return false
     }
 

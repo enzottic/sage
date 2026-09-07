@@ -5,6 +5,10 @@ import SageKit
 struct ExpenseCalendarWidget: View {
     private let selectedMonth: Date
     @Query private var expenses: [Expense]
+    @Query(filter: #Predicate<Expense> { $0.recurringExpenseId != nil })
+    private var existingRecurringExpenses: [Expense]
+    @Query private var recurringRules: [RecurringExpenseRule]
+    @State private var selectedDate: Date?
     @ScaledMetric(relativeTo: .caption2) private var minimumDayWidth = 40.0
 
     private let calendar = Calendar.current
@@ -15,7 +19,8 @@ struct ExpenseCalendarWidget: View {
     }
 
     var body: some View {
-        let month = SpendingCalendarMonth(month: selectedMonth, expenses: expenses, calendar: calendar)
+        let month = SpendingCalendarMonth(month: selectedMonth, expenses: expenses, recurringRules: recurringRules,
+                                          existingRecurringExpenses: existingRecurringExpenses, calendar: calendar)
 
         Section {
             ViewThatFits(in: .horizontal) {
@@ -35,6 +40,7 @@ struct ExpenseCalendarWidget: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
         }
+        .onChange(of: selectedMonth) { selectedDate = nil }
     }
 
     private func calendarGrid(_ month: SpendingCalendarMonth) -> some View {
@@ -66,6 +72,13 @@ struct ExpenseCalendarWidget: View {
                     }
                 }
             }
+            if month.days.contains(where: { !$0.upcomingExpenses.isEmpty }) {
+                Text("Dashed days include upcoming recurring expenses.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
+            }
         }
         // Keep the requested Sunday-to-Saturday column order in every locale.
         .environment(\.layoutDirection, .leftToRight)
@@ -76,33 +89,116 @@ struct ExpenseCalendarWidget: View {
         let isFuture = day.date > calendar.startOfDay(for: .now)
         let dayNumber = calendar.component(.day, from: day.date)
 
-        return VStack(spacing: 4) {
-            Text(dayNumber.formatted())
-                .font(.caption)
-                .fontWeight(isToday ? .bold : .medium)
-                .foregroundStyle(isToday ? Color.sage : Color.primary)
-            Text(calendarAmount(day.amount))
-                .font(.caption2)
-                .foregroundStyle(day.amount == 0 ? .secondary : .primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+        return Button {
+            selectedDate = day.date
+        } label: {
+            VStack(spacing: 4) {
+                Text(dayNumber.formatted())
+                    .font(.caption)
+                    .fontWeight(isToday ? .bold : .medium)
+                    .foregroundStyle(isToday ? Color.sage : Color.primary)
+                Text(calendarAmount(day.amount))
+                    .font(.caption2)
+                    .foregroundStyle(day.amount == 0 ? .secondary : .primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+            .monospacedDigit()
+            .padding(.horizontal, 2)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isToday ? Color.sage.opacity(0.12) : isFuture ? Color.clear : Color(.tertiarySystemGroupedBackground))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(isToday ? Color.sage : Color(.separator),
+                                  style: StrokeStyle(lineWidth: isToday ? 1.5 : 1,
+                                                     dash: day.upcomingExpenses.isEmpty ? [] : [3, 2]))
+            }
         }
-        .monospacedDigit()
-        .padding(.horizontal, 2)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 48)
-        .background {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isToday ? Color.sage.opacity(0.12) : isFuture ? Color.clear : Color(.tertiarySystemGroupedBackground))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(isToday ? Color.sage : Color(.separator), lineWidth: isToday ? 1.5 : 1)
-        }
+        .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(day.date.formatted(date: .complete, time: .omitted))
-        .accessibilityValue("\(day.amount.currencyString) spent\(isToday ? ", Today" : "")")
+        .accessibilityValue(dayAccessibilityValue(day, isFuture: isFuture, isToday: isToday))
+        .accessibilityHint("Show expenses for this day")
         .accessibilityIdentifier("expense-calendar-day-\(dayNumber)")
+        .popover(isPresented: Binding(
+            get: { selectedDate == day.date },
+            set: { if !$0 { selectedDate = nil } }
+        )) {
+            dayDetails(day, isFuture: isFuture)
+                .presentationCompactAdaptation(.popover)
+                .presentationBackground(.regularMaterial)
+        }
+    }
+
+    private func dayAccessibilityValue(_ day: SpendingCalendarMonth.Day, isFuture: Bool, isToday: Bool) -> String {
+        if isFuture {
+            let recorded = day.amount - day.upcomingAmount
+            return recorded == 0
+                ? "\(day.upcomingAmount.currencyString) upcoming"
+                : "\(recorded.currencyString) recorded, \(day.upcomingAmount.currencyString) upcoming"
+        }
+        return "\(day.amount.currencyString) spent\(isToday ? ", Today" : "")"
+    }
+
+    private func dayDetails(_ day: SpendingCalendarMonth.Day, isFuture: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(day.date.formatted(.dateTime.month(.wide).day()))
+                .font(.subheadline.weight(.semibold))
+            Text("\(day.amount.currencyString) \(isFuture ? "expected this day" : "spent this day")")
+                .font(.headline)
+                .monospacedDigit()
+                .accessibilityIdentifier("expense-calendar-day-total")
+            ViewThatFits(in: .vertical) {
+                dayExpenseList(day, isFuture: isFuture)
+                ScrollView {
+                    dayExpenseList(day, isFuture: isFuture)
+                }
+            }
+            .frame(maxHeight: 260)
+        }
+        .padding(16)
+        .frame(idealWidth: 280, maxWidth: 320)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("expense-calendar-day-details")
+    }
+
+    private func dayExpenseList(_ day: SpendingCalendarMonth.Day, isFuture: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if day.expenses.isEmpty && day.upcomingExpenses.isEmpty {
+                Text(isFuture ? "No upcoming expenses for this day." : "No expenses recorded for this day.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            if !day.expenses.isEmpty {
+                Text("Recorded Expenses").font(.caption).foregroundStyle(.secondary)
+                ForEach(day.expenses) { expense in
+                    detailRow(name: expense.name, amount: expense.amount)
+                }
+            }
+            if !day.upcomingExpenses.isEmpty {
+                Text("Upcoming Expenses").font(.caption).foregroundStyle(.secondary)
+                ForEach(day.upcomingExpenses) { expense in
+                    detailRow(name: expense.name, amount: expense.amount)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func detailRow(name: String, amount: Double) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(name).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            Text(amount.currencyString).monospacedDigit().fixedSize()
+        }
+        .font(.subheadline)
     }
 
     private func calendarAmount(_ amount: Double) -> String {

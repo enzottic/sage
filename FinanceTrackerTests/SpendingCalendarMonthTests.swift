@@ -60,3 +60,71 @@ struct SpendingCalendarMonthTests {
         #expect(result.days.allSatisfy { calendar.startOfDay(for: $0.date) == $0.date })
     }
 }
+
+extension SpendingCalendarMonthTests {
+    @Test @MainActor
+    func projectsEveryFutureOccurrenceThroughInclusiveEndDate() throws {
+        let today = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 10)))
+        let end = try #require(calendar.date(byAdding: .day, value: 3, to: today))
+        let rule = RecurringExpenseRule(name: "Coffee", amount: 5, note: "", category: .wants,
+                                        frequency: .daily, startDate: today, endDate: end,
+                                        recurrenceTimeZoneIdentifier: calendar.timeZone.identifier)
+        let month = SpendingCalendarMonth(month: today, expenses: [], recurringRules: [rule], now: today, calendar: calendar)
+        #expect(month.days[9].amount == 0)
+        #expect(month.days[10...12].allSatisfy { $0.amount == 5 && $0.upcomingExpenses.count == 1 })
+        #expect(month.days[13].amount == 0)
+        #expect(month.days.reduce(0) { $0 + $1.amount } == 15)
+    }
+
+    @Test @MainActor
+    func combinesRecordedAndProjectedWithoutDuplicatingGeneratedOccurrences() throws {
+        let today = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 10)))
+        let tomorrow = try #require(calendar.date(byAdding: .day, value: 1, to: today))
+        let rule = RecurringExpenseRule(name: "Subscription", amount: 15, note: "", category: .wants,
+                                        frequency: .daily, startDate: tomorrow,
+                                        recurrenceTimeZoneIdentifier: calendar.timeZone.identifier)
+        let generated = Expense(name: "Already recorded", amount: 12, date: tomorrow,
+                                recurringExpenseId: rule.id,
+                                recurringOccurrenceKey: RecurringExpenseOccurrence.key(ruleID: rule.id, scheduledDate: tomorrow))
+        let other = Expense(name: "Other", amount: 3, date: tomorrow)
+        let legacy = Expense(name: "Legacy recorded", amount: 12, date: tomorrow, recurringExpenseId: rule.id)
+        let legacyResult = SpendingCalendarMonth(month: today, expenses: [legacy], recurringRules: [rule], now: today, calendar: calendar)
+        #expect(legacyResult.days[10].amount == 12)
+        #expect(legacyResult.days[10].upcomingExpenses.isEmpty)
+        let result = SpendingCalendarMonth(month: today, expenses: [generated, other], recurringRules: [rule], now: today, calendar: calendar)
+        #expect(result.days[10].amount == 15)
+        #expect(result.days[10].expenses.count == 2)
+        #expect(result.days[10].upcomingExpenses.isEmpty)
+        #expect(result.days[11].upcomingAmount == 15)
+
+        // A moved expense still fulfills its original occurrence, even outside this month.
+        generated.date = calendar.date(byAdding: .month, value: -1, to: tomorrow)!
+        let moved = SpendingCalendarMonth(month: today, expenses: [other], recurringRules: [rule], now: today,
+                                          existingRecurringExpenses: [generated], calendar: calendar)
+        #expect(moved.days[10].amount == 3)
+        #expect(moved.days[10].upcomingExpenses.isEmpty)
+
+        let additional = RecurringExpenseRule(name: "Second subscription", amount: 8, note: "", category: .needs,
+                                              frequency: .monthly, startDate: tomorrow)
+        let mixed = SpendingCalendarMonth(month: today, expenses: [other], recurringRules: [additional], now: today, calendar: calendar)
+        #expect(mixed.days[10].amount == 11)
+        #expect(mixed.days[10].upcomingAmount == 8)
+        #expect(mixed.days[10].upcomingExpenses.first?.name == "Second subscription")
+    }
+
+    @Test @MainActor
+    func respectsGenerationCursorAndFixedMonthlyAnchor() throws {
+        let start = try #require(calendar.date(from: DateComponents(year: 2026, month: 1, day: 31)))
+        let february = try #require(calendar.date(from: DateComponents(year: 2026, month: 2, day: 28)))
+        let march = try #require(calendar.date(from: DateComponents(year: 2026, month: 3, day: 1)))
+        let rule = RecurringExpenseRule(name: "Rent", amount: 100, note: "", category: .needs,
+                                        frequency: .monthly, startDate: start, lastGeneratedDate: february,
+                                        recurrenceTimeZoneIdentifier: calendar.timeZone.identifier)
+        let result = SpendingCalendarMonth(month: march, expenses: [], recurringRules: [rule], now: february, calendar: calendar)
+        #expect(result.days[30].upcomingAmount == 100)
+        #expect(result.days[27].amount == 0)
+        #expect(result.days.reduce(0) { $0 + $1.amount } == 100)
+        let past = SpendingCalendarMonth(month: start, expenses: [], recurringRules: [rule], now: february, calendar: calendar)
+        #expect(past.days.allSatisfy { $0.upcomingExpenses.isEmpty })
+    }
+}

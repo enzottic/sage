@@ -19,8 +19,18 @@ final class WidgetGalleryUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 10), springboard.debugDescription)
         search.tap()
         search.typeText("Sage")
-        let sage = springboard.cells["Sage"]
-        XCTAssertTrue(sage.waitForExistence(timeout: 10), springboard.debugDescription)
+        // SpringBoard can expose multiple cells for the same widget provider.
+        var sage: XCUIElement?
+        let sageIsHittable = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                sage = springboard.cells.matching(identifier: "Sage").allElementsBoundByIndex
+                    .first(where: { $0.isHittable })
+                return sage != nil
+            },
+            object: springboard
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [sageIsHittable], timeout: 10), .completed, springboard.debugDescription)
+        guard let sage else { return }
         sage.tap()
         XCTAssertTrue(springboard.staticTexts["Daily Spending"].firstMatch.waitForExistence(timeout: 10), springboard.debugDescription)
         let screenshot = XCTAttachment(screenshot: springboard.screenshot())

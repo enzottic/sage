@@ -29,8 +29,10 @@ struct StatsFilterMenu: View {
             Section {
                 Picker("Category", selection: $selectedCategory.animation()) {
                     Text("All Categories").tag(nil as ExpenseCategory?)
+                        .accessibilityIdentifier("stats-category-all")
                     ForEach(ExpenseCategory.allCases, id: \.self) { category in
                         Text(category.rawValue).tag(category as ExpenseCategory?)
+                            .accessibilityIdentifier("stats-category-\(category.rawValue.lowercased())")
                     }
                 }
                 .pickerStyle(.menu)
