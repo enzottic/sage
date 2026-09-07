@@ -66,7 +66,7 @@ final class AppRouter {
         } catch {
             showToast(
                 SageToast(
-                    message: "Sage could not open that receipt image.",
+                    message: "Syl could not open that receipt image.",
                     kind: .error
                 )
             )

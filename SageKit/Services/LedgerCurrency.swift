@@ -22,10 +22,10 @@ public enum LedgerCurrency {
         public var errorDescription: String? {
             switch self {
             case .invalidCode(let code): "Choose a supported ISO currency code instead of '\(code)'."
-            case .notEstablished: "Open Sage and confirm the currency for your expenses and budgets first."
-            case .alreadyEstablished(let code): "This ledger already uses \(code). Sage does not convert currencies."
-            case .storageUnavailable: "Sage could not access the shared currency setting. Try opening the app again."
-            case .cloudConflict: "Your devices disagree about the ledger currency. Resolve the currency conflict before saving monetary changes. Sage does not convert currencies."
+            case .notEstablished: "Open Syl and confirm the currency for your expenses and budgets first."
+            case .alreadyEstablished(let code): "This ledger already uses \(code). Syl does not convert currencies."
+            case .storageUnavailable: "Syl could not access the shared currency setting. Try opening the app again."
+            case .cloudConflict: "Your devices disagree about the ledger currency. Resolve the currency conflict before saving monetary changes. Syl does not convert currencies."
             }
         }
     }

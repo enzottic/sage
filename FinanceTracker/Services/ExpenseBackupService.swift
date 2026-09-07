@@ -44,7 +44,7 @@ final class ExpenseBackupService: Sendable {
 
     nonisolated private static func write(_ data: Data, extension suffix: String) throws -> URL {
         // Temporary share files are not a second permanent, app-owned financial archive.
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("sage-expenses-\(UUID().uuidString.lowercased()).\(suffix)")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("syl-expenses-\(UUID().uuidString.lowercased()).\(suffix)")
         
         try data.write(to: url, options: .atomic)
         

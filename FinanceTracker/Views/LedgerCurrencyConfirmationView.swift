@@ -12,7 +12,7 @@ struct LedgerCurrencyConfirmationView: View {
             Form {
                 Section {
                     Text("Choose the currency used by your expenses and budgets.")
-                    Text("If you already have data in Sage, choose the currency those amounts were entered in. Older data does not record a currency. No amounts will be converted.")
+                    Text("If you already have data in Syl, choose the currency those amounts were entered in. Older data does not record a currency. No amounts will be converted.")
                         .foregroundStyle(.secondary)
                 }
 
@@ -31,12 +31,12 @@ struct LedgerCurrencyConfirmationView: View {
 
                 if let cloudCode = config.cloudLedgerCurrencyCode {
                     Section {
-                        Text("iCloud reports \(cloudCode). Confirm that this matches your existing amounts. Sage cannot combine ledgers with different currencies.")
+                        Text("iCloud reports \(cloudCode). Confirm that this matches your existing amounts. Syl cannot combine ledgers with different currencies.")
                             .foregroundStyle(.secondary)
                         if selectedCode != cloudCode {
                             Text("Select \(cloudCode) only if that is the currency your amounts were entered in. If it is not, stop and contact support before continuing.")
                             if let supportURL = URL(string: "mailto:hi@enzottic.me") {
-                                Link("Contact Sage Support", destination: supportURL)
+                                Link("Contact Syl Support", destination: supportURL)
                             }
                         }
                     }
@@ -53,7 +53,7 @@ struct LedgerCurrencyConfirmationView: View {
                     .accessibilityIdentifier("confirm-ledger-currency-button")
                     .disabled(config.cloudLedgerCurrencyCode.map { $0 != selectedCode } ?? false)
                 } footer: {
-                    Text("You cannot change this currency without deleting all data in Sage. No currency conversion is performed.")
+                    Text("You cannot change this currency without deleting all data in Syl. No currency conversion is performed.")
                 }
 
                 if let errorMessage {
@@ -88,19 +88,19 @@ struct LedgerCurrencyConflictView: View {
                 }
                 Section {
                     if config.isCloudSyncEnabled {
-                        Text("Check the ledger currency in Sage on your other devices. Connect to the internet using the same iCloud account, then check again. If the currencies still disagree, contact Sage support before changing or deleting any data.")
+                        Text("Check the ledger currency in Syl on your other devices. Connect to the internet using the same iCloud account, then check again. If the currencies still disagree, contact Syl support before changing or deleting any data.")
                     } else {
-                        Text("iCloud preference sync is off on this device, so Sage cannot check again. The previously detected currency conflict remains unresolved. Contact Sage Support.")
+                        Text("iCloud preference sync is off on this device, so Syl cannot check again. The previously detected currency conflict remains unresolved. Contact Syl Support.")
                     }
                     Button("Check iCloud Again") {
                         config.recheckLedgerCurrency()
                     }
                     .disabled(!config.isCloudSyncEnabled)
                     if let supportURL = URL(string: "mailto:hi@enzottic.me") {
-                        Link("Contact Sage Support", destination: supportURL)
+                        Link("Contact Syl Support", destination: supportURL)
                     }
                 } footer: {
-                    Text("Checking iCloud does not repair existing data. If amounts were entered in different currencies, Sage cannot determine their original currencies or convert them automatically.")
+                    Text("Checking iCloud does not repair existing data. If amounts were entered in different currencies, Syl cannot determine their original currencies or convert them automatically.")
                 }
             }
             .navigationTitle("Currency Conflict")

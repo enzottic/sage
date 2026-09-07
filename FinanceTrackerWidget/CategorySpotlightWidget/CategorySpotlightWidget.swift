@@ -88,7 +88,7 @@ struct CategorySpotlightWidget: Widget {
                             .accessibilityHidden(true)
                         Text("Spending unavailable")
                             .font(.caption.weight(.semibold))
-                        Text("Open Sage to reload your data.")
+                        Text("Open Syl to reload your data.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -96,7 +96,7 @@ struct CategorySpotlightWidget: Widget {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Confirm currency")
                             .font(.caption.weight(.semibold))
-                        Text("Open Sage to confirm your currency.")
+                        Text("Open Syl to confirm your currency.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }

@@ -39,7 +39,7 @@ struct CameraPickerView: UIViewControllerRepresentable {
             if let image = info[.originalImage] as? UIImage {
                 parent.onImagePicked(image)
             } else {
-                parent.onFailure("Sage couldn't open this camera photo. Try again.")
+                parent.onFailure("Syl couldn't open this camera photo. Try again.")
             }
             parent.dismiss()
         }

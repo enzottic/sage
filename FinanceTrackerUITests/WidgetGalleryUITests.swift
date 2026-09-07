@@ -18,12 +18,12 @@ final class WidgetGalleryUITests: XCTestCase {
         let search = springboard.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10), springboard.debugDescription)
         search.tap()
-        search.typeText("Sage")
+        search.typeText("Syl")
         // SpringBoard can expose multiple cells for the same widget provider.
         var sage: XCUIElement?
         let sageIsHittable = XCTNSPredicateExpectation(
             predicate: NSPredicate { _, _ in
-                sage = springboard.cells.matching(identifier: "Sage").allElementsBoundByIndex
+                sage = springboard.cells.matching(identifier: "Syl").allElementsBoundByIndex
                     .first(where: { $0.isHittable })
                 return sage != nil
             },

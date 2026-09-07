@@ -73,9 +73,9 @@ struct ExpenseBackupSettingsSection: View {
             } header: {
                 Text("iCloud Sync")
             } footer: {
-                Text("Preference sync changes take effect immediately. Fully close and reopen Sage to apply changes to expense sync. Previously queued iCloud activity may still finish; turning sync off does not delete existing iCloud data.")
+                Text("Preference sync changes take effect immediately. Fully close and reopen Syl to apply changes to expense sync. Previously queued iCloud activity may still finish; turning sync off does not delete existing iCloud data.")
                 if config.cloudSyncStatus == .accountChanged {
-                    Text("Your iCloud account changed. Preference sync is off. Fully restart Sage to stop expense sync, then review your account before enabling sync again.")
+                    Text("Your iCloud account changed. Preference sync is off. Fully restart Syl to stop expense sync, then review your account before enabling sync again.")
                 } else if config.cloudSyncStatus == .quotaExceeded {
                     Text("iCloud preference storage is full. Changes are saved on this device, but new preference uploads are paused.")
                 } else if config.cloudSyncStatus == .synchronizationUnavailable {
@@ -131,7 +131,7 @@ struct ExpenseBackupSettingsSection: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This device uses \(config.ledgerCurrencyCode ?? "an unconfirmed currency"). Sage has not received an iCloud currency. Before confirming, check that any existing Sage data on your other devices uses the same currency. No conversion will occur.")
+            Text("This device uses \(config.ledgerCurrencyCode ?? "an unconfirmed currency"). Syl has not received an iCloud currency. Before confirming, check that any existing Syl data on your other devices uses the same currency. No conversion will occur.")
         }
         .safeAreaInset(edge: .bottom) {
             if isWorking {
@@ -191,12 +191,12 @@ struct ExpenseBackupSettingsSection: View {
             set: { enabled in
                 if config.updateCloudSyncEnabled(enabled) {
                     appRouter.showToast(
-                        SageToast(message: "Sync preference saved. Fully close and reopen Sage to apply it to expenses.", kind: .success)
+                        SageToast(message: "Sync preference saved. Fully close and reopen Syl to apply it to expenses.", kind: .success)
                     )
                 } else {
                     appRouter.showToast(
                         SageToast(
-                            message: "Sage could not save the sync preference. Try again.",
+                            message: "Syl could not save the sync preference. Try again.",
                             kind: .error
                         )
                     )

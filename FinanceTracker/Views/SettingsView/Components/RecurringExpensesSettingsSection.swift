@@ -75,7 +75,7 @@ struct RecurringExpensesSettingsSection: View {
                             if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
                         }
                     } else if let error = permissionError ?? reminders?.scheduler.errorMessage {
-                        Text("Sage could not update reminders. \(error)")
+                        Text("Syl could not update reminders. \(error)")
                         Button("Retry") { setRemindersEnabled(true) }
                     } else if reminders?.scheduler.authorizationStatus == .provisional {
                         Text("Notifications are delivered quietly. You can enable alerts in iOS Settings.")
@@ -139,7 +139,7 @@ struct RecurringExpensesSettingsSection: View {
                     router.showToast(SageToast(message: "Expense Recurrence Rule Deleted", kind: .success))
                 } catch {
                     modelContext.rollback()
-                    router.showToast(SageToast(message: "Sage could not delete this recurring rule. Please try again.", kind: .error))
+                    router.showToast(SageToast(message: "Syl could not delete this recurring rule. Please try again.", kind: .error))
                 }
             }
             Button("Cancel", role: .cancel) {}

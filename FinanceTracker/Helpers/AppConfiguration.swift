@@ -28,9 +28,9 @@ class AppConfiguration {
     var ledgerCurrencyConflictMessage: String? {
         guard hasLedgerCurrencyConflict else { return nil }
         if let local = ledgerCurrencyCode, let cloud = cloudLedgerCurrencyCode {
-            return "This device uses \(local), but iCloud reports \(cloud). Monetary screens are blocked because these currencies do not match. Sage has not changed your currency or converted any amounts."
+            return "This device uses \(local), but iCloud reports \(cloud). Monetary screens are blocked because these currencies do not match. Syl has not changed your currency or converted any amounts."
         }
-        return "A currency conflict was previously detected, and Sage cannot currently verify the iCloud currency. Monetary screens remain blocked. No currency has been changed and no amounts have been converted."
+        return "A currency conflict was previously detected, and Syl cannot currently verify the iCloud currency. Monetary screens remain blocked. No currency has been changed and no amounts have been converted."
     }
 
     func establishLedgerCurrency(_ code: String, savingSetup: () throws -> Void = {}) throws {

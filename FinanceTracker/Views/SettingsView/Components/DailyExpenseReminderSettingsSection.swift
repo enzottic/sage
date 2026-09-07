@@ -34,7 +34,7 @@ struct DailyExpenseReminderSettingsSection: View {
                             if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
                         }
                     } else if let error = permissionError ?? reminders?.dailyScheduler.errorMessage {
-                        Text("Sage could not update your daily reminder. \(error)")
+                        Text("Syl could not update your daily reminder. \(error)")
                         Button("Retry") { setEnabled(true) }
                     } else if reminders?.dailyScheduler.authorizationStatus == .provisional {
                         Text("Notifications are delivered quietly. You can enable alerts in iOS Settings.")

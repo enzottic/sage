@@ -187,7 +187,7 @@ struct TagsSettingsSection: View {
             try modelContext.save()
         } catch {
             modelContext.rollback()
-            deleteErrorMessage = "Sage could not delete this tag. Please try again."
+            deleteErrorMessage = "Syl could not delete this tag. Please try again."
         }
     }
 }

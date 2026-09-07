@@ -60,7 +60,7 @@ public enum ExpenseImportError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .conflict: "Conflicting expense identities were found. No expenses were saved. Resolve the existing copies before importing."
-        case .ambiguousTag(let name): "More than one saved tag matches '\(name)'. Resolve those tags before importing; Sage will not choose one arbitrarily."
+        case .ambiguousTag(let name): "More than one saved tag matches '\(name)'. Resolve those tags before importing; Syl will not choose one arbitrarily."
         case .changed: "Saved data changed while preparing this import. Review the updated summary before importing again."
         case .alreadyImporting: "Another import is in progress. Wait for it to finish."
         case .currencyChanged: "The ledger currency changed. Review the file again. No amounts were converted."

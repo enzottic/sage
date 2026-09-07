@@ -226,7 +226,7 @@ struct OnboardingView: View {
                 .scaledToFit()
                 .frame(width: 140, height: 140)
                 .accessibilityHidden(true)
-            heading("Welcome to Sage", subtitle: "A simple personal expense tracking app")
+            heading("Welcome to Syl", subtitle: "A simple personal expense tracking app")
         }
     }
 
@@ -270,7 +270,7 @@ struct OnboardingView: View {
                 .disabled(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil)
                 .onChange(of: selectedCurrencyCode) { incomeFocused = false }
                 Text(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil
-                     ? "Your existing expenses and budgets use this currency. Sage does not convert amounts."
+                     ? "Your existing expenses and budgets use this currency. Syl does not convert amounts."
                      : "Used for all expenses and budgets. You can change it here before finishing setup; it stays fixed afterward.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -312,7 +312,7 @@ struct OnboardingView: View {
                     .font(.headline)
                     .tint(.sage)
                     .accessibilityIdentifier("onboarding-sync-toggle")
-                Text(cloudSyncEnabled ? "Preference sync starts when you finish setup. Fully close and reopen Sage to enable expense sync." : "Preferences stay on this device. If expense sync was previously enabled, fully close and reopen Sage to turn it off.")
+                Text(cloudSyncEnabled ? "Preference sync starts when you finish setup. Fully close and reopen Syl to enable expense sync." : "Preferences stay on this device. If expense sync was previously enabled, fully close and reopen Syl to turn it off.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -392,7 +392,7 @@ struct OnboardingView: View {
     private func completeOnboarding() {
         guard (monthlyIncome ?? 0) > 0 else { return }
         guard config.updateCloudSyncEnabled(cloudSyncEnabled) else {
-            completionErrorMessage = "Sage could not save your sync preference. Try again."
+            completionErrorMessage = "Syl could not save your sync preference. Try again."
             return
         }
         do {
@@ -416,7 +416,7 @@ struct OnboardingView: View {
             }
         } catch {
             modelContext.rollback()
-            completionErrorMessage = "Sage could not finish setup. \(error.localizedDescription)"
+            completionErrorMessage = "Syl could not finish setup. \(error.localizedDescription)"
             return
         }
 

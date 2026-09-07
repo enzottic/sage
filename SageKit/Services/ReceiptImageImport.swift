@@ -14,7 +14,7 @@ public enum ReceiptImageImport {
         public var errorDescription: String? {
             switch self {
             case .unsupportedURL:
-                "Sage can only import receipt files from this action."
+                "Syl can only import receipt files from this action."
             case .invalidImage:
                 "The selected file is not a valid image."
             }

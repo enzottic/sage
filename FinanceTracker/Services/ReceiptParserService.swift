@@ -137,13 +137,13 @@ enum ReceiptParserError: LocalizedError {
         case .languageModelUnavailable:
             "Receipt reading requires Apple Intelligence on this device."
         case .imageEncodingFailed:
-            "Sage couldn't prepare this photo. Choose another photo and try again."
+            "Syl couldn't prepare this photo. Choose another photo and try again."
         case .textRecognitionFailed:
-            "Sage couldn't read text from this photo. Try a clearer photo of the full receipt."
+            "Syl couldn't read text from this photo. Try a clearer photo of the full receipt."
         case .noTextFound:
-            "Sage couldn't find receipt text in this photo. Try a clearer photo of the full receipt."
+            "Syl couldn't find receipt text in this photo. Try a clearer photo of the full receipt."
         case .parsingFailed:
-            "Sage couldn't read this photo. Please try again."
+            "Syl couldn't read this photo. Please try again."
         case .noReceipt:
             "Please provide an image of a receipt, or try a different photo."
         }

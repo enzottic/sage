@@ -2,7 +2,7 @@
 
 ## Feather Icons
 
-The Sage app icon includes a modified version of the Feather `dollar-sign` icon.
+The Syl app icon includes a modified version of the Feather `dollar-sign` icon.
 
 Source: https://github.com/feathericons/feather
 

@@ -212,7 +212,7 @@ struct AddExpenseTagSheet: View {
                     dismiss()
                 } catch {
                     modelContext.rollback()
-                    saveErrorMessage = "Sage could not save this tag. Check available storage and try again."
+                    saveErrorMessage = "Syl could not save this tag. Check available storage and try again."
                 }
             } label: {
                 Text(isEditing ? "Save Tag" : "Add Tag")

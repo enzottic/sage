@@ -17,7 +17,7 @@ struct WhatsNewSheet: View {
                 VStack(spacing: 36) {
                     header
                     
-                    Text("Thank you for being a Sage beta tester! These are just a few of the many improvments that have been made this update. Please continue to leave feedback via the e-mail link in the Settings tab.")
+                    Text("Thank you for being a Syl beta tester! These are just a few of the many improvments that have been made this update. Please continue to leave feedback via the e-mail link in the Settings tab.")
                         .font(.subheadline)
 
                     VStack(alignment: .leading, spacing: 24) {

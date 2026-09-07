@@ -39,6 +39,6 @@ public struct GetMonthlySpendingIntent: AppIntent {
             return .result(dialog: "You've spent \(total.currencyString) this month.")
         }
         
-        return .result(dialog: "Unable to get monthly spending from Sage.")
+        return .result(dialog: "Unable to get monthly spending from Syl.")
     }
 }

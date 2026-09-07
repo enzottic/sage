@@ -91,7 +91,7 @@ struct DailyChartEntryView: View {
 
             if entry.isUnavailable {
                 ContentUnavailableView("Spending unavailable", systemImage: "exclamationmark.triangle",
-                                       description: Text("Open Sage to reload your data."))
+                                       description: Text("Open Syl to reload your data."))
             } else if let currencyCode = entry.currencyCode {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(entry.total, format: .currency(code: currencyCode))
@@ -130,13 +130,13 @@ struct DailyChartEntryView: View {
                 .minimumScaleFactor(0.8)
 
                 if !entry.hasExpenses {
-                    Text("No expenses this month. Add one in Sage.")
+                    Text("No expenses this month. Add one in Syl.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             } else {
                 ContentUnavailableView("Confirm your currency", systemImage: "dollarsign.circle",
-                                       description: Text("Open Sage to confirm your ledger currency."))
+                                       description: Text("Open Syl to confirm your ledger currency."))
             }
         }
         .fontDesign(.rounded)

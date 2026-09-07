@@ -72,13 +72,6 @@ struct ExpenseCalendarWidget: View {
                     }
                 }
             }
-            if month.days.contains(where: { !$0.upcomingExpenses.isEmpty }) {
-                Text("Dashed days include upcoming recurring expenses.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 4)
-            }
         }
         // Keep the requested Sunday-to-Saturday column order in every locale.
         .environment(\.layoutDirection, .leftToRight)

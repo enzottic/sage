@@ -222,7 +222,7 @@ public enum ExpenseBackupError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalid(let detail): "Invalid expense backup: \(detail)"
-        case .unsupportedVersion(let version): "Expense backup version \(version) is not supported. Update Sage before importing this file."
+        case .unsupportedVersion(let version): "Expense backup version \(version) is not supported. Update Syl before importing this file."
         }
     }
 }

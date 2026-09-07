@@ -184,7 +184,7 @@ private struct DataStoreRecoveryView: View {
         ContentUnavailableView(
             "Your data could not open",
             systemImage: "externaldrive.badge.exclamationmark",
-            description: Text("Sage could not access its shared storage. Check available device storage, then close and reopen the app. \(error.localizedDescription)")
+            description: Text("Syl could not access its shared storage. Check available device storage, then close and reopen the app. \(error.localizedDescription)")
         )
     }
 }

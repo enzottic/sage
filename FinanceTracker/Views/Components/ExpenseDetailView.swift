@@ -164,7 +164,7 @@ struct ExpenseDetailView: View {
             ))
         } catch {
             modelContext.rollback()
-            saveErrorMessage = "Sage could not save this expense. Check available storage and try again."
+            saveErrorMessage = "Syl could not save this expense. Check available storage and try again."
         }
     }
 }

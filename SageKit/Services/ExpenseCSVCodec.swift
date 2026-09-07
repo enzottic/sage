@@ -60,9 +60,9 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
         case .invalidCurrency(let code):
             return "Invalid CSV currency '\(code)'. Choose a file with a supported ISO currency code."
         case .mixedCurrencies:
-            return "This CSV contains mixed currencies. Sage imports only one ledger currency and does not convert amounts."
+            return "This CSV contains mixed currencies. Syl imports only one ledger currency and does not convert amounts."
         case .currencyMismatch(let expected, let actual):
-            return "This CSV uses \(actual), but your ledger uses \(expected). No expenses were imported. Sage does not convert currencies."
+            return "This CSV uses \(actual), but your ledger uses \(expected). No expenses were imported. Syl does not convert currencies."
         case .legacyCurrencyConfirmationRequired:
             return "This CSV has no currency information. Confirm the currency of its amounts before importing."
         }

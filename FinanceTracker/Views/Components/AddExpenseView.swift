@@ -177,7 +177,7 @@ struct AddExpenseView: View {
         .task {
             guard let initialReceiptData else { return }
             guard let image = UIImage(data: initialReceiptData) else {
-                showReceiptError("Sage couldn't open the shared receipt.")
+                showReceiptError("Syl couldn't open the shared receipt.")
                 return
             }
             await parseReceipt(image)
@@ -340,13 +340,13 @@ struct AddExpenseView: View {
                 let data = try await item.loadTransferable(type: Data.self),
                 let image = UIImage(data: data)
             else {
-                showReceiptError("Sage couldn't open that photo.")
+                showReceiptError("Syl couldn't open that photo.")
                 return
             }
 
             await parseReceipt(image)
         } catch {
-            showReceiptError("Sage couldn't open that photo. Choose another photo and try again.")
+            showReceiptError("Syl couldn't open that photo. Choose another photo and try again.")
         }
     }
 
@@ -380,7 +380,7 @@ struct AddExpenseView: View {
             } catch let error as ReceiptParserError {
                 showReceiptError(error.localizedDescription)
             } catch {
-                showReceiptError("Sage couldn't read this receipt. Try again later.")
+                showReceiptError("Syl couldn't read this receipt. Try again later.")
             }
         }
     }
@@ -458,7 +458,7 @@ struct AddExpenseView: View {
             appRouter.showToast(SageToast(message: "Expense saved", kind: .success))
         } catch {
             modelContext.rollback()
-            errorMessage = "Sage could not save this expense. Check available storage and try again."
+            errorMessage = "Syl could not save this expense. Check available storage and try again."
             showError = true
         }
     }

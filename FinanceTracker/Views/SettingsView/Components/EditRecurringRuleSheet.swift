@@ -126,7 +126,7 @@ struct EditRecurringRuleSheet: View {
                 Button("Update Future Schedule") { saveChanges(scheduleConfirmed: true) }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Use the Gregorian calendar in \(timeZoneIdentifier). Existing expenses and their identities stay unchanged. Past catch-up is skipped. Monthly rules already started resume after this month or the latest recorded occurrence's month, whichever is later. Other frequencies resume after that date on their cadence. Future start dates are kept. Update Sage on every synced device first; older versions do not honor this schedule.")
+                Text("Use the Gregorian calendar in \(timeZoneIdentifier). Existing expenses and their identities stay unchanged. Past catch-up is skipped. Monthly rules already started resume after this month or the latest recorded occurrence's month, whichever is later. Other frequencies resume after that date on their cadence. Future start dates are kept. Update Syl on every synced device first; older versions do not honor this schedule.")
             }
         }
     }

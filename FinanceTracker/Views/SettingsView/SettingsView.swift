@@ -30,12 +30,12 @@ struct SettingsView: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         let ios = UIDevice.current.systemVersion
-        let body = "\n\n\n--- Please do not remove the info below ---\nSage \(version) (\(build)) · iOS \(ios) · \(Self.deviceModel)"
+        let body = "\n\n\n--- Please do not remove the info below ---\nSyl \(version) (\(build)) · iOS \(ios) · \(Self.deviceModel)"
         var components = URLComponents()
         components.scheme = "mailto"
         components.path = "hi@enzottic.me"
         components.queryItems = [
-            URLQueryItem(name: "subject", value: "Sage Feedback"),
+            URLQueryItem(name: "subject", value: "Syl Feedback"),
             URLQueryItem(name: "body", value: body)
         ]
         return components.url
@@ -111,7 +111,7 @@ struct SettingsView: View {
                     }
                     .disabled(isChangingData)
                 } footer: {
-                    Text("Delete All Data also removes settings and Sage's local CSV export. Copies saved or shared outside Sage are not deleted.")
+                    Text("Delete All Data also removes settings and Syl's local CSV export. Copies saved or shared outside Syl are not deleted.")
                 }
 
                 #if DEBUG
@@ -175,7 +175,7 @@ struct SettingsView: View {
                 .disabled(isChangingData)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently removes all expenses, recurring rules, tags, accounts, settings, and Sage's local CSV export. Copies saved to Files or shared outside Sage cannot be recalled and must be deleted separately. This cannot be undone.")
+                Text("This permanently removes all expenses, recurring rules, tags, accounts, settings, and Syl's local CSV export. Copies saved to Files or shared outside Syl cannot be recalled and must be deleted separately. This cannot be undone.")
             }
             .safeAreaInset(edge: .bottom) {
                 if let activeDataOperation {
@@ -241,15 +241,15 @@ private enum DataOperation {
         switch self {
         case .expensesOnly: "All expenses deleted. Recurring rules are still active."
         case .expensesAndRecurringRules: "All expenses and recurring rules deleted."
-        case .fullReset: "Sage data, settings, and local export deleted. External copies are unchanged."
+        case .fullReset: "Syl data, settings, and local export deleted. External copies are unchanged."
         }
     }
 
     var failureMessage: String {
         switch self {
-        case .expensesOnly: "Sage could not delete the expenses. Check storage and try again."
-        case .expensesAndRecurringRules: "Sage could not delete the expenses and recurring rules. Check storage and try again."
-        case .fullReset: "Sage could not finish deleting all data. Some data may already be removed. Check storage and try again."
+        case .expensesOnly: "Syl could not delete the expenses. Check storage and try again."
+        case .expensesAndRecurringRules: "Syl could not delete the expenses and recurring rules. Check storage and try again."
+        case .fullReset: "Syl could not finish deleting all data. Some data may already be removed. Check storage and try again."
         }
     }
 }

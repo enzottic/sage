@@ -24,7 +24,7 @@ struct BudgetSettingsSection: View {
                         .foregroundStyle(.secondary)
                 }
             } footer: {
-                Text("All expenses and budgets use this currency, even when your device region changes. Sage does not convert currencies.")
+                Text("All expenses and budgets use this currency, even when your device region changes. Syl does not convert currencies.")
             }
             Section {
                 WholeNumberCurrencyField(amount: $config.totalMonthlyIncome, isFocused: $needsFocus)
