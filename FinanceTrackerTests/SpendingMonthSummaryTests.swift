@@ -59,6 +59,60 @@ struct SpendingMonthSummaryTests {
     }
 
     @Test
+    func previousMonthComparisonUsesMatchingWallTime() throws {
+        // March and February have different UTC offsets in this calendar.
+        let now = try date(2026, 3, 15, hour: 12).addingTimeInterval(34 * 60 + 56)
+        let cutoff = try date(2026, 2, 15, hour: 12).addingTimeInterval(34 * 60 + 56)
+        let expenses = [
+            Expense(name: "Before previous month", amount: 999, date: try date(2026, 1, 31)),
+            Expense(name: "Previous month start", amount: 10, date: try date(2026, 2, 1)),
+            Expense(name: "Matching day morning", amount: 20, date: try date(2026, 2, 15, hour: 9)),
+            Expense(name: "Exactly at cutoff", amount: 5, date: cutoff),
+            Expense(name: "After cutoff", amount: 999, date: cutoff.addingTimeInterval(1)),
+            Expense(name: "Current spending", amount: 42, date: now)
+        ]
+
+        let result = SpendingMonthSummary(month: now, expenses: expenses, now: now, calendar: calendar)
+
+        #expect(result.previousTotal == 35)
+        #expect(result.total == 42)
+    }
+
+    @Test
+    func completedMonthComparisonExcludesSelectedMonthMidnight() throws {
+        let start = try date(2026, 8, 1)
+        let expenses = [
+            Expense(name: "Before previous month", amount: 999, date: try date(2026, 6, 30)),
+            Expense(name: "Previous month start", amount: 10, date: try date(2026, 7, 1)),
+            Expense(name: "Previous month last second", amount: 20, date: start.addingTimeInterval(-1)),
+            Expense(name: "Selected month midnight", amount: 40, date: start)
+        ]
+
+        let result = SpendingMonthSummary(month: start, expenses: expenses,
+                                          now: try date(2026, 9, 1), calendar: calendar)
+
+        #expect(result.previousTotal == 30)
+        #expect(result.total == 40)
+    }
+
+    @Test(arguments: [(2026, 28), (2024, 29)])
+    func previousMonthComparisonClampsToShorterMonth(year: Int, lastDay: Int) throws {
+        let now = try date(year, 3, 31, hour: 12)
+        let expenses = [
+            Expense(name: "February start", amount: 10, date: try date(year, 2, 1)),
+            Expense(name: "February last second", amount: 20,
+                    date: try date(year, 2, lastDay, hour: 23).addingTimeInterval(3599)),
+            Expense(name: "March midnight", amount: 40, date: try date(year, 3, 1)),
+            Expense(name: "March second day", amount: 50, date: try date(year, 3, 2))
+        ]
+
+        let result = SpendingMonthSummary(month: now, expenses: expenses, now: now, calendar: calendar)
+
+        #expect(result.previousTotal == 30)
+        #expect(result.total == 90)
+    }
+
+    @Test
     func refundsRemainSignedInTotalsAndCumulativeCurves() throws {
         let now = try date(2026, 8, 3, hour: 12)
         let expenses = [

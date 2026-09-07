@@ -13,6 +13,8 @@ struct ExpenseDetailView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Environment(AppRouter.self) private var appRouter
+    @Environment(\.recurringReminders) private var reminders
+    @Query private var recurringRules: [RecurringExpenseRule]
     
     let expense: Expense
     
@@ -21,6 +23,12 @@ struct ExpenseDetailView: View {
     @State private var showingDeleteConfirmation: Bool = false
     @State private var saveErrorMessage: String?
     @State private var isSaving = false
+    @State private var showingRecurringRuleConfirmation = false
+
+    private var recurringRule: RecurringExpenseRule? {
+        guard let ruleID = expense.recurringExpenseId else { return nil }
+        return recurringRules.first { $0.id == ruleID }
+    }
 
     init(expense: Expense) {
         self.expense = expense
@@ -68,6 +76,19 @@ struct ExpenseDetailView: View {
                 }
             }
         }
+        .alert("Update Recurring Rule?", isPresented: $showingRecurringRuleConfirmation) {
+            Button("Update Expense Only") {
+                Task { await saveItem(updateRecurringRule: false) }
+            }
+            .accessibilityIdentifier("save-expense-only-button")
+            Button("Update Expense and Rule") {
+                Task { await saveItem(updateRecurringRule: true) }
+            }
+            .accessibilityIdentifier("save-expense-and-rule-button")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Future expenses will use these details. The schedule and other existing expenses will stay unchanged.")
+        }
         .alert("Could not save expense", isPresented: Binding(
             get: { saveErrorMessage != nil },
             set: { if !$0 { saveErrorMessage = nil } }
@@ -79,7 +100,7 @@ struct ExpenseDetailView: View {
         .gradientBackground()
     }
     
-    private func saveItem() async {
+    private func saveItem(updateRecurringRule: Bool? = nil) async {
         guard !isSaving else { return }
         let currencyCode: String
         do { currencyCode = try LedgerCurrency.requireCode() } catch {
@@ -100,6 +121,18 @@ struct ExpenseDetailView: View {
             return
         }
 
+        if updateRecurringRule == nil, recurringRule != nil {
+            showingRecurringRuleConfirmation = true
+            return
+        }
+
+        let ruleToUpdate = updateRecurringRule == true ? recurringRule : nil
+        if ruleToUpdate != nil,
+           !MonetaryAmount.isValid(amount, currencyCode: currencyCode, requiresPositive: true) {
+            saveErrorMessage = MonetaryAmount.validationMessage(currencyCode: currencyCode, requiresPositive: true)
+            return
+        }
+
         isSaving = true
         defer { isSaving = false }
 
@@ -111,11 +144,24 @@ struct ExpenseDetailView: View {
         expense.category = workingExpense.category
         expense.tags = workingExpense.tags
         expense.note = workingExpense.note
+        if let rule = ruleToUpdate {
+            rule.name = trimmedName
+            rule.amount = amount
+            rule.category = workingExpense.category
+            rule.tags = workingExpense.tags
+            rule.note = workingExpense.note
+        }
         do {
             try modelContext.save()
+            if ruleToUpdate != nil {
+                reminders?.refresh()
+            }
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
-            appRouter.showToast(SageToast(message: "Expense updated", kind: .success))
+            appRouter.showToast(SageToast(
+                message: ruleToUpdate == nil ? "Expense updated" : "Expense and recurring rule updated",
+                kind: .success
+            ))
         } catch {
             modelContext.rollback()
             saveErrorMessage = "Sage could not save this expense. Check available storage and try again."
