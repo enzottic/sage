@@ -209,7 +209,7 @@ struct ExpenseInfoForm: View {
                     text: amountTextBinding
                 )
                 .accessibilityIdentifier("expense-amount-field")
-                .keyboardType(.numbersAndPunctuation)
+                .keyboardType(.decimalPad)
                 .font(.body)
                 .multilineTextAlignment(.trailing)
                 .focused($focusedField, equals: .amount)
