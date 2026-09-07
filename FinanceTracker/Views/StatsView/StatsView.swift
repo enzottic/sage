@@ -17,6 +17,12 @@ private struct SpendingPeriodData: Identifiable {
 }
 
 struct StatsView: View {
+    private struct ChartSelection {
+        let day: Int
+        let location: CGPoint
+        let highestLineY: CGFloat
+    }
+
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -27,7 +33,8 @@ struct StatsView: View {
     @State private var selectedTag: ExpenseTag?
     @State private var selectedBar: String?
     @State private var showsMonthPicker = false
-    @GestureState private var chartTouch: (day: Int, location: CGPoint, highestLineY: CGFloat)?
+    @GestureState private var chartTouch: ChartSelection?
+    @State private var chartHover: ChartSelection?
     @State private var dailyOverviewHeight: CGFloat = 220
     @State private var statsViewport: CGRect = .zero
     @State private var isolatedLine: String?
@@ -35,7 +42,8 @@ struct StatsView: View {
     @AppStorage("statsShowsWantsLine") private var showsWantsLine = true
     @AppStorage("statsShowsSavingsLine") private var showsSavingsLine = true
 
-    private var selectedDay: Int? { chartTouch?.day }
+    private var chartSelection: ChartSelection? { chartTouch ?? chartHover }
+    private var selectedDay: Int? { chartSelection?.day }
     private var visibleCategories: [ExpenseCategory] {
         ExpenseCategory.allCases.filter { category in
             switch category {
@@ -122,6 +130,7 @@ struct StatsView: View {
                     selectedBar = nil
                 }
             }
+            .onChange(of: selectedMonth) { chartHover = nil }
             .onChange(of: selectedCategory) { isolatedLine = nil }
             .onChange(of: selectedTag?.id) { isolatedLine = nil }
             .onChange(of: visibleCategories) { _, categories in
@@ -133,6 +142,7 @@ struct StatsView: View {
             .sheet(isPresented: $showsMonthPicker) {
                 StatsMonthPicker(month: selectedMonth) { selectedMonth = $0 }
             }
+            .onDisappear { chartHover = nil }
         }
     }
 
@@ -270,18 +280,18 @@ struct StatsView: View {
         .coordinateSpace(name: "stats-chart-card")
         .overlay {
             GeometryReader { geometry in
-                if let chartTouch {
+                if let chartSelection {
                     let cardFrame = geometry.frame(in: .global)
                     let visibleFrame = statsViewport.isEmpty ? cardFrame : statsViewport
                     let bounds = CGRect(x: 0, y: visibleFrame.minY - cardFrame.minY,
                                         width: geometry.size.width, height: visibleFrame.height)
-                    dailyOverview(summary, day: chartTouch.day, category: isolatedCategory,
-                                  finger: chartTouch.location, highestLineY: chartTouch.highestLineY, bounds: bounds)
+                    dailyOverview(summary, day: chartSelection.day, category: isolatedCategory,
+                                  finger: chartSelection.location, highestLineY: chartSelection.highestLineY, bounds: bounds)
                 }
             }
             .allowsHitTesting(false)
         }
-        .zIndex(chartTouch == nil ? 0 : 1)
+        .zIndex(chartSelection == nil ? 0 : 1)
     }
 
     private func chartInteractionOverlay(_ summary: SpendingMonthSummary, proxy: ChartProxy,
@@ -289,6 +299,21 @@ struct StatsView: View {
         GeometryReader { geometry in
             if let plotFrame = proxy.plotFrame {
                 let frame = geometry[plotFrame]
+                let selectionAt: (CGPoint) -> ChartSelection? = { location in
+                    guard let lastDay = summary.days.last?.day,
+                          let chartDay = proxy.value(atX: min(max(location.x, 0), frame.width), as: Double.self)
+                    else { return nil }
+                    // Touch and hover coordinates are local to the plot, not the chart axes.
+                    let chartOrigin = geometry.frame(in: .named("stats-chart-card")).origin
+                    let points = series.flatMap(\.points) + (isolatedLine == nil ? summary.averageDays : [])
+                    let highestLineY = points.compactMap { proxy.position(forY: $0.total) }.min() ?? 0
+                    return ChartSelection(
+                        day: min(max(Int(chartDay.rounded()), 1), lastDay),
+                        location: CGPoint(x: chartOrigin.x + frame.minX + location.x,
+                                          y: chartOrigin.y + frame.minY + location.y),
+                        highestLineY: chartOrigin.y + frame.minY + highestLineY
+                    )
+                }
                 Rectangle()
                     .fill(.clear)
                     .contentShape(Rectangle())
@@ -297,20 +322,8 @@ struct StatsView: View {
                         LongPressGesture(minimumDuration: 0.25)
                             .sequenced(before: DragGesture(minimumDistance: 0))
                             .updating($chartTouch) { value, touch, _ in
-                                guard case let .second(true, drag?) = value,
-                                      let lastDay = summary.days.last?.day,
-                                      let chartDay = proxy.value(atX: min(max(drag.location.x, 0), frame.width), as: Double.self)
-                                else { return }
-                                // Gesture coordinates are local to the plot, not the chart axes.
-                                let chartOrigin = geometry.frame(in: .named("stats-chart-card")).origin
-                                let points = series.flatMap(\.points) + (isolatedLine == nil ? summary.averageDays : [])
-                                let highestLineY = points.compactMap { proxy.position(forY: $0.total) }.min() ?? 0
-                                touch = (
-                                    day: min(max(Int(chartDay.rounded()), 1), lastDay),
-                                    location: CGPoint(x: chartOrigin.x + frame.minX + drag.location.x,
-                                                      y: chartOrigin.y + frame.minY + drag.location.y),
-                                    highestLineY: chartOrigin.y + frame.minY + highestLineY
-                                )
+                                guard case let .second(true, drag?) = value else { return }
+                                touch = selectionAt(drag.location)
                             }
                     )
                     .simultaneousGesture(
@@ -318,6 +331,14 @@ struct StatsView: View {
                             isolateLine(at: value.location, proxy: proxy, series: series)
                         }
                     )
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            chartHover = selectionAt(location)
+                        case .ended:
+                            chartHover = nil
+                        }
+                    }
                     .position(x: frame.midX, y: frame.midY)
             }
         }
