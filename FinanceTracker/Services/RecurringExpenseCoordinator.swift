@@ -50,16 +50,16 @@ final class RecurringExpenseCoordinator {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
-                    as? NSPersistentCloudKitContainer.Event,
-                  event.type == .import else {
-                return
-            }
+            
+            guard let
+                event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event,
+                event.type == .import else { return }
 
             Task { @MainActor [weak self] in
                 self?.handleImportEvent(event)
             }
         }
+        
         observers.append(observer)
     }
 
