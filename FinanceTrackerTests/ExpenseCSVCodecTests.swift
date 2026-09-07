@@ -148,17 +148,36 @@ struct ExpenseCSVCodecTests {
     }
 
     @Test(arguments: [
+        ("USD", "48.695"), ("USD", "-48.695"),
         ("USD", "0.004"), ("USD", "-12.345"), ("USD", "999999999.990001"),
         ("JPY", "4.5"), ("KWD", "12.3456")
     ])
-    func decodeRejectsExtraPrecisionWithPhysicalRow(currencyCode: String, amount: String) {
+    func backupRoundTripsHistoricalPrecision(currencyCode: String, amount: String) throws {
         let csv = """
         name,date,amount,category,tag,note,currency
         Coffee,2026-08-12T18:30:00Z,4,Wants,,"Two
         lines",\(currencyCode)
-        Invalid,2026-08-12T18:30:00Z,\(amount),Wants,,,\(currencyCode)
+        Historical,2026-08-12T18:30:00Z,\(amount),Wants,,,\(currencyCode)
         """
-        #expect(throws: ExpenseCSVError.invalidAmount(row: 4, value: amount)) {
+        let expenses = try ExpenseCSVCodec.decode(csv)
+        try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: currencyCode)
+        let encoded = try ExpenseCSVCodec.encode(expenses, currencyCode: currencyCode)
+        let decoded = try ExpenseCSVCodec.decode(encoded)
+        #expect(decoded.count == 2)
+        #expect(decoded.last?.amount == Double(amount))
+        #expect(decoded.last?.currencyCode == currencyCode)
+        #expect(decoded.first?.note == "Two\nlines")
+    }
+
+    @Test
+    func decodeReportsPhysicalRowAfterMultilineField() {
+        let csv = """
+        name,date,amount,category,tag,note,currency
+        Coffee,2026-08-12T18:30:00Z,4,Wants,,"Two
+        lines",USD
+        Invalid,2026-08-12T18:30:00Z,NaN,Wants,,,USD
+        """
+        #expect(throws: ExpenseCSVError.invalidAmount(row: 4, value: "NaN")) {
             try ExpenseCSVCodec.decode(csv)
         }
     }
@@ -187,19 +206,19 @@ struct ExpenseCSVCodecTests {
     }
 
     @Test
-    func legacyConsentDoesNotPermitInvalidPrecision() throws {
+    func legacyConsentPreservesHistoricalPrecision() throws {
         let csv = "name,date,amount,category,tag,note\nCoffee,2026-08-12T18:30:00Z,4.5,Wants,,"
         let expenses = try ExpenseCSVCodec.decode(csv)
         #expect(throws: ExpenseCSVError.legacyCurrencyConfirmationRequired) {
             try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "JPY")
         }
-        #expect(throws: ExpenseCSVError.invalidAmount(row: 2, value: "4.5")) {
-            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "JPY", allowLegacy: true)
-        }
-        #expect(expenses.first?.amount == 4.5)
+        try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: "JPY", allowLegacy: true)
+        let decoded = try ExpenseCSVCodec.decode(ExpenseCSVCodec.encode(expenses, currencyCode: "JPY"))
+        #expect(decoded.first?.amount == 4.5)
+        #expect(decoded.first?.currencyCode == "JPY")
     }
 
-    @Test(arguments: [0.0, 0.004, -0.004, 1_000_000_001, Double.nan, Double.infinity])
+    @Test(arguments: [0.0, -0.0, 1_000_000_001, -1_000_000_001, Double.nan, Double.infinity, -Double.infinity])
     func validationAndExportRejectInvalidSavedAmounts(amount: Double) {
         let expenses = [
             ExportableExpense(name: "Valid", date: .now, amount: 1, category: "Wants", tag: "", note: ""),

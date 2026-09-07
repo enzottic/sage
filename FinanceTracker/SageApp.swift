@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 import AppIntents
 import SageKit
-import Combine
 import UserNotifications
 
 @main
@@ -27,9 +26,6 @@ struct SageApp: App {
         if UITestConfiguration.isEnabled {
             WhatsNewStore.markCurrentVersionSeen()
         }
-
-        // Pull latest iCloud KVS values before checking setup state
-        NSUbiquitousKeyValueStore.default.synchronize()
 
         // Keep the store configuration stable across the app, widgets, and App Intents until
         // the next app launch.
@@ -79,13 +75,6 @@ struct SageApp: App {
         // Register App Shortcuts phrases with Siri
         SageShortcutsProvider.updateAppShortcutParameters()
 
-        // If onboarding was completed on another device, skip it here
-        if !UITestConfiguration.isEnabled,
-           !UserDefaults.standard.bool(forKey: "hasOpenedAppOnce"),
-           AppConfiguration.hasCompletedSetupOnAnotherDevice {
-            UserDefaults.standard.set(true, forKey: "hasOpenedAppOnce")
-            WhatsNewStore.markCurrentVersionSeen()
-        }
     }
     
     var body: some Scene {
@@ -128,10 +117,10 @@ struct SageApp: App {
         .textCase(nil)
         .fontDesign(.rounded)
         .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
-        .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: DispatchQueue.main)) { _ in
+        .onChange(of: appConfiguration.hasCompletedSetupOnAnotherDevice, initial: true) { _, completed in
             if !UITestConfiguration.isEnabled,
                !hasOpenedAppOnce,
-               AppConfiguration.hasCompletedSetupOnAnotherDevice {
+               completed {
                 WhatsNewStore.markCurrentVersionSeen()
                 hasOpenedAppOnce = true
             }

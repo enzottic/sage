@@ -20,14 +20,16 @@ verification are being handled by the project owner.
   Sources: [EmojiKeyboardField](FinanceTracker/Views/SettingsView/Components/EmojiKeyboardField.swift),
   [app manifest](FinanceTracker/PrivacyInfo.xcprivacy).
 
-- [ ] **Make the iCloud opt-out match actual behavior.** Income, allocations,
-  currency, and other preferences still use iCloud key-value storage independently
-  of the expense-sync toggle. Either make the toggle govern all app-controlled
-  synchronization or introduce clearly disclosed separate controls. Include
-  incoming settings updates, initial reads, and full reset in the policy.
-  Acceptance: with sync disabled, behavior matches the exact promise shown to
-  the user on both devices.
-  Source: [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift).
+- [ ] **Verify the unified iCloud opt-out on release devices.** Implemented a
+  consent-controlled preference sync service: device-local/default-off consent,
+  no KVS acquisition or operations while off, no remote echo writes, and guarded
+  startup, incoming notifications, currency confirmation, and reset. Standard
+  unit tests cover the service and production AppConfiguration source. Preference
+  access stops immediately; the existing SwiftData store changes only after a
+  full restart, and previously queued iCloud activity can finish. The UI explains
+  this distinction. Two-device and Release network verification remain open.
+  Sources: [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift),
+  [preference sync](SageKit/Services/PreferenceSyncService.swift).
 
 - [ ] **Publish the corrected privacy policy at the URL users actually open.**
   `https://enzottic.me/sage/privacy` is reachable, but the audit found the older

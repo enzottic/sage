@@ -150,7 +150,7 @@ struct ExpenseImportServiceTests {
         uiContext.insert(draft)
         let valid = ExportableExpense(name: "Valid", date: .now, amount: 4, category: "Needs", tag: "New", note: "", currencyCode: invalidField == "legacy" ? nil : "USD")
         let invalid = ExportableExpense(
-            name: "Invalid", date: .now, amount: invalidField == "amount" ? 0.001 : 4,
+            name: "Invalid", date: .now, amount: invalidField == "amount" ? 0 : 4,
             category: invalidField == "category" ? "Invalid" : "Wants", tag: "New", note: "",
             currencyCode: invalidField == "legacy" || invalidField == "mixed" ? nil : "USD"
         )
@@ -159,7 +159,7 @@ struct ExpenseImportServiceTests {
         case "category": expected = .invalidCategory(row: 3, value: "Invalid")
         case "currency": expected = .currencyMismatch(expected: "EUR", actual: "USD")
         case "legacy": expected = .legacyCurrencyConfirmationRequired
-        case "amount": expected = .invalidAmount(row: 3, value: "0.001")
+        case "amount": expected = .invalidAmount(row: 3, value: "0.0")
         default: expected = .mixedCurrencies
         }
 
@@ -199,6 +199,38 @@ struct ExpenseImportServiceTests {
         #expect(Set(persisted.map(\.id)).count == 2)
         #expect(persisted.allSatisfy { $0.amount == -12.34 && $0.tags?.count == 1 })
         #expect(try reader.fetchCount(FetchDescriptor<ExpenseTag>()) == 1)
+    }
+
+    @Test(arguments: [48.695, -48.695, 0.004, -0.004]) @MainActor
+    func historicalAmountSurvivesExportRestoreAndReexport(amount: Double) async throws {
+        let source = try SageModelContainer.make(for: .test)
+        source.mainContext.insert(Expense(
+            name: "Historical", amount: amount, category: .wants,
+            date: Date(timeIntervalSince1970: 1_723_500_000.125)
+        ))
+        try source.mainContext.save()
+        let sourceReader = ModelContext(source)
+        let saved = try #require(sourceReader.fetch(FetchDescriptor<Expense>()).first)
+        let rows = [ExportableExpense(
+            name: saved.name, date: saved.date, amount: saved.amount,
+            category: saved.category.rawValue, tag: "", note: saved.note
+        )]
+        let csv = try ExpenseCSVCodec.encode(rows, currencyCode: "USD")
+        let decoded = try ExpenseCSVCodec.decode(csv)
+        let restored = try SageModelContainer.make(for: .test)
+        let count = try await ExpenseImportService(modelContainer: restored).importExpenses(
+            decoded, ledgerCurrencyCode: "USD"
+        )
+        #expect(count == 1)
+        let restoredReader = ModelContext(restored)
+        let expense = try #require(restoredReader.fetch(FetchDescriptor<Expense>()).first)
+        #expect(expense.amount == amount)
+        let reexported = try ExpenseCSVCodec.encode([ExportableExpense(
+            name: expense.name, date: expense.date, amount: expense.amount,
+            category: expense.category.rawValue, tag: "", note: expense.note
+        )], currencyCode: "USD")
+        #expect(reexported == csv)
+        #expect(saved.amount == amount)
     }
 
     @Test @MainActor

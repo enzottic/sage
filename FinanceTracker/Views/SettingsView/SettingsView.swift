@@ -117,8 +117,7 @@ struct SettingsView: View {
                 #if DEBUG
                 Section("Debug") {
                     Button(role: .destructive) {
-                        NSUbiquitousKeyValueStore.default.removeObject(forKey: "hasCompletedSetup")
-                        NSUbiquitousKeyValueStore.default.synchronize()
+                        config.resetRemoteSetup()
                         UserDefaults.standard.removeObject(forKey: "hasOpenedAppOnce")
                     } label: {
                         SettingsListItem(text: "Reset Onboarding", icon: "arrow.counterclockwise", color: .orange)

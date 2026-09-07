@@ -19,6 +19,7 @@ struct ExpenseBackupSettingsSection: View {
     @Query var expenses: [Expense]
 
     @State private var showFileImporter: Bool = false
+    @State private var showCloudCurrencyConfirmation = false
     @State private var showImportConfirmation: Bool = false
     @State private var pendingImportExpenses: [ExportableExpense] = []
     @State private var pendingImportCurrencyCode: String?
@@ -57,10 +58,24 @@ struct ExpenseBackupSettingsSection: View {
                     }
                 }
                 .disabled(isWorking)
+                if config.isCloudSyncEnabled, config.cloudLedgerCurrencyCode == nil,
+                   config.ledgerCurrencyCode != nil, !config.hasLedgerCurrencyConflict {
+                    Button("Confirm Currency for iCloud") {
+                        showCloudCurrencyConfirmation = true
+                    }
+                    .disabled(isWorking)
+                }
             } header: {
                 Text("iCloud Sync")
             } footer: {
-                Text("Changes take effect the next time you open the app.")
+                Text("Preference sync changes take effect immediately. Fully close and reopen Sage to apply changes to expense sync. Previously queued iCloud activity may still finish; turning sync off does not delete existing iCloud data.")
+                if config.cloudSyncStatus == .accountChanged {
+                    Text("Your iCloud account changed. Preference sync is off. Fully restart Sage to stop expense sync, then review your account before enabling sync again.")
+                } else if config.cloudSyncStatus == .quotaExceeded {
+                    Text("iCloud preference storage is full. Changes are saved on this device, but new preference uploads are paused.")
+                } else if config.cloudSyncStatus == .synchronizationUnavailable {
+                    Text("iCloud preferences are currently unavailable. Your settings remain saved on this device.")
+                }
             }
 
             Section {
@@ -87,6 +102,21 @@ struct ExpenseBackupSettingsSection: View {
         .settingsBackground()
         .navigationTitle("Backup")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Confirm iCloud Currency", isPresented: $showCloudCurrencyConfirmation) {
+            Button("Confirm") {
+                guard let code = config.ledgerCurrencyCode else { return }
+                do {
+                    try config.establishLedgerCurrency(code)
+                    config.recheckLedgerCurrency()
+                    appRouter.showToast(SageToast(message: "Currency checked. No amounts were converted.", kind: .success))
+                } catch {
+                    appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This device uses \(config.ledgerCurrencyCode ?? "an unconfirmed currency"). Sage has not received an iCloud currency. Before confirming, check that any existing Sage data on your other devices uses the same currency. No conversion will occur.")
+        }
         .safeAreaInset(edge: .bottom) {
             if isWorking {
                 operationProgress
@@ -136,14 +166,13 @@ struct ExpenseBackupSettingsSection: View {
             get: { config.isCloudSyncEnabled },
             set: { enabled in
                 if config.updateCloudSyncEnabled(enabled) {
-                    let state = enabled ? "enabled" : "disabled"
                     appRouter.showToast(
-                        SageToast(message: "iCloud sync will be \(state) when you reopen Sage.", kind: .success)
+                        SageToast(message: "Sync preference saved. Fully close and reopen Sage to apply it to expenses.", kind: .success)
                     )
                 } else {
                     appRouter.showToast(
                         SageToast(
-                            message: "Sage saved the sync setting on this device. Connect to iCloud, then try again.",
+                            message: "Sage could not save the sync preference. Try again.",
                             kind: .error
                         )
                     )

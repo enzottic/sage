@@ -54,7 +54,7 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
         case .invalidDate(let row, let value):
             return "Row \(row): invalid date '\(value)'."
         case .invalidAmount(let row, let value):
-            return "Row \(row): invalid amount '\(value)'. Use a finite, nonzero amount (negative for refunds), no more than 1 billion in magnitude, with no extra decimal places beyond the currency's minor units. Amounts are not rounded."
+            return "Row \(row): invalid amount '\(value)'. Use a finite, nonzero amount (negative for refunds), no more than 1 billion in magnitude. CSV backups preserve amounts without rounding."
         case .invalidCategory(let row, let value):
             return "Row \(row): invalid category '\(value)'."
         case .invalidCurrency(let code):
@@ -124,8 +124,7 @@ public enum ExpenseCSVCodec {
             guard let date = parseDate(fields[1]) else {
                 throw ExpenseCSVError.invalidDate(row: record.row, value: fields[1])
             }
-            guard let amount = Double(fields[2]), amount.isFinite, amount != 0,
-                  abs(amount) <= MonetaryAmount.maximumMagnitude else {
+            guard let amount = Double(fields[2]), isValidBackupAmount(amount) else {
                 throw ExpenseCSVError.invalidAmount(row: record.row, value: fields[2])
             }
             guard ExpenseCategory(rawValue: fields[3]) != nil else {
@@ -142,11 +141,6 @@ public enum ExpenseCSVCodec {
                 fileCurrency = code
                 currencyCode = code
             }
-            if let currencyCode,
-               !MonetaryAmount.isValid(amount, currencyCode: currencyCode) {
-                throw ExpenseCSVError.invalidAmount(row: record.row, value: fields[2])
-            }
-
             expenses.append(
                 ExportableExpense(
                     name: fields[0],
@@ -163,7 +157,7 @@ public enum ExpenseCSVCodec {
         return expenses
     }
 
-    /// Validate the complete batch before any model insertion. Legacy amounts need user consent.
+    /// Validate the complete batch before insertion. Legacy rows need currency consent.
     public static func validateCurrency(
         _ expenses: [ExportableExpense],
         ledgerCurrencyCode: String,
@@ -186,12 +180,17 @@ public enum ExpenseCSVCodec {
         if hasLegacy && !allowLegacy {
             throw ExpenseCSVError.legacyCurrencyConfirmationRequired
         }
-        // Legacy rows acquire precision rules only after the user confirms their currency.
         for (index, expense) in expenses.enumerated() {
-            guard MonetaryAmount.isValid(expense.amount, currencyCode: ledgerCurrencyCode) else {
+            guard isValidBackupAmount(expense.amount) else {
                 throw ExpenseCSVError.invalidAmount(row: index + 2, value: String(expense.amount))
             }
         }
+    }
+
+    private static func isValidBackupAmount(_ amount: Double) -> Bool {
+        // Saved expenses can predate minor-unit validation. Backups must round-trip
+        // their precision without applying today's entry rules or changing amounts.
+        amount.isFinite && amount != 0 && abs(amount) <= MonetaryAmount.maximumMagnitude
     }
 
     private static func encodeField(_ value: String) -> String {

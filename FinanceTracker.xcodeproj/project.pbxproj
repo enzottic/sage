@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C60609063000000100000001 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000100000003 /* AppConfiguration.swift */; };
+		C60609063000000100000002 /* UITestConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000100000004 /* UITestConfiguration.swift */; };
 		C62200012FFD000100000022 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C62400012FFF002400000001 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C62509062FFF002400000001 /* THIRD_PARTY_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */; };
@@ -100,6 +102,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C60609063000000100000003 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppConfiguration.swift; path = FinanceTracker/Helpers/AppConfiguration.swift; sourceTree = SOURCE_ROOT; };
+		C60609063000000100000004 /* UITestConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UITestConfiguration.swift; path = FinanceTracker/Helpers/UITestConfiguration.swift; sourceTree = SOURCE_ROOT; };
 		C62400032FFF002400000003 /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -239,6 +243,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C60609063000000100000005 /* Production Test Sources */ = {
+			isa = PBXGroup;
+			children = (
+				C60609063000000100000003 /* AppConfiguration.swift */,
+				C60609063000000100000004 /* UITestConfiguration.swift */,
+			);
+			name = "Production Test Sources";
+			sourceTree = "<group>";
+		};
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
@@ -248,6 +261,7 @@
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
 				C62400042FFF002400000004 /* FinanceTrackerTests */,
+				C60609063000000100000005 /* Production Test Sources */,
 				C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
 				C6B09FD12E92CF5200899162 /* Frameworks */,
@@ -509,6 +523,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C60609063000000100000001 /* AppConfiguration.swift in Sources */,
+				C60609063000000100000002 /* UITestConfiguration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

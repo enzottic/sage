@@ -87,10 +87,15 @@ struct LedgerCurrencyConflictView: View {
                     Text(message)
                 }
                 Section {
-                    Text("Check the ledger currency in Sage on your other devices. Connect to the internet using the same iCloud account, then check again. If the currencies still disagree, contact Sage support before changing or deleting any data.")
+                    if config.isCloudSyncEnabled {
+                        Text("Check the ledger currency in Sage on your other devices. Connect to the internet using the same iCloud account, then check again. If the currencies still disagree, contact Sage support before changing or deleting any data.")
+                    } else {
+                        Text("iCloud preference sync is off on this device, so Sage cannot check again. The previously detected currency conflict remains unresolved. Contact Sage Support.")
+                    }
                     Button("Check iCloud Again") {
                         config.recheckLedgerCurrency()
                     }
+                    .disabled(!config.isCloudSyncEnabled)
                     if let supportURL = URL(string: "mailto:hi@enzottic.me") {
                         Link("Contact Sage Support", destination: supportURL)
                     }

@@ -14,7 +14,7 @@ struct MonetaryAmountTests {
     @Test(arguments: [
         ("USD", 0.01), ("USD", 12.34), ("USD", 999_999_999.99),
         ("JPY", 1.0), ("JPY", 1234.0),
-        ("KWD", 0.001), ("KWD", 12.345), ("KWD", 999_999_999.999)
+        ("KWD", 0.001), ("KWD", 12.345), ("KWD", 48.695), ("KWD", 999_999_999.999)
     ])
     func acceptsMinorUnitsAndRefunds(currencyCode: String, amount: Double) {
         #expect(MonetaryAmount.isValid(amount, currencyCode: currencyCode))
@@ -23,7 +23,7 @@ struct MonetaryAmountTests {
     }
 
     @Test(arguments: [
-        ("USD", 0.004), ("USD", 0.005), ("USD", 12.001), ("USD", 12.345),
+        ("USD", 0.004), ("USD", 0.005), ("USD", 12.001), ("USD", 12.345), ("USD", 48.695),
         ("USD", 999_999_999.994),
         ("USD", 999_999_999.990001),
         ("JPY", 0.1), ("JPY", 12.5), ("JPY", 999_999_999.1),

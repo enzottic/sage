@@ -1,6 +1,6 @@
 # Sage Privacy Policy
 
-Last updated: September 4, 2026
+Last updated: September 6, 2026
 
 Sage does not collect personal information, track users, show advertisements,
 or sell data.
@@ -12,10 +12,12 @@ on the user's device. Receipt reading uses supported Apple Intelligence features
 on the device. Sage does not send receipt images to the developer or to a
 third-party service.
 
-If the user turns on iCloud Sync, Sage stores the user's app data in the user's
-private iCloud database. Apple operates iCloud and applies its iCloud terms and
-privacy policy. The developer does not use this data for advertising, analytics,
-or profiling.
+If the user turns on iCloud Sync on a device, Sage synchronizes expense data
+through the user's private iCloud database and supported preferences through
+iCloud key-value storage. The sync choice is stored only on that device and is
+off by default; another device cannot turn it on remotely. Apple operates iCloud
+and applies its iCloud terms and privacy policy. The developer does not use this
+data for advertising, analytics, or profiling.
 
 ## Retention and deletion
 
@@ -31,8 +33,13 @@ Sage includes these deletion controls in Settings:
   settings.
 
 Deletion can sync to iCloud when iCloud Sync is on and the device is connected.
-The user can stop future iCloud synchronization by turning off iCloud Sync in
-Sage and restarting the app.
+Turning off iCloud Sync immediately stops Sage's new preference-store reads,
+writes, and synchronization requests. Fully close and reopen Sage to apply the
+change to expense synchronization. Previously queued iCloud activity may still
+finish. Turning sync off does not delete local data or existing iCloud copies.
+While opted out, resetting settings does not contact iCloud to remove cloud
+preferences; those copies remain until removed through an opted-in device or
+the user's iCloud data controls.
 
 ## Permissions
 

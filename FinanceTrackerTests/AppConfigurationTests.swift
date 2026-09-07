@@ -1,0 +1,582 @@
+import Foundation
+import SageKit
+import SwiftUI
+import Testing
+
+@Suite("App configuration integration", .serialized)
+@MainActor
+struct AppConfigurationTests {
+    private typealias Key = PreferenceSyncService.Key
+
+    @Test
+    func disabledConfigurationNeverAcquiresCloudForInitializationEditsCurrencyOrReset() throws {
+        let fixture = try Fixture()
+        fixture.cloud.values = [SageModelContainer.cloudKitPreferenceKey: true, "appearance": "Dark"]
+        let config = fixture.config
+        #expect(!config.isCloudSyncEnabled)
+        #expect(config.selectedAppearance == .system)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+
+        config.selectedAppearance = .light
+        config.totalMonthlyIncome = 4200
+        config.needsPercent = 0.6
+        config.wantsPercent = 0.25
+        config.savingsPercent = 0.15
+        config.updateNeeds(0.55)
+        config.updateWants(0.2)
+        config.smartTaggingMode = .both
+        config.needsColor = .red
+        config.wantsColor = .green
+        config.savingsColor = .blue
+        config.billRemindersEnabled = true
+        config.markSetupComplete()
+        config.resetRemoteSetup()
+        #expect(config.updateCloudSyncEnabled(false))
+        config.recheckLedgerCurrency()
+        var savedSetup = false
+        try config.establishLedgerCurrency("USD") { savedSetup = true }
+        #expect(savedSetup)
+        #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == "USD")
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 4200)
+        #expect(fixture.defaults.string(forKey: "appearance") == "Light")
+        #expect(fixture.defaults.bool(forKey: "billRemindersEnabled"))
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+
+        config.resetAllSettings()
+        #expect(config.totalMonthlyIncome == 0)
+        #expect(config.selectedAppearance == .system)
+        #expect(config.smartTaggingMode == .history)
+        #expect(!config.billRemindersEnabled)
+        #expect(config.ledgerCurrencyCode == nil)
+        #expect(!config.hasLedgerCurrencyConflict)
+        #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == nil)
+        #expect(!fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        #expect(fixture.defaults.object(forKey: "totalMonthlyIncome") == nil)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test
+    func startupAndRemoteChangesPersistValidatedValuesWithoutEchoingOldLocalData() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set("Light", forKey: "appearance")
+        fixture.defaults.set(1200, forKey: "totalMonthlyIncome")
+        fixture.cloud.values = [
+            Key.ledgerCurrency.storageKey: "USD", "appearance": "Dark", "totalMonthlyIncome": 7300,
+            "needsPercent": 0.6, "wantsPercent": 0.25, "savingsPercent": 0.15,
+            "smartTaggingMode": "AI", "hasCompletedSetup": true,
+            SageModelContainer.cloudKitPreferenceKey: false,
+        ]
+        let config = fixture.config
+        #expect(config.selectedAppearance == .dark)
+        #expect(config.totalMonthlyIncome == 7300)
+        #expect(config.smartTaggingMode == .ai)
+        #expect(config.hasCompletedSetupOnAnotherDevice)
+        #expect(config.isCloudSyncEnabled)
+        #expect(config.cloudSyncStatus == .running)
+        fixture.expectAllocation(0.6, 0.25, 0.15)
+        #expect(fixture.defaults.string(forKey: "appearance") == "Dark")
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 7300)
+        #expect(fixture.defaults.string(forKey: "smartTaggingMode") == "AI")
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        #expect(!fixture.cloud.operations.contains(.read(SageModelContainer.cloudKitPreferenceKey)))
+
+        fixture.cloud.operations.removeAll()
+        fixture.cloud.values["appearance"] = "Light"
+        fixture.cloud.values["totalMonthlyIncome"] = 8400
+        fixture.cloud.values["needsPercent"] = 0.45
+        fixture.cloud.values["wantsPercent"] = 0.35
+        fixture.cloud.values["savingsPercent"] = 0.2
+        // A single changed allocation key must pull and apply the complete remote triple.
+        fixture.post(keys: ["appearance", "totalMonthlyIncome", "needsPercent"])
+        await drainNotifications()
+        #expect(config.selectedAppearance == .light)
+        #expect(config.totalMonthlyIncome == 8400)
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 8400)
+        fixture.expectAllocation(0.45, 0.35, 0.2)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        #expect(!fixture.cloud.operations.contains(.synchronize))
+    }
+
+    @Test
+    func delayedInitialSyncDoesNotUploadFallbackOrOldPreferences() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set("Light", forKey: "appearance")
+        fixture.defaults.set(1200, forKey: "totalMonthlyIncome")
+        fixture.cloud.synchronizationResult = false
+        let config = fixture.config
+        #expect(config.cloudSyncStatus == .synchronizationUnavailable)
+        #expect(config.cloudLedgerCurrencyCode == nil)
+        // An empty local KVS cache is not proof that the server has no currency.
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        fixture.cloud.operations.removeAll()
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "EUR", "totalMonthlyIncome": 9900, "appearance": "Dark"]
+        fixture.post(reason: NSUbiquitousKeyValueStoreInitialSyncChange)
+        await drainNotifications()
+        #expect(config.selectedAppearance == .dark)
+        #expect(config.totalMonthlyIncome == 1200)
+        #expect(config.ledgerCurrencyCode == "USD")
+        #expect(config.hasLedgerCurrencyConflict)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func malformedLocalDefaultsFallBackToSafeValuesWithoutCloudAccess() throws {
+        let fixture = try Fixture()
+        let invalidIncomes: [Any] = [true, -1, 1.25, Double.nan, Double.infinity, Double.greatestFiniteMagnitude, "500"]
+        for income in invalidIncomes {
+            fixture.defaults.set(income, forKey: "totalMonthlyIncome")
+            fixture.defaults.set("unknown", forKey: "appearance")
+            fixture.defaults.set("unknown", forKey: "smartTaggingMode")
+            fixture.defaults.set(0.8, forKey: "needsPercent")
+            fixture.defaults.set(0.7, forKey: "wantsPercent")
+            fixture.defaults.set(0.2, forKey: "savingsPercent")
+            let config = fixture.makeConfiguration()
+            #expect(config.totalMonthlyIncome == 0)
+            #expect(config.selectedAppearance == .system)
+            #expect(config.smartTaggingMode == .history)
+            #expect(config.needsPercent == 0.5)
+            #expect(config.wantsPercent == 0.3)
+            #expect(config.savingsPercent == 0.2)
+            #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 0)
+        }
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test
+    func invalidRemoteIncomeAndNonBooleanSetupFlagsAreRejected() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set(3200, forKey: "totalMonthlyIncome")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        let config = fixture.config
+        let invalidIncomes: [Any] = [true, false, -1, 1.25, Double.nan, Double.infinity, -Double.infinity,
+                                    Double.greatestFiniteMagnitude, "500", [500]]
+        for income in invalidIncomes {
+            fixture.cloud.values["totalMonthlyIncome"] = income
+            fixture.cloud.values["appearance"] = "invalid"
+            fixture.cloud.values["smartTaggingMode"] = "invalid"
+            config.recheckLedgerCurrency()
+            #expect(config.totalMonthlyIncome == 3200)
+            #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 3200)
+            #expect(config.selectedAppearance == .system)
+            #expect(config.smartTaggingMode == .history)
+        }
+        for flag in [1, "true", 1.0] as [Any] {
+            fixture.cloud.values["hasCompletedSetup"] = flag
+            config.recheckLedgerCurrency()
+            #expect(!config.hasCompletedSetupOnAnotherDevice)
+        }
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func invalidOrIncompleteRemoteAllocationsAreRejectedAsAWhole() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        let config = fixture.config
+        let invalidAllocations: [[Any?]] = [
+            [0.8, 0.3, 0.2], [-0.1, 0.9, 0.2], [1.1, 0.0, -0.1],
+            [Double.nan, 0.3, 0.2], [0.5, Double.infinity, 0.2],
+            [true, 0.0, 0.0], [0.5, "0.3", 0.2], [0.6, nil, 0.4],
+        ]
+        for allocation in invalidAllocations {
+            fixture.cloud.values["needsPercent"] = allocation[0]
+            fixture.cloud.values["wantsPercent"] = allocation[1]
+            fixture.cloud.values["savingsPercent"] = allocation[2]
+            config.recheckLedgerCurrency()
+            fixture.expectAllocation(0.5, 0.3, 0.2)
+        }
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func localValidationRejectsInvalidNumbersAndOnlyPublishesCoherentAllocation() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        let config = fixture.config
+        config.totalMonthlyIncome = 3200
+        fixture.cloud.operations.removeAll()
+        config.totalMonthlyIncome = -1
+        for invalid in [Double.nan, .infinity, -.infinity, -0.1, 1.1] {
+            config.needsPercent = invalid
+            config.wantsPercent = invalid
+            config.savingsPercent = invalid
+        }
+        config.updateNeeds(.nan)
+        config.updateWants(.infinity)
+        #expect(config.totalMonthlyIncome == 3200)
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 3200)
+        fixture.expectAllocation(0.5, 0.3, 0.2)
+        #expect(fixture.cloud.operations.isEmpty)
+
+        config.needsPercent = 0.6
+        config.wantsPercent = 0.25
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        config.savingsPercent = 0.15
+        #expect(Set(fixture.cloud.writtenKeys) == Set(Key.allocation.map(\.storageKey)))
+        #expect(fixture.cloud.writtenKeys.count == 3)
+        #expect(fixture.cloud.values["needsPercent"] as? Double == 0.6)
+        #expect(fixture.cloud.values["wantsPercent"] as? Double == 0.25)
+        #expect(fixture.cloud.values["savingsPercent"] as? Double == 0.15)
+        fixture.expectAllocation(0.6, 0.25, 0.15)
+    }
+
+    @Test(arguments: [nil, "invalid", "EUR"] as [String?])
+    func unverifiedOrConflictingCurrencyDoesNotApplyRemoteMoney(remote: String?) throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set(3200, forKey: "totalMonthlyIncome")
+        fixture.cloud.values = ["totalMonthlyIncome": 9900, "needsPercent": 0.6, "wantsPercent": 0.2, "savingsPercent": 0.2]
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = remote
+        let config = fixture.config
+        #expect(config.totalMonthlyIncome == 3200)
+        fixture.expectAllocation(0.5, 0.3, 0.2)
+        #expect(config.ledgerCurrencyCode == "USD")
+        #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == "USD")
+        #expect(config.hasLedgerCurrencyConflict == (remote == "EUR"))
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func currencyConflictRemainsPersistedAcrossOptOutAndReinitialization() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set(3200, forKey: "totalMonthlyIncome")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "EUR", "totalMonthlyIncome": 9900]
+        let config = fixture.config
+        #expect(config.hasLedgerCurrencyConflict)
+        #expect(fixture.shared.bool(forKey: LedgerCurrency.cloudConflictKey))
+        #expect(config.totalMonthlyIncome == 3200)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        #expect(config.updateCloudSyncEnabled(false))
+        fixture.cloud.operations.removeAll()
+        config.recheckLedgerCurrency()
+        let reopened = fixture.makeConfiguration()
+        #expect(reopened.hasLedgerCurrencyConflict)
+        #expect(reopened.ledgerCurrencyConflictMessage != nil)
+        #expect(reopened.cloudLedgerCurrencyCode == nil)
+        #expect(reopened.ledgerCurrencyCode == "USD")
+        #expect(!reopened.isCloudSyncEnabled)
+        var savedSetup = false
+        #expect(throws: LedgerCurrency.Error.cloudConflict) {
+            try reopened.establishLedgerCurrency("USD") { savedSetup = true }
+        }
+        #expect(!savedSetup)
+        #expect(fixture.acquisitions == 1)
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(fixture.shared.bool(forKey: LedgerCurrency.cloudConflictKey))
+    }
+
+    @Test
+    func wantsThirtyFivePercentReachesAnotherClientAfterPartialDelivery() async throws {
+        let phone = try Fixture(enabled: true, currency: "USD")
+        let tablet = try Fixture(enabled: true, currency: "USD")
+        let original: [String: Any] = [
+            Key.ledgerCurrency.storageKey: "USD",
+            "needsPercent": 0.5, "wantsPercent": 0.3, "savingsPercent": 0.2,
+        ]
+        phone.cloud.values = original
+        tablet.cloud.values = original
+        let sender = phone.config
+        _ = tablet.config
+        phone.cloud.operations.removeAll()
+        tablet.cloud.operations.removeAll()
+
+        sender.updateWants(0.35)
+        phone.expectAllocation(0.5, 0.35, 0.15)
+        #expect(Set(phone.cloud.writtenKeys) == Set(Key.allocation.map(\.storageKey)))
+
+        // KVS keys can arrive separately; never apply an inconsistent intermediate budget.
+        tablet.cloud.values["wantsPercent"] = phone.cloud.values["wantsPercent"]
+        tablet.post(keys: ["wantsPercent"])
+        await drainNotifications()
+        tablet.expectAllocation(0.5, 0.3, 0.2)
+        tablet.cloud.values["savingsPercent"] = phone.cloud.values["savingsPercent"]
+        tablet.post(keys: ["savingsPercent"])
+        await drainNotifications()
+        tablet.expectAllocation(0.5, 0.35, 0.15)
+        #expect(tablet.cloud.writtenKeys.isEmpty)
+
+        tablet.config.updateCloudSyncEnabled(false)
+        tablet.cloud.operations.removeAll()
+        sender.updateWants(0.4)
+        for key in Key.allocation { tablet.cloud.values[key.storageKey] = phone.cloud.values[key.storageKey] }
+        tablet.post(keys: Key.allocation.map(\.storageKey))
+        await drainNotifications()
+        tablet.expectAllocation(0.5, 0.35, 0.15)
+        #expect(tablet.cloud.operations.isEmpty)
+    }
+
+    @Test
+    func localOnlyLedgerCanExplicitlyConfirmCurrencyAfterEnablingSync() throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        try config.establishLedgerCurrency("USD")
+        #expect(fixture.acquisitions == 0)
+        #expect(config.updateCloudSyncEnabled(true))
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        config.totalMonthlyIncome = 1200
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        try config.establishLedgerCurrency("USD")
+        config.recheckLedgerCurrency()
+        #expect(config.cloudLedgerCurrencyCode == "USD")
+        config.totalMonthlyIncome = 2400
+        #expect(fixture.cloud.values["totalMonthlyIncome"] as? Int == 2400)
+        #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == "USD")
+    }
+
+    @Test
+    func reenableUsesRemoteValuesRatherThanUploadingOfflineEdits() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Dark", "totalMonthlyIncome": 7000]
+        let config = fixture.config
+        config.isCloudSyncEnabled = false
+        fixture.cloud.operations.removeAll()
+        config.selectedAppearance = .light
+        config.totalMonthlyIncome = 1200
+        config.updateNeeds(0.7)
+        #expect(fixture.cloud.operations.isEmpty)
+        fixture.cloud.values["totalMonthlyIncome"] = 8500
+        fixture.cloud.values["needsPercent"] = 0.4
+        fixture.cloud.values["wantsPercent"] = 0.3
+        fixture.cloud.values["savingsPercent"] = 0.3
+        #expect(config.updateCloudSyncEnabled(true))
+        #expect(config.selectedAppearance == .dark)
+        #expect(config.totalMonthlyIncome == 8500)
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 8500)
+        fixture.expectAllocation(0.4, 0.3, 0.3)
+        #expect(fixture.acquisitions == 2)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func queuedCallbacksAreIgnoredAfterOptOutIncludingReset() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Light"]
+        let config = fixture.config
+        fixture.cloud.values["appearance"] = "Dark"
+        fixture.post(keys: ["appearance"])
+        fixture.post(reason: NSUbiquitousKeyValueStoreAccountChange)
+        config.isCloudSyncEnabled = false
+        fixture.cloud.operations.removeAll()
+        await drainNotifications()
+        #expect(config.selectedAppearance == .light)
+        #expect(config.cloudSyncStatus == .stopped)
+        #expect(!config.hasCompletedSetupOnAnotherDevice)
+        config.totalMonthlyIncome = 1200
+        config.markSetupComplete()
+        config.recheckLedgerCurrency()
+        config.resetAllSettings()
+        fixture.post()
+        await drainNotifications()
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(fixture.acquisitions == 1)
+    }
+
+    @Test
+    func accountChangePersistsOptOutAndNeverPublishesOldPreferences() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Dark"]
+        let config = fixture.config
+        fixture.cloud.operations.removeAll()
+        fixture.post(reason: NSUbiquitousKeyValueStoreAccountChange)
+        await drainNotifications()
+        #expect(!config.isCloudSyncEnabled)
+        #expect(!fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        #expect(config.cloudSyncStatus == .accountChanged)
+        config.selectedAppearance = .light
+        config.recheckLedgerCurrency()
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(!fixture.makeConfiguration().isCloudSyncEnabled)
+        #expect(fixture.acquisitions == 1)
+    }
+
+    @Test
+    func onboardingOptInCurrencyMismatchNeverInvokesSavingSetup() throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        config.totalMonthlyIncome = 3200
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "EUR", "totalMonthlyIncome": 9900, "hasCompletedSetup": true]
+        #expect(config.updateCloudSyncEnabled(true))
+        #expect(config.hasCompletedSetupOnAnotherDevice)
+        #expect(config.totalMonthlyIncome == 3200)
+        var savedSetup = false
+        #expect(throws: LedgerCurrency.Error.cloudConflict) {
+            try config.establishLedgerCurrency("USD") { savedSetup = true }
+        }
+        #expect(!savedSetup)
+        #expect(config.ledgerCurrencyCode == nil)
+        #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == nil)
+        #expect(config.cloudLedgerCurrencyCode == "EUR")
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func persistedConsentRevocationBlocksAnAlreadyActiveConfiguration() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Light"]
+        let config = fixture.config
+        fixture.post(keys: ["appearance"])
+        fixture.shared.set(false, forKey: SageModelContainer.cloudKitPreferenceKey)
+        fixture.cloud.operations.removeAll()
+        config.selectedAppearance = .dark
+        config.totalMonthlyIncome = 1200
+        config.updateNeeds(0.6)
+        config.markSetupComplete()
+        config.recheckLedgerCurrency()
+        await drainNotifications()
+        #expect(config.selectedAppearance == .dark)
+        #expect(config.cloudSyncStatus == .stopped)
+        config.resetAllSettings()
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(fixture.acquisitions == 1)
+    }
+
+    @Test
+    func matchingCurrencyNotificationClearsConflictAndAppliesPreviouslyWithheldMoney() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.defaults.set(3200, forKey: "totalMonthlyIncome")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "EUR", "totalMonthlyIncome": 9900,
+                                "needsPercent": 0.6, "wantsPercent": 0.2, "savingsPercent": 0.2]
+        let config = fixture.config
+        #expect(config.hasLedgerCurrencyConflict)
+        #expect(config.totalMonthlyIncome == 3200)
+        fixture.cloud.operations.removeAll()
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        fixture.post(keys: [Key.ledgerCurrency.storageKey])
+        await drainNotifications()
+        #expect(!config.hasLedgerCurrencyConflict)
+        #expect(!fixture.shared.bool(forKey: LedgerCurrency.cloudConflictKey))
+        #expect(config.ledgerCurrencyConflictMessage == nil)
+        #expect(config.totalMonthlyIncome == 9900)
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 9900)
+        fixture.expectAllocation(0.6, 0.2, 0.2)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func failedSetupDoesNotPersistOrPublishCurrency() throws {
+        enum SetupError: Error { case failed }
+        let fixture = try Fixture(enabled: true)
+        let config = fixture.config
+        var saveAttempts = 0
+        #expect(throws: SetupError.failed) {
+            try config.establishLedgerCurrency("USD") {
+                saveAttempts += 1
+                throw SetupError.failed
+            }
+        }
+        #expect(saveAttempts == 1)
+        #expect(config.ledgerCurrencyCode == nil)
+        #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == nil)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+    }
+
+    @Test
+    func enabledResetDeletesCloudPreferencesBeforePersistingOptOutWithoutPublishingDefaults() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Dark", "totalMonthlyIncome": 7000]
+        let config = fixture.config
+        fixture.cloud.operations.removeAll()
+        fixture.cloud.onRemove = {
+            #expect(fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        }
+        defer { fixture.cloud.onRemove = nil }
+        config.resetAllSettings()
+        #expect(Set(fixture.cloud.operations) == Set(Key.allCases.map { .remove($0.storageKey) } + [.synchronize]))
+        #expect(fixture.cloud.operations.last == .synchronize)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        #expect(!config.isCloudSyncEnabled)
+        #expect(!fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        #expect(config.cloudSyncStatus == .stopped)
+        #expect(config.ledgerCurrencyCode == nil)
+        #expect(config.totalMonthlyIncome == 0)
+    }
+
+    private func drainNotifications() async {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+    }
+
+    @MainActor
+    private final class Fixture {
+        let localSuite = "AppConfigurationTests.local.\(UUID().uuidString)"
+        let sharedSuite = "AppConfigurationTests.shared.\(UUID().uuidString)"
+        let defaults: UserDefaults
+        let shared: UserDefaults
+        let cloud = CloudSpy()
+        let notifications = NotificationCenter()
+        var acquisitions = 0
+        lazy var config = makeConfiguration()
+
+        init(enabled: Bool = false, currency: String? = nil) throws {
+            defaults = try #require(UserDefaults(suiteName: localSuite))
+            shared = try #require(UserDefaults(suiteName: sharedSuite))
+            shared.set(enabled, forKey: SageModelContainer.cloudKitPreferenceKey)
+            if let currency { try LedgerCurrency.establish(currency, defaults: shared) }
+        }
+
+        deinit {
+            defaults.removePersistentDomain(forName: localSuite)
+            shared.removePersistentDomain(forName: sharedSuite)
+        }
+
+        func makeConfiguration() -> AppConfiguration {
+            AppConfiguration(defaults: defaults, sharedDefaults: shared, makeCloudStore: { [unowned self] in
+                acquisitions += 1
+                return cloud
+            }, notificationCenter: notifications)
+        }
+
+        func post(reason: Int = NSUbiquitousKeyValueStoreServerChange, keys: [String]? = nil) {
+            var info: [String: Any] = [NSUbiquitousKeyValueStoreChangeReasonKey: reason]
+            info[NSUbiquitousKeyValueStoreChangedKeysKey] = keys
+            notifications.post(name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: cloud, userInfo: info)
+        }
+
+        func expectAllocation(_ needs: Double, _ wants: Double, _ savings: Double, sourceLocation: SourceLocation = #_sourceLocation) {
+            #expect(abs(config.needsPercent - needs) < 0.000001, sourceLocation: sourceLocation)
+            #expect(abs(config.wantsPercent - wants) < 0.000001, sourceLocation: sourceLocation)
+            #expect(abs(config.savingsPercent - savings) < 0.000001, sourceLocation: sourceLocation)
+            #expect(abs(defaults.double(forKey: "needsPercent") - needs) < 0.000001, sourceLocation: sourceLocation)
+            #expect(abs(defaults.double(forKey: "wantsPercent") - wants) < 0.000001, sourceLocation: sourceLocation)
+            #expect(abs(defaults.double(forKey: "savingsPercent") - savings) < 0.000001, sourceLocation: sourceLocation)
+        }
+    }
+
+    private final class CloudSpy: NSObject, CloudPreferenceStore {
+        enum Operation: Hashable {
+            case read(String), write(String), remove(String), synchronize
+        }
+        var values: [String: Any] = [:]
+        var operations: [Operation] = []
+        var synchronizationResult = true
+        var onRemove: (() -> Void)?
+        var writtenKeys: [String] {
+            operations.compactMap { if case .write(let key) = $0 { key } else { nil } }
+        }
+
+        func object(forKey key: String) -> Any? {
+            operations.append(.read(key))
+            return values[key]
+        }
+
+        func set(_ value: Any?, forKey key: String) {
+            operations.append(.write(key))
+            values[key] = value
+        }
+
+        func removeObject(forKey key: String) {
+            onRemove?()
+            operations.append(.remove(key))
+            values.removeValue(forKey: key)
+        }
+
+        func synchronize() -> Bool {
+            operations.append(.synchronize)
+            return synchronizationResult
+        }
+    }
+}

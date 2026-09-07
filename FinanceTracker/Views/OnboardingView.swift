@@ -303,7 +303,7 @@ struct OnboardingView: View {
                     .font(.headline)
                     .tint(.sage)
                     .accessibilityIdentifier("onboarding-sync-toggle")
-                Text(cloudSyncEnabled ? "Expense sync will start the next time you open Sage." : "Your expenses will stay on this device.")
+                Text(cloudSyncEnabled ? "Preference sync starts when you finish setup. Fully close and reopen Sage to enable expense sync." : "Preferences stay on this device. If expense sync was previously enabled, fully close and reopen Sage to turn it off.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -382,6 +382,10 @@ struct OnboardingView: View {
 
     private func completeOnboarding() {
         guard (monthlyIncome ?? 0) > 0 else { return }
+        guard config.updateCloudSyncEnabled(cloudSyncEnabled) else {
+            completionErrorMessage = "Sage could not save your sync preference. Try again."
+            return
+        }
         do {
             // Cloud data may have arrived since the initial routing decision.
             if !UITestConfiguration.isEnabled, config.ledgerCurrencyCode == nil,
@@ -411,7 +415,6 @@ struct OnboardingView: View {
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
         config.savingsPercent = savingsPercent / 100
-        config.isCloudSyncEnabled = cloudSyncEnabled
         config.markSetupComplete()
         WhatsNewStore.markCurrentVersionSeen()
         WidgetCenter.shared.reloadAllTimelines()
