@@ -74,7 +74,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C66031C52E8073C60078DD15"
             BuildableName = "Sage.app"
-            BlueprintName = "FinanceTracker"
             ReferencedContainer = "container:FinanceTracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
