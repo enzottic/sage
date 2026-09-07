@@ -50,6 +50,7 @@ struct AddExpenseView: View {
             _amount = State(initialValue: expense.amount)
             _tags = State(initialValue: expense.tags ?? [])
             _category = State(initialValue: expense.category)
+            _note = State(initialValue: expense.note)
         }
     }
 
