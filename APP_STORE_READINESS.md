@@ -1,66 +1,85 @@
 # Sage App Store Readiness
 
-Updated: September 4, 2026. Source baseline: `806beb0`.
+Updated: September 6, 2026. Source audit: `2f8b8d7` plus current working-tree
+privacy-manifest and import-test changes. Original audit baseline: `806beb0`.
 
 This is the remaining backlog from the App Store audit, adjusted for the fixes
-already committed. Sage still needs privacy/compliance corrections, data-integrity
+already implemented. Sage still needs privacy/compliance corrections, data-integrity
 fixes, and release-device verification before submission.
 
 Unchecked items are not complete. Source findings describe identifiable code
 paths; verification items are risks to test, not claims of reproduced failures.
-No build or simulator test pass is implied by this checklist. Build and device
-verification are being handled by the project owner.
+Checked implementation items do not imply device or release verification. Existing
+tests were inspected, not rerun for this documentation audit; the import entry
+records the targeted test run from the preceding implementation task. Device,
+distribution, and App Store Connect checks remain open without execution evidence.
 
 ## Priority 1: Submission And Privacy
 
-- [ ] **Declare active-keyboard API use.** `UITextInputMode.activeInputModes`
-  requires an active-keyboards required-reason API declaration. Review approved
-  reason `54BD.1` for this use and include it in the app privacy manifest, or
-  remove the API use. Verify the final archive's privacy report.
+- [x] **Declare active-keyboard API use.** Added
+  `NSPrivacyAccessedAPICategoryActiveKeyboards` with approved reason `54BD.1`
+  to the app privacy manifest. `EmojiKeyboardField` uses
+  `UITextInputMode.activeInputModes` only to select the emoji keyboard when
+  available, visibly adapting text input; keyboard information is not sent
+  off-device. This matches Apple's customized text-input UI reason.
   Sources: [EmojiKeyboardField](FinanceTracker/Views/SettingsView/Components/EmojiKeyboardField.swift),
-  [app manifest](FinanceTracker/PrivacyInfo.xcprivacy).
+  [app manifest](FinanceTracker/PrivacyInfo.xcprivacy),
+  [Apple's approved reasons](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype).
 
-- [ ] **Verify the unified iCloud opt-out on release devices.** Implemented a
+- [ ] **Verify the active-keyboard declaration in the final archive.** Confirm
+  the distributed app includes the updated privacy manifest and its privacy
+  report lists active-keyboard access with reason `54BD.1`.
+
+- [x] **Implement consent-controlled preference sync.** Implemented a
   consent-controlled preference sync service: device-local/default-off consent,
   no KVS acquisition or operations while off, no remote echo writes, and guarded
   startup, incoming notifications, currency confirmation, and reset. Standard
   unit tests cover the service and production AppConfiguration source. Preference
   access stops immediately; the existing SwiftData store changes only after a
   full restart, and previously queued iCloud activity can finish. The UI explains
-  this distinction. Two-device and Release network verification remain open.
+  this distinction.
   Sources: [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift),
   [preference sync](SageKit/Services/PreferenceSyncService.swift).
 
+- [ ] **Verify the unified iCloud opt-out on release devices.** Check two-device
+  behavior and network activity before and after opt-out/restart, including queued
+  activity and reset while opted out. Source tests do not establish real transport behavior.
+
 - [ ] **Publish the corrected privacy policy at the URL users actually open.**
   `https://enzottic.me/sage/privacy` is reachable, but the audit found the older
-  June 15 policy rather than the September 4 repository version. Reconcile the
-  implementation first, then publish accurate collection, synchronization,
-  retention, deletion, and consent-withdrawal information. Remove unsupported
-  notification claims if reminders are not shipping.
+  June 15 policy; the September 6 recheck still serves it. The repository draft is
+  now dated September 6. Reconcile collection, synchronization, retention, and
+  consent withdrawal before publishing. Include accounts, local-export deletion,
+  and external-copy limits; remove unsupported reminder-permission claims.
   Sources: [repository policy](PRIVACY_POLICY.md),
   [policy presentation](FinanceTracker/Views/SettingsView/SettingsView.swift).
 
 - [ ] **Remove or disclose the privacy page's third-party network behavior.**
-  The live page inspected during the audit loaded Cloudflare Web Analytics and
-  Adobe-hosted fonts inside a `WKWebView`. Prefer an analytics-free page or local
+  The current public HTML still references Cloudflare Web Analytics and
+  Adobe-hosted fonts, and Sage loads it in a `WKWebView`. Prefer an analytics-free page or local
   policy content. Otherwise inspect the actual traffic and vendor retention and
   reconcile App Privacy disclosures. Analytics alone does not establish ATT
   tracking; do not add an ATT prompt without evidence that tracking occurs.
   Source: [web view](FinanceTracker/Views/SettingsView/SettingsView.swift).
 
-- [ ] **Make Delete All Data account for Sage-owned exports.**
-  `Documents/sage-export.csv` survives the current reset. Remove the app-owned
-  copy or explicitly disclose that it remains and how to delete it. Explain
-  separately that copies exported outside Sage cannot be recalled.
+- [x] **Make Delete All Data account for Sage-owned exports.** Reset removes
+  `Documents/sage-export.csv` before deleting user models, reports removal failures,
+  and explains that external copies must be deleted separately. Tests cover repeated
+  reset, missing files, failures, and preservation of unrelated files and symlink
+  targets. File removal cannot be rolled back if a later model operation fails.
   Sources: [backup service](FinanceTracker/Services/ExpenseBackupService.swift),
   [reset](FinanceTracker/Views/SettingsView/SettingsView.swift),
-  [deletion service](SageKit/Services/DataDeletionService.swift).
+  [deletion service](SageKit/Services/DataDeletionService.swift),
+  [deletion tests](FinanceTrackerTests/DataDeletionServiceTests.swift).
 
-- [ ] **Ship the required icon license notice.** The Feather/MIT notice exists
-  at repository root but is not configured as an app resource. Bundle the full
-  required notice and verify it is included in the distributed product. A
-  dedicated acknowledgments screen is optional.
-  Source: [third-party notices](THIRD_PARTY_NOTICES.md).
+- [x] **Configure the required icon license notice as an app resource.** The full
+  Feather/MIT notice is included in the FinanceTracker target's Resources phase.
+  Sources: [third-party notices](THIRD_PARTY_NOTICES.md),
+  [project resource configuration](FinanceTracker.xcodeproj/project.pbxproj).
+
+- [ ] **Verify the icon license notice in the distributed product.** Confirm
+  `THIRD_PARTY_NOTICES.md` and its complete license text are present in the final app.
+  A dedicated acknowledgments screen is optional.
 
 ## Priority 1: Data Integrity
 
@@ -72,37 +91,79 @@ verification are being handled by the project owner.
   compatibility decision and remain supported for now.
   Source: [SageModelContainer](SageKit/Services/SageModelContainer.swift).
 
-- [ ] **Prevent intentionally removed legacy tags from returning.** Startup
-  backfill copies a legacy single tag whenever the new tags array is empty.
-  Clear or explicitly mark converted legacy relationships so a deliberate
-  removal stays removed, including after late CloudKit imports.
-  Acceptance: removing every tag from a migrated expense or rule survives
-  relaunch and synchronization.
-  Source: [multi-tag backfill](SageKit/Services/SageModelContainer.swift).
+- [x] **Consume converted legacy tag relationships.** Startup backfill clears
+  legacy single-tag fields in the same save as conversion and preserves nonempty
+  modern selections. Disk-backed tests cover deliberate removal/reopen and
+  simulated late legacy records.
+  Sources: [multi-tag backfill](SageKit/Services/SageModelContainer.swift),
+  [legacy safety tests](FinanceTrackerTests/SageLegacySafetyTests.swift).
 
-- [ ] **Give CSV import an isolated commit boundary.** Import currently uses
-  the shared UI context and yields during insertion. Autosave or an unrelated
-  save may commit part of the batch, while rollback can affect unrelated edits.
-  Use a dedicated context with controlled saving. Only promise that nothing was
-  saved when that is guaranteed.
-  Acceptance: an injected save failure leaves no imported records or tags and
-  preserves unrelated pending edits.
-  Source: [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
+- [ ] **Resolve legacy-tag synchronization edge cases.** Backfill runs at startup,
+  and older clients can repopulate consumed fields. Define mixed-version behavior
+  or a synchronized conversion marker, then verify deliberate removal and late
+  imports across Release devices. Local reopen tests do not prove synchronization safety.
 
-- [ ] **Define backup restore versus append behavior.** New exports preserve
-  currency, but still omit expense IDs and recurrence identity. Reimporting the
-  same file creates duplicates. Add an explicit restore/merge/append policy and
-  preserve identities in a versioned format; retain support for existing exports.
-  Acceptance: repeated restoration cannot silently double spending, and restored
-  recurring occurrences retain their accounting identity.
-  Sources: [CSV codec](SageKit/Services/ExpenseCSVCodec.swift),
+- [x] **Give CSV import an isolated commit boundary.** Implemented a fresh,
+  autosave-disabled context with context-local tags, one local save for the
+  complete batch, and rollback isolated from UI edits. Passing in-memory tests
+  cover an injected save failure and an explicit interleaved UI save. No imported
+  records or new tags persist before commit or after failure; committed UI edits
+  survive, and pending UI relationship edits remain unsaved on success or failure.
+  Existing tests also cover later-save resurrection. This verifies local import
+  isolation, not automatic-save timing, real disk exhaustion, or CloudKit atomicity.
+  Sources: [import service](SageKit/Services/ExpenseImportService.swift),
+  [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift),
+  [import tests](FinanceTrackerTests/ExpenseImportServiceTests.swift).
+
+- [x] **Define backup restore versus append behavior (#48).** Implemented version-2
+  JSON expense backups with precise saved amounts/dates, expense UUIDs and stored
+  recurrence identity, plus recurring rules with schedules, time zones, end dates,
+  generation cursors and conversion boundaries. Version-1 expense-only JSON remains
+  readable. Missing rules are added by UUID; existing rules stay unchanged, and
+  rule-only backups are supported. Add-missing import preserves local edits, rejects relevant
+  ambiguous/crossed identities, and does not save all-skipped batches. A read-only
+  summary is replanned at execution; a fresh-reader check, currency gate and
+  cancellation check precede the isolated commit. Six/seven-column CSV stays
+  append-only with explicit duplicate warnings and separate six-column currency
+  consent. Exports snapshot persisted data without saving UI drafts, write unique
+  atomic staging files, then open the native save picker directly for JSON and CSV.
+  Success appears only after saving; completion/cancellation cleans up staging files.
+  Exports disclose exclusions and unencrypted financial content.
+  Targeted simulator tests cover repeat/partial imports, recurrence repair/date
+  edits, collisions/replacements, rollback/cancellation, interleaved UI saves,
+  disk reopen, and suppression of restored recurring generation.
+  Rule-backup tests additionally cover legacy/fixed schedules, rule-only restores,
+  preserved local edits, repeated imports, stale cursors, invalid schedule metadata,
+  interleaved rule/tag changes, rollback/cancellation and disk-backed rule reopen.
+  Recurring rules resume through normal maintenance and may catch up after restore;
+  multi-device rule restoration and the rule-specific review UI remain unverified.
+  Native UI tests cover JSON export, Save to Files, silent picker cancellation, and all-skipped
+  reimport in light and dark/enlarged-text appearances. Full CSV handoff/error/
+  cancellation UI coverage, large-ledger performance, release-device behavior,
+  and multi-device CloudKit safety remain unverified. Import is local sequential
+  safety, not a distributed transaction.
+  Sources: [JSON codec](SageKit/Services/ExpenseBackupCodec.swift),
+  [import tests](FinanceTrackerTests/ExpenseBackupImportTests.swift),
+  [file tests](FinanceTrackerTests/ExpenseBackupFileTests.swift),
+  [UI tests](FinanceTrackerUITests/ExpenseBackupUITests.swift),
   [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
 
-- [ ] **Make tag names and identities round-trip through backups.** Pipe-separated
-  tag names split a valid tag such as `Work|Travel`, and duplicate tag names lose
-  identity. Use an escaped or structured representation with an explicit legacy
-  decoding path.
-  Source: [CSV codec](SageKit/Services/ExpenseCSVCodec.swift).
+- [x] **Make tag names and identities round-trip through backups (#49).** JSON
+  uses structured UUID/name definitions and UUID references, preserving pipe names
+  and distinct same-name tags. Matching local UUIDs keep local name/metadata;
+  only added expenses or recurring rules create tags. Snapshots prefer nonempty modern tags, otherwise
+  the legacy singleton, without union or mutation. CSV remains name-based and
+  lossy for pipe names, rejects referenced ambiguous saved names, and deduplicates
+  repeated names per row. Tests cover special names/identities, modern/legacy
+  snapshots, skipped-only tags, local renames, and fresh-reader tag replacement.
+  JSON also preserves SF Symbol names/emoji and light/dark extended-sRGB tag colors.
+  Appearance is restored only for newly created tags; older backups without it keep
+  the neutral fallback. Focused tests cover icon/emoji, opacity, wide-gamut and
+  light/dark colors through persistence, local appearance edits, and invalid color
+  components. Tag budgets remain excluded.
+  Sources: [JSON codec](SageKit/Services/ExpenseBackupCodec.swift),
+  [codec tests](FinanceTrackerTests/ExpenseBackupCodecTests.swift),
+  [import tests](FinanceTrackerTests/ExpenseBackupImportTests.swift).
 
 - [ ] **Expose conflicting recurring copies for resolution.** Exact duplicates
   are repaired, but differently edited copies of the same occurrence are retained
@@ -112,18 +173,28 @@ verification are being handled by the project owner.
 
 ## Priority 2: Correctness And Errors
 
-- [ ] **Finish the unknown-tags import handoff.** Create/Skip requests the import
-  alert without dismissing the resolution sheet. Dismiss first, then present
-  confirmation; clear pending state on cancellation. Verify the exact SwiftUI
-  presentation behavior on device.
+- [x] **Implement the unknown-tags import handoff.** Create/Skip dismisses the
+  resolution sheet; its `onDismiss` presents import confirmation. Unresolved sheet
+  dismissal and confirmation cancellation clear pending import state.
   Source: [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
 
-- [ ] **Use half-open month intervals everywhere.** Some store/category queries
-  use `date <= endOfMonth`, including the first instant of the next month. Use
-  `[start, end)` consistently across lists, totals, widgets, and intents.
-  Acceptance: a transaction at next month's midnight belongs to exactly one month.
+- [ ] **Verify the unknown-tags handoff on device.** Exercise Create, Skip,
+  Continue Without Creating, swipe dismissal, and confirmation cancellation.
+  Check presentation order and that subsequent imports have no stale state.
+
+- [x] **Use half-open store month queries.** ExpenseStore month and range fetches,
+  derived totals, and monthly snapshots exclude the end boundary. Month-boundary
+  regression tests are present.
   Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
-  [category detail](FinanceTracker/Views/HomeView/Components/CategoryDetailView.swift).
+  [store tests](FinanceTrackerTests/ExpenseStoreTests.swift).
+
+- [ ] **Finish half-open filtering in category detail and Home comparisons.**
+  Category detail still includes the month-end boundary; Home can count selected-month
+  midnight in the previous month's comparison total. Keep month bounds exclusive
+  independently of inclusive as-of cutoffs, and test both paths.
+  Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
+  [category detail](FinanceTracker/Views/HomeView/Components/CategoryDetailView.swift),
+  [monthly overview](FinanceTracker/Views/DashboardView/Widgets/MonthlyOverviewWidget.swift).
 
 - [ ] **Separate unavailable financial data from zero spending.** Range fetches
   can suppress errors into an empty array, and Monthly Spending can fall back
@@ -133,27 +204,35 @@ verification are being handled by the project owner.
   [Find Expenses](SageKit/AppIntents/Intents/FindExpensesIntent.swift),
   [Monthly Spending](SageKit/AppIntents/Intents/GetMonthlySpendingIntent.swift).
 
-- [ ] **Remove invented transactions from production widget error states.**
-  Monthly Summary uses a sample-filled placeholder after real fetch/store
-  failures. Keep sample records for previews only; show unavailable or explicitly
-  stale data in live timelines. Other widget failures should not look like a
-  successful zero-spend result.
+- [x] **Remove invented transactions from production widget error states.**
+  All four widgets distinguish store/fetch failures with an unavailable state;
+  Monthly Summary no longer substitutes sample expenses. Sample data remains
+  limited to preview and placeholder paths.
   Sources: [timeline provider](FinanceTrackerWidget/TimelineProvider.swift),
-  [entries](FinanceTrackerWidget/WidgetTimelineEntry.swift).
+  [entries](FinanceTrackerWidget/WidgetTimelineEntry.swift),
+  [daily widget](FinanceTrackerWidget/DailyChartWidget.swift).
 
-- [ ] **Include already-entered future expenses consistently in forecasts.**
-  Shared recurrence stepping is fixed, but future records can still be omitted
-  from the forecast, or included in the actual bar without being subtracted from
-  the projected remainder. Deduplicate future records against projected
-  occurrences and make the bar total agree with its annotation.
-  Sources: [projection](SageKit/Analytics/SpendingProjection.swift),
-  [Stats](FinanceTracker/Views/StatsView/StatsView.swift).
+- [ ] **Verify widget failure states in live timelines.** Confirm unavailable
+  messaging under store/fetch failure and recovery after reopening Sage.
+
+- [x] **Remove the inconsistent Stats forecast presentation.** Stats now shows
+  recorded spending only; forecast bars and annotations were removed. Current
+  actual totals intentionally exclude future-dated records.
+  Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
+  [month summary](SageKit/Analytics/SpendingMonthSummary.swift).
+
+- [ ] **Resolve the unused projection API before reuse.** `SpendingProjection`
+  is now called only by tests, but still lacks explicit future-record handling
+  and occurrence deduplication. Remove it if no longer needed, or define and test
+  those semantics before restoring forecasts; the API itself was not repaired.
+  Source: [projection](SageKit/Analytics/SpendingProjection.swift).
 
 - [ ] **Use the same comparison cutoff on Home and Stats.** Home's previous-month
-  cutoff drops the time of day, unlike its current-period cutoff. Choose one
-  definition and test equal spending at the corresponding date/time.
+  cutoff drops the time of day, unlike its current-period cutoff, and lacks Stats'
+  shorter-month cap. Share the definition and test corresponding times, shorter
+  previous months, and month boundaries.
   Sources: [monthly overview](FinanceTracker/Views/DashboardView/Widgets/MonthlyOverviewWidget.swift),
-  [Stats](FinanceTracker/Views/StatsView/StatsView.swift).
+  [Stats summary](SageKit/Analytics/SpendingMonthSummary.swift).
 
 - [ ] **Use calendar-day comparisons for upcoming labels.** A charge tomorrow
   morning can say "today" tonight when fewer than 24 hours remain. Compare
@@ -183,17 +262,25 @@ verification are being handled by the project owner.
   [expense editor](FinanceTracker/Views/Components/ExpenseDetailView.swift),
   [router](FinanceTracker/Router/AppRouter.swift).
 
-- [ ] **Label tag-editor controls and enlarge hit areas.** Give glyph and color
-  controls meaningful VoiceOver labels, selected-state semantics, and at least
-  44-point hit areas. Label the custom color picker. Add selected semantics to
-  unknown-tag import choices. The ordinary tag picker already has selection
-  accessibility; do not duplicate that work.
+- [x] **Provide accessible glyph choices.** The glyph-picker sheet has labeled
+  symbol/emoji choices, selected-state semantics, and 56-point cells. Ordinary
+  tag selection also exposes its selected state.
+  Sources: [glyph picker](FinanceTracker/Views/SettingsView/Components/TagGlyphPickerSheet.swift),
+  [tag picker](FinanceTracker/Views/Components/TagPicker.swift).
+
+- [ ] **Finish tag-editor control labels and hit areas.** Label the glyph launcher
+  and custom color picker; give preset colors meaningful names, selected semantics,
+  and at least 44-point targets. Add selected semantics to unknown-tag import choices.
   Sources: [tag editor](FinanceTracker/Views/SettingsView/Components/AddExpenseTagSheet.swift),
   [import choices](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
 
-- [ ] **Fix insufficient text contrast.** Explicit white-on-Sage combinations
+- [x] **Use a dark foreground on the onboarding primary action.** The action no
+  longer uses white text on Sage. Full rendered contrast verification remains open.
+  Source: [onboarding](FinanceTracker/Views/OnboardingView.swift).
+
+- [ ] **Fix remaining insufficient text contrast.** Explicit white-on-Sage combinations
   measured approximately 2.65:1; white-on-SageAccent approximately 3.90:1. Review
-  primary actions, the add-tag chip, and gauge marker in both appearances. Keep
+  the add-tag chip, gauge marker, import action, and What's New action in both appearances. Keep
   the palette but use foreground/background pairs appropriate for the text size.
   Sources: [tag picker](FinanceTracker/Views/Components/TagPicker.swift),
   [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift).
@@ -205,21 +292,27 @@ verification are being handled by the project owner.
   Source: [FlowLayout](FinanceTracker/Views/Components/FlowLayout.swift).
 
 - [ ] **Represent zero budgets and over-budget values accurately.** Positive
-  spending against zero allocation should not say 0% used. VoiceOver should
-  announce the actual utilization, not the drawing's clamped 100% maximum.
+  spending against zero allocation or income should not say 0% used. Arc-gauge
+  VoiceOver and both compact circular-gauge text and VoiceOver should report actual
+  utilization, not the drawing's clamped 100% maximum.
   Sources: [category utilization](FinanceTracker/Views/DashboardView/Widgets/SingleCategoryUtilizationWidget.swift),
-  [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift).
+  [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift),
+  [circular gauge](FinanceTracker/Views/Components/CircularProgressBar.swift).
 
 - [ ] **Complete Reduce Motion support.** Audit explicit toast, budget-toggle,
   recurring-option, and end-date animations. Keep native behavior and replace
-  unnecessary custom movement when Reduce Motion is enabled.
+  unnecessary custom movement when Reduce Motion is enabled. Existing progress,
+  tag-selection, expense-date, and Stats month guards are already implemented.
 
 - [ ] **Finish regional date and income input handling.** Older relative dates
   still use US ordering, and onboarding filters out non-ASCII digits. Use
-  locale-aware dates and normalize supported localized digits. English-only
+  locale-aware dates and normalize supported localized digits in onboarding and
+  Settings income fields. Shared amount parsing already normalizes digits, but
+  these income controls do not. English-only
   translation is acceptable; regional correctness remains necessary.
   Sources: [relative dates](SageKit/Extensions/Date+Relative.swift),
-  [onboarding](FinanceTracker/Views/OnboardingView.swift).
+  [onboarding](FinanceTracker/Views/OnboardingView.swift),
+  [Settings income field](FinanceTracker/Views/Components/WholeNumberCurrencyField.swift).
 
 ## Priority 3: Quality Of Life
 
@@ -230,15 +323,30 @@ verification are being handled by the project owner.
   silently relabel an existing ledger or overwrite a conflicting cloud setting.
 - [ ] **Copy the note when duplicating an expense**, unless deliberately excluded
   and explained. Resetting date or recurrence is a separate product decision.
-- [ ] **Improve expense deletion feedback.** Identify the item, explain whether
-  future recurring occurrences remain, and consider Undo.
-- [ ] **Add jump-to-month and return-to-current-month navigation.**
+- [ ] **Improve expense deletion feedback.** Generic success/error feedback exists;
+  identify the expense in confirmation, explain whether future recurring occurrences
+  remain, and consider Undo. Recurring-rule deletion already has explanatory copy.
+- [x] **Add jump-to-month and return-to-current-month navigation in Stats.** Choose
+  Month and This Month controls are implemented, with a dedicated UI test.
+  Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
+  [Stats UI tests](FinanceTrackerUITests/StatsViewUITests.swift).
+- [ ] **Add equivalent month navigation to Home and Expenses.** These still offer
+  previous/next arrows only. Verify picker accessibility and presentation on device.
 - [ ] **Paginate search beyond 100 matches** or provide a way to reach older
   results without guessing narrower search terms.
-- [ ] **Explain overlapping tag totals.** One expense can contribute its full
-  amount to several tags, so their sum may exceed total spending.
-- [ ] **Fill uneven empty states.** Review category detail, Stats comparisons,
-  and hidden dashboard sections for clear explanations and useful actions.
+- [x] **Explain overlapping tag totals in Stats.** Stats explains that expenses
+  with multiple tags count toward each tag.
+  Source: [Stats top tags](FinanceTracker/Views/StatsView/StatsView.swift).
+- [ ] **Explain overlapping tag totals on Home and category detail.** One expense
+  contributes its full amount to several tags, so their sum may exceed total spending.
+- [x] **Add Stats empty-state explanations.** Empty months, missing history,
+  absent tags, and missing comparison baselines have explanatory messages.
+  Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
+  [comparison card](FinanceTracker/Views/StatsView/Components/SpendingComparisonCard.swift).
+- [ ] **Finish uneven empty states.** Category detail and hidden dashboard sections
+  still need clear explanations and useful actions. Stats' comparison fallback must
+  distinguish missing records from zero/negative net totals rather than label both
+  "No spending recorded."
 - [ ] **Clean up What's New.** Fix "improvments," remove inappropriate beta
   wording, and avoid referring to a Settings tab on layouts without one.
   Source: [What's New](FinanceTracker/Views/WhatsNewSheet.swift).
@@ -247,8 +355,13 @@ verification are being handled by the project owner.
 
 These checks still require runtime evidence. They are not established failures.
 
-- [ ] Test V1/V5 upgrades to V6 with real on-disk data, relationships, occurrence
-  keys, and interrupted launches. Verify both migration and reopening.
+- [ ] Validate upgrades from supported released stores to V6, including actual
+  store locations, relationships, occurrence keys, interrupted launches, and reopening.
+  SQLite fixture tests cover V1/V5 migration and V2 legacy-tag backfill/reopening;
+  these are not released-store or interrupted-launch evidence. The migration plan
+  still includes V1-V6 despite removal of old store-location relocation.
+  Sources: [migration tests](FinanceTrackerTests/SchemaMigrationTests.swift),
+  [legacy tests](FinanceTrackerTests/SageLegacySafetyTests.swift).
 - [ ] Test two-device CloudKit synchronization, offline edits, deletion
   propagation, currency conflicts, and late-arriving records. A currency conflict
   gate does not stop an already-open CloudKit store from synchronizing, and
@@ -257,15 +370,16 @@ These checks still require runtime evidence. They are not established failures.
   recurring rules. Older clients do not honor fixed time zones or conversion
   boundaries. Current confirmation warns users to update all devices first.
 - [ ] Validate CloudKit production schema and background delivery. The checked-in
-  app configuration lacks the push/background setup normally used for remote
-  changes; decide whether the widget is a local shared-store reader or a CloudKit
-  participant, then configure and test it accordingly.
-- [ ] Validate Siri discovery, cold launch, and parameterized phrases. The audit
-  builds emitted unresolved parameter-type and SSU training diagnostics despite
-  completing; actual Siri behavior remains unverified. Direct Shortcuts execution
-  does not prove voice discovery works.
+  app has CloudKit/App Group entitlements but lacks push/background setup normally
+  used for remote changes. The widget uses a CloudKit-capable Release container path
+  while declaring only App Groups. Choose its local-reader or CloudKit role, align
+  configuration and entitlements, then test.
+- [ ] Validate Siri discovery, cold launch, and parameterized phrases. Shortcut
+  registration and direct intent tests exist, but voice discovery remains unverified.
+  Recheck previously reported parameter-type and SSU training diagnostics against
+  a retained build log; direct Shortcuts execution does not prove voice discovery.
 - [ ] Choose and test locked-device privacy for financial App Intents. They
-  inherit permissive authentication defaults. Consider explicit authentication
+  inherit the default `.alwaysAllowed` authentication policy. Consider explicit authentication
   requirements and privacy-sensitive widget redaction; an app-wide biometric
   lock is not automatically required.
 - [ ] Test fresh onboarding, regional currency selection, back navigation,
@@ -275,7 +389,8 @@ These checks still require runtime evidence. They are not established failures.
   JPY, and KWD; include refunds, invalid replacement text, and pasted grouping.
 - [ ] Exercise all editors on small iPhones and at the largest accessibility
   sizes with the keyboard visible. The tag editor remains non-scrolling; the
-  recurring editor needs verification despite its added schedule scroll area.
+  recurring editor scrolls only its schedule section, not the expense-information
+  form. Both still need keyboard and accessibility-size verification.
 - [ ] Verify VoiceOver can discover and edit the Settings income field, not
   merely read its visible value. Verify progress-to-success toast announcements.
 - [ ] Verify iPad Settings discovery with collapsed/sidebar layouts and whether
@@ -307,20 +422,24 @@ These checks still require runtime evidence. They are not established failures.
 
 ## Implemented In Source
 
-These items have commits and regression coverage added, but still need the
-relevant runtime checks above. Do not reopen them as entirely unimplemented.
+These items are implemented in checked-in source. Regression tests cover many,
+but not all, changes; targeted coverage was not found for Settings persistence-failure
+handling or recurring-coordinator retry/due scheduling. Relevant runtime checks
+above remain open. Do not reopen these items as entirely unimplemented.
 
 - [x] Locale-safe tag-budget editing and invalid-limit rejection (`edfff76`).
-- [x] Settings save errors and rollback instead of false success (`e28cf61`).
+- [x] Tag and recurring-rule save/delete errors and rollback instead of false
+  success (`e28cf61`).
 - [x] Isolated shortcut writes and propagated persistence errors (`3f93604`).
 - [x] Persistent ledger currency, legacy confirmation, and currency-aware CSV
   compatibility/validation (`defea81`).
 - [x] Fixed-zone anchored recurrence for new/explicitly converted rules and
   shared generation/projection stepping (`c223aa6`). Legacy rules intentionally
   keep their old schedule until confirmed.
-- [x] Shared monetary precision/range validation, refunds, and immediate amount
-  binding updates (`35b5981`). Existing invalid amounts require correction;
-  they are not silently rounded or rewritten.
+- [x] Shared entry-time monetary precision/range validation, refunds, and immediate
+  amount binding updates (`35b5981`). Invalid amounts require correction when saved
+  through validated editors; existing records are not migrated or rounded. CSV
+  backups intentionally preserve historical fractional precision.
 - [x] Recurring-maintenance retries and foreground due scheduling (`a477a2c`).
 - [x] Malformed grouping rejection and localized refund signs (`c2e6f31`).
 - [x] Regional currency default and picker on the onboarding income screen,

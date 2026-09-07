@@ -5,7 +5,7 @@
 
 import Foundation
 
-public struct ExportableExpense: Sendable {
+public struct ExportableExpense: Sendable, Equatable {
     public let name: String
     public let date: Date
     public let amount: Double
@@ -181,6 +181,12 @@ public enum ExpenseCSVCodec {
             throw ExpenseCSVError.legacyCurrencyConfirmationRequired
         }
         for (index, expense) in expenses.enumerated() {
+            guard RecurringExpenseOccurrence.safeMilliseconds(expense.date) != nil else {
+                throw ExpenseCSVError.invalidDate(row: index + 2, value: String(expense.date.timeIntervalSinceReferenceDate))
+            }
+            guard ExpenseCategory(rawValue: expense.category) != nil else {
+                throw ExpenseCSVError.invalidCategory(row: index + 2, value: expense.category)
+            }
             guard isValidBackupAmount(expense.amount) else {
                 throw ExpenseCSVError.invalidAmount(row: index + 2, value: String(expense.amount))
             }

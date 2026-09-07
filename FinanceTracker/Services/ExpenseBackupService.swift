@@ -1,100 +1,57 @@
-//
-//  ExpenseExportManager.swift
-//  FinanceTracker
-//
-//  Created by Tyler McCormick on 11/22/25.
-//
-
 import Foundation
-import OSLog
+import SwiftData
 import SageKit
 
 final class ExpenseBackupService: Sendable {
     static let shared = ExpenseBackupService()
-    nonisolated private static let logger = Logger(
-        subsystem: "me.enzottic.FinanceTracker",
-        category: "ExpenseBackup"
-    )
 
-    func exportExpenses(expenses: [ExportableExpense], currencyCode: String) async -> Result<Void, ExpenseExportServiceError> {
-        await Task.detached(priority: .userInitiated) {
-            Self.writeExport(expenses: expenses, currencyCode: currencyCode)
+    @MainActor func createBackup(modelContainer: ModelContainer, currencyCode: String) async throws -> URL {
+        let snapshot = try ExpenseBackupCodec.snapshot(modelContainer: modelContainer, currency: currencyCode)
+        return try await Task.detached(priority: .userInitiated) {
+            try Self.write(ExpenseBackupCodec.encode(snapshot), extension: "json")
         }.value
     }
 
-    func readExpenses(from filePath: URL, currencyCode: String) async -> Result<[ExportableExpense], ExpenseExportServiceError> {
-        await Task.detached(priority: .userInitiated) {
-            Self.readExport(from: filePath, currencyCode: currencyCode)
+    @MainActor func exportCSV(modelContainer: ModelContainer, currencyCode: String) async throws -> URL {
+        let reader = ModelContext(modelContainer)
+        reader.autosaveEnabled = false
+        let snapshot = try reader.fetch(FetchDescriptor<Expense>()).toExportable()
+        return try await Task.detached(priority: .userInitiated) {
+            try Self.write(Data(ExpenseCSVCodec.encode(snapshot, currencyCode: currencyCode).utf8), extension: "csv")
         }.value
     }
 
-    nonisolated private static func writeExport(expenses: [ExportableExpense], currencyCode: String) -> Result<Void, ExpenseExportServiceError> {
-        do {
-            let csvContent = try ExpenseCSVCodec.encode(expenses, currencyCode: currencyCode)
-            let fileName = "sage-export.csv"
-            
-            let documentsDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            
-            let fileURL = documentsDirectory.appendingPathComponent(fileName)
-            
-            guard let csvData = csvContent.data(using: .utf8) else {
-                return .failure(.dataConversionError("Could not prepare the CSV. Try exporting again."))
+    func readExpenses(from url: URL) async throws -> ExpenseImportSource {
+        try await Task.detached(priority: .userInitiated) {
+            let data = try Data(contentsOf: url)
+            let text = String(decoding: data, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\u{FEFF}")))
+            // A malformed JSON document must never be retried as a legacy CSV.
+            if url.pathExtension.lowercased() == "json" || text.first == "{" || text.first == "[" {
+                return .backup(try ExpenseBackupCodec.decode(Data(text.utf8)))
             }
-            try csvData.write(to: fileURL, options: .atomic)
-            
-            logger.info("Expense export completed.")
-            
-        } catch let error as ExpenseCSVError {
-            return .failure(.serializationError(error.localizedDescription))
-        } catch {
-            logger.error("Expense export failed: \(error.localizedDescription, privacy: .private(mask: .hash))")
-            return .failure(.filesystemError("Could not save the CSV. Check available storage and try again."))
-        }
-        
-        return .success(())
+            guard let csv = String(data: data, encoding: .utf8) else {
+                throw ExpenseBackupError.invalid("the file is not UTF-8 text.")
+            }
+            return .csv(try ExpenseCSVCodec.decode(csv))
+        }.value
     }
-    
-    // Returns an array of ExportableExpense, to be inserted into the SwiftData model on import
-    nonisolated private static func readExport(from filePath: URL, currencyCode: String) -> Result<[ExportableExpense], ExpenseExportServiceError> {
-        guard let fileContents = try? String(contentsOf: filePath, encoding: .utf8) else {
-            return .failure(.fileReadError("Could not read the CSV. Choose another file and try again."))
-        }
-        
-        do {
-            let expenses = try ExpenseCSVCodec.decode(fileContents)
-            // Reading may stage legacy data; the UI still requires explicit confirmation before writing.
-            try ExpenseCSVCodec.validateCurrency(expenses, ledgerCurrencyCode: currencyCode, allowLegacy: true)
-            return .success(expenses)
-        } catch let error as ExpenseCSVError {
-            return .failure(.serializationError(error.localizedDescription))
-        } catch {
-            return .failure(.serializationError("Could not parse the CSV file: \(error.localizedDescription)"))
-        }
-    }
-}
 
-enum ExpenseExportServiceError: LocalizedError, Sendable {
-    case serializationError(String)
-    case dataConversionError(String)
-    case filesystemError(String)
-    
-    case fileReadError(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .serializationError(let message),
-             .dataConversionError(let message),
-             .filesystemError(let message),
-             .fileReadError(let message):
-            return message
-        }
+    nonisolated private static func write(_ data: Data, extension suffix: String) throws -> URL {
+        // Temporary share files are not a second permanent, app-owned financial archive.
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sage-expenses-\(UUID().uuidString.lowercased()).\(suffix)")
+        try data.write(to: url, options: .atomic)
+        return url
     }
 }
 
 extension [Expense] {
     func toExportable() -> [ExportableExpense] {
-        self.map {
-            ExportableExpense(name: $0.name, date: $0.date, amount: $0.amount, category: $0.category.rawValue, tag: ($0.tags ?? []).map(\.name).joined(separator: "|"), note: $0.note)
+        map {
+            let tags = ($0.tags?.isEmpty == false ? $0.tags : $0.tag.map { [$0] }) ?? []
+            return ExportableExpense(name: $0.name, date: $0.date, amount: $0.amount,
+                                     category: $0.category.rawValue, tag: tags.map(\.name).joined(separator: "|"), note: $0.note)
         }
     }
 }

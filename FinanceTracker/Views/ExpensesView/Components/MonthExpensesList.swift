@@ -50,7 +50,7 @@ struct MonthExpensesList: View {
             if (filteredExpenses.isEmpty) {
                 ContentUnavailableView(
                     searchText.isEmpty ? "No expenses for this month" : "No matching expenses",
-                    systemImage: searchText.isEmpty ? "dollarsign" : "magnifyingglass",
+                    systemImage: searchText.isEmpty ? "receipt" : "magnifyingglass",
                 )
             } else {
                 List {
