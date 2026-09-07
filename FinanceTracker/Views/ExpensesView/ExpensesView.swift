@@ -15,6 +15,7 @@ struct ExpensesView: View {
     @State private var selectedMonth: Date
     @State private var slideDirection: Edge = .leading
     @State private var searchText: String = ""
+    @State private var showsMonthPicker = false
 
     let calendar = Calendar.current
     let formatter: DateFormatter
@@ -32,9 +33,14 @@ struct ExpensesView: View {
                 .frame(maxWidth: .infinity)
                 .background(.sageBackground)
                 .navigationTitle(formatter.string(from: selectedMonth))
+                .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $searchText, prompt: "Search expenses")
                 .appRouteDestinations()
                 .toolbar {
+                    ToolbarItem(placement: .title) {
+                        monthTitle
+                            .font(.headline)
+                    }
                     SageToolbar(
                         onPrevious: {
                             slideDirection = .leading
@@ -48,11 +54,34 @@ struct ExpensesView: View {
                     )
                 }
                 .gradientBackground()
+                .sheet(isPresented: $showsMonthPicker) {
+                    MonthPicker(month: selectedMonth, allowsFutureMonths: true) {
+                        selectedMonth = $0
+                    }
+                }
                 .onChange(of: appRouter.expensesRequestID) { _, _ in
                     selectedMonth = appRouter.expensesMonth
                     searchText = ""
                 }
         }
+    }
+
+    private var monthTitle: some View {
+        Button {
+            showsMonthPicker = true
+        } label: {
+            HStack(spacing: 8) {
+                Text(formatter.string(from: selectedMonth))
+                Image(systemName: "chevron.down")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Choose month")
+        .accessibilityIdentifier("expenses-month-picker")
     }
 }
 
