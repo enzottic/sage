@@ -83,7 +83,7 @@ struct ExpenseList: View {
                 expenseToDelete = nil
             }
         }, message: {
-            if let rule = recurringRuleToDelete {
+            if recurringRuleToDelete != nil {
                 Text("This expense is recurring. Delete its recurring rule to stop future expenses. Previous expenses will not be deleted.")
             }
         })
