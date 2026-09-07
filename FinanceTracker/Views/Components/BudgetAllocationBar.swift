@@ -109,8 +109,8 @@ struct BudgetAllocationBar: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(first ? "Needs and Wants divider" : "Wants and Savings divider")
                 .accessibilityValue(first
-                    ? "Needs \(Int(needsPercent))%, Wants \(Int(wantsPercent))%"
-                    : "Wants \(Int(wantsPercent))%, Savings \(Int(100 - secondBoundary))%")
+                    ? "Needs \((needsPercent / 100).formatted(.percent.precision(.fractionLength(0)))), Wants \((wantsPercent / 100).formatted(.percent.precision(.fractionLength(0))))"
+                    : "Wants \((wantsPercent / 100).formatted(.percent.precision(.fractionLength(0)))), Savings \(((100 - secondBoundary) / 100).formatted(.percent.precision(.fractionLength(0))))")
                 .accessibilityHint("Swipe up or down to move the divider in five percent steps")
                 .accessibilityAdjustableAction { direction in
                     switch direction {

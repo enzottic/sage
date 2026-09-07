@@ -123,7 +123,7 @@ private struct ArcProgressMarker: View, Animatable {
 #Preview {
     VStack(spacing: 32) {
         ArcProgressGauge(progress: 0.44) {
-            Text("44%")
+            Text(0.44, format: .percent.precision(.fractionLength(0)))
                 .font(.largeTitle)
                 .fontWeight(.bold)
         }

@@ -276,9 +276,9 @@ struct OnboardingView: View {
 
             VStack(alignment: .leading, spacing: 24) {
                 BudgetAllocationBar(needsPercent: $needsPercent, wantsPercent: $wantsPercent)
-                BudgetSummaryRow(title: "Needs (\(Int(needsPercent))%)", amount: income * needsPercent / 100, currencyCode: currencyCode, color: categoryColors.needs, icon: "house.fill")
-                BudgetSummaryRow(title: "Wants (\(Int(wantsPercent))%)", amount: income * wantsPercent / 100, currencyCode: currencyCode, color: categoryColors.wants, icon: "cart.fill")
-                BudgetSummaryRow(title: "Savings (\(Int(savingsPercent))%)", amount: income * savingsPercent / 100, currencyCode: currencyCode, color: categoryColors.savings, icon: "banknote.fill")
+                BudgetSummaryRow(title: "Needs (\((needsPercent / 100).formatted(.percent.precision(.fractionLength(0)))))", amount: income * needsPercent / 100, currencyCode: currencyCode, color: categoryColors.needs, icon: "house.fill")
+                BudgetSummaryRow(title: "Wants (\((wantsPercent / 100).formatted(.percent.precision(.fractionLength(0)))))", amount: income * wantsPercent / 100, currencyCode: currencyCode, color: categoryColors.wants, icon: "cart.fill")
+                BudgetSummaryRow(title: "Savings (\((savingsPercent / 100).formatted(.percent.precision(.fractionLength(0)))))", amount: income * savingsPercent / 100, currencyCode: currencyCode, color: categoryColors.savings, icon: "banknote.fill")
             }
         }
     }

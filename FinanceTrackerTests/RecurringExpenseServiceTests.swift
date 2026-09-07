@@ -139,46 +139,63 @@ struct RecurringExpenseServiceTests {
         #expect(result.generatedCount == 0)
         #expect(result.repair.backfilledCount == 2)
         #expect(result.repair.removedCount == 1)
-        #expect(result.repair.conflictingGroupCount == 0)
         #expect(expenses.count == 1)
     }
 
-    @Test @MainActor
-    func conflictingImportedCopiesAreNotDeleted() throws {
+    @Test(arguments: [false, true]) @MainActor
+    func differingCopiesKeepLowestUUIDRegardlessOfInsertionOrder(reversed: Bool) throws {
         let container = try SageModelContainer.make(for: .test)
         let context = container.mainContext
         let date = Date(timeIntervalSince1970: 1_786_368_000)
         let ruleID = UUID()
         let key = RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: date)
-        context.insert(
-            Expense(
-                name: "Subscription",
-                amount: 12,
-                date: date,
-                recurringExpenseId: ruleID,
-                recurringOccurrenceKey: key
-            )
+        let survivor = Expense(
+            name: "Edited subscription",
+            amount: 15,
+            category: .needs,
+            date: date.addingTimeInterval(86_400),
+            note: "Corrected bill",
+            recurringExpenseId: ruleID,
+            recurringOccurrenceKey: key
         )
-        context.insert(
-            Expense(
-                name: "Subscription",
-                amount: 15,
-                date: date,
-                recurringExpenseId: ruleID,
-                recurringOccurrenceKey: key
-            )
+        let survivorID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+        survivor.id = survivorID
+        let duplicates = try (2...3).map { index in
+            let expense = Expense(name: "Subscription", amount: 12, date: date,
+                                  recurringExpenseId: ruleID, recurringOccurrenceKey: key)
+            expense.id = try #require(UUID(uuidString: "00000000-0000-0000-0000-00000000000\(index)"))
+            return expense
+        }
+        let copies = [survivor] + duplicates
+        for expense in reversed ? Array(copies.reversed()) : copies {
+            context.insert(expense)
+        }
+        let otherOccurrence = Expense(
+            name: "Subscription", amount: 12, date: date,
+            recurringExpenseId: ruleID,
+            recurringOccurrenceKey: RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: date.addingTimeInterval(86_400))
         )
+        let manualExpense = Expense(name: "Subscription", amount: 12, date: date)
+        context.insert(otherOccurrence)
+        context.insert(manualExpense)
         try context.save()
 
         let firstResult = try RecurringExpenseRepairService(modelContext: context).repair()
         try context.save()
         let secondResult = try RecurringExpenseRepairService(modelContext: context).repair()
-        let expenses = try context.fetch(FetchDescriptor<Expense>())
+        let expenses = try ModelContext(container).fetch(FetchDescriptor<Expense>())
 
-        #expect(firstResult.removedCount == 0)
-        #expect(firstResult.conflictingGroupCount == 1)
+        #expect(firstResult.removedCount == 2)
         #expect(secondResult.removedCount == 0)
-        #expect(expenses.count == 2)
+        #expect(expenses.count == 3)
+        #expect(Set(expenses.map(\.id)) == Set([survivorID, otherOccurrence.id, manualExpense.id]))
+        let remaining = try #require(expenses.first { $0.recurringOccurrenceKey == key })
+        #expect(remaining.id == survivorID)
+        #expect(remaining.name == "Edited subscription")
+        #expect(remaining.amount == 15)
+        #expect(remaining.category == .needs)
+        #expect(remaining.date == date.addingTimeInterval(86_400))
+        #expect(remaining.note == "Corrected bill")
     }
 
     @Test(arguments: [2026, 2028]) @MainActor

@@ -113,7 +113,7 @@ final class RecurringExpenseCoordinator {
             retryDelay = 5_000_000_000
 
             Self.logger.info(
-                "Recurring maintenance completed. Generated: \(result.generatedCount), skipped: \(result.skippedCount), repaired: \(result.repair.removedCount), conflicts: \(result.repair.conflictingGroupCount)."
+                "Recurring maintenance completed. Generated: \(result.generatedCount), skipped: \(result.skippedCount), repaired: \(result.repair.removedCount)."
             )
 
             if result.generatedCount > 0 || result.repair.removedCount > 0 {

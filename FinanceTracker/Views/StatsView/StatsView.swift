@@ -50,6 +50,7 @@ struct StatsView: View {
             case .needs: showsNeedsLine
             case .wants: showsWantsLine
             case .savings: showsSavingsLine
+            @unknown default: false
             }
         }
     }

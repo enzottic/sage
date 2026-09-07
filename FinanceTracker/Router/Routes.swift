@@ -35,7 +35,7 @@ enum SageSheet: Identifiable, Hashable {
         Expense?,
         receiptData: Data? = nil,
         presentationID: UUID = UUID()
-    ) // nil expense = blank or receipt import
+    )
 
     var id: UUID {
         switch self {

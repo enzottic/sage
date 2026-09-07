@@ -4,12 +4,10 @@ import SwiftData
 public struct RecurringExpenseRepairResult: Equatable, Sendable {
     public let backfilledCount: Int
     public let removedCount: Int
-    public let conflictingGroupCount: Int
 
-    public init(backfilledCount: Int = 0, removedCount: Int = 0, conflictingGroupCount: Int = 0) {
+    public init(backfilledCount: Int = 0, removedCount: Int = 0) {
         self.backfilledCount = backfilledCount
         self.removedCount = removedCount
-        self.conflictingGroupCount = conflictingGroupCount
     }
 }
 
@@ -21,7 +19,7 @@ public final class RecurringExpenseRepairService {
         self.modelContext = modelContext
     }
 
-    /// Backfills occurrence identities and removes only exact duplicate generated expenses.
+    /// Backfills occurrence identities and keeps one generated expense per occurrence key.
     /// The caller owns the save so repair and generation can use one transaction.
     public func repair() throws -> RecurringExpenseRepairResult {
         let expenses = try modelContext.fetch(FetchDescriptor<Expense>())
@@ -43,43 +41,19 @@ public final class RecurringExpenseRepairService {
         }
 
         var removedCount = 0
-        var conflictingGroupCount = 0
 
         for group in groups.values where group.count > 1 {
+            // Every device chooses the same survivor, even when copies have different edits.
             let sorted = group.sorted { $0.id.uuidString < $1.id.uuidString }
-            guard let canonical = sorted.first else { continue }
-
-            var groupHasConflict = false
             for duplicate in sorted.dropFirst() {
-                if Self.hasSameContent(canonical, duplicate) {
-                    modelContext.delete(duplicate)
-                    removedCount += 1
-                } else {
-                    groupHasConflict = true
-                }
-            }
-
-            if groupHasConflict {
-                conflictingGroupCount += 1
+                modelContext.delete(duplicate)
+                removedCount += 1
             }
         }
 
         return RecurringExpenseRepairResult(
             backfilledCount: backfilledCount,
-            removedCount: removedCount,
-            conflictingGroupCount: conflictingGroupCount
+            removedCount: removedCount
         )
-    }
-
-    private static func hasSameContent(_ lhs: Expense, _ rhs: Expense) -> Bool {
-        lhs.name == rhs.name
-            && lhs.amount == rhs.amount
-            && lhs.category == rhs.category
-            && lhs.date == rhs.date
-            && lhs.note == rhs.note
-            && lhs.recurringExpenseId == rhs.recurringExpenseId
-            && lhs.tag?.id == rhs.tag?.id
-            && Set((lhs.tags ?? []).map(\.id)) == Set((rhs.tags ?? []).map(\.id))
-            && lhs.account?.id == rhs.account?.id
     }
 }
