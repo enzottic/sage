@@ -6,6 +6,21 @@ import UIKit
 
 @Suite("Expense JSON backup codec")
 struct ExpenseBackupCodecTests {
+    @Test(arguments: ["nan", "inf", "1000000000.1", "-1000000000.1"])
+    func invalidAmountIdentifiesTheRecord(amount: String) {
+        let id = UUID().uuidString
+        let row = ExpenseBackup.Record(id: id, name: "Problem expense", dateSecondsSince2001: 123,
+                                       amount: amount, category: "Needs", note: "", tagIDs: [])
+        do {
+            try ExpenseBackupCodec.validate(.init(currency: "USD", tags: [], expenses: [row]))
+            Issue.record("Expected invalid amount")
+        } catch {
+            #expect(error.localizedDescription.contains("Problem expense"))
+            #expect(error.localizedDescription.contains(id))
+            #expect(error.localizedDescription.contains(amount))
+        }
+    }
+
     @Test(arguments: ["short", "alpha", "nonfinite", "overflow"])
     @MainActor func rejectsInvalidTagColors(kind: String) throws {
         var appearance = try ExpenseBackup.Tag.Appearance(color: .red, emoji: "", symbolName: "tag")
@@ -56,7 +71,7 @@ struct ExpenseBackupCodecTests {
         #expect(throws: ExpenseBackupError.self) { try ExpenseBackupCodec.validate(backup) }
     }
 
-    @Test(arguments: [48.695, -48.695, 0.004, -0.004, Double.leastNonzeroMagnitude, MonetaryAmount.maximumMagnitude])
+    @Test(arguments: [0, 48.695, -48.695, 0.004, -0.004, Double.leastNonzeroMagnitude, MonetaryAmount.maximumMagnitude])
     func preciseRoundTrip(amount: Double) throws {
         let tagID = UUID().uuidString
         let otherTagID = UUID().uuidString
@@ -106,7 +121,7 @@ struct ExpenseBackupCodecTests {
         }
     }
 
-    @Test(arguments: ["format", "version", "currency", "id", "duplicateExpense", "duplicateTag", "duplicateReference", "missingTag", "unusedTag", "category", "zero", "nan", "infinity", "amountOverflow", "dateOverflow", "dateNaN", "keyOnly", "wrongRule", "uppercaseKey", "noncanonicalMillis", "overflowMillis", "duplicateOccurrence"])
+    @Test(arguments: ["format", "version", "currency", "id", "duplicateExpense", "duplicateTag", "duplicateReference", "missingTag", "unusedTag", "category", "nan", "infinity", "amountOverflow", "dateOverflow", "dateNaN", "keyOnly", "wrongRule", "uppercaseKey", "noncanonicalMillis", "overflowMillis", "duplicateOccurrence"])
     func rejectsInvalidDTOAndExport(field: String) throws {
         let tag = ExpenseBackup.Tag(id: UUID().uuidString, name: "Tag")
         let rule = UUID()
@@ -124,7 +139,6 @@ struct ExpenseBackupCodecTests {
         case "missingTag": backup.tags = []
         case "unusedTag": backup.expenses[0].tagIDs = []
         case "category": backup.expenses[0].category = "Unknown"
-        case "zero": backup.expenses[0].amount = "0"
         case "nan": backup.expenses[0].amount = "nan"
         case "infinity": backup.expenses[0].amount = "inf"
         case "amountOverflow": backup.expenses[0].amount = "1000000000.1"

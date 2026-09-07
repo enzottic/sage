@@ -152,8 +152,8 @@ struct ExpenseBackupSettingsSection: View {
             onCompletion: { result in
                 defer { clearExport() }
                 switch result {
-                case .success(let url):
-                    appRouter.showToast(SageToast(message: "Saved \(url.lastPathComponent).", kind: .success))
+                case .success:
+                    appRouter.showToast(SageToast(message: "Saved expense backup file", kind: .success))
                 case .failure(let error):
                     let nsError = error as NSError
                     if nsError.domain != NSCocoaErrorDomain || nsError.code != NSUserCancelledError {

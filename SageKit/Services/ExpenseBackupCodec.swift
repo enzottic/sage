@@ -296,8 +296,9 @@ public enum ExpenseBackupCodec {
             guard record.dateSecondsSince2001.isFinite, RecurringExpenseOccurrence.safeMilliseconds(record.date) != nil else {
                 throw ExpenseBackupError.invalid("unsafe expense date.")
             }
-            guard let amount = Double(record.amount), amount.isFinite, amount != 0, abs(amount) <= MonetaryAmount.maximumMagnitude else {
-                throw ExpenseBackupError.invalid("amount must be finite, nonzero and no more than 1 billion in magnitude.")
+            // Backups preserve saved zero-value records even though new entry rejects zero.
+            guard let amount = Double(record.amount), amount.isFinite, abs(amount) <= MonetaryAmount.maximumMagnitude else {
+                throw ExpenseBackupError.invalid("expense '\(record.name)' (ID: \(record.id)) has amount '\(record.amount)'. Amounts must be finite and no more than 1 billion in magnitude. No records were omitted or changed.")
             }
             guard ExpenseCategory(rawValue: record.category) != nil else { throw ExpenseBackupError.invalid("unknown category.") }
             var recordTags = Set<UUID>()
@@ -321,8 +322,8 @@ public enum ExpenseBackupCodec {
         var rules = Set<UUID>()
         for rule in backup.recurringRules {
             guard try rules.insert(uuid(rule.id)).inserted else { throw ExpenseBackupError.invalid("duplicate recurring rule ID.") }
-            guard let amount = Double(rule.amount), amount.isFinite, amount != 0, abs(amount) <= MonetaryAmount.maximumMagnitude else {
-                throw ExpenseBackupError.invalid("invalid recurring rule amount.")
+            guard let amount = Double(rule.amount), amount.isFinite, abs(amount) <= MonetaryAmount.maximumMagnitude else {
+                throw ExpenseBackupError.invalid("recurring rule '\(rule.name)' (ID: \(rule.id)) has amount '\(rule.amount)'. Amounts must be finite and no more than 1 billion in magnitude. No records were omitted or changed.")
             }
             guard ExpenseCategory(rawValue: rule.category) != nil, RecurrenceFrequency(rawValue: rule.frequency) != nil else {
                 throw ExpenseBackupError.invalid("unknown recurring category or frequency.")

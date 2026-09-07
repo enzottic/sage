@@ -6,6 +6,30 @@ import Testing
 @Suite("Expense backup files")
 struct ExpenseBackupFileTests {
     @Test @MainActor
+    func zeroValueRecordsCanBeBackedUpAndRestored() async throws {
+        let source = try SageModelContainer.make(for: .test)
+        let expense = Expense(name: "Historical zero", amount: 0)
+        let rule = RecurringExpenseRule(name: "Historical rule", amount: 0, note: "", category: .needs,
+                                        frequency: .monthly, startDate: .now)
+        source.mainContext.insert(expense)
+        source.mainContext.insert(rule)
+        try source.mainContext.save()
+        let file = try await ExpenseBackupService.shared.createBackup(modelContainer: source, currencyCode: "USD")
+        defer { try? FileManager.default.removeItem(at: file) }
+        let data = try await ExpenseBackupService.shared.readExpenses(from: file)
+        let destination = try SageModelContainer.make(for: .test)
+        let importer = ExpenseImportService(modelContainer: destination)
+        let result = try await importer.execute(importer.plan(data, ledgerCurrencyCode: "USD"), currencyGate: { "USD" })
+        #expect(result.inserted == 1 && result.insertedRules == 1)
+        let reader = ModelContext(destination)
+        let restored = try #require(reader.fetch(FetchDescriptor<Expense>()).first)
+        let restoredRule = try #require(reader.fetch(FetchDescriptor<RecurringExpenseRule>()).first)
+        #expect(restored.amount == 0 && restored.id == expense.id)
+        #expect(restoredRule.amount == 0 && restoredRule.id == rule.id)
+        #expect(try importer.plan(data, ledgerCurrencyCode: "USD").result.totalInserted == 0)
+    }
+
+    @Test @MainActor
     func uniqueJSONAndCSVFilesReadPersistedSnapshots() async throws {
         let container = try SageModelContainer.make(for: .test)
         container.mainContext.autosaveEnabled = false
