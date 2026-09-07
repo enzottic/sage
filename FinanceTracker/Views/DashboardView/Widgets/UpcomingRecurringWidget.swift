@@ -112,7 +112,7 @@ private struct UpcomingRecurringCard: View {
     let nextDate: Date
 
     private var daysAway: Int {
-        max(0, Calendar.current.dateComponents([.day], from: .now, to: nextDate).day ?? 0)
+        UpcomingExpenseDays.count(until: nextDate)
     }
 
     private var isImminent: Bool { daysAway <= 3 }

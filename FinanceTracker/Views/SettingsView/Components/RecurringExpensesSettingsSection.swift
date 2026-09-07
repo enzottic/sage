@@ -215,14 +215,14 @@ private struct RecurringRuleRow: View {
     }
 
     private func daysLabel(for date: Date) -> String {
-        let days = max(0, Calendar.current.dateComponents([.day], from: .now, to: date).day ?? 0)
+        let days = UpcomingExpenseDays.count(until: date)
         if days == 0 { return "today" }
         if days == 1 { return "in 1 day" }
         return "in \(days) days"
     }
 
     private func isImminent(_ date: Date) -> Bool {
-        let days = Calendar.current.dateComponents([.day], from: .now, to: date).day ?? 0
+        let days = UpcomingExpenseDays.count(until: date)
         return days <= 3
     }
 }

@@ -234,9 +234,13 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [monthly overview](FinanceTracker/Views/DashboardView/Widgets/MonthlyOverviewWidget.swift),
   [Stats summary](SageKit/Analytics/SpendingMonthSummary.swift).
 
-- [ ] **Use calendar-day comparisons for upcoming labels.** A charge tomorrow
-  morning can say "today" tonight when fewer than 24 hours remain. Compare
-  calendar days rather than whole elapsed days.
+- [x] **Use calendar-day comparisons for upcoming labels.** Both surfaces now
+  compare start-of-day dates in the display calendar through `UpcomingExpenseDays`,
+  including the three-day highlighting threshold. Regression coverage in
+  `UpcomingExpenseDaysTests` includes midnight, past dates, multi-day thresholds,
+  daylight-saving changes, and display time zones. All 6 tests (12 cases) passed
+  using the exact helper and test sources in a standalone macOS Swift package.
+  Simulator verification was intentionally skipped at the user's request (#57).
   Sources: [upcoming widget](FinanceTracker/Views/DashboardView/Widgets/UpcomingRecurringWidget.swift),
   [recurring settings](FinanceTracker/Views/SettingsView/Components/RecurringExpensesSettingsSection.swift).
 
