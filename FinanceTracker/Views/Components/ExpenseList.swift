@@ -13,6 +13,8 @@ import SageKit
 struct ExpenseList: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var appRouter
+    @Environment(\.recurringReminders) private var reminders
+    @Query private var recurringRules: [RecurringExpenseRule]
 
     let expenses: [Expense]
     var rowStyle: ExpenseRowItem.Style = .regular
@@ -27,6 +29,11 @@ struct ExpenseList: View {
 
     private var visibleExpenses: [Expense] {
         expenses.filter { !deletingExpenseIDs.contains($0.persistentModelID) }
+    }
+
+    private var recurringRuleToDelete: RecurringExpenseRule? {
+        guard let ruleID = expenseToDelete?.recurringExpenseId else { return nil }
+        return recurringRules.first { $0.id == ruleID }
     }
 
     var body: some View {
@@ -58,14 +65,26 @@ struct ExpenseList: View {
             }
         }
         .alert("Delete Expense?", isPresented: $showingDeleteConfirmation, actions: {
-            Button("Delete", role: .destructive) {
+            Button(recurringRuleToDelete == nil ? "Delete" : "Delete Expense Only", role: .destructive) {
                 if let expense = expenseToDelete {
                     deleteExpense(expense)
                 }
             }
             .accessibilityIdentifier("confirm-delete-expense-button")
+            if let rule = recurringRuleToDelete {
+                Button("Delete Expense and Rule", role: .destructive) {
+                    if let expense = expenseToDelete {
+                        deleteExpense(expense, recurringRule: rule)
+                    }
+                }
+                .accessibilityIdentifier("confirm-delete-expense-and-rule-button")
+            }
             Button("Cancel", role: .cancel) {
                 expenseToDelete = nil
+            }
+        }, message: {
+            if let rule = recurringRuleToDelete {
+                Text("This expense is recurring. Delete its recurring rule to stop future expenses. Previous expenses will not be deleted.")
             }
         })
         .alert("Could not delete expense", isPresented: Binding(
@@ -78,7 +97,7 @@ struct ExpenseList: View {
         }
     }
     
-    private func deleteExpense(_ expense: Expense) {
+    private func deleteExpense(_ expense: Expense, recurringRule: RecurringExpenseRule? = nil) {
         let expenseID = expense.persistentModelID
 
         // Do not keep a deleted SwiftData model in view state. SwiftUI can
@@ -88,11 +107,20 @@ struct ExpenseList: View {
             _ = deletingExpenseIDs.insert(expenseID)
         }
         modelContext.delete(expense)
+        if let recurringRule {
+            modelContext.delete(recurringRule)
+        }
 
         do {
             try modelContext.save()
+            if recurringRule != nil {
+                reminders?.refresh()
+            }
             WidgetCenter.shared.reloadAllTimelines()
-            appRouter.showToast(SageToast(message: "Expense deleted", kind: .success))
+            appRouter.showToast(SageToast(
+                message: recurringRule == nil ? "Expense deleted" : "Expense and recurring rule deleted",
+                kind: .success
+            ))
         } catch {
             modelContext.rollback()
             withAnimation {
