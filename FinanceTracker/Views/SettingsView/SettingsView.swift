@@ -10,13 +10,13 @@ import WebKit
 import WidgetKit
 import Darwin
 import SageKit
-import UserNotifications
 
 struct SettingsView: View {
     @Environment(AppConfiguration.self) private var config: AppConfiguration
     @Environment(AppRouter.self) private var router: AppRouter
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.recurringReminders) private var reminders
 
     var showsDismissButton = false
 
@@ -65,7 +65,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach([SettingsPage.budget, .recurringExpenses, .tags], id: \.self) { page in
+                    ForEach([SettingsPage.budget, .recurringExpenses, .dailyReminder, .tags], id: \.self) { page in
                         NavigationLink(value: page) {
                             SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                         }
@@ -145,6 +145,8 @@ struct SettingsView: View {
                     BudgetSettingsSection()
                 case .recurringExpenses:
                     RecurringExpensesSettingsSection()
+                case .dailyReminder:
+                    DailyExpenseReminderSettingsSection()
                 case .tags:
                     TagsSettingsSection()
                 case .backup:
@@ -203,11 +205,11 @@ struct SettingsView: View {
                 try deletionService.deleteExpenses(includeRecurringRules: false)
             case .expensesAndRecurringRules:
                 try deletionService.deleteExpenses(includeRecurringRules: true)
-                UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+                reminders?.refresh()
             case .fullReset:
                 try deletionService.deleteAllUserData()
                 config.resetAllSettings()
-                UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+                reminders?.refresh()
             }
 
             WidgetCenter.shared.reloadAllTimelines()
@@ -276,6 +278,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
     case appearance = "Appearance"
     case budget = "Budget and Allocation"
     case recurringExpenses = "Recurring Expenses"
+    case dailyReminder = "Daily Reminder"
     case tags = "Tags"
     case backup = "Backup"
     case privacy = "Privacy"
@@ -285,6 +288,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .appearance: "paintpalette.fill"
         case .budget: "chart.bar.horizontal.page.fill"
         case .recurringExpenses: "arrow.trianglehead.clockwise"
+        case .dailyReminder: "bell.fill"
         case .tags: "tag.fill"
         case .backup: "cloud.fill"
         case .privacy: "hand.raised.fill"
@@ -297,6 +301,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .budget: .green
         case .tags: .purple
         case .recurringExpenses: .orange
+        case .dailyReminder: .sage
         case .backup: .blue
         case .privacy: .red
         }

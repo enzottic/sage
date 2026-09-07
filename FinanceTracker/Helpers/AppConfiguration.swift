@@ -73,6 +73,11 @@ class AppConfiguration {
         static let wantsColor = "categoryColorWants"
         static let savingsColor = "categoryColorSavings"
         static let billRemindersEnabled = "billRemindersEnabled"
+        static let billReminderDaysBefore = "billReminderDaysBefore"
+        static let hideBillReminderDetails = "hideBillReminderDetails"
+        static let billReminderTimeMinutes = "billReminderTimeMinutes"
+        static let dailyExpenseReminderEnabled = "dailyExpenseReminderEnabled"
+        static let dailyExpenseReminderTimeMinutes = "dailyExpenseReminderTimeMinutes"
     }
 
     var selectedAppearance: Appearance {
@@ -180,6 +185,57 @@ class AppConfiguration {
         }
     }
 
+    var billReminderDaysBefore: Int {
+        didSet {
+            guard !isRestoringValue else { return }
+            guard (1...7).contains(billReminderDaysBefore) else {
+                isRestoringValue = true
+                billReminderDaysBefore = oldValue
+                isRestoringValue = false
+                return
+            }
+            if !isPreview { defaults.set(billReminderDaysBefore, forKey: Keys.billReminderDaysBefore) }
+        }
+    }
+
+    var hideBillReminderDetails: Bool {
+        didSet {
+            if !isPreview { defaults.set(hideBillReminderDetails, forKey: Keys.hideBillReminderDetails) }
+        }
+    }
+
+    var billReminderTimeMinutes: Int {
+        didSet {
+            guard !isRestoringValue else { return }
+            guard (0..<1440).contains(billReminderTimeMinutes) else {
+                isRestoringValue = true
+                billReminderTimeMinutes = oldValue
+                isRestoringValue = false
+                return
+            }
+            if !isPreview { defaults.set(billReminderTimeMinutes, forKey: Keys.billReminderTimeMinutes) }
+        }
+    }
+
+    var dailyExpenseReminderEnabled: Bool {
+        didSet {
+            if !isPreview { defaults.set(dailyExpenseReminderEnabled, forKey: Keys.dailyExpenseReminderEnabled) }
+        }
+    }
+
+    var dailyExpenseReminderTimeMinutes: Int {
+        didSet {
+            guard !isRestoringValue else { return }
+            guard (0..<1440).contains(dailyExpenseReminderTimeMinutes) else {
+                isRestoringValue = true
+                dailyExpenseReminderTimeMinutes = oldValue
+                isRestoringValue = false
+                return
+            }
+            if !isPreview { defaults.set(dailyExpenseReminderTimeMinutes, forKey: Keys.dailyExpenseReminderTimeMinutes) }
+        }
+    }
+
     var categoryColors: CategoryColors {
         CategoryColors(needs: needsColor, wants: wantsColor, savings: savingsColor)
     }
@@ -212,6 +268,11 @@ class AppConfiguration {
         wantsColor = Color("WantColor")
         savingsColor = Color("SavingColor")
         billRemindersEnabled = false
+        billReminderDaysBefore = 1
+        hideBillReminderDetails = true
+        billReminderTimeMinutes = 540
+        dailyExpenseReminderEnabled = false
+        dailyExpenseReminderTimeMinutes = 1200
         ledgerCurrencyCode = nil
         cloudLedgerCurrencyCode = nil
         hasLedgerCurrencyConflict = false
@@ -222,6 +283,8 @@ class AppConfiguration {
         if !isUITesting { LedgerCurrency.reset(defaults: sharedDefaults) }
         let localKeys = Key.allCases.filter { $0 != .ledgerCurrency }.map(\.storageKey) + [
             Keys.isCloudSyncEnabled, Keys.needsColor, Keys.wantsColor, Keys.savingsColor, Keys.billRemindersEnabled,
+            Keys.billReminderDaysBefore, Keys.hideBillReminderDetails,
+            Keys.billReminderTimeMinutes, Keys.dailyExpenseReminderEnabled, Keys.dailyExpenseReminderTimeMinutes,
         ]
         
         for key in localKeys { defaults.removeObject(forKey: key) }
@@ -286,6 +349,14 @@ class AppConfiguration {
         wantsColor = isPreview ? Color("WantColor") : defaults.sageColor(forKey: Keys.wantsColor) ?? Color("WantColor")
         savingsColor = isPreview ? Color("SavingColor") : defaults.sageColor(forKey: Keys.savingsColor) ?? Color("SavingColor")
         billRemindersEnabled = !isPreview && defaults.bool(forKey: Keys.billRemindersEnabled)
+        let reminderDays = defaults.integer(forKey: Keys.billReminderDaysBefore)
+        billReminderDaysBefore = !isPreview && (1...7).contains(reminderDays) ? reminderDays : 1
+        hideBillReminderDetails = isPreview || (defaults.object(forKey: Keys.hideBillReminderDetails) as? Bool ?? true)
+        let reminderTime = defaults.object(forKey: Keys.billReminderTimeMinutes) as? Int ?? 540
+        billReminderTimeMinutes = !isPreview && (0..<1440).contains(reminderTime) ? reminderTime : 540
+        dailyExpenseReminderEnabled = !isPreview && defaults.bool(forKey: Keys.dailyExpenseReminderEnabled)
+        let dailyTime = defaults.object(forKey: Keys.dailyExpenseReminderTimeMinutes) as? Int ?? 1200
+        dailyExpenseReminderTimeMinutes = !isPreview && (0..<1440).contains(dailyTime) ? dailyTime : 1200
 
         // All observable fields must exist before a synchronous startup snapshot is delivered.
         preferenceSync.onChange = { [weak self] in self?.applyRemote($0) }

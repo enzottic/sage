@@ -299,6 +299,38 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testRecurringReminderSettings() {
+        let app = launchApp()
+        let settings = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: timeout))
+        settings.tap()
+        app.buttons["Recurring Expenses"].tap()
+        let enabled = app.switches["bill-reminders-toggle"]
+        let privacy = app.switches["bill-reminder-privacy"]
+        let days = app.buttons["bill-reminder-days"]
+        XCTAssertTrue(enabled.waitForExistence(timeout: timeout))
+        XCTAssertEqual(enabled.value as? String, "0")
+        XCTAssertEqual(privacy.value as? String, "1")
+        XCTAssertFalse(days.isEnabled)
+        enabled.tap()
+        XCTAssertEqual(enabled.value as? String, "1")
+        XCTAssertTrue(days.isEnabled)
+        XCTAssertEqual(days.value as? String, "1 day before")
+        days.tap()
+        XCTAssertFalse(app.buttons["8 days before"].exists)
+        app.buttons["7 days before"].tap()
+        XCTAssertEqual(days.value as? String, "7 days before")
+        privacy.tap()
+        XCTAssertEqual(privacy.value as? String, "0")
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Recurring reminder settings"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        enabled.tap()
+        XCTAssertFalse(days.isEnabled)
+        XCTAssertEqual(days.value as? String, "7 days before")
+    }
+
     func testShowAllRestoresMonthAndClearsDetail() {
         let app = launchApp(seedExpense: "Navigation Expense")
         let showAll = app.buttons["show-all-expenses-button"]

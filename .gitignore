@@ -1,4 +1,5 @@
 .claude
+.build/
 
 # Secrets — never commit real credentials
 FinanceTracker/Config/Secrets.xcconfig

@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import SageKit
 import SwiftUI
 import Testing
@@ -30,6 +31,9 @@ struct AppConfigurationTests {
         config.wantsColor = .green
         config.savingsColor = .blue
         config.billRemindersEnabled = true
+        config.billReminderTimeMinutes = 1125
+        config.dailyExpenseReminderEnabled = true
+        config.dailyExpenseReminderTimeMinutes = 1260
         config.markSetupComplete()
         config.resetRemoteSetup()
         #expect(config.updateCloudSyncEnabled(false))
@@ -41,6 +45,9 @@ struct AppConfigurationTests {
         #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 4200)
         #expect(fixture.defaults.string(forKey: "appearance") == "Light")
         #expect(fixture.defaults.bool(forKey: "billRemindersEnabled"))
+        #expect(fixture.defaults.integer(forKey: "billReminderTimeMinutes") == 1125)
+        #expect(fixture.defaults.bool(forKey: "dailyExpenseReminderEnabled"))
+        #expect(fixture.defaults.integer(forKey: "dailyExpenseReminderTimeMinutes") == 1260)
         #expect(fixture.acquisitions == 0)
         #expect(fixture.cloud.operations.isEmpty)
 
@@ -49,11 +56,214 @@ struct AppConfigurationTests {
         #expect(config.selectedAppearance == .system)
         #expect(config.smartTaggingMode == .history)
         #expect(!config.billRemindersEnabled)
+        #expect(config.billReminderTimeMinutes == 540)
+        #expect(!config.dailyExpenseReminderEnabled)
+        #expect(config.dailyExpenseReminderTimeMinutes == 1200)
         #expect(config.ledgerCurrencyCode == nil)
         #expect(!config.hasLedgerCurrencyConflict)
         #expect(LedgerCurrency.persistedCode(defaults: fixture.shared) == nil)
         #expect(!fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
         #expect(fixture.defaults.object(forKey: "totalMonthlyIncome") == nil)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test
+    func billReminderSettingsPersistReloadAndResetWithoutCloudWrites() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        fixture.cloud.values["billReminderTimeMinutes"] = 0
+        let config = fixture.config
+        #expect(config.cloudSyncStatus == .running)
+        #expect(config.billReminderDaysBefore == 1)
+        #expect(config.billReminderTimeMinutes == 540)
+        #expect(config.hideBillReminderDetails)
+        #expect(!config.billRemindersEnabled)
+        fixture.cloud.operations.removeAll()
+
+        config.billReminderDaysBefore = 7
+        config.billReminderTimeMinutes = 1125
+        config.hideBillReminderDetails = false
+        config.billRemindersEnabled = true
+        #expect(fixture.defaults.integer(forKey: "billReminderDaysBefore") == 7)
+        #expect(fixture.defaults.integer(forKey: "billReminderTimeMinutes") == 1125)
+        #expect(fixture.defaults.object(forKey: "hideBillReminderDetails") as? Bool == false)
+        #expect(fixture.defaults.bool(forKey: "billRemindersEnabled"))
+        #expect(fixture.cloud.operations.isEmpty)
+
+        fixture.cloud.values["billReminderTimeMinutes"] = 1439
+        fixture.post(keys: ["billReminderTimeMinutes"])
+        await drainNotifications()
+        #expect(config.billReminderTimeMinutes == 1125)
+        #expect(fixture.defaults.integer(forKey: "billReminderTimeMinutes") == 1125)
+        #expect(!fixture.cloud.operations.contains(.read("billReminderTimeMinutes")))
+
+        let reopened = fixture.makeConfiguration()
+        #expect(reopened.billReminderDaysBefore == 7)
+        #expect(reopened.billReminderTimeMinutes == 1125)
+        #expect(!reopened.hideBillReminderDetails)
+        #expect(reopened.billRemindersEnabled)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+
+        reopened.resetAllSettings()
+        #expect(reopened.billReminderDaysBefore == 1)
+        #expect(reopened.billReminderTimeMinutes == 540)
+        #expect(reopened.hideBillReminderDetails)
+        #expect(!reopened.billRemindersEnabled)
+        let reset = fixture.makeConfiguration()
+        #expect(reset.billReminderDaysBefore == 1)
+        #expect(reset.billReminderTimeMinutes == 540)
+        #expect(reset.hideBillReminderDetails)
+        #expect(!reset.billRemindersEnabled)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        #expect(fixture.cloud.values["billReminderTimeMinutes"] as? Int == 1439)
+    }
+
+    @Test
+    func dailyExpenseReminderSettingsPersistReloadAndResetWithoutCloudAccess() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        fixture.cloud.values["dailyExpenseReminderEnabled"] = true
+        fixture.cloud.values["dailyExpenseReminderTimeMinutes"] = 0
+        let config = fixture.config
+        #expect(config.cloudSyncStatus == .running)
+        #expect(!config.dailyExpenseReminderEnabled)
+        #expect(config.dailyExpenseReminderTimeMinutes == 1200)
+        #expect(!fixture.cloud.operations.contains(.read("dailyExpenseReminderEnabled")))
+        #expect(!fixture.cloud.operations.contains(.read("dailyExpenseReminderTimeMinutes")))
+        fixture.cloud.operations.removeAll()
+
+        config.dailyExpenseReminderEnabled = true
+        config.dailyExpenseReminderTimeMinutes = 1260
+        #expect(fixture.defaults.bool(forKey: "dailyExpenseReminderEnabled"))
+        #expect(fixture.defaults.integer(forKey: "dailyExpenseReminderTimeMinutes") == 1260)
+        #expect(fixture.cloud.operations.isEmpty)
+
+        fixture.cloud.values["dailyExpenseReminderEnabled"] = false
+        fixture.cloud.values["dailyExpenseReminderTimeMinutes"] = 1439
+        fixture.post(keys: ["dailyExpenseReminderEnabled", "dailyExpenseReminderTimeMinutes"])
+        await drainNotifications()
+        #expect(config.dailyExpenseReminderEnabled)
+        #expect(config.dailyExpenseReminderTimeMinutes == 1260)
+        #expect(fixture.defaults.bool(forKey: "dailyExpenseReminderEnabled"))
+        #expect(fixture.defaults.integer(forKey: "dailyExpenseReminderTimeMinutes") == 1260)
+
+        let reopened = fixture.makeConfiguration()
+        #expect(reopened.dailyExpenseReminderEnabled)
+        #expect(reopened.dailyExpenseReminderTimeMinutes == 1260)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+
+        reopened.resetAllSettings()
+        #expect(!reopened.dailyExpenseReminderEnabled)
+        #expect(reopened.dailyExpenseReminderTimeMinutes == 1200)
+        #expect(fixture.defaults.object(forKey: "dailyExpenseReminderEnabled") == nil)
+        #expect(fixture.defaults.object(forKey: "dailyExpenseReminderTimeMinutes") == nil)
+        let reset = fixture.makeConfiguration()
+        #expect(!reset.dailyExpenseReminderEnabled)
+        #expect(reset.dailyExpenseReminderTimeMinutes == 1200)
+        #expect(fixture.cloud.writtenKeys.isEmpty)
+        for key in ["dailyExpenseReminderEnabled", "dailyExpenseReminderTimeMinutes"] {
+            #expect(!fixture.cloud.operations.contains(.read(key)))
+            #expect(!fixture.cloud.operations.contains(.remove(key)))
+        }
+        #expect(fixture.cloud.values["dailyExpenseReminderEnabled"] as? Bool == false)
+        #expect(fixture.cloud.values["dailyExpenseReminderTimeMinutes"] as? Int == 1439)
+    }
+
+    @Test(arguments: [0, 1439])
+    func dailyExpenseReminderTimeBoundariesPersistAndReload(minutes: Int) throws {
+        let fixture = try Fixture()
+        fixture.config.dailyExpenseReminderTimeMinutes = minutes
+        #expect(fixture.config.dailyExpenseReminderTimeMinutes == minutes)
+        #expect(fixture.defaults.object(forKey: "dailyExpenseReminderTimeMinutes") as? Int == minutes)
+        #expect(fixture.makeConfiguration().dailyExpenseReminderTimeMinutes == minutes)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test(arguments: [Int.min, -1, 1440, Int.max])
+    func invalidDailyExpenseReminderTimesRetainAssignmentsAndFallBackWhenPersisted(minutes: Int) throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        config.dailyExpenseReminderTimeMinutes = 1260
+        config.dailyExpenseReminderTimeMinutes = minutes
+        #expect(config.dailyExpenseReminderTimeMinutes == 1260)
+        #expect(fixture.defaults.integer(forKey: "dailyExpenseReminderTimeMinutes") == 1260)
+        #expect(fixture.makeConfiguration().dailyExpenseReminderTimeMinutes == 1260)
+
+        fixture.defaults.set(minutes, forKey: "dailyExpenseReminderTimeMinutes")
+        #expect(fixture.makeConfiguration().dailyExpenseReminderTimeMinutes == 1200)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test(arguments: [0, 1439])
+    func billReminderTimeBoundariesPersistAndReload(minutes: Int) throws {
+        let fixture = try Fixture()
+        fixture.config.billReminderTimeMinutes = minutes
+        #expect(fixture.config.billReminderTimeMinutes == minutes)
+        #expect(fixture.defaults.object(forKey: "billReminderTimeMinutes") as? Int == minutes)
+        #expect(fixture.makeConfiguration().billReminderTimeMinutes == minutes)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test(arguments: [Int.min, -1, 1440, Int.max])
+    func invalidBillReminderTimesRetainAssignmentsAndFallBackWhenPersisted(minutes: Int) throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        config.billReminderTimeMinutes = 1125
+        config.billReminderTimeMinutes = minutes
+        #expect(config.billReminderTimeMinutes == 1125)
+        #expect(fixture.defaults.integer(forKey: "billReminderTimeMinutes") == 1125)
+        #expect(fixture.makeConfiguration().billReminderTimeMinutes == 1125)
+
+        fixture.defaults.set(minutes, forKey: "billReminderTimeMinutes")
+        #expect(fixture.makeConfiguration().billReminderTimeMinutes == 540)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test
+    func billReminderTimeChangesNotifyObservers() async throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        await confirmation("Reminder time change is observable") { changed in
+            withObservationTracking {
+                _ = config.billReminderTimeMinutes
+            } onChange: {
+                changed()
+            }
+            config.billReminderTimeMinutes = 1125
+        }
+    }
+
+    @Test
+    func billReminderDaysAcceptOneThroughSevenAndRejectInvalidAssignments() throws {
+        let fixture = try Fixture()
+        let config = fixture.config
+        for days in 1...7 {
+            config.billReminderDaysBefore = days
+            #expect(config.billReminderDaysBefore == days)
+            #expect(fixture.defaults.integer(forKey: "billReminderDaysBefore") == days)
+        }
+
+        config.billReminderDaysBefore = 4
+        for days in [Int.min, -1, 0, 8, Int.max] {
+            config.billReminderDaysBefore = days
+            #expect(config.billReminderDaysBefore == 4)
+            #expect(fixture.defaults.integer(forKey: "billReminderDaysBefore") == 4)
+        }
+        #expect(fixture.makeConfiguration().billReminderDaysBefore == 4)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+
+    @Test(arguments: [Int.min, -1, 0, 8, Int.max])
+    func invalidPersistedBillReminderDaysFallBackToOne(days: Int) throws {
+        let fixture = try Fixture()
+        fixture.defaults.set(days, forKey: "billReminderDaysBefore")
+        #expect(fixture.makeConfiguration().billReminderDaysBefore == 1)
         #expect(fixture.acquisitions == 0)
         #expect(fixture.cloud.operations.isEmpty)
     }

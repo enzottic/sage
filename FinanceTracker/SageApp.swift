@@ -18,6 +18,7 @@ struct SageApp: App {
     @AppStorage("hasOpenedAppOnce") var hasOpenedAppOnce: Bool = false
     private let containerResult: Result<ModelContainer, any Error>
     private let recurringExpenseCoordinator: RecurringExpenseCoordinator?
+    private let recurringReminders: RecurringReminderCoordinator?
     
     @MainActor
     init() {
@@ -47,6 +48,13 @@ struct SageApp: App {
             containerResult = SageModelContainer.shared
         }
         self.containerResult = containerResult
+        if case let .success(container) = containerResult,
+           !UITestConfiguration.isEnabled,
+           ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" {
+            recurringReminders = RecurringReminderCoordinator(container: container)
+        } else {
+            recurringReminders = nil
+        }
 
         // Present notifications that fire while the app is foreground
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
@@ -88,6 +96,7 @@ struct SageApp: App {
             }
         }
         .environment(appConfiguration)
+        .environment(\.recurringReminders, recurringReminders)
         .environment(\.categoryColors, appConfiguration.categoryColors)
     }
 
@@ -117,6 +126,22 @@ struct SageApp: App {
         .textCase(nil)
         .fontDesign(.rounded)
         .preferredColorScheme(appConfiguration.selectedAppearance.colorScheme)
+        .task {
+            recurringReminders?.start(configuration: appConfiguration)
+            // Local notifications deliver while suspended; this only replenishes the horizon.
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .seconds(3_600)) } catch { return }
+                recurringReminders?.refresh()
+            }
+        }
+        .onChange(of: appConfiguration.billRemindersEnabled) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.billReminderDaysBefore) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.billReminderTimeMinutes) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.dailyExpenseReminderEnabled) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.dailyExpenseReminderTimeMinutes) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.hideBillReminderDetails) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.ledgerCurrencyCode) { recurringReminders?.refresh() }
+        .onChange(of: appConfiguration.hasLedgerCurrencyConflict) { recurringReminders?.refresh() }
         .onChange(of: appConfiguration.hasCompletedSetupOnAnotherDevice, initial: true) { _, completed in
             if !UITestConfiguration.isEnabled,
                !hasOpenedAppOnce,

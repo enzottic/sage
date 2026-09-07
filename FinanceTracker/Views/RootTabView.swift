@@ -15,6 +15,7 @@ struct RootTabView: View {
     @State private var whatsNewRelease: WhatsNewRelease?
     @State private var query: String? = nil
     @State private var isShowingSettings = false
+    @State private var reminderNavigation = ReminderNavigation.shared
 
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
@@ -110,12 +111,30 @@ struct RootTabView: View {
             }
         }
         .task {
-            whatsNewRelease = WhatsNewStore.releaseToPresent()
+            if !reminderNavigation.isRequested && !reminderNavigation.isExpenseEntryRequested {
+                whatsNewRelease = WhatsNewStore.releaseToPresent()
+            }
             WhatsNewStore.markCurrentVersionSeen()
         }
+        .onChange(of: reminderNavigation.isRequested, initial: true) { openReminderDashboardIfReady() }
+        .onChange(of: reminderNavigation.isExpenseEntryRequested, initial: true) { openReminderDashboardIfReady() }
+        .onChange(of: isShowingSettings) { openReminderDashboardIfReady() }
+        .onChange(of: appRouter.presentedSheet == nil) { openReminderDashboardIfReady() }
+        .onChange(of: whatsNewRelease == nil) { openReminderDashboardIfReady() }
         .sheet(item: $whatsNewRelease) { release in
             WhatsNewSheet(release: release)
         }
+    }
+
+    private func openReminderDashboardIfReady() {
+        // Preserve an open expense draft; cold-launch requests wait for the normal app gates.
+        guard reminderNavigation.isRequested || reminderNavigation.isExpenseEntryRequested,
+              appRouter.presentedSheet == nil, !isShowingSettings,
+              whatsNewRelease == nil else { return }
+        reminderNavigation.isExpenseEntryRequested = false
+        reminderNavigation.isRequested = false
+        appRouter.homePath.removeAll()
+        appRouter.selectedTab = .home
     }
 
 }
