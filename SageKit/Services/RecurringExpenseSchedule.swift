@@ -95,7 +95,35 @@ public struct RecurringExpenseSchedule {
     }
 }
 
+public enum RecurringScheduleEditError: LocalizedError {
+    case endBeforeStart
+
+    public var errorDescription: String? {
+        "End date must be on or after the start date."
+    }
+}
+
 public extension RecurringExpenseRule {
+    /// Apply only after confirmation; the caller owns saving/rollback with other edits.
+    /// Keeps expense identities and values. Skips catch-up through the latest of now,
+    /// the old cursor, prior boundary and recorded occurrence identities. Monthly rules
+    /// resume in the following month; other frequencies follow the new start's cadence.
+    /// A future start beyond the boundary is the first occurrence. An end before the
+    /// next occurrence leaves the rule inactive. Editing opts legacy rules into a fixed zone.
+    func editSchedule(startDate: Date, frequency: RecurrenceFrequency, endDate: Date?,
+                      in timeZone: TimeZone, after date: Date, existingExpenses: [Expense]) throws {
+        guard endDate.map({ $0 >= startDate }) ?? true else {
+            throw RecurringScheduleEditError.endBeforeStart
+        }
+        enableFixedSchedule(in: timeZone, after: date, existingExpenses: existingExpenses)
+        self.startDate = startDate
+        self.frequency = frequency
+        self.endDate = endDate
+        // The old cursor belongs to the old cadence; its high-water mark is now in
+        // recurrenceEffectiveDate. Start the new cadence from its own anchor.
+        lastGeneratedDate = nil
+    }
+
     /// Call only after explicit confirmation. Does not rewrite expenses, keys or the cursor.
     func enableFixedSchedule(in timeZone: TimeZone, after date: Date, existingExpenses: [Expense]) {
         var boundary = max(date, lastGeneratedDate ?? date)

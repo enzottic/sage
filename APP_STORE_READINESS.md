@@ -254,10 +254,28 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [expense creation](FinanceTracker/Views/Components/AddExpenseView.swift),
   [expense form](FinanceTracker/Views/Components/ExpenseInfoForm.swift).
 
-- [ ] **Make the recurring start-date presentation honest.** The editor passes
-  `.constant(rule.startDate)` to an interactive date picker. Show a read-only
-  value or implement a real schedule-edit operation with explicit semantics.
-  Source: [rule editor](FinanceTracker/Views/SettingsView/Components/EditRecurringRuleSheet.swift).
+- [x] **Make the recurring start-date presentation honest.** (#59) The editor
+  stages start-date changes and confirms start/frequency edits before
+  applying `editSchedule`. Existing expenses and occurrence keys are preserved.
+  Edits automatically capture the current time zone without exposing a selector
+  and use a fixed Gregorian schedule. They skip catch-up through the latest of save
+  time, the previous cursor/boundary and recorded occurrence identities, and reset
+  the cursor to follow the new start's cadence. Monthly rules resume after the
+  boundary month; daily/weekly/biweekly rules take the first anchored occurrence
+  after the boundary. A start beyond the boundary remains the first occurrence.
+  End dates before the start are rejected; an end before the next occurrence
+  leaves the rule inactive. End-only edits retain the current cadence and catch-up
+  behavior. Cancel/discard leaves the stored rule unchanged.
+  Evidence: recurrence and reminder-plan suites passed (39 tests on iOS 26.5),
+  covering persistence, preserved history, all frequencies, future starts,
+  invalid ends, monotonic boundaries, and idempotent generation. A focused
+  simulator UI test passed for confirmation, save/reopen, and removed time-zone
+  controls.
+  Source: [rule editor](FinanceTracker/Views/SettingsView/Components/EditRecurringRuleSheet.swift),
+  [schedule operation](SageKit/Services/RecurringExpenseSchedule.swift),
+  [tests](FinanceTrackerTests/RecurringExpenseServiceTests.swift).
+  Multi-device concurrent edits and older-client compatibility still require
+  device validation; older clients do not honor the schedule boundary.
 
 ## Priority 2: Polish And Accessibility
 

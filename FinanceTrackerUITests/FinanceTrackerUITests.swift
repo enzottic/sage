@@ -575,6 +575,35 @@ final class FinanceTrackerUITests: XCTestCase {
         assertExpenseAmount(1234.56, in: app)
     }
 
+    func testRecurringScheduleEditRequiresConfirmationAndPersists() {
+        let app = launchApp(seedCalendar: true)
+        tap(app.tabBars.buttons["Settings"], named: "Settings")
+        tap("Recurring Expenses", in: app)
+        tap(app.staticTexts["Calendar Subscription"],
+            named: "Calendar Subscription")
+        let frequency = app.descendants(matching: .any)["recurring-frequency-picker"].firstMatch
+        XCTAssertTrue(scrollToVisibility(of: frequency, in: app))
+        frequency.tap()
+        tap("Weekly", in: app)
+        tap("Save", in: app)
+        let confirmation = app.buttons["Update Future Schedule"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: timeout))
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Schedule edit confirmation"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        confirmation.tap()
+        let row = app.staticTexts["Calendar Subscription"]
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        row.tap()
+        XCTAssertTrue(scrollToVisibility(of: frequency, in: app))
+        XCTAssertTrue(frequency.label.contains("Weekly"))
+        XCTAssertFalse(app.buttons["Time Zone"].exists)
+        XCTAssertFalse(app.switches["Use Fixed Schedule"].exists)
+        tap("Cancel", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+    }
+
     func testRecurringReminderSettings() {
         let app = launchApp()
         let settings = app.tabBars.buttons["Settings"]

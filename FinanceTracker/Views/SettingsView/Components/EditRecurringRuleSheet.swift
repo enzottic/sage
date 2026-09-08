@@ -18,11 +18,10 @@ struct EditRecurringRuleSheet: View {
     @State private var note: String
     @State private var category: ExpenseCategory
     @State private var tags: [ExpenseTag]
+    @State private var startDate: Date
     @State private var frequency: RecurrenceFrequency
     @State private var hasEndDate: Bool
     @State private var endDate: Date
-    @State private var useFixedSchedule = false
-    @State private var timeZoneIdentifier: String
     @State private var showScheduleConfirmation = false
 
     @State private var showError = false
@@ -36,79 +35,67 @@ struct EditRecurringRuleSheet: View {
         _note = State(initialValue: rule.note)
         _category = State(initialValue: rule.category)
         _tags = State(initialValue: rule.tags ?? [])
+        _startDate = State(initialValue: rule.startDate)
         _frequency = State(initialValue: rule.frequency)
         _hasEndDate = State(initialValue: rule.endDate != nil)
         _endDate = State(initialValue: rule.endDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date.now) ?? Date.now)
-        _timeZoneIdentifier = State(initialValue: rule.recurrenceTimeZoneIdentifier ?? TimeZone.current.identifier)
     }
 
     var body: some View {
         NavigationStack {
-            ExpenseInfoForm(
-                name: $name,
-                amount: $amount,
-                date: .constant(rule.startDate),
-                category: $category,
-                tags: $tags,
-                note: $note
-            )
-
-            Divider()
-                .padding(.horizontal)
-
             ScrollView {
                 VStack(spacing: 12) {
-                    HStack {
-                        Text("Frequency")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Picker("Frequency", selection: $frequency) {
-                            ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
-                                Text(freq.rawValue).tag(freq)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(.primary)
-                    }
+                    ExpenseInfoForm(
+                        name: $name,
+                        amount: $amount,
+                        date: $startDate,
+                        category: $category,
+                        tags: $tags,
+                        note: $note
+                    )
 
-                    Toggle(isOn: $hasEndDate.animation()) {
-                        Text("End Date")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                    Divider()
+                        .padding(.horizontal)
 
-                    if hasEndDate {
-                        DatePicker(
-                            "Ends on",
-                            selection: $endDate,
-                            in: rule.startDate...,
-                            displayedComponents: .date
-                        )
-                        .font(.subheadline)
-                    }
-
-                    if rule.recurrenceTimeZoneIdentifier == nil {
-                        Toggle("Use Fixed Schedule", isOn: $useFixedSchedule)
-                        Text("This existing rule uses each device's calendar and time zone. Monthly dates can drift after a shorter month. Keep this off to leave its scheduling unchanged.")
+                    VStack(spacing: 12) {
+                        Text("Date sets the schedule’s start and repeating day. Changing it or the frequency updates future occurrences only. End date changes only limit when generation stops; extending it allows catch-up on the current schedule.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
-                    }
 
-                    if useFixedSchedule || rule.recurrenceTimeZoneIdentifier != nil {
-                        Picker("Time Zone", selection: $timeZoneIdentifier) {
-                            ForEach(Array(Set(TimeZone.knownTimeZoneIdentifiers + [timeZoneIdentifier, TimeZone.current.identifier])).sorted(), id: \.self) { identifier in
-                                Text(identifier.replacingOccurrences(of: "_", with: " ")).tag(identifier)
+                        HStack {
+                            Text("Frequency")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Picker("Frequency", selection: $frequency) {
+                                ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
+                                    Text(freq.rawValue).tag(freq)
+                                }
                             }
+                            .pickerStyle(.menu)
+                            .accessibilityIdentifier("recurring-frequency-picker")
+                            .tint(.primary)
                         }
-                        .pickerStyle(.menu)
-                        Text("Uses the Gregorian calendar and this time zone on every device. Monthly dates return to the original start day after shorter months.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+
+                        Toggle(isOn: $hasEndDate.animation()) {
+                            Text("End Date")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if hasEndDate {
+                            DatePicker(
+                                "Ends on",
+                                selection: $endDate,
+                                in: startDate...,
+                                displayedComponents: .date
+                            )
+                            .font(.subheadline)
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -127,7 +114,11 @@ struct EditRecurringRuleSheet: View {
                 Button("Update Future Schedule") { saveChanges(scheduleConfirmed: true) }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Use the Gregorian calendar in \(timeZoneIdentifier). Existing expenses and their identities stay unchanged. Past catch-up is skipped. Monthly rules already started resume after this month or the latest recorded occurrence's month, whichever is later. Other frequencies resume after that date on their cadence. Future start dates are kept. Update Syl on every synced device first; older versions do not honor this schedule.")
+                if frequency == .monthly {
+                    Text("Existing expenses stay unchanged. Monthly expenses resume after this month or the latest recorded month, whichever is later. A later start date is kept. No past expenses will be added.")
+                } else {
+                    Text("Existing expenses stay unchanged. The schedule repeats from the selected start date, beginning after today or the latest recorded expense, whichever is later. No past expenses will be added.")
+                }
             }
             .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
                 Button("Discard Changes", role: .destructive) { dismiss() }
@@ -141,12 +132,15 @@ struct EditRecurringRuleSheet: View {
         .interactiveDismissDisabled(hasChanges)
     }
 
+    private var changesAnchor: Bool {
+        startDate != rule.startDate || frequency != rule.frequency
+    }
+
     private var hasChanges: Bool {
         name != rule.name || amount != rule.amount || note != rule.note || category != rule.category
             || tags.map(\.persistentModelID) != (rule.tags ?? []).map(\.persistentModelID)
-            || frequency != rule.frequency || hasEndDate != (rule.endDate != nil)
+            || startDate != rule.startDate || frequency != rule.frequency || hasEndDate != (rule.endDate != nil)
             || (hasEndDate && endDate != rule.endDate)
-            || useFixedSchedule || timeZoneIdentifier != (rule.recurrenceTimeZoneIdentifier ?? TimeZone.current.identifier)
     }
 
     private func requestDismissal() {
@@ -174,8 +168,13 @@ struct EditRecurringRuleSheet: View {
             return
         }
 
-        let changesSchedule = (rule.recurrenceTimeZoneIdentifier == nil && useFixedSchedule)
-            || (rule.recurrenceTimeZoneIdentifier != nil && rule.recurrenceTimeZoneIdentifier != timeZoneIdentifier)
+        guard !hasEndDate || endDate >= startDate else {
+            errorMessage = "End date must be on or after the start date."
+            showError = true
+            return
+        }
+
+        let changesSchedule = changesAnchor
         if changesSchedule && !scheduleConfirmed {
             showScheduleConfirmation = true
             return
@@ -194,8 +193,14 @@ struct EditRecurringRuleSheet: View {
             showError = true
             return
         }
-        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
-            errorMessage = "Please choose a valid time zone."
+        do {
+            if changesSchedule {
+                try rule.editSchedule(startDate: startDate, frequency: frequency,
+                                      endDate: hasEndDate ? endDate : nil,
+                                      in: .current, after: .now, existingExpenses: existingExpenses)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
             showError = true
             return
         }
@@ -205,11 +210,7 @@ struct EditRecurringRuleSheet: View {
         rule.note = note
         rule.category = category
         rule.tags = tags
-        rule.frequency = frequency
         rule.endDate = hasEndDate ? endDate : nil
-        if changesSchedule {
-            rule.enableFixedSchedule(in: timeZone, after: .now, existingExpenses: existingExpenses)
-        }
 
         do {
             try modelContext.save()
