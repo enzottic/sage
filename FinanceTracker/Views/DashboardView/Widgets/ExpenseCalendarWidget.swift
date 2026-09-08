@@ -139,59 +139,12 @@ struct ExpenseCalendarWidget: View {
     }
 
     private func dayDetails(_ day: SpendingCalendarMonth.Day, isFuture: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(day.date.formatted(.dateTime.month(.wide).day()))
-                .font(.subheadline.weight(.semibold))
-            Text("\(day.amount.currencyString) \(isFuture ? "expected this day" : "spent this day")")
-                .font(.headline)
-                .monospacedDigit()
-                .accessibilityIdentifier("expense-calendar-day-total")
-            ViewThatFits(in: .vertical) {
-                dayExpenseList(day, isFuture: isFuture)
-                ScrollView {
-                    dayExpenseList(day, isFuture: isFuture)
-                }
-            }
-            .frame(maxHeight: 260)
-        }
+        DailySpendingDetails(date: day.date, total: day.amount, expenses: day.expenses,
+                             upcomingExpenses: day.upcomingExpenses, isFuture: isFuture,
+                             accessibilityPrefix: "expense-calendar-day")
         .padding(16)
         .frame(idealWidth: 280, maxWidth: 320)
         .fixedSize(horizontal: false, vertical: true)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("expense-calendar-day-details")
-    }
-
-    private func dayExpenseList(_ day: SpendingCalendarMonth.Day, isFuture: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if day.expenses.isEmpty && day.upcomingExpenses.isEmpty {
-                Text(isFuture ? "No upcoming expenses for this day." : "No expenses recorded for this day.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            if !day.expenses.isEmpty {
-                Text("Recorded Expenses").font(.caption).foregroundStyle(.secondary)
-                ForEach(day.expenses) { expense in
-                    detailRow(name: expense.name, amount: expense.amount)
-                }
-            }
-            if !day.upcomingExpenses.isEmpty {
-                Text("Upcoming Expenses").font(.caption).foregroundStyle(.secondary)
-                ForEach(day.upcomingExpenses) { expense in
-                    detailRow(name: expense.name, amount: expense.amount)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private func detailRow(name: String, amount: Double) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(name).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-            Text(amount.currencyString).monospacedDigit().fixedSize()
-        }
-        .font(.subheadline)
     }
 
     private func calendarAmount(_ amount: Double) -> String {

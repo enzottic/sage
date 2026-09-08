@@ -59,17 +59,11 @@ final public class ExpenseStore {
 
     /// Returns all expenses for a given month, if provided. If not, fetches all expenses
     public func fetchExpenses(for month: Date? = nil) throws -> [Expense] {
-        var descriptor = FetchDescriptor<Expense>(
-            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
-        )
-        
+        let descriptor: FetchDescriptor<Expense>
         if let month {
-            let calendar = Calendar.current
-            let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start ?? month
-            let endOfMonth = calendar.dateInterval(of: .month, for: month)?.end ?? month
-            descriptor.predicate = #Predicate { expense in
-                startOfMonth <= expense.date && expense.date < endOfMonth
-            }
+            descriptor = ExpenseFetchDescriptors.month(month)
+        } else {
+            descriptor = FetchDescriptor<Expense>(sortBy: [SortDescriptor(\Expense.date, order: .reverse)])
         }
         
         return try context.fetch(descriptor)
@@ -101,12 +95,7 @@ final public class ExpenseStore {
     }
     
     public func fetchExpenses(from startDate: Date, to endDate: Date) -> [Expense] {
-        let fetchDescriptor = FetchDescriptor<Expense>(
-            predicate: #Predicate { expense in
-                startDate <= expense.date && expense.date < endDate
-            },
-            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
-        )
+        let fetchDescriptor = ExpenseFetchDescriptors.range(start: startDate, end: endDate)
         return (try? context.fetch(fetchDescriptor)) ?? []
     }
 

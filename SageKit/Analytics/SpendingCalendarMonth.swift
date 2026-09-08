@@ -6,6 +6,7 @@ public struct SpendingCalendarMonth {
         public let id: String
         public let name: String
         public let amount: Double
+        public let category: ExpenseCategory
         public let date: Date
     }
 
@@ -55,7 +56,7 @@ public struct SpendingCalendarMonth {
                        let key = RecurringExpenseOccurrence.safeKey(ruleID: rule.id, scheduledDate: occurrence),
                        !existingKeys.contains(key) {
                         upcoming[day, default: []].append(UpcomingExpense(
-                            id: key, name: rule.name, amount: rule.amount, date: occurrence
+                            id: key, name: rule.name, amount: rule.amount, category: rule.category, date: occurrence
                         ))
                     }
                     next = schedule.nextOccurrence(after: occurrence)

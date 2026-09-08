@@ -28,11 +28,19 @@ public enum SageModelContainer {
     }
 
     public nonisolated static let appGroupIdentifier = "group.me.enzottic.SageAppGroup"
+    #if DEBUG
+    public nonisolated static let supportsCloudSync = false
+    public nonisolated static let cloudKitPreferenceKey = "dev.isCloudSyncEnabled"
+    private nonisolated static let activeCloudKitPreferenceKey = "dev.activeCloudSyncEnabled"
+    #else
+    public nonisolated static let supportsCloudSync = true
     public nonisolated static let cloudKitPreferenceKey = "isCloudSyncEnabled"
     private nonisolated static let activeCloudKitPreferenceKey = "activeCloudSyncEnabled"
+    #endif
 
     // The CloudKit setting used by every process that opens the shared store.
     public nonisolated static var isCloudKitEnabled: Bool {
+        guard supportsCloudSync else { return false }
         let defaults = UserDefaults(suiteName: appGroupIdentifier)
         if defaults?.object(forKey: activeCloudKitPreferenceKey) != nil {
             return defaults?.bool(forKey: activeCloudKitPreferenceKey) ?? false
@@ -41,11 +49,13 @@ public enum SageModelContainer {
     }
 
     public nonisolated static func setCloudKitPreference(_ enabled: Bool) {
+        guard supportsCloudSync else { return }
         UserDefaults(suiteName: appGroupIdentifier)?.set(enabled, forKey: cloudKitPreferenceKey)
     }
 
     /// Applies the requested setting before the main app opens the store.
     public nonisolated static func activateCloudKitPreference() {
+        guard supportsCloudSync else { return }
         let defaults = UserDefaults(suiteName: appGroupIdentifier)
         let requestedValue = defaults?.bool(forKey: cloudKitPreferenceKey) ?? false
         defaults?.set(requestedValue, forKey: activeCloudKitPreferenceKey)

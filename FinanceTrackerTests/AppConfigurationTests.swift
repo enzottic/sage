@@ -10,6 +10,59 @@ struct AppConfigurationTests {
     private typealias Key = PreferenceSyncService.Key
 
     @Test
+    func localOnlyConfigurationRejectsOptInWithoutCloudAccessOrChangingConsent() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.shared.set(true, forKey: LedgerCurrency.cloudConflictKey)
+        let config = fixture.makeConfiguration(supportsCloudSync: false)
+        #expect(!config.isCloudSyncEnabled)
+        #expect(!config.hasLedgerCurrencyConflict)
+        #expect(!config.updateCloudSyncEnabled(true))
+        #expect(config.updateCloudSyncEnabled(false))
+        config.selectedAppearance = .dark
+        config.totalMonthlyIncome = 4200
+        config.markSetupComplete()
+        config.resetRemoteSetup()
+        config.recheckLedgerCurrency()
+        try config.establishLedgerCurrency("USD")
+        fixture.post(reason: NSUbiquitousKeyValueStoreAccountChange)
+        await drainNotifications()
+        #expect(fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        #expect(fixture.defaults.integer(forKey: "totalMonthlyIncome") == 4200)
+        config.resetAllSettings()
+        #expect(fixture.shared.bool(forKey: SageModelContainer.cloudKitPreferenceKey))
+        #expect(!fixture.makeConfiguration(supportsCloudSync: false).isCloudSyncEnabled)
+        #expect(fixture.acquisitions == 0)
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(config.cloudSyncStatus == .stopped)
+    }
+
+    #if DEBUG
+    @Test
+    func devDefaultsIgnoreProductionConsentAndResetPreservesProductionState() throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.shared.set(true, forKey: "isCloudSyncEnabled")
+        fixture.shared.set(true, forKey: "activeCloudSyncEnabled")
+        fixture.shared.set("EUR", forKey: "ledgerCurrencyCode")
+        let config = AppConfiguration(defaults: fixture.defaults, sharedDefaults: fixture.shared,
+                                      makeCloudStore: {
+            Issue.record("Dev configuration must never acquire an iCloud store")
+            return fixture.cloud
+        })
+        #expect(!config.supportsCloudSync)
+        #expect(!config.isCloudSyncEnabled)
+        #expect(!config.updateCloudSyncEnabled(true))
+        #expect(config.ledgerCurrencyCode == "USD")
+        config.resetAllSettings()
+        #expect(fixture.shared.bool(forKey: "isCloudSyncEnabled"))
+        #expect(fixture.shared.bool(forKey: "activeCloudSyncEnabled"))
+        #expect(fixture.shared.string(forKey: "ledgerCurrencyCode") == "EUR")
+        #expect(SageModelContainer.cloudKitPreferenceKey != "isCloudSyncEnabled")
+        #expect(!SageModelContainer.isCloudKitEnabled)
+        #expect(fixture.cloud.operations.isEmpty)
+    }
+    #endif
+
+    @Test
     func disabledConfigurationNeverAcquiresCloudForInitializationEditsCurrencyOrReset() throws {
         let fixture = try Fixture()
         fixture.cloud.values = [SageModelContainer.cloudKitPreferenceKey: true, "appearance": "Dark"]
@@ -541,7 +594,7 @@ struct AppConfigurationTests {
         let fixture = try Fixture(enabled: true, currency: "USD")
         fixture.cloud.values = [Key.ledgerCurrency.storageKey: "USD", "appearance": "Dark", "totalMonthlyIncome": 7000]
         let config = fixture.config
-        config.isCloudSyncEnabled = false
+        config.updateCloudSyncEnabled(false)
         fixture.cloud.operations.removeAll()
         config.selectedAppearance = .light
         config.totalMonthlyIncome = 1200
@@ -568,7 +621,7 @@ struct AppConfigurationTests {
         fixture.cloud.values["appearance"] = "Dark"
         fixture.post(keys: ["appearance"])
         fixture.post(reason: NSUbiquitousKeyValueStoreAccountChange)
-        config.isCloudSyncEnabled = false
+        config.updateCloudSyncEnabled(false)
         fixture.cloud.operations.removeAll()
         await drainNotifications()
         #expect(config.selectedAppearance == .light)
@@ -733,8 +786,8 @@ struct AppConfigurationTests {
             shared.removePersistentDomain(forName: sharedSuite)
         }
 
-        func makeConfiguration() -> AppConfiguration {
-            AppConfiguration(defaults: defaults, sharedDefaults: shared, makeCloudStore: { [unowned self] in
+        func makeConfiguration(supportsCloudSync: Bool = true) -> AppConfiguration {
+            AppConfiguration(defaults: defaults, sharedDefaults: shared, supportsCloudSync: supportsCloudSync, makeCloudStore: { [unowned self] in
                 acquisitions += 1
                 return cloud
             }, notificationCenter: notifications)

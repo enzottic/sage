@@ -402,44 +402,9 @@ struct StatsView: View {
         }
             .sorted { $0.amount == $1.amount ? $0.date > $1.date : $0.amount > $1.amount }
 
-        return VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(date.formatted(.dateTime.month(.wide).day()))
-                    .font(.subheadline.weight(.semibold))
-                if let category {
-                    Text(category.rawValue).font(.caption).foregroundStyle(category.color(in: categoryColors))
-                }
-                Text("\(expenses.total.currencyString) spent this day")
-                    .font(.headline).monospacedDigit()
-                    .accessibilityIdentifier("stats-day-total")
-            }
-            if expenses.isEmpty {
-                Text("No expenses recorded for this day.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            } else {
-                Text("Top Expenses").font(.caption).foregroundStyle(.secondary)
-                ForEach(Array(expenses.prefix(3))) { expense in
-                    HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Image(systemName: "circle.fill")
-                                .font(.system(size: 8))
-                                .foregroundStyle(expense.category.color(in: categoryColors))
-                                .baselineOffset(2)
-                                .accessibilityHidden(true)
-                            Text(expense.name).lineLimit(2)
-                        }
-                        Spacer(minLength: 0)
-                        Text(expense.amount.currencyString)
-                            .monospacedDigit().fixedSize()
-                    }
-                    .font(.subheadline)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityValue(expense.category.rawValue)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier("stats-day-details")
+        return DailySpendingDetails(date: date, total: expenses.total, expenses: expenses,
+                                    category: category, style: .topExpenses,
+                                    accessibilityPrefix: "stats-day")
     }
 
     private func topTags(_ summary: SpendingMonthSummary) -> some View {

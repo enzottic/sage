@@ -13,6 +13,7 @@ class AppConfiguration {
     private static let suite = "group.me.enzottic.SageAppGroup"
     private let isPreview: Bool
     private let isUITesting: Bool
+    let supportsCloudSync: Bool
     private let defaults: UserDefaults
     private let sharedDefaults: UserDefaults?
     private let preferenceSync: PreferenceSyncService
@@ -135,9 +136,9 @@ class AppConfiguration {
         didSet { persist(smartTaggingMode.rawValue, key: .smartTaggingMode) }
     }
 
-    var isCloudSyncEnabled: Bool {
+    private(set) var isCloudSyncEnabled: Bool {
         didSet {
-            guard !isPreview, !isUITesting else { return }
+            guard supportsCloudSync, !isPreview, !isUITesting else { return }
             sharedDefaults?.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
             if isCloudSyncEnabled {
                 preferenceSync.start()
@@ -152,6 +153,7 @@ class AppConfiguration {
     /// Reports local consent persistence, not iCloud availability or server confirmation.
     @discardableResult
     func updateCloudSyncEnabled(_ enabled: Bool) -> Bool {
+        guard supportsCloudSync else { return !enabled }
         isCloudSyncEnabled = enabled
         guard !isPreview, !isUITesting else { return true }
         return sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == enabled
@@ -289,7 +291,7 @@ class AppConfiguration {
         
         for key in localKeys { defaults.removeObject(forKey: key) }
         
-        if !isUITesting { sharedDefaults?.set(false, forKey: Keys.isCloudSyncEnabled) }
+        if supportsCloudSync, !isUITesting { sharedDefaults?.set(false, forKey: Keys.isCloudSyncEnabled) }
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -314,22 +316,24 @@ class AppConfiguration {
         sharedDefaults: UserDefaults?,
         isPreview: Bool = false,
         isUITesting: Bool = false,
+        supportsCloudSync: Bool = SageModelContainer.supportsCloudSync,
         makeCloudStore: (() -> any CloudPreferenceStore)? = nil,
         notificationCenter: NotificationCenter = .default
     ) {
         self.isPreview = isPreview
         self.isUITesting = isUITesting
+        self.supportsCloudSync = supportsCloudSync
         self.defaults = defaults
         self.sharedDefaults = sharedDefaults
         
         preferenceSync = PreferenceSyncService(
-            hasConsent: { !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true },
+            hasConsent: { supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true },
             makeStore: makeCloudStore,
             notificationCenter: notificationCenter
         )
         ledgerCurrencyCode = isPreview || isUITesting ? "USD" : LedgerCurrency.persistedCode(defaults: sharedDefaults)
-        hasLedgerCurrencyConflict = !isPreview && !isUITesting && sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
-        isCloudSyncEnabled = !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true
+        hasLedgerCurrencyConflict = supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
+        isCloudSyncEnabled = supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true
         selectedAppearance = isPreview ? .system : Appearance(rawValue: defaults.string(forKey: Key.appearance.storageKey) ?? "") ?? .system
         
         let income = Self.number(defaults.object(forKey: Key.totalMonthlyIncome.storageKey))

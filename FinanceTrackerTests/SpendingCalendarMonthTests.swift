@@ -72,6 +72,7 @@ extension SpendingCalendarMonthTests {
         let month = SpendingCalendarMonth(month: today, expenses: [], recurringRules: [rule], now: today, calendar: calendar)
         #expect(month.days[9].amount == 0)
         #expect(month.days[10...12].allSatisfy { $0.amount == 5 && $0.upcomingExpenses.count == 1 })
+        #expect(month.days[10...12].allSatisfy { $0.upcomingExpenses.first?.category == .wants })
         #expect(month.days[13].amount == 0)
         #expect(month.days.reduce(0) { $0 + $1.amount } == 15)
     }
@@ -110,6 +111,7 @@ extension SpendingCalendarMonthTests {
         #expect(mixed.days[10].amount == 11)
         #expect(mixed.days[10].upcomingAmount == 8)
         #expect(mixed.days[10].upcomingExpenses.first?.name == "Second subscription")
+        #expect(mixed.days[10].upcomingExpenses.first?.category == .needs)
     }
 
     @Test @MainActor

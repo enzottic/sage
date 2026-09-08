@@ -32,6 +32,20 @@ final class FinanceTrackerUITests: XCTestCase {
         tap("onboarding-sync-continue-button", in: app)
         tap("onboarding-tags-continue-button", in: app)
 
+        let recurringReminder = app.switches["onboarding-recurring-reminders-toggle"]
+        let dailyReminder = app.switches["onboarding-daily-reminder-toggle"]
+        XCTAssertTrue(recurringReminder.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: recurringReminder, in: app))
+        XCTAssertEqual(recurringReminder.value as? String, "0", "Recurring reminders must default to off.")
+        XCTAssertTrue(dailyReminder.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: dailyReminder, in: app))
+        XCTAssertEqual(dailyReminder.value as? String, "0", "Daily reminders must default to off.")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Onboarding reminders - defaults off"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        tap("onboarding-reminders-continue-button", in: app)
+
         let planTotal = app.staticTexts["onboarding-plan-total"]
         XCTAssertTrue(planTotal.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: planTotal, in: app))
@@ -45,6 +59,61 @@ final class FinanceTrackerUITests: XCTestCase {
             app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout),
             "The main tabs did not appear after onboarding completed."
         )
+        assertReminderSettings(recurringEnabled: false, dailyEnabled: false, in: app)
+    }
+
+    func testOnboardingReminderChoicesAreIndependentAndRetainedWhenGoingBack() {
+        let app = launchApp(showsOnboarding: true)
+        tap("onboarding-get-started-button", in: app)
+        let incomeField = app.textFields["onboarding-income-field"]
+        XCTAssertTrue(incomeField.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: incomeField, in: app))
+        incomeField.tap()
+        incomeField.typeText("5000")
+        tap("onboarding-keyboard-done-button", in: app)
+        tap("onboarding-budget-continue-button", in: app)
+        tap("onboarding-allocation-continue-button", in: app)
+        tap("onboarding-sync-continue-button", in: app)
+        tap("onboarding-tags-continue-button", in: app)
+
+        let recurringReminder = app.switches["onboarding-recurring-reminders-toggle"]
+        let dailyReminder = app.switches["onboarding-daily-reminder-toggle"]
+        XCTAssertTrue(recurringReminder.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: recurringReminder, in: app))
+        recurringReminder.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertEqual(recurringReminder.value as? String, "1")
+        XCTAssertTrue(dailyReminder.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: dailyReminder, in: app))
+        XCTAssertEqual(dailyReminder.value as? String, "0", "Enabling recurring reminders must not enable daily reminders.")
+        dailyReminder.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertEqual(dailyReminder.value as? String, "1")
+        XCTAssertEqual(recurringReminder.value as? String, "1", "Enabling daily reminders must not change recurring reminders.")
+        XCTAssertTrue(app.buttons["onboarding-reminders-continue-button"].isHittable,
+                      "Enabling reminders must leave the user on the reminders page.")
+
+        tap("onboarding-reminders-continue-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-start-tracking-button"].waitForExistence(timeout: timeout))
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(recurringReminder.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: recurringReminder, in: app))
+        XCTAssertEqual(recurringReminder.value as? String, "1", "Recurring reminder selection must survive returning from the summary.")
+        XCTAssertTrue(dailyReminder.waitForExistence(timeout: timeout))
+        XCTAssertEqual(dailyReminder.value as? String, "1", "Daily reminder selection must survive returning from the summary.")
+        recurringReminder.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertEqual(recurringReminder.value as? String, "0")
+        XCTAssertEqual(dailyReminder.value as? String, "1", "Turning recurring reminders off must leave daily reminders enabled.")
+
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-tags-continue-button"].waitForExistence(timeout: timeout))
+        tap("onboarding-tags-continue-button", in: app)
+        XCTAssertTrue(recurringReminder.waitForExistence(timeout: timeout))
+        XCTAssertEqual(recurringReminder.value as? String, "0", "Turning a reminder off must survive returning from an earlier step.")
+        XCTAssertTrue(dailyReminder.waitForExistence(timeout: timeout))
+        XCTAssertEqual(dailyReminder.value as? String, "1", "The other reminder must remain enabled after going back.")
+        tap("onboarding-reminders-continue-button", in: app)
+        tap("onboarding-start-tracking-button", in: app)
+        XCTAssertTrue(app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout))
+        assertReminderSettings(recurringEnabled: false, dailyEnabled: true, in: app)
     }
 
     func testOnboardingIncomeKeyboardStaysOpenAndCanBeReopened() {
@@ -111,6 +180,7 @@ final class FinanceTrackerUITests: XCTestCase {
         tap("onboarding-allocation-continue-button", in: app)
         tap("onboarding-sync-continue-button", in: app)
         tap("onboarding-tags-continue-button", in: app)
+        tap("onboarding-reminders-continue-button", in: app)
         let total = app.staticTexts["onboarding-plan-total"]
         XCTAssertTrue(total.waitForExistence(timeout: timeout))
         XCTAssertEqual(total.label, Double(5000).formatted(.currency(code: "EUR").locale(Locale(identifier: "en_GB")).precision(.fractionLength(0))))
@@ -142,8 +212,14 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: syncToggle, in: app))
         XCTAssertEqual(syncToggle.value as? String, "0")
+        #if DEBUG
+        let expectedSyncValue = "0"
+        XCTAssertFalse(syncToggle.isEnabled, "Dev builds must remain local-only.")
+        #else
+        let expectedSyncValue = "1"
         tap(syncToggle, named: "onboarding-sync-toggle")
         XCTAssertEqual(syncToggle.value as? String, "1")
+        #endif
         tap("onboarding-sync-continue-button", in: app)
 
         let shoppingTag = app.buttons["onboarding-tag-Shopping"]
@@ -153,14 +229,17 @@ final class FinanceTrackerUITests: XCTestCase {
         tap(shoppingTag, named: "onboarding-tag-Shopping")
         XCTAssertTrue(shoppingTag.isSelected)
         tap("onboarding-tags-continue-button", in: app)
+        tap("onboarding-reminders-continue-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-start-tracking-button"].waitForExistence(timeout: timeout))
 
+        tap("onboarding-back-button", in: app)
+        XCTAssertTrue(app.buttons["onboarding-reminders-continue-button"].waitForExistence(timeout: timeout))
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
         XCTAssertTrue(shoppingTag.isSelected, "Tag selection must survive returning from the summary.")
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(syncToggle.value as? String, "1", "Sync selection must survive going back.")
+        XCTAssertEqual(syncToggle.value as? String, expectedSyncValue, "Sync selection must survive going back.")
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-allocation-continue-button"].waitForExistence(timeout: timeout))
         tap("onboarding-back-button", in: app)
@@ -171,7 +250,7 @@ final class FinanceTrackerUITests: XCTestCase {
         tap("onboarding-budget-continue-button", in: app)
         tap("onboarding-allocation-continue-button", in: app)
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(syncToggle.value as? String, "1")
+        XCTAssertEqual(syncToggle.value as? String, expectedSyncValue)
         tap("onboarding-sync-continue-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-tags-continue-button"].waitForExistence(timeout: timeout),
                       "Continue did not leave the sync step.")
@@ -236,6 +315,7 @@ final class FinanceTrackerUITests: XCTestCase {
         tap("onboarding-allocation-continue-button", in: app)
         tap("onboarding-sync-continue-button", in: app)
         tap("onboarding-tags-continue-button", in: app)
+        tap("onboarding-reminders-continue-button", in: app)
         XCTAssertTrue(app.staticTexts["onboarding-plan-total"].waitForExistence(timeout: timeout))
         let summary = XCTAttachment(screenshot: app.screenshot())
         summary.name = "Allocation - adjusted summary"
@@ -263,6 +343,7 @@ final class FinanceTrackerUITests: XCTestCase {
             ("onboarding-allocation-continue-button", app.descendants(matching: .any)["onboarding-needs-divider"].firstMatch),
             ("onboarding-sync-continue-button", app.switches["onboarding-sync-toggle"]),
             ("onboarding-tags-continue-button", app.staticTexts["onboarding-tags-count"]),
+            ("onboarding-reminders-continue-button", app.switches["onboarding-recurring-reminders-toggle"]),
             ("onboarding-start-tracking-button", app.staticTexts["onboarding-plan-total"])
         ]
         for (identifier, content) in pages {
@@ -274,6 +355,11 @@ final class FinanceTrackerUITests: XCTestCase {
                 tap(incomeField, named: "onboarding-income-field")
                 incomeField.typeText("5000")
                 tap("onboarding-keyboard-done-button", in: app)
+            }
+            if identifier == "onboarding-reminders-continue-button" {
+                let dailyReminder = app.switches["onboarding-daily-reminder-toggle"]
+                XCTAssertTrue(dailyReminder.waitForExistence(timeout: timeout))
+                XCTAssertTrue(scrollToVisibility(of: dailyReminder, in: app))
             }
             XCTAssertTrue(app.windows.firstMatch.frame.contains(button.frame))
             if identifier != "onboarding-get-started-button" {
@@ -587,6 +673,23 @@ final class FinanceTrackerUITests: XCTestCase {
         let expensesTab = app.tabBars.buttons["Expenses"]
         XCTAssertTrue(expensesTab.waitForExistence(timeout: timeout), "The Expenses tab did not appear.")
         expensesTab.tap()
+    }
+
+    private func assertReminderSettings(recurringEnabled: Bool, dailyEnabled: Bool, in app: XCUIApplication) {
+        tap(app.tabBars.buttons["Settings"], named: "Settings tab")
+        for (page, identifier, enabled) in [
+            ("Recurring Expenses", "bill-reminders-toggle", recurringEnabled),
+            ("Daily Reminder", "daily-expense-reminder-toggle", dailyEnabled)
+        ] {
+            let link = app.buttons[page]
+            XCTAssertTrue(scrollToVisibility(of: link, in: app))
+            tap(link, named: page)
+            let toggle = app.switches[identifier]
+            XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
+            XCTAssertTrue(scrollToVisibility(of: toggle, in: app))
+            XCTAssertEqual(toggle.value as? String, enabled ? "1" : "0", "Start Tracking must save the onboarding choice for \(page).")
+            tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
+        }
     }
 
     private func addExpense(named name: String, amount: String, in app: XCUIApplication) {

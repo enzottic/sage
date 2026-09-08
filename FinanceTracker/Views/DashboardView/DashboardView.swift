@@ -292,19 +292,14 @@ private struct AdaptiveEqualColumnsLayout: Layout {
 }
 
 func expenseQuery(for month: Date, limit: Int? = nil) -> Query<Expense, [Expense]> {
-    let cal = Calendar.current
-    let startOfMonth = cal.dateInterval(of: .month, for: month)?.start ?? month
-    let endOfMonth = cal.dateInterval(of: .month, for: month)?.end ?? month
-    return expenseQuery(start: startOfMonth, end: endOfMonth, limit: limit)
+    var descriptor = ExpenseFetchDescriptors.month(month)
+    descriptor.fetchLimit = limit
+    return Query(descriptor)
 }
 
 func expenseQuery(start: Date, end: Date, limit: Int? = nil) -> Query<Expense, [Expense]> {
-    var descriptor = FetchDescriptor<Expense>(
-        predicate: #Predicate { $0.date >= start && $0.date < end },
-        sortBy: [SortDescriptor(\.date, order: .reverse)]
-    )
+    var descriptor = ExpenseFetchDescriptors.range(start: start, end: end)
     descriptor.fetchLimit = limit
-    
     return Query(descriptor)
 }
 
