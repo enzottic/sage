@@ -341,8 +341,11 @@ distribution, and App Store Connect checks remain open without execution evidenc
   [Stats UI tests](FinanceTrackerUITests/StatsViewUITests.swift).
 - [ ] **Add equivalent month navigation to Home and Expenses.** These still offer
   previous/next arrows only. Verify picker accessibility and presentation on device.
-- [ ] **Paginate search beyond 100 matches** or provide a way to reach older
-  results without guessing narrower search terms.
+- [x] **Paginate search beyond 100 matches.** Load more results reveals another
+  100 matches without changing search terms; a new query resets the visible window.
+  Sources: [Search](FinanceTracker/Views/ExpensesView/Components/SearchExpensesView.swift),
+  [search query tests](FinanceTrackerTests/ExpenseSearchPredicateTests.swift),
+  [pagination UI test](FinanceTrackerUITests/FinanceTrackerUITests.swift).
 - [x] **Explain overlapping tag totals in Stats.** Stats explains that expenses
   with multiple tags count toward each tag.
   Source: [Stats top tags](FinanceTracker/Views/StatsView/StatsView.swift).
