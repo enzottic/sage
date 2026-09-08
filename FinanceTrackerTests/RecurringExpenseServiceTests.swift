@@ -447,6 +447,78 @@ struct RecurringExpenseServiceTests {
         #expect(rule.nextOccurrence() == calendar.date(byAdding: .day, value: 14, to: cursor))
     }
 
+    @Test(arguments: [RecurrenceFrequency.daily, .weekly, .biweekly, .monthly]) @MainActor
+    func scheduleEditReanchorsAndPreservesHistory(frequency: RecurrenceFrequency) throws {
+        let calendar = utcCalendar()
+        func day(_ day: Int, month: Int = 3) throws -> Date {
+            try #require(calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: 12)))
+        }
+        let container = try SageModelContainer.make(for: .test)
+        let context = container.mainContext
+        let oldStart = try day(1)
+        let anchor = try day(2)
+        let boundary = try day(15)
+        let expected: Date
+        switch frequency {
+        case .daily: expected = try day(16)
+        case .weekly: expected = try day(16)
+        case .biweekly: expected = try day(16)
+        case .monthly: expected = try day(2, month: 4)
+        }
+        let rule = RecurringExpenseRule(name: "Bill", amount: 10, note: "", category: .needs,
+                                        frequency: .daily, startDate: oldStart,
+                                        lastGeneratedDate: oldStart, recurrenceTimeZoneIdentifier: nil)
+        let key = RecurringExpenseOccurrence.key(ruleID: rule.id, scheduledDate: boundary)
+        let expense = Expense(name: "Edited history", amount: 99, date: oldStart,
+                              recurringExpenseId: rule.id, recurringOccurrenceKey: key)
+        context.insert(rule)
+        context.insert(expense)
+        try context.save()
+        try rule.editSchedule(startDate: anchor, frequency: frequency, endDate: expected,
+                              in: calendar.timeZone, after: oldStart, existingExpenses: [expense])
+        try context.save()
+        let reloaded = try #require(ModelContext(container).fetch(FetchDescriptor<RecurringExpenseRule>()).first)
+        #expect(reloaded.startDate == anchor)
+        #expect(reloaded.frequency == frequency)
+        #expect(reloaded.recurrenceEffectiveDate == boundary)
+        #expect(reloaded.recurrenceTimeZoneIdentifier == calendar.timeZone.identifier)
+        #expect(reloaded.lastGeneratedDate == nil)
+        #expect(RecurringExpenseSchedule(rule: reloaded).firstPendingOccurrence() == expected)
+        let service = RecurringExpenseService(modelContext: context)
+        try service.generateAllExpenses(through: expected)
+        let retry = try service.generateAllExpenses(through: expected.addingTimeInterval(86400 * 40))
+        #expect(retry.generatedCount == 0)
+        #expect(try context.fetchCount(FetchDescriptor<Expense>()) == 2)
+        #expect(expense.recurringOccurrenceKey == key)
+        #expect(expense.date == oldStart)
+        #expect(expense.amount == 99)
+        #expect(expense.name == "Edited history")
+    }
+
+    @Test @MainActor
+    func scheduleEditHonorsFutureStartAndRejectsInvalidEndWithoutMutation() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let future = now.addingTimeInterval(86400 * 40)
+        let rule = RecurringExpenseRule(name: "Bill", amount: 10, note: "", category: .needs,
+                                        frequency: .daily, startDate: now, lastGeneratedDate: now)
+        #expect(throws: RecurringScheduleEditError.self) {
+            try rule.editSchedule(startDate: future, frequency: .monthly, endDate: now,
+                                  in: utcCalendar().timeZone, after: now, existingExpenses: [])
+        }
+        #expect(rule.startDate == now)
+        #expect(rule.frequency == .daily)
+        #expect(rule.lastGeneratedDate == now)
+        #expect(rule.recurrenceEffectiveDate == nil)
+        try rule.editSchedule(startDate: future, frequency: .monthly, endDate: nil,
+                              in: utcCalendar().timeZone, after: now, existingExpenses: [])
+        #expect(RecurringExpenseSchedule(rule: rule).firstPendingOccurrence() == future)
+        // A second edit cannot reopen dates before the durable boundary.
+        try rule.editSchedule(startDate: now.addingTimeInterval(-86400), frequency: .daily, endDate: now,
+                              in: utcCalendar().timeZone, after: now.addingTimeInterval(-86400), existingExpenses: [])
+        #expect(rule.recurrenceEffectiveDate == now)
+        #expect(RecurringExpenseSchedule(rule: rule).firstPendingOccurrence() == nil)
+    }
+
     private func utcCalendar() -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
