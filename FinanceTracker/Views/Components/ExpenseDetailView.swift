@@ -24,6 +24,8 @@ struct ExpenseDetailView: View {
     @State private var saveErrorMessage: String?
     @State private var isSaving = false
     @State private var showingRecurringRuleConfirmation = false
+    @State private var showDiscardConfirmation = false
+    @State private var discardAction: (() -> Void)?
 
     private var recurringRule: RecurringExpenseRule? {
         guard let ruleID = expense.recurringExpenseId else { return nil }
@@ -60,7 +62,12 @@ struct ExpenseDetailView: View {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Edit Expense")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden()
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Back") { requestDismissal { dismiss() } }
+                    .accessibilityIdentifier("back-expense-button")
+            }
             ToolbarItem(placement: .confirmationAction) {
                 if isSaving {
                     ProgressView()
@@ -97,7 +104,45 @@ struct ExpenseDetailView: View {
         } message: {
             Text(saveErrorMessage ?? "Please try again.")
         }
+        .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) {
+                let action = discardAction
+                discardAction = nil
+                action?()
+            }
+            .accessibilityIdentifier("discard-expense-changes-button")
+            Button("Keep Editing", role: .cancel) {}
+                .accessibilityIdentifier("keep-editing-expense-changes-button")
+        } message: {
+            Text("Your unsaved expense changes will be lost.")
+        }
+        .onAppear {
+            appRouter.expenseDraftNavigationHandler = { month in
+                requestDismissal { appRouter.completeShowExpenses(for: month) }
+            }
+        }
+        .onDisappear {
+            appRouter.expenseDraftNavigationHandler = nil
+        }
         .gradientBackground()
+    }
+
+    private var hasChanges: Bool {
+        workingExpense.name != expense.name
+            || workingExpense.amount != expense.amount
+            || workingExpense.date != expense.date
+            || workingExpense.category != expense.category
+            || workingExpense.note != expense.note
+            || workingExpense.tags.map(\.persistentModelID) != (expense.tags ?? []).map(\.persistentModelID)
+    }
+
+    private func requestDismissal(_ action: @escaping () -> Void) {
+        guard hasChanges else {
+            action()
+            return
+        }
+        discardAction = action
+        showDiscardConfirmation = true
     }
     
     private func saveItem(updateRecurringRule: Bool? = nil) async {

@@ -27,6 +27,7 @@ struct EditRecurringRuleSheet: View {
 
     @State private var showError = false
     @State private var errorMessage: String?
+    @State private var showDiscardConfirmation = false
 
     init(rule: RecurringExpenseRule) {
         self.rule = rule
@@ -111,7 +112,7 @@ struct EditRecurringRuleSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { requestDismissal() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { saveChanges() }
@@ -128,7 +129,28 @@ struct EditRecurringRuleSheet: View {
             } message: {
                 Text("Use the Gregorian calendar in \(timeZoneIdentifier). Existing expenses and their identities stay unchanged. Past catch-up is skipped. Monthly rules already started resume after this month or the latest recorded occurrence's month, whichever is later. Other frequencies resume after that date on their cadence. Future start dates are kept. Update Syl on every synced device first; older versions do not honor this schedule.")
             }
+            .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) { dismiss() }
+                    .accessibilityIdentifier("discard-recurring-rule-button")
+                Button("Keep Editing", role: .cancel) {}
+                    .accessibilityIdentifier("keep-editing-recurring-rule-button")
+            } message: {
+                Text("Your unsaved recurring expense changes will be lost.")
+            }
         }
+        .interactiveDismissDisabled(hasChanges)
+    }
+
+    private var hasChanges: Bool {
+        name != rule.name || amount != rule.amount || note != rule.note || category != rule.category
+            || tags.map(\.persistentModelID) != (rule.tags ?? []).map(\.persistentModelID)
+            || frequency != rule.frequency || hasEndDate != (rule.endDate != nil)
+            || (hasEndDate && endDate != rule.endDate)
+            || useFixedSchedule || timeZoneIdentifier != (rule.recurrenceTimeZoneIdentifier ?? TimeZone.current.identifier)
+    }
+
+    private func requestDismissal() {
+        if hasChanges { showDiscardConfirmation = true } else { dismiss() }
     }
 
     private func saveChanges(scheduleConfirmed: Bool = false) {

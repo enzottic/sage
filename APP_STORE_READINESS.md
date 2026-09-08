@@ -261,10 +261,12 @@ distribution, and App Store Connect checks remain open without execution evidenc
 
 ## Priority 2: Polish And Accessibility
 
-- [ ] **Protect changed drafts on dismissal and navigation.** Add discard
-  confirmation or draft preservation for expense/tag/rule editors. Include
-  swipe dismissal, Cancel, back navigation, and Home's Show All action clearing
-  the Expenses stack. Do not prompt for untouched forms.
+- [x] **Protect changed drafts on dismissal and navigation.** Changed expense,
+  tag, and recurring-rule forms require discard confirmation on Cancel and
+  custom back navigation; sheet swipe dismissal is disabled while changed.
+  Untouched forms exit directly.
+  The router defers Home's Show All stack clear to the active expense editor,
+  which can keep editing or discard before navigation continues (#60).
   Sources: [expense creation](FinanceTracker/Views/Components/AddExpenseView.swift),
   [expense editor](FinanceTracker/Views/Components/ExpenseDetailView.swift),
   [router](FinanceTracker/Router/AppRouter.swift).

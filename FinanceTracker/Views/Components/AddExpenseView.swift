@@ -21,6 +21,7 @@ struct AddExpenseView: View {
     @State private var name: String = ""
     @State private var amount: Double? = nil
     @State private var date: Date = Date.now
+    @State private var initialDate: Date = Date.now
     @State private var category: ExpenseCategory = .needs
     @State private var tags: [ExpenseTag] = []
     @State private var note: String = ""
@@ -33,6 +34,7 @@ struct AddExpenseView: View {
     @State private var keyboardDismissalRequest = 0
     @State private var debouncedName = ""
     @State private var nameDebounceTask: Task<Void, Never>?
+    @State private var showDiscardConfirmation = false
 
     @State private var isParsingReceipt: Bool = false
     @State private var showCamera = false
@@ -45,6 +47,9 @@ struct AddExpenseView: View {
     
     init(expense: Expense?, receiptData: Data? = nil) {
         initialReceiptData = receiptData
+        let initialDate = expense?.date ?? .now
+        _date = State(initialValue: initialDate)
+        _initialDate = State(initialValue: initialDate)
         if let expense = expense {
             _name = State(initialValue: expense.name)
             _amount = State(initialValue: expense.amount)
@@ -123,7 +128,7 @@ struct AddExpenseView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { requestDismissal() }
                     .accessibilityIdentifier("cancel-expense-button")
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -145,6 +150,15 @@ struct AddExpenseView: View {
         } message: {
             Text(errorMessage ?? "An unexpected error occurred")
         }
+        .confirmationDialog("Discard this expense?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }
+                .accessibilityIdentifier("discard-expense-button")
+            Button("Keep Editing", role: .cancel) {}
+                .accessibilityIdentifier("keep-editing-expense-button")
+        } message: {
+            Text("Your unsaved expense details will be lost.")
+        }
+        .interactiveDismissDisabled(hasChanges)
         .photosPicker(
             isPresented: $showPhotoLibrary,
             selection: $receiptPhotoItem,
@@ -203,6 +217,14 @@ struct AddExpenseView: View {
 
     private var showsPastExpenseSuggestions: Bool {
         isNameFieldFocused && !pastExpenseSuggestions.isEmpty
+    }
+
+    private var hasChanges: Bool {
+        !name.isEmpty || amount != nil || !tags.isEmpty || !note.isEmpty || isRecurring || category != .needs || date != initialDate
+    }
+
+    private func requestDismissal() {
+        if hasChanges { showDiscardConfirmation = true } else { dismiss() }
     }
 
     private var pastExpenseSuggestionList: some View {
