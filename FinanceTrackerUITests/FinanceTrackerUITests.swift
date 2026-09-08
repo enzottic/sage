@@ -212,8 +212,14 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: syncToggle, in: app))
         XCTAssertEqual(syncToggle.value as? String, "0")
+        #if DEBUG
+        let expectedSyncValue = "0"
+        XCTAssertFalse(syncToggle.isEnabled, "Dev builds must remain local-only.")
+        #else
+        let expectedSyncValue = "1"
         tap(syncToggle, named: "onboarding-sync-toggle")
         XCTAssertEqual(syncToggle.value as? String, "1")
+        #endif
         tap("onboarding-sync-continue-button", in: app)
 
         let shoppingTag = app.buttons["onboarding-tag-Shopping"]
@@ -233,7 +239,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(shoppingTag.isSelected, "Tag selection must survive returning from the summary.")
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(syncToggle.value as? String, "1", "Sync selection must survive going back.")
+        XCTAssertEqual(syncToggle.value as? String, expectedSyncValue, "Sync selection must survive going back.")
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-allocation-continue-button"].waitForExistence(timeout: timeout))
         tap("onboarding-back-button", in: app)
@@ -244,7 +250,7 @@ final class FinanceTrackerUITests: XCTestCase {
         tap("onboarding-budget-continue-button", in: app)
         tap("onboarding-allocation-continue-button", in: app)
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
-        XCTAssertEqual(syncToggle.value as? String, "1")
+        XCTAssertEqual(syncToggle.value as? String, expectedSyncValue)
         tap("onboarding-sync-continue-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-tags-continue-button"].waitForExistence(timeout: timeout),
                       "Continue did not leave the sync step.")

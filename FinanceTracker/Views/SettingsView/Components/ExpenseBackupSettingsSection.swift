@@ -62,7 +62,7 @@ struct ExpenseBackupSettingsSection: View {
                         }
                     }
                 }
-                .disabled(isWorking)
+                .disabled(isWorking || !config.supportsCloudSync)
                 if config.isCloudSyncEnabled, config.cloudLedgerCurrencyCode == nil,
                    config.ledgerCurrencyCode != nil, !config.hasLedgerCurrencyConflict {
                     Button("Confirm Currency for iCloud") {
@@ -73,13 +73,17 @@ struct ExpenseBackupSettingsSection: View {
             } header: {
                 Text("iCloud Sync")
             } footer: {
-                Text("Preference sync changes take effect immediately. Fully close and reopen Syl to apply changes to expense sync. Previously queued iCloud activity may still finish; turning sync off does not delete existing iCloud data.")
-                if config.cloudSyncStatus == .accountChanged {
-                    Text("Your iCloud account changed. Preference sync is off. Fully restart Syl to stop expense sync, then review your account before enabling sync again.")
-                } else if config.cloudSyncStatus == .quotaExceeded {
-                    Text("iCloud preference storage is full. Changes are saved on this device, but new preference uploads are paused.")
-                } else if config.cloudSyncStatus == .synchronizationUnavailable {
-                    Text("iCloud preferences are currently unavailable. Your settings remain saved on this device.")
+                if !config.supportsCloudSync {
+                    Text("This dev build is local-only. Expenses and preferences do not sync with iCloud or your main Syl install.")
+                } else {
+                    Text("Preference sync changes take effect immediately. Fully close and reopen Syl to apply changes to expense sync. Previously queued iCloud activity may still finish; turning sync off does not delete existing iCloud data.")
+                    if config.cloudSyncStatus == .accountChanged {
+                        Text("Your iCloud account changed. Preference sync is off. Fully restart Syl to stop expense sync, then review your account before enabling sync again.")
+                    } else if config.cloudSyncStatus == .quotaExceeded {
+                        Text("iCloud preference storage is full. Changes are saved on this device, but new preference uploads are paused.")
+                    } else if config.cloudSyncStatus == .synchronizationUnavailable {
+                        Text("iCloud preferences are currently unavailable. Your settings remain saved on this device.")
+                    }
                 }
             }
 

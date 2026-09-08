@@ -313,7 +313,8 @@ struct OnboardingView: View {
 
     private var syncPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Sync your expenses", subtitle: "Keep expenses up to date across your devices.")
+            heading(config.supportsCloudSync ? "Sync your expenses" : "Local-only dev build",
+                    subtitle: config.supportsCloudSync ? "Keep expenses up to date across your devices." : "Dev expenses and preferences stay separate from your main Syl install.")
 
             HStack(spacing: 24) {
                 Image(systemName: "iphone")
@@ -331,7 +332,8 @@ struct OnboardingView: View {
                     .font(.headline)
                     .tint(.sage)
                     .accessibilityIdentifier("onboarding-sync-toggle")
-                Text(cloudSyncEnabled ? "Preference sync starts when you finish setup. Fully close and reopen Syl to enable expense sync." : "Preferences stay on this device. If expense sync was previously enabled, fully close and reopen Syl to turn it off.")
+                    .disabled(!config.supportsCloudSync)
+                Text(!config.supportsCloudSync ? "iCloud sync is unavailable in this dev build." : cloudSyncEnabled ? "Preference sync starts when you finish setup. Fully close and reopen Syl to enable expense sync." : "Preferences stay on this device. If expense sync was previously enabled, fully close and reopen Syl to turn it off.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

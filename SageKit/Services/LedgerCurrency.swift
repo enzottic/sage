@@ -65,11 +65,14 @@ public enum LedgerCurrency {
     }
 
     public static func requireCode() throws -> String {
+        // Local-only dev ledgers can retain conflict flags from older cloud-enabled builds.
+        #if !DEBUG
         if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] != "1",
            ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
            UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)?.bool(forKey: cloudConflictKey) == true {
             throw Error.cloudConflict
         }
+        #endif
         guard let code = currentCode else { throw Error.notEstablished }
         return code
     }
