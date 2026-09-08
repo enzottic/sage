@@ -538,7 +538,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertFalse(details.staticTexts["Expired Subscription"].exists)
         app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(total.waitForNonExistence(timeout: timeout))
-        // Daily projections must continue beyond just the next occurrence.
+        // Daily upcoming occurrences must continue beyond just the next date.
         if let following = calendar.date(byAdding: .day, value: 1, to: tomorrow),
            calendar.isDate(now, equalTo: following, toGranularity: .month) {
             let nextCell = app.buttons["expense-calendar-day-\(calendar.component(.day, from: following))"]
