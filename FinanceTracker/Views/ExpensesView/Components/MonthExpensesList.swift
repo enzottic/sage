@@ -13,17 +13,8 @@ struct MonthExpensesList: View {
     var searchText: String
 
     init(month: Date, searchText: String = "") {
-        let calendar = Calendar.current
-        let start = calendar.dateInterval(of: .month, for: month)?.start ?? month
-        let end = calendar.dateInterval(of: .month, for: month)?.end ?? month
-
-       _expenses = Query(
-           filter: #Predicate<Expense> { expense in
-               expense.date >= start && expense.date < end
-           },
-           sort: [SortDescriptor(\Expense.date, order: .reverse)]
-       )
-       self.searchText = searchText
+        _expenses = Query(ExpenseFetchDescriptors.month(month))
+        self.searchText = searchText
     }
     
     var filteredExpenses: [Expense] {

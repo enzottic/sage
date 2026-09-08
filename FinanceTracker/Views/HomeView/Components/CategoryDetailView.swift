@@ -22,13 +22,7 @@ struct CategoryDetailView: View {
         self.category = category
         self.month = month
 
-        let cal = Calendar.current
-        let start = cal.dateInterval(of: .month, for: month)?.start ?? month
-        let end = cal.dateInterval(of: .month, for: month)?.end ?? month
-        _monthExpenses = Query(
-            filter: #Predicate<Expense> { $0.date >= start && $0.date <= end },
-            sort: [SortDescriptor(\Expense.date, order: .reverse)]
-        )
+        _monthExpenses = Query(ExpenseFetchDescriptors.month(month))
     }
 
     var expenses: [Expense] {

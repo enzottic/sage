@@ -188,11 +188,16 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
   [store tests](FinanceTrackerTests/ExpenseStoreTests.swift).
 
-- [ ] **Finish half-open filtering in category detail and Home comparisons.**
-  Category detail still includes the month-end boundary; Home can count selected-month
-  midnight in the previous month's comparison total. Keep month bounds exclusive
-  independently of inclusive as-of cutoffs, and test both paths.
-  Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
+- [x] **Finish half-open filtering in category detail and Home comparisons (#52).**
+  Category detail and Home share persisted queries with exclusive month-end bounds.
+  Home's month summary independently excludes selected-month midnight from the
+  previous total while retaining inclusive as-of cutoffs. Persisted query tests
+  cover both paths, fractional end-of-month timestamps, leap February, DST, and
+  year rollover; summary tests also cover shorter-month comparison cutoffs.
+  Device/distribution verification remains unperformed.
+  Sources: [shared queries](SageKit/Services/ExpenseFetchDescriptors.swift),
+  [query tests](FinanceTrackerTests/ExpenseFetchDescriptorTests.swift),
+  [summary tests](FinanceTrackerTests/SpendingMonthSummaryTests.swift),
   [category detail](FinanceTracker/Views/HomeView/Components/CategoryDetailView.swift),
   [monthly overview](FinanceTracker/Views/DashboardView/Widgets/MonthlyOverviewWidget.swift).
 
