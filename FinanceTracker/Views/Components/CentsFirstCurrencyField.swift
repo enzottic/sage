@@ -1,97 +1,150 @@
-//
-//  CentsFirstCurrencyField.swift
-//  FinanceTracker
-//
-//  Created by Tyler McCormick on 10/21/25.
-//
-
 import SwiftUI
 import SageKit
 
-struct CentsFirstCurrencyField: View {
+struct CentsFirstCurrencyField<Field: Hashable>: View {
     @Binding var amount: Double?
-    var accessibilityIdentifier: String = "Expense Amount Field"
-    var keyboardDoneAccessibilityIdentifier: String = "currency-keyboard-done-button"
-    var textAlignment: Alignment = .leading
+    var focus: FocusState<Field?>.Binding
+    var focusValue: Field
+    var accessibilityIdentifier: String = "expense-amount-field"
 
-    @State private var centsValue: String = "0"
-    @FocusState private var isFocused: Bool
+    @ScaledMetric(relativeTo: .largeTitle) private var amountFontSize = 48
+    @State private var digits = ""
+    @State private var isRefund = false
+    @State private var selection: TextSelection?
+    @State private var rejectedNonDigitInput = false
 
-    private var minorUnitScale: Double {
-        pow(10, Double(LedgerCurrency.fractionDigits(for: LedgerCurrency.currentCode ?? "XXX")))
+    private var currencyCode: String { LedgerCurrency.currentCode ?? "XXX" }
+    private var fractionDigits: Int { LedgerCurrency.fractionDigits(for: currencyCode) }
+    private var isFocused: Bool { focus.wrappedValue == focusValue }
+    private var hasInvalidAmount: Bool {
+        if let amount { return !MonetaryAmount.isValid(amount, currencyCode: currencyCode) }
+        return !digits.isEmpty
     }
 
     private var displayValue: String {
-        let cents = Int(centsValue) ?? 0
-        return (Double(cents) / minorUnitScale).currencyString
+        if let amount {
+            if !MonetaryAmount.isValid(amount, currencyCode: currencyCode) {
+                return "\(amount.formatted(.number.precision(.fractionLength(0...16)))) \(currencyCode)"
+            }
+            return amount.currencyString
+        }
+        let value = (Double(digits) ?? 0) / pow(10, Double(fractionDigits))
+        return value.isFinite ? (value * (isRefund ? -1 : 1)).currencyString : "Amount too large"
     }
 
-    private var isEmptyState: Bool {
-        (Int(centsValue) ?? 0) == 0
+    private var input: Binding<String> {
+        Binding(get: { digits }, set: { text in
+            guard text.unicodeScalars.allSatisfy({ $0.properties.generalCategory == .decimalNumber }) else {
+                rejectedNonDigitInput = true
+                return
+            }
+            rejectedNonDigitInput = false
+            digits = CentsFirstAmountInput.normalizedDigits(text)
+            amount = CentsFirstAmountInput.amount(for: digits, currencyCode: currencyCode, isRefund: isRefund)
+        })
     }
 
     var body: some View {
-        ZStack(alignment: .trailing) {
-            // Hidden text field for keyboard input.
-            // Full-width frame so VoiceOver can find and activate it;
-            // allowsHitTesting(false) lets normal taps fall through to the Text views below.
-            TextField("", text: $centsValue)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Amount")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer()
+                Menu {
+                    Picker("Transaction type", selection: $isRefund) {
+                        Text("Expense").tag(false)
+                        Text("Refund").tag(true)
+                    }
+                    if amount != nil || !digits.isEmpty {
+                        Button("Clear Amount", systemImage: "delete.left") {
+                            digits = ""
+                            amount = nil
+                            rejectedNonDigitInput = false
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(isRefund ? "Refund" : "Expense")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(isRefund ? Color.sageAccent : .secondary)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("expense-amount-type")
+                .accessibilityLabel("Transaction type")
+                .accessibilityValue(isRefund ? "Refund" : "Expense")
+            }
+
+            // Keep the real input visible to accessibility and hit testing. Only its
+            // raw digits are transparent; the localized amount supplies the display.
+            TextField("", text: input, selection: $selection)
+                .font(.system(size: amountFontSize, weight: .semibold, design: .rounded))
+                .foregroundStyle(.clear)
+                .tint(.clear)
                 .keyboardType(.numberPad)
-                .opacity(0)
-                .frame(maxWidth: .infinity)
-                .allowsHitTesting(false)
-                .focused($isFocused)
-                .onChange(of: centsValue) { oldValue, newValue in
-                    let filtered = newValue.filter { $0.isNumber }
-                    if filtered.isEmpty {
-                        centsValue = "0"
-                        amount = nil
-                    } else if filtered.count > 10 {
-                        centsValue = String(filtered.prefix(10))
-                    } else {
-                        centsValue = filtered
+                .autocorrectionDisabled()
+                .focused(focus, equals: focusValue)
+                .frame(minHeight: 60)
+                .overlay(alignment: .leading) {
+                    HStack(spacing: 8) {
+                        Text(displayValue)
+                            .font(.system(size: amountFontSize, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(amount == nil && digits.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.3)
+                        if isFocused {
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(.sageAccent)
+                                .frame(width: 2, height: 32)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    if let cents = Int(centsValue), cents > 0 {
-                        amount = Double(cents) / minorUnitScale
-                    } else {
-                        amount = nil
-                    }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
                 }
                 .accessibilityIdentifier(accessibilityIdentifier)
                 .accessibilityLabel("Amount")
                 .accessibilityValue(displayValue)
-                .accessibilityHint("Enter expense amount using number keys")
-                .toolbar {
-                    ToolbarItem(placement: .keyboard) {
-                        Button("Done") {
-                            isFocused = false
-                        }
-                        .accessibilityIdentifier(keyboardDoneAccessibilityIdentifier)
-                    }
-                }
+                .accessibilityHint(fractionDigits == 0 ? "Enter the amount using number keys" : "Enter digits; the decimal separator is added automatically")
 
-
-            Text(displayValue)
-                .font(.system(size: 52, weight: .bold))
-                .foregroundStyle(Color.primary)
-                .frame(maxWidth: .infinity, alignment: textAlignment)
-                .onTapGesture { isFocused = true }
-                .accessibilityHidden(true)
-
-        }
-        .onAppear {
-            if let amount, let cents = Int(exactly: (amount * minorUnitScale).rounded()) {
-                centsValue = String(cents)
+            if rejectedNonDigitInput || hasInvalidAmount {
+                Text(rejectedNonDigitInput
+                     ? "Use digits only. To enter a refund, choose Refund above."
+                     : "Clear and re-enter this amount. " + MonetaryAmount.validationMessage(currencyCode: currencyCode))
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .onChange(of: amount) { _, newAmount in
-            let currentCents = Int(centsValue) ?? 0
-            let currentAmount = currentCents > 0 ? Double(currentCents) / minorUnitScale : nil
-            guard currentAmount != newAmount else { return }
-            if let newAmount, let units = Int(exactly: (newAmount * minorUnitScale).rounded()) {
-                centsValue = String(units)
-            } else {
-                centsValue = "0"
+        .onChange(of: selection) {
+            // Minor-unit entry is a right-to-left register, not an editable decimal string.
+            if let selection, case let .selection(range) = selection.indices,
+               range != digits.endIndex..<digits.endIndex {
+                self.selection = TextSelection(insertionPoint: digits.endIndex)
+            }
+        }
+        .onChange(of: isFocused) { _, focused in
+            if focused { selection = TextSelection(insertionPoint: digits.endIndex) }
+        }
+        .onChange(of: amount, initial: true) { _, value in
+            let current = CentsFirstAmountInput.amount(for: digits, currencyCode: currencyCode, isRefund: isRefund)
+            guard current != value else { return }
+            // History, receipt imports and edits must never round or rewrite the model.
+            digits = CentsFirstAmountInput.digits(for: value, currencyCode: currencyCode)
+            if let value { isRefund = value < 0 }
+        }
+        .onChange(of: isRefund) { _, refund in
+            if let amount, (amount < 0) != refund {
+                self.amount = refund ? -abs(amount) : abs(amount)
             }
         }
     }
@@ -99,16 +152,7 @@ struct CentsFirstCurrencyField: View {
 
 #Preview {
     @Previewable @State var amount: Double? = nil
-
-    VStack(spacing: 30) {
-        CentsFirstCurrencyField(amount: $amount)
-
-        Text("Current amount: \(amount?.description ?? "nil")")
-            .foregroundStyle(.secondary)
-
-        Button("Clear") {
-            amount = nil
-        }
-    }
-    .padding()
+    @Previewable @FocusState var focus: Bool?
+    CentsFirstCurrencyField(amount: $amount, focus: $focus, focusValue: true)
+        .padding()
 }

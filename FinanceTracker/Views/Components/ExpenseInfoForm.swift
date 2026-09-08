@@ -25,7 +25,6 @@ struct ExpenseInfoForm: View {
 
     @Binding var name: String
     @Binding var amount: Double?
-    @State private var amountText: String
     @Binding var date: Date
     @Binding var category: ExpenseCategory
     @Binding var tags: [ExpenseTag]
@@ -33,6 +32,7 @@ struct ExpenseInfoForm: View {
     @Binding var isNameFieldFocused: Bool
     @Binding var keyboardDismissalRequest: Int
     var isEditing: Bool
+    var focusesNameOnAppear: Bool
     var receiptImport: ReceiptImportConfiguration?
     var receiptImportUnavailableMessage: String?
 
@@ -54,12 +54,12 @@ struct ExpenseInfoForm: View {
         isNameFieldFocused: Binding<Bool> = .constant(false),
         keyboardDismissalRequest: Binding<Int> = .constant(0),
         isEditing: Bool = false,
+        focusesNameOnAppear: Bool = false,
         receiptImport: ReceiptImportConfiguration? = nil,
         receiptImportUnavailableMessage: String? = nil
     ) {
         self._name = name
         self._amount = amount
-        self._amountText = State(initialValue: amount.wrappedValue.map { AmountInput.text(for: $0) } ?? "")
         self._date = date
         self._category = category
         self._tags = tags
@@ -67,17 +67,18 @@ struct ExpenseInfoForm: View {
         self._isNameFieldFocused = isNameFieldFocused
         self._keyboardDismissalRequest = keyboardDismissalRequest
         self.isEditing = isEditing
+        self.focusesNameOnAppear = focusesNameOnAppear
         self.receiptImport = receiptImport
         self.receiptImportUnavailableMessage = receiptImportUnavailableMessage
     }
 
     var body: some View {
         VStack(spacing: 20) {
-            nameHeader
-            detailsCard
+            entryCard
             sectionHeader(title: "Category") {
                 inlineCategoryPicker
             }
+            detailsCard
             sectionHeader(title: "Tags") {
                 TagPicker(
                     selectedTags: $tags,
@@ -102,39 +103,72 @@ struct ExpenseInfoForm: View {
         .onChange(of: keyboardDismissalRequest) {
             dismissKeyboard()
         }
-        .onChange(of: amount) { _, value in
-            // Our own text edits already match parsedAmount, including invalid text -> nil.
-            guard value != parsedAmount else { return }
-            amountText = value.map { AmountInput.text(for: $0) } ?? ""
+        .onChange(of: focusedField) { old, new in
+            isNameFieldFocused = new == .name
+            if old == .name { suggestTagIfNeeded() }
+        }
+        .task {
+            if focusesNameOnAppear { focusedField = .name }
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(focusedField == .name ? "Next" : "Done") {
+                    if focusedField == .name { focusedField = .amount } else { dismissKeyboard() }
+                }
+                .fontWeight(.semibold)
+                .accessibilityIdentifier("expense-keyboard-continue-button")
+            }
         }
     }
 
     // MARK: - Name header
 
-    private var nameHeader: some View {
-        HStack(alignment: .center, spacing: 16) {
-            TextField("New Expense", text: $name)
-                .accessibilityIdentifier("expense-name-field")
-                .font(.largeTitle.bold())
-                .focused($focusedField, equals: .name)
-                .onChange(of: focusedField) { old, new in
-                    isNameFieldFocused = new == .name
-                    if old == .name { suggestTagIfNeeded() }
-                }
+    private var entryCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            nameHeader
+                .padding(20)
+            Divider().padding(.horizontal, 20)
+            CentsFirstCurrencyField(amount: $amount, focus: $focusedField, focusValue: .amount)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+                .padding(.bottom, 20)
+        }
+        .background(.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+    }
 
-            Spacer(minLength: 0)
+    private var nameHeader: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Name")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                TextField("What was it for?", text: $name)
+                    .accessibilityIdentifier("expense-name-field")
+                    .accessibilityLabel("Expense name")
+                    .font(.title2.weight(.semibold))
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .name)
+                    .onSubmit { focusedField = .amount }
+                    .frame(minHeight: 44)
+            }
 
             if !isEditing, let receiptImport {
                 receiptButton(receiptImport)
             } else if !isEditing, let receiptImportUnavailableMessage {
-                Text(receiptImportUnavailableMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 144)
+                Menu {
+                    Text(receiptImportUnavailableMessage)
+                } label: {
+                    Image(systemName: "receipt")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
+                        .background(.sageBackground, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .accessibilityLabel("Receipt reading unavailable")
+                .accessibilityHint(receiptImportUnavailableMessage)
             }
         }
-        .padding(.horizontal)
     }
 
     private func receiptButton(_ configuration: ReceiptImportConfiguration) -> some View {
@@ -148,30 +182,18 @@ struct ExpenseInfoForm: View {
                 configuration.onChoosePhoto()
             }
         } label: {
-            VStack(spacing: 6) {
+            Group {
                 if configuration.isParsing {
-                    ProgressView("Reading")
+                    ProgressView()
                         .controlSize(.small)
-                        .font(.caption2)
-                        .frame(height: 22)
                 } else {
                     Image(systemName: "receipt")
-                        .font(.system(size: 22, weight: .regular))
+                        .font(.body)
                         .foregroundStyle(.secondary)
                 }
-
-                Text("Receipt")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
-            .frame(minWidth: 72, minHeight: 80)
-            .background {
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(
-                        Color.secondary.opacity(0.4),
-                        style: StrokeStyle(lineWidth: 1, dash: [4])
-                    )
-            }
+            .frame(width: 44, height: 44)
+            .background(.sageBackground, in: RoundedRectangle(cornerRadius: 12))
             .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(configuration.isParsing)
@@ -181,44 +203,8 @@ struct ExpenseInfoForm: View {
 
     // MARK: - Details card
 
-    private var parsedAmount: Double? {
-        guard let code = config.ledgerCurrencyCode else { return nil }
-        return AmountInput.parse(amountText, currencyCode: code)
-    }
-
-    private var amountTextBinding: Binding<String> {
-        Binding(
-            get: { amountText },
-            set: {
-                amountText = $0
-                amount = parsedAmount
-            }
-        )
-    }
-
     private var detailsCard: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                rowIcon("dollarsign")
-                Text("Amount")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                TextField(
-                    Double(0).currencyString,
-                    text: amountTextBinding
-                )
-                .accessibilityIdentifier("expense-amount-field")
-                .keyboardType(.decimalPad)
-                .font(.body)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedField, equals: .amount)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-
-            Divider().padding(.leading, 52)
-
             Button {
                 dismissKeyboard()
                 withAnimation(reduceMotion ? nil : .spring(duration: 0.3)) { showDatePicker.toggle() }
@@ -229,9 +215,12 @@ struct ExpenseInfoForm: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(date.formatted(date: .abbreviated, time: .omitted))
+                    Text(Calendar.current.isDateInToday(date) ? "Today" : date.formatted(date: .abbreviated, time: .omitted))
                         .font(.subheadline)
                         .foregroundStyle(showDatePicker ? .sage : .primary)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -261,11 +250,12 @@ struct ExpenseInfoForm: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                TextField("Add a note", text: $note)
+                TextField("Optional", text: $note, axis: .vertical)
                     .accessibilityIdentifier("expense-note-field")
                     .font(.subheadline)
                     .multilineTextAlignment(.trailing)
                     .focused($focusedField, equals: .note)
+                    .lineLimit(1...4)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -322,11 +312,11 @@ struct ExpenseInfoForm: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 12)
                             .fill(isSelected ? cat.color(in: categoryColors).opacity(0.18) : .cardBackground)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 12)
                             .strokeBorder(
                                 isSelected ? cat.color(in: categoryColors).opacity(0.6) : Color.clear,
                                 lineWidth: 1.5

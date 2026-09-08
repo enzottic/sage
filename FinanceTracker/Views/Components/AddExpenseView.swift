@@ -16,6 +16,7 @@ struct AddExpenseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(AppRouter.self) private var appRouter
 
     @State private var name: String = ""
@@ -98,6 +99,7 @@ struct AddExpenseView: View {
                     note: $note,
                     isNameFieldFocused: $isNameFieldFocused,
                     keyboardDismissalRequest: $keyboardDismissalRequest,
+                    focusesNameOnAppear: name.isEmpty && initialReceiptData == nil,
                     receiptImport: receiptImportConfiguration,
                     receiptImportUnavailableMessage: receiptImportUnavailableMessage
                 )
@@ -111,7 +113,7 @@ struct AddExpenseView: View {
             .padding(.bottom, 40)
         }
         .background(.sageBackground)
-        .scrollDismissesKeyboard(.immediately)
+        .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if showsPastExpenseSuggestions {
                 pastExpenseSuggestionList
@@ -140,7 +142,7 @@ struct AddExpenseView: View {
                     Button("Save") { Task { await saveItem() } }
                         .accessibilityIdentifier("save-expense-button")
                         .fontWeight(.semibold)
-                        .tint(Color(red: 108 / 255, green: 138 / 255, blue: 78 / 255))
+                        .tint(.sageAccent)
                         .disabled(isParsingReceipt || isSaving)
                 }
             }
@@ -211,7 +213,7 @@ struct AddExpenseView: View {
             seenNames.insert(key)
             return true
         }
-        .prefix(3)
+        .prefix(dynamicTypeSize.isAccessibilitySize ? 1 : 3)
         .map { $0 }
     }
 
@@ -263,6 +265,7 @@ struct AddExpenseView: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.primary)
+                                .lineLimit(2)
                             HStack(spacing: 4) {
                                 Text(expense.category.rawValue)
                                 let tagNames = (expense.tags ?? []).map(\.name).joined(separator: ", ")
@@ -273,6 +276,7 @@ struct AddExpenseView: View {
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                         }
 
                         Spacer()
@@ -281,6 +285,10 @@ struct AddExpenseView: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .layoutPriority(1)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
@@ -288,11 +296,13 @@ struct AddExpenseView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("past-expense-suggestion-\(expense.name)")
             }
         }
         .background(.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("past-expense-suggestions")
     }
 
@@ -310,7 +320,7 @@ struct AddExpenseView: View {
                     .font(.subheadline)
                     .foregroundStyle(.primary)
                 Spacer()
-                Toggle("", isOn: $isRecurring.animation(.spring(duration: 0.3)))
+                Toggle("", isOn: $isRecurring)
                     .labelsHidden()
                     .accessibilityLabel("Recurring")
             }
@@ -346,10 +356,9 @@ struct AddExpenseView: View {
 
         }
         .background(.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
-        .animation(.spring(duration: 0.3), value: amount)
-        .animation(.spring(duration: 0.3), value: isRecurring)
+        .animation(reduceMotion ? nil : .spring(duration: 0.3), value: isRecurring)
     }
 
     // MARK: - Logic
