@@ -28,10 +28,19 @@ final class AppRouter {
     var toast: SageToast?
 
     private var dismissTask: Task<Void, Never>?
+    var expenseDraftNavigationHandler: ((Date) -> Void)?
 
     // MARK: - Navigation
 
     func showExpenses(for month: Date) {
+        if let expenseDraftNavigationHandler {
+            expenseDraftNavigationHandler(month)
+            return
+        }
+        completeShowExpenses(for: month)
+    }
+
+    func completeShowExpenses(for month: Date) {
         expensesMonth = month
         expensesPath.removeAll()
         expensesRequestID = UUID()

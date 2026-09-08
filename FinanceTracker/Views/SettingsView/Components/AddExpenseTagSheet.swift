@@ -33,6 +33,8 @@ struct AddExpenseTagSheet: View {
     /// icon is showing, so string-only surfaces (Shortcuts, entity subtitles) keep a mark and
     /// clearing the icon later restores something better than the default.
     @State private var fallbackEmoji: String = "💰"
+    @State private var showDiscardConfirmation = false
+    @State private var initialDraft: TagDraft?
 
     private var isEditing: Bool { tagToEdit != nil }
 
@@ -68,6 +70,12 @@ struct AddExpenseTagSheet: View {
     
     var body: some View {
         VStack(spacing: 24) {
+            HStack {
+                Button("Cancel") { requestDismissal() }
+                    .accessibilityIdentifier("cancel-tag-button")
+                Spacer()
+            }
+            .padding(.horizontal)
             Spacer()
 
             // Form fields
@@ -237,6 +245,15 @@ struct AddExpenseTagSheet: View {
         } message: {
             Text(saveErrorMessage ?? "Please try again.")
         }
+        .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }
+                .accessibilityIdentifier("discard-tag-button")
+            Button("Keep Editing", role: .cancel) {}
+                .accessibilityIdentifier("keep-editing-tag-button")
+        } message: {
+            Text("Your unsaved tag changes will be lost.")
+        }
+        .interactiveDismissDisabled(hasChanges)
         .onChange(of: glyph) { _, newValue in
             if case .emoji(let value) = newValue { fallbackEmoji = value }
         }
@@ -249,7 +266,34 @@ struct AddExpenseTagSheet: View {
                 hasBudget = tag.budget != nil
                 budgetText = tag.budget.map { AmountInput.text(for: $0) } ?? ""
             }
+            initialDraft = currentDraft
         }
+    }
+
+    private var currentDraft: TagDraft {
+        TagDraft(name: name, color: UIColor(color), glyph: glyph, hasBudget: hasBudget, budgetText: budgetText)
+    }
+
+    private var hasChanges: Bool {
+        guard let initialDraft else { return false }
+        return currentDraft != initialDraft
+    }
+
+    private func requestDismissal() {
+        if hasChanges { showDiscardConfirmation = true } else { dismiss() }
+    }
+}
+
+private struct TagDraft: Equatable {
+    let name: String
+    let color: UIColor
+    let glyph: TagGlyph
+    let hasBudget: Bool
+    let budgetText: String
+
+    static func == (lhs: TagDraft, rhs: TagDraft) -> Bool {
+        lhs.name == rhs.name && lhs.color.isEqual(rhs.color) && lhs.glyph == rhs.glyph
+            && lhs.hasBudget == rhs.hasBudget && lhs.budgetText == rhs.budgetText
     }
 }
 
