@@ -1,8 +1,26 @@
 import Foundation
 import SwiftData
 
-/// Shared persisted queries for category detail and dashboard spending.
+/// Shared persisted queries for expense lists and spending.
 public enum ExpenseFetchDescriptors {
+    /// Fetches the visible search window plus one match to detect another page.
+    /// Growing the window keeps SwiftData updates live without stale offset pages.
+    public static func search(_ query: String, visibleLimit: Int) -> FetchDescriptor<Expense> {
+        precondition(visibleLimit > 0 && visibleLimit < Int.max)
+        var descriptor = FetchDescriptor<Expense>(
+            predicate: #Predicate { expense in
+                expense.name.localizedStandardContains(query)
+                || expense.note.localizedStandardContains(query)
+                || (expense.tags?.contains { tag in
+                    tag.name.localizedStandardContains(query)
+                } == true)
+            },
+            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = visibleLimit + 1
+        return descriptor
+    }
+
     public static func month(_ month: Date, calendar: Calendar = .current) -> FetchDescriptor<Expense> {
         let interval = calendar.dateInterval(of: .month, for: month)
         return range(start: interval?.start ?? month, end: interval?.end ?? month)

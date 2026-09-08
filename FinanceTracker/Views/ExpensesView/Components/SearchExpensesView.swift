@@ -32,7 +32,8 @@ struct SearchExpensesView: View {
                     Color.clear
                         .accessibilityHidden(true)
                 } else {
-                    ExpenseSearchResults(searchText: activeSearchText)
+                    PaginatedExpenseSearchResults(searchText: activeSearchText)
+                        .id(activeSearchText)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -61,28 +62,26 @@ struct SearchExpensesView: View {
     }
 }
 
-private struct ExpenseSearchResults: View {
-    private static let resultLimit = 100
-
-    @Query private var expenses: [Expense]
+private struct PaginatedExpenseSearchResults: View {
+    @State private var visibleLimit = 100
     let searchText: String
 
-    init(searchText: String) {
-        self.searchText = searchText
+    var body: some View {
+        ExpenseSearchResults(searchText: searchText, visibleLimit: visibleLimit) {
+            visibleLimit += 100
+        }
+    }
+}
 
-        let query = searchText
-        var descriptor = FetchDescriptor<Expense>(
-            predicate: #Predicate { expense in
-                expense.name.localizedStandardContains(query)
-                || expense.note.localizedStandardContains(query)
-                || (expense.tags?.contains { tag in
-                    tag.name.localizedStandardContains(query)
-                } == true)
-            },
-            sortBy: [SortDescriptor(\Expense.date, order: .reverse)]
-        )
-        descriptor.fetchLimit = Self.resultLimit
-        _expenses = Query(descriptor)
+private struct ExpenseSearchResults: View {
+    @Query private var expenses: [Expense]
+    let visibleLimit: Int
+    let loadMore: () -> Void
+
+    init(searchText: String, visibleLimit: Int, loadMore: @escaping () -> Void) {
+        self.visibleLimit = visibleLimit
+        self.loadMore = loadMore
+        _expenses = Query(ExpenseFetchDescriptors.search(searchText, visibleLimit: visibleLimit))
     }
 
     var body: some View {
@@ -105,11 +104,10 @@ private struct ExpenseSearchResults: View {
                         }
                     }
 
-                    if expenses.count == Self.resultLimit {
-                        Text("Showing the first \(Self.resultLimit) results")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
+                    if expenses.count > visibleLimit {
+                        Button("Load more results", action: loadMore)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .accessibilityIdentifier("search-load-more")
                     }
                 }
                 .scrollContentBackground(.hidden)
@@ -120,7 +118,7 @@ private struct ExpenseSearchResults: View {
 
     private func makeSections() -> [ExpenseSearchSection] {
         let calendar = Calendar.current
-        let groupedExpenses = Dictionary(grouping: expenses) { expense in
+        let groupedExpenses = Dictionary(grouping: expenses.prefix(visibleLimit)) { expense in
             calendar.startOfDay(for: expense.date)
         }
 

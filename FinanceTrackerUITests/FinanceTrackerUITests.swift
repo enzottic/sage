@@ -622,6 +622,51 @@ final class FinanceTrackerUITests: XCTestCase {
         )
     }
 
+    func testSearchLoadsOlderResultsAndResetsForNewQuery() {
+        let app = XCUIApplication()
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
+        app.launchEnvironment["SAGE_UI_TEST_SEED_SEARCH"] = "1"
+        app.launch()
+        let searchTab = app.tabBars.buttons["Search"]
+        XCTAssertTrue(searchTab.waitForExistence(timeout: timeout))
+        searchTab.tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        field.tap()
+        field.typeText("Needle")
+
+        let more = app.buttons["search-load-more"]
+        for _ in 0..<40 {
+            if more.exists && more.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(more.isHittable)
+        more.tap()
+        let older = expenseRow(named: "Search Needle 100", in: app)
+        for _ in 0..<5 {
+            if older.exists && older.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(older.isHittable, "The oldest match should become reachable after loading more.")
+        XCTAssertFalse(more.exists, "The final page should not offer more results.")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Search - oldest result after loading more"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+
+        field.tap()
+        field.typeText(" 100")
+        XCTAssertTrue(older.waitForExistence(timeout: timeout))
+        field.buttons["Clear text"].tap()
+        field.typeText("Needle")
+        for _ in 0..<40 {
+            if more.exists && more.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(more.isHittable, "Changing the query must reset pagination to 100 results.")
+    }
+
     func testDeletesExpense() {
         let app = launchApp(seedExpense: "Expense to Delete")
         openExpenses(in: app)

@@ -42,6 +42,16 @@ struct SageApp: App {
                     )
                     try container.mainContext.save()
                 }
+                if UITestConfiguration.seedsSearch {
+                    let date = Date.now
+                    for index in 0..<101 {
+                        container.mainContext.insert(Expense(
+                            name: "Search Needle \(index)", amount: 1,
+                            date: date.addingTimeInterval(Double(-index))
+                        ))
+                    }
+                    try container.mainContext.save()
+                }
                 if UITestConfiguration.seedsCalendar {
                     let calendar = Calendar.current
                     let today = calendar.startOfDay(for: .now)
