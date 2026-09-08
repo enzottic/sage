@@ -9,11 +9,13 @@ import SwiftUI
 import WidgetKit
 import SwiftData
 import SageKit
+import UserNotifications
 
 struct OnboardingView: View {
     @Environment(AppConfiguration.self) var config
     @Environment(\.modelContext) private var modelContext
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(\.recurringReminders) private var reminders
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @ScaledMetric(relativeTo: .largeTitle) private var incomeFontSize = 64
@@ -30,6 +32,10 @@ struct OnboardingView: View {
     @State private var cloudSyncEnabled = false
     @State private var tagTemplates = ExpenseTag.suggestedTags
     @State private var selectedTagNames: Set<String> = []
+    @State private var recurringRemindersEnabled = false
+    @State private var dailyReminderEnabled = false
+    @State private var requestingNotificationPermission = false
+    @State private var notificationPermissionMessage: String?
     @State private var completionErrorMessage: String?
     @FocusState private var incomeFocused: Bool
     @AccessibilityFocusState private var headingFocused: Bool
@@ -41,7 +47,7 @@ struct OnboardingView: View {
     }
 
     enum OnboardingStep: Int, CaseIterable, Hashable {
-        case welcome, budget, allocation, sync, tags, complete
+        case welcome, budget, allocation, sync, tags, reminders, complete
 
         var buttonIdentifier: String {
             switch self {
@@ -50,6 +56,7 @@ struct OnboardingView: View {
             case .allocation: "onboarding-allocation-continue-button"
             case .sync: "onboarding-sync-continue-button"
             case .tags: "onboarding-tags-continue-button"
+            case .reminders: "onboarding-reminders-continue-button"
             case .complete: "onboarding-start-tracking-button"
             }
         }
@@ -122,6 +129,14 @@ struct OnboardingView: View {
             } message: {
                 Text(completionErrorMessage ?? "Check available storage and try again.")
             }
+            .alert("Notifications are off", isPresented: Binding(
+                get: { notificationPermissionMessage != nil },
+                set: { if !$0 { notificationPermissionMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(notificationPermissionMessage ?? "")
+            }
         }
         .fontDesign(.rounded)
         .tint(.sage)
@@ -137,6 +152,8 @@ struct OnboardingView: View {
         .onAppear {
             guard !didLoadCurrency else { return }
             didLoadCurrency = true
+            recurringRemindersEnabled = config.billRemindersEnabled
+            dailyReminderEnabled = config.dailyExpenseReminderEnabled
             if !UITestConfiguration.isEnabled {
                 selectedCurrencyCode = config.ledgerCurrencyCode ?? config.cloudLedgerCurrencyCode ?? LedgerCurrency.suggestedCode()
             }
@@ -164,7 +181,7 @@ struct OnboardingView: View {
                     move(to: next)
                 }
             } label: {
-                Text(currentStep == .welcome ? "Get Started" : currentStep == .complete ? "Start Tracking" : "Continue")
+                Text(requestingNotificationPermission ? "Requesting permission..." : currentStep == .welcome ? "Get Started" : currentStep == .complete ? "Start Tracking" : "Continue")
                     .font(.headline)
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .foregroundStyle(Color(red: 0.10, green: 0.17, blue: 0.07))
@@ -175,6 +192,7 @@ struct OnboardingView: View {
             .disabled(currentStep == .budget && (monthlyIncome ?? 0) <= 0)
             .accessibilityIdentifier(currentStep.buttonIdentifier)
         }
+        .disabled(requestingNotificationPermission)
         .frame(maxWidth: 520)
         .padding(.horizontal, 24)
         .padding(.top, 16)
@@ -197,6 +215,7 @@ struct OnboardingView: View {
         case .allocation: allocationPage
         case .sync: syncPage
         case .tags: tagsPage
+        case .reminders: remindersPage
         case .complete: completePage
         }
     }
@@ -346,6 +365,56 @@ struct OnboardingView: View {
         }
     }
 
+    private var remindersPage: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            heading("Enable Reminders?", subtitle: "Get reminded when recurring expenses are due, and a daily reminder to add expenses from the day.")
+
+            VStack(alignment: .leading, spacing: 24) {
+                Toggle(isOn: Binding(
+                    get: { recurringRemindersEnabled },
+                    set: {
+                        recurringRemindersEnabled = $0
+                        if $0 { requestNotificationPermission() }
+                    }
+                )) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Recurring expenses")
+                            .font(.headline)
+                        Text("Get a reminder before recurring expenses are due.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .accessibilityIdentifier("onboarding-recurring-reminders-toggle")
+
+                Divider()
+
+                Toggle(isOn: Binding(
+                    get: { dailyReminderEnabled },
+                    set: {
+                        dailyReminderEnabled = $0
+                        if $0 { requestNotificationPermission() }
+                    }
+                )) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Daily reminder")
+                            .font(.headline)
+                        Text("Remember to add your expenses at the end of the day.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .accessibilityIdentifier("onboarding-daily-reminder-toggle")
+            }
+            .disabled(requestingNotificationPermission)
+            .padding(24)
+            .background(Color.cardBackground, in: .rect(cornerRadius: 24))
+
+        }
+    }
+
     private var completePage: some View {
         VStack(alignment: .leading, spacing: 28) {
             heading("Your budget is ready", subtitle: "Here's your monthly breakdown.")
@@ -389,6 +458,27 @@ struct OnboardingView: View {
         currentStep = step
     }
 
+    private func requestNotificationPermission() {
+        guard !requestingNotificationPermission, reminders != nil else { return }
+        requestingNotificationPermission = true
+        Task { @MainActor in
+            defer {
+                requestingNotificationPermission = false
+            }
+            let center = UNUserNotificationCenter.current()
+            do {
+                if await center.notificationSettings().authorizationStatus == .notDetermined {
+                    _ = try await center.requestAuthorization(options: [.alert, .sound])
+                }
+                if await center.notificationSettings().authorizationStatus == .denied {
+                    notificationPermissionMessage = "You can finish setup without notifications. Your reminder choices will be saved, but delivery is blocked until you allow notifications in iOS Settings."
+                }
+            } catch {
+                notificationPermissionMessage = "Syl could not request notification permission. You can finish setup and try again from Settings. \(error.localizedDescription)"
+            }
+        }
+    }
+
     private func completeOnboarding() {
         guard (monthlyIncome ?? 0) > 0 else { return }
         guard config.updateCloudSyncEnabled(cloudSyncEnabled) else {
@@ -424,6 +514,9 @@ struct OnboardingView: View {
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100
         config.savingsPercent = savingsPercent / 100
+        config.billRemindersEnabled = recurringRemindersEnabled
+        config.dailyExpenseReminderEnabled = dailyReminderEnabled
+        reminders?.refresh()
         config.markSetupComplete()
         WhatsNewStore.markCurrentVersionSeen()
         WidgetCenter.shared.reloadAllTimelines()
