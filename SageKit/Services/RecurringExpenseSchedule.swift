@@ -1,6 +1,6 @@
 import Foundation
 
-/// One schedule for generation, projection and upcoming dates. Display calendars do not
+/// One schedule for generation and upcoming dates. Display calendars do not
 /// override a fixed rule's Gregorian calendar and persisted time zone.
 public struct RecurringExpenseSchedule {
     private let rule: RecurringExpenseRule

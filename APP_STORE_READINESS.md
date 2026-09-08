@@ -226,11 +226,9 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
   [month summary](SageKit/Analytics/SpendingMonthSummary.swift).
 
-- [ ] **Resolve the unused projection API before reuse.** `SpendingProjection`
-  is now called only by tests, but still lacks explicit future-record handling
-  and occurrence deduplication. Remove it if no longer needed, or define and test
-  those semantics before restoring forecasts; the API itself was not repaired.
-  Source: [projection](SageKit/Analytics/SpendingProjection.swift).
+- [x] **Remove the unused projection API.** Spending forecasts are no longer a
+  product feature, so `SpendingProjection` and its tests were removed rather
+  than defining semantics for a dormant API (#55).
 
 - [ ] **Use the same comparison cutoff on Home and Stats.** Home's previous-month
   cutoff drops the time of day, unlike its current-period cutoff, and lacks Stats'
@@ -443,7 +441,7 @@ above remain open. Do not reopen these items as entirely unimplemented.
 - [x] Persistent ledger currency, legacy confirmation, and currency-aware CSV
   compatibility/validation (`defea81`).
 - [x] Fixed-zone anchored recurrence for new/explicitly converted rules and
-  shared generation/projection stepping (`c223aa6`). Legacy rules intentionally
+  shared generation/upcoming-date stepping (`c223aa6`). Legacy rules intentionally
   keep their old schedule until confirmed.
 - [x] Shared entry-time monetary precision/range validation, refunds, and immediate
   amount binding updates (`35b5981`). Invalid amounts require correction when saved
