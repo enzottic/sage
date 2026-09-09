@@ -609,19 +609,24 @@ final class FinanceTrackerUITests: XCTestCase {
         let settings = app.tabBars.buttons["Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: timeout))
         settings.tap()
-        app.buttons["Recurring Expenses"].tap()
+        app.buttons["Notifications"].tap()
         let enabled = app.switches["bill-reminders-toggle"]
         let privacy = app.switches["bill-reminder-privacy"]
         let days = app.buttons["bill-reminder-days"]
+        let time = app.datePickers["bill-reminder-time"]
         XCTAssertTrue(enabled.waitForExistence(timeout: timeout))
         XCTAssertEqual(enabled.value as? String, "0")
-        XCTAssertEqual(privacy.value as? String, "1")
-        XCTAssertFalse(days.isEnabled)
+        XCTAssertFalse(privacy.exists)
+        XCTAssertFalse(days.exists)
+        XCTAssertFalse(time.exists)
         // SwiftUI exposes the entire row as a switch; its center is empty space.
         XCTAssertTrue(enabled.waitForHittability(timeout: timeout))
         enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertEqual(enabled.value as? String, "1")
+        XCTAssertTrue(days.waitForExistence(timeout: timeout))
         XCTAssertTrue(days.isEnabled)
+        XCTAssertTrue(time.exists)
+        XCTAssertEqual(privacy.value as? String, "1")
         XCTAssertEqual(days.value as? String, "1 day before")
         days.tap()
         XCTAssertFalse(app.buttons["8 days before"].exists)
@@ -636,8 +641,55 @@ final class FinanceTrackerUITests: XCTestCase {
         add(attachment)
         XCTAssertTrue(enabled.waitForHittability(timeout: timeout))
         enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        XCTAssertFalse(days.isEnabled)
+        XCTAssertTrue(days.waitForNonExistence(timeout: timeout))
+        XCTAssertFalse(time.exists)
+        XCTAssertFalse(privacy.exists)
+        captureScreenshot("Recurring reminder settings - disabled", in: app)
+        enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertTrue(days.waitForExistence(timeout: timeout))
         XCTAssertEqual(days.value as? String, "7 days before")
+        XCTAssertEqual(privacy.value as? String, "0")
+    }
+
+    func testNotificationsSettingsShowsDailyTimeOnlyWhenEnabled() {
+        let app = launchApp()
+        tap(app.tabBars.buttons["Settings"], named: "Settings")
+        XCTAssertFalse(app.buttons["Daily Reminder"].exists)
+        tap("Notifications", in: app)
+        XCTAssertTrue(app.navigationBars["Notifications"].waitForExistence(timeout: timeout))
+
+        let recurring = app.switches["bill-reminders-toggle"]
+        let daily = app.switches["daily-expense-reminder-toggle"]
+        let time = app.datePickers["daily-expense-reminder-time"]
+        XCTAssertTrue(recurring.exists)
+        XCTAssertEqual(recurring.value as? String, "0")
+        XCTAssertTrue(scrollToVisibility(of: daily, in: app))
+        XCTAssertEqual(daily.value as? String, "0")
+        XCTAssertFalse(time.exists)
+        captureScreenshot("Notifications - daily reminder off", in: app)
+
+        daily.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertTrue(time.waitForExistence(timeout: timeout))
+        XCTAssertTrue(scrollToVisibility(of: time, in: app))
+        XCTAssertTrue(time.isEnabled)
+        let selectedTime = time.value as? String
+        captureScreenshot("Notifications - daily reminder on", in: app)
+
+        tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
+        tap("Notifications", in: app)
+        XCTAssertTrue(scrollToVisibility(of: daily, in: app))
+        XCTAssertEqual(daily.value as? String, "1")
+        XCTAssertEqual(time.value as? String, selectedTime)
+        daily.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertTrue(time.waitForNonExistence(timeout: timeout))
+        daily.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertTrue(time.waitForExistence(timeout: timeout))
+        XCTAssertEqual(time.value as? String, selectedTime)
+
+        tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
+        tap("Recurring Expenses", in: app)
+        XCTAssertTrue(app.staticTexts["No Recurring Expense Rules"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(recurring.exists, "Notification controls should only appear on Notifications.")
     }
 
     func testShowAllRestoresMonthAndClearsDetail() {
@@ -935,19 +987,17 @@ final class FinanceTrackerUITests: XCTestCase {
 
     private func assertReminderSettings(recurringEnabled: Bool, dailyEnabled: Bool, in app: XCUIApplication) {
         tap(app.tabBars.buttons["Settings"], named: "Settings tab")
-        for (page, identifier, enabled) in [
-            ("Recurring Expenses", "bill-reminders-toggle", recurringEnabled),
-            ("Daily Reminder", "daily-expense-reminder-toggle", dailyEnabled)
+        tap("Notifications", in: app)
+        for (identifier, enabled) in [
+            ("bill-reminders-toggle", recurringEnabled),
+            ("daily-expense-reminder-toggle", dailyEnabled)
         ] {
-            let link = app.buttons[page]
-            XCTAssertTrue(scrollToVisibility(of: link, in: app))
-            tap(link, named: page)
             let toggle = app.switches[identifier]
             XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
             XCTAssertTrue(scrollToVisibility(of: toggle, in: app))
-            XCTAssertEqual(toggle.value as? String, enabled ? "1" : "0", "Start Tracking must save the onboarding choice for \(page).")
-            tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
+            XCTAssertEqual(toggle.value as? String, enabled ? "1" : "0", "Start Tracking must save the onboarding choice for \(identifier).")
         }
+        tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
     }
 
     private func openNewExpense(in app: XCUIApplication) {

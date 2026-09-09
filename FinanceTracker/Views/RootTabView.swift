@@ -70,7 +70,7 @@ struct RootTabView: View {
         .tabViewSearchActivation(.searchTabSelection)
         .accessibilityIdentifier("main-tab-view")
         .sheet(isPresented: $isShowingSettings) {
-            SettingsView(showsDismissButton: true)
+            SettingsView(showsDismissButton: true, showsGradientBackground: false)
                 .presentationSizing(.form)
         }
         .sheet(item: $appRouter.presentedSheet) { sheet in

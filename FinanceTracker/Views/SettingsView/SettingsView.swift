@@ -19,6 +19,7 @@ struct SettingsView: View {
     @Environment(\.recurringReminders) private var reminders
 
     var showsDismissButton = false
+    var showsGradientBackground = true
 
     @State private var showExpenseDeletionOptions = false
     @State private var showFullResetConfirmation = false
@@ -65,7 +66,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach([SettingsPage.budget, .recurringExpenses, .dailyReminder, .tags], id: \.self) { page in
+                    ForEach([SettingsPage.budget, .recurringExpenses, .notifications, .tags], id: \.self) { page in
                         NavigationLink(value: page) {
                             SettingsListItem(text: page.rawValue, icon: page.icon, color: page.color)
                         }
@@ -136,7 +137,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            .settingsBackground()
+            .settingsBackground(showGradientBackground: showsGradientBackground)
             .navigationDestination(for: SettingsPage.self) { page in
                 switch page {
                 case .appearance:
@@ -145,8 +146,8 @@ struct SettingsView: View {
                     BudgetSettingsSection()
                 case .recurringExpenses:
                     RecurringExpensesSettingsSection()
-                case .dailyReminder:
-                    DailyExpenseReminderSettingsSection()
+                case .notifications:
+                    NotificationsSettingsSection()
                 case .tags:
                     TagsSettingsSection()
                 case .backup:
@@ -270,6 +271,7 @@ struct SettingsListItem: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             Text(text)
+                .fontWeight(.bold)
         }
     }
 }
@@ -278,7 +280,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
     case appearance = "Appearance"
     case budget = "Budget and Allocation"
     case recurringExpenses = "Recurring Expenses"
-    case dailyReminder = "Daily Reminder"
+    case notifications = "Notifications"
     case tags = "Tags"
     case backup = "Backup"
     case privacy = "Privacy"
@@ -288,7 +290,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .appearance: "paintpalette.fill"
         case .budget: "chart.bar.horizontal.page.fill"
         case .recurringExpenses: "arrow.trianglehead.clockwise"
-        case .dailyReminder: "bell.fill"
+        case .notifications: "bell.fill"
         case .tags: "tag.fill"
         case .backup: "cloud.fill"
         case .privacy: "hand.raised.fill"
@@ -301,7 +303,7 @@ enum SettingsPage: String, Hashable, CaseIterable {
         case .budget: .green
         case .tags: .purple
         case .recurringExpenses: .orange
-        case .dailyReminder: .sage
+        case .notifications: .sage
         case .backup: .blue
         case .privacy: .red
         }

@@ -35,10 +35,17 @@ extension View {
     }
 
     /// Applies the Sage background treatment used by Settings lists.
-    func settingsBackground() -> some View {
-        scrollContentBackground(.hidden)
-            .textCase(nil)
-            .background(.sageBackground)
-            .gradientBackground()
+    @ViewBuilder
+    func settingsBackground(showGradientBackground: Bool = true) -> some View {
+        if showGradientBackground && UIDevice.current.userInterfaceIdiom != .pad {
+            scrollContentBackground(.hidden)
+                .textCase(nil)
+                .background(.sageBackground)
+                .gradientBackground()
+        } else {
+            scrollContentBackground(.hidden)
+                .textCase(nil)
+                .background(.sageBackground)
+        }
     }
 }

@@ -5,14 +5,11 @@
 import SwiftUI
 import SwiftData
 import SageKit
-import UserNotifications
 
 struct RecurringExpensesSettingsSection: View {
     @Environment(AppRouter.self) var router
     @Environment(\.modelContext) private var modelContext
-    @Environment(AppConfiguration.self) private var config
     @Environment(\.recurringReminders) private var reminders
-    @Environment(\.openURL) private var openURL
 
     @Query private var rules: [RecurringExpenseRule]
 
@@ -27,66 +24,9 @@ struct RecurringExpensesSettingsSection: View {
     @State private var ruleToEdit: RecurringExpenseRule? = nil
     @State private var ruleToDelete: RecurringExpenseRule? = nil
     @State private var showDeleteConfirmation = false
-    @State private var isRequestingPermission = false
-    @State private var permissionError: String?
 
     var body: some View {
-        @Bindable var config = config
         List {
-            Section {
-                Toggle("Bill Reminders", isOn: Binding(
-                    get: { config.billRemindersEnabled },
-                    set: { setRemindersEnabled($0) }
-                ))
-                .disabled(isRequestingPermission)
-                .accessibilityIdentifier("bill-reminders-toggle")
-
-                Picker("Remind Me", selection: $config.billReminderDaysBefore) {
-                    Text("1 day before").tag(1)
-                    ForEach(2...7, id: \.self) { days in
-                        Text("\(days) days before").tag(days)
-                    }
-                }
-                .disabled(!config.billRemindersEnabled)
-                .accessibilityIdentifier("bill-reminder-days")
-                .accessibilityValue(config.billReminderDaysBefore == 1
-                    ? Text("1 day before")
-                    : Text("\(config.billReminderDaysBefore) days before"))
-
-                ReminderTimePicker(minutes: $config.billReminderTimeMinutes)
-                    .disabled(!config.billRemindersEnabled)
-                    .accessibilityIdentifier("bill-reminder-time")
-
-                Toggle("Hide Expense Details", isOn: $config.hideBillReminderDetails)
-                    .accessibilityIdentifier("bill-reminder-privacy")
-            } header: {
-                Text("Reminders")
-            } footer: {
-                Text("One summary at your chosen local time for all recurring expenses scheduled on the target day. When details are visible, expense names and amounts may appear on your Lock Screen.")
-            }
-
-            if config.billRemindersEnabled {
-                Section {
-                    if isRequestingPermission {
-                        ProgressView("Requesting notification permission")
-                    } else if reminders?.scheduler.authorizationStatus == .denied {
-                        Text("Notifications are blocked in iOS Settings.")
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
-                        }
-                    } else if let error = permissionError ?? reminders?.scheduler.errorMessage {
-                        Text("Syl could not update reminders. \(error)")
-                        Button("Retry") { setRemindersEnabled(true) }
-                    } else if reminders?.scheduler.authorizationStatus == .provisional {
-                        Text("Notifications are delivered quietly. You can enable alerts in iOS Settings.")
-                    } else if reminders?.scheduler.isRefreshing == true {
-                        ProgressView("Updating reminders")
-                    } else if rules.isEmpty {
-                        Text("Reminders will begin when you add a recurring expense.")
-                    }
-                }
-                .font(.footnote)
-            }
             if rules.isEmpty {
                 ContentUnavailableView(
                     "No Recurring Expense Rules",
@@ -120,9 +60,6 @@ struct RecurringExpensesSettingsSection: View {
             }
         }
         .settingsBackground()
-        .onChange(of: config.billReminderDaysBefore) { reminders?.refresh() }
-        .onChange(of: config.billReminderTimeMinutes) { reminders?.refresh() }
-        .onChange(of: config.hideBillReminderDetails) { reminders?.refresh() }
         .sheet(item: $ruleToEdit) { rule in
             EditRecurringRuleSheet(rule: rule)
                 .presentationBackground(.sageBackground)
@@ -146,27 +83,6 @@ struct RecurringExpensesSettingsSection: View {
             Button("Cancel", role: .cancel) {}
         } message: { rule in
             Text("'\(rule.name)' will stop generating future expenses. Past expenses will not be deleted.")
-        }
-    }
-
-    private func setRemindersEnabled(_ enabled: Bool) {
-        config.billRemindersEnabled = enabled
-        permissionError = nil
-        guard enabled, reminders != nil else {
-            reminders?.refresh()
-            return
-        }
-        isRequestingPermission = true
-        Task { @MainActor in
-            defer {
-                isRequestingPermission = false
-                reminders?.refresh()
-            }
-            let center = UNUserNotificationCenter.current()
-            if await center.notificationSettings().authorizationStatus == .notDetermined {
-                do { _ = try await center.requestAuthorization(options: [.alert, .sound]) }
-                catch { permissionError = error.localizedDescription }
-            }
         }
     }
 }

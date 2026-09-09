@@ -11,41 +11,21 @@ struct DailyExpenseReminderSettingsSection: View {
 
     var body: some View {
         @Bindable var config = config
-        List {
-            Section {
-                Toggle("Daily Reminder", isOn: Binding(
-                    get: { config.dailyExpenseReminderEnabled },
-                    set: { setEnabled($0) }
-                ))
-                .disabled(requestingPermission)
-                .accessibilityIdentifier("daily-expense-reminder-toggle")
-                ReminderTimePicker(minutes: $config.dailyExpenseReminderTimeMinutes)
-                    .disabled(!config.dailyExpenseReminderEnabled)
-                    .accessibilityIdentifier("daily-expense-reminder-time")
-            }
+        Section {
+            Toggle("Daily Reminder", isOn: Binding(
+                get: { config.dailyExpenseReminderEnabled },
+                set: { setEnabled($0) }
+            ))
+            .disabled(requestingPermission)
+            .accessibilityIdentifier("daily-expense-reminder-toggle")
 
             if config.dailyExpenseReminderEnabled {
-                Section {
-                    if requestingPermission {
-                        ProgressView("Requesting notification permission")
-                    } else if reminders?.dailyScheduler.authorizationStatus == .denied {
-                        Text("Notifications are blocked in iOS Settings.")
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
-                        }
-                    } else if let error = permissionError ?? reminders?.dailyScheduler.errorMessage {
-                        Text("Syl could not update your daily reminder. \(error)")
-                        Button("Retry") { setEnabled(true) }
-                    } else if reminders?.dailyScheduler.authorizationStatus == .provisional {
-                        Text("Notifications are delivered quietly. You can enable alerts in iOS Settings.")
-                    }
-                }
-                .font(.footnote)
+                ReminderTimePicker(minutes: $config.dailyExpenseReminderTimeMinutes)
+                    .accessibilityIdentifier("daily-expense-reminder-time")
             }
+        } header: {
+            Text("Daily Reminder")
         }
-        .settingsBackground()
-        .navigationTitle("Daily Reminder")
-        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: config.dailyExpenseReminderTimeMinutes) { reminders?.refresh() }
     }
 

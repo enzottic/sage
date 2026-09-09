@@ -199,7 +199,6 @@ struct AddExpenseView: View {
             }
             await parseReceipt(image)
         }
-        .gradientBackground()
     }
 
     private var pastExpenseSuggestions: [Expense] {
