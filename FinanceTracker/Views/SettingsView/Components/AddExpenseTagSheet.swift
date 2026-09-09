@@ -44,8 +44,11 @@ struct AddExpenseTagSheet: View {
         (glyph.emojiValue ?? fallbackEmoji, glyph.symbolValue)
     }
     
-    private let presetColors: [Color] = [
-        .red, .orange, .yellow, .green, .mint, .teal, .blue, .indigo, .purple, .pink
+    private let presetColors: [(color: Color, label: LocalizedStringKey)] = [
+        (.red, "Red color"), (.orange, "Orange color"), (.yellow, "Yellow color"),
+        (.green, "Green color"), (.mint, "Mint color"), (.teal, "Teal color"),
+        (.blue, "Blue color"), (.indigo, "Indigo color"), (.purple, "Purple color"),
+        (.pink, "Pink color")
     ]
     
     private var displayName: String {
@@ -80,9 +83,96 @@ struct AddExpenseTagSheet: View {
                 Spacer()
             }
             .padding(.horizontal)
-            Spacer()
+            ScrollView {
+                editorContent
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
 
-            // Form fields
+            // Add / Save button
+            Button {
+                guard canSave else { return }
+                let currencyCode = config.ledgerCurrencyCode
+                // Only turning the toggle off clears a previously set cap.
+                let resolvedBudget = parsedBudget
+                if hasBudget {
+                    guard let resolvedBudget,
+                          resolvedBudget == tagToEdit?.budget || MonetaryAmount.isValid(resolvedBudget, currencyCode: currencyCode, requiresPositive: true) else {
+                        saveErrorMessage = budgetValidationMessage
+                        return
+                    }
+                }
+                let stored = storedGlyphFields
+                do {
+                    if let tag = tagToEdit {
+                        tag.name = name
+                        tag.uiColor = UIColor(color)
+                        tag.emoji = stored.emoji
+                        tag.symbolName = stored.symbolName
+                        tag.budget = resolvedBudget
+                        try modelContext.save()
+                    } else {
+                        let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: stored.emoji, symbolName: stored.symbolName, budget: resolvedBudget)
+                        modelContext.insert(newExpenseTag)
+                        try modelContext.save()
+                        onTagAdded?(newExpenseTag)
+                    }
+                    dismiss()
+                } catch {
+                    modelContext.rollback()
+                    saveErrorMessage = "Syl could not save this tag. Check available storage and try again."
+                }
+            } label: {
+                Text(isEditing ? "Save Tag" : "Add Tag")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(color)
+            .disabled(!canSave)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+        .padding(.top)
+        .sheet(isPresented: $showingGlyphPicker) {
+            TagGlyphPickerSheet(glyph: $glyph, tint: color)
+        }
+        .alert("Could not save tag", isPresented: Binding(
+            get: { saveErrorMessage != nil },
+            set: { if !$0 { saveErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage ?? "Please try again.")
+        }
+        .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }
+                .accessibilityIdentifier("discard-tag-button")
+            Button("Keep Editing", role: .cancel) {}
+                .accessibilityIdentifier("keep-editing-tag-button")
+        } message: {
+            Text("Your unsaved tag changes will be lost.")
+        }
+        .interactiveDismissDisabled(hasChanges)
+        .onChange(of: glyph) { _, newValue in
+            if case .emoji(let value) = newValue { fallbackEmoji = value }
+        }
+        .onAppear {
+            if let tag = tagToEdit {
+                name = tag.name
+                glyph = tag.glyph
+                fallbackEmoji = tag.emoji
+                color = Color(tag.uiColor)
+                hasBudget = tag.budget != nil
+                budgetText = tag.budget.map { AmountInput.text(for: $0) } ?? ""
+            }
+            initialDraft = currentDraft
+        }
+    }
+
+    private var editorContent: some View {
+        VStack(spacing: 24) {
             VStack(spacing: 16) {
                 // Glyph + Name row
                 HStack(spacing: 12) {
@@ -92,9 +182,12 @@ struct AddExpenseTagSheet: View {
                         TagGlyphView(glyph)
                             .font(.title2)
                             .foregroundStyle(color)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 48, height: 48)
                             .background(Circle().fill(color.quaternary))
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Choose tag icon")
+                    .accessibilityValue(glyph.symbolValue.map { TagSymbolCatalog.accessibilityName(for: $0) } ?? glyph.emojiValue ?? "")
 
                     TextField("Tag Name", text: $name)
                         .font(.body)
@@ -104,28 +197,34 @@ struct AddExpenseTagSheet: View {
                 }
                
                 // Color presets
-                HStack(spacing: 0) {
-                    ForEach(presetColors, id: \.self) { preset in
+                // Leave room for the system's medium-sheet scaling while keeping 44-point targets.
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: 8)], spacing: 8) {
+                    ForEach(presetColors, id: \.color) { preset in
+                        let isSelected = UIColor(color).isEqual(UIColor(preset.color))
                         Button {
                             withAnimation(.easeInOut(duration: 0.2)) {
-                                color = preset
+                                color = preset.color
                             }
                         } label: {
                             Circle()
-                                .fill(preset)
+                                .fill(preset.color)
                                 .frame(width: 28, height: 28)
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.primary, lineWidth: color == preset ? 2.5 : 0)
+                                        .stroke(Color.primary, lineWidth: isSelected ? 2.5 : 0)
                                         .padding(-2)
                                 )
+                                .frame(maxWidth: .infinity, minHeight: 48)
+                                .contentShape(Rectangle())
                         }
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(preset.label))
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
                     }
                     
-                    ColorPicker("", selection: $color)
+                    ColorPicker("Custom color", selection: $color)
                         .labelsHidden()
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, minHeight: 48)
                 }
 
                 Divider()
@@ -186,88 +285,8 @@ struct AddExpenseTagSheet: View {
             }
             .animation(.easeInOut(duration: 0.2), value: color)
             .animation(.easeInOut(duration: 0.2), value: glyph)
-            
-            Spacer()
-            
-            // Add / Save button
-            Button {
-                guard canSave else { return }
-                let currencyCode = config.ledgerCurrencyCode
-                // Only turning the toggle off clears a previously set cap.
-                let resolvedBudget = parsedBudget
-                if hasBudget {
-                    guard let resolvedBudget,
-                          resolvedBudget == tagToEdit?.budget || MonetaryAmount.isValid(resolvedBudget, currencyCode: currencyCode, requiresPositive: true) else {
-                        saveErrorMessage = budgetValidationMessage
-                        return
-                    }
-                }
-                let stored = storedGlyphFields
-                do {
-                    if let tag = tagToEdit {
-                        tag.name = name
-                        tag.uiColor = UIColor(color)
-                        tag.emoji = stored.emoji
-                        tag.symbolName = stored.symbolName
-                        tag.budget = resolvedBudget
-                        try modelContext.save()
-                    } else {
-                        let newExpenseTag = ExpenseTag(name: name, uiColor: UIColor(color), emoji: stored.emoji, symbolName: stored.symbolName, budget: resolvedBudget)
-                        modelContext.insert(newExpenseTag)
-                        try modelContext.save()
-                        onTagAdded?(newExpenseTag)
-                    }
-                    dismiss()
-                } catch {
-                    modelContext.rollback()
-                    saveErrorMessage = "Syl could not save this tag. Check available storage and try again."
-                }
-            } label: {
-                Text(isEditing ? "Save Tag" : "Add Tag")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(color)
-            .disabled(!canSave)
-            .padding(.horizontal)
-            .padding(.bottom, 8)
         }
-        .sheet(isPresented: $showingGlyphPicker) {
-            TagGlyphPickerSheet(glyph: $glyph, tint: color)
-        }
-        .alert("Could not save tag", isPresented: Binding(
-            get: { saveErrorMessage != nil },
-            set: { if !$0 { saveErrorMessage = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(saveErrorMessage ?? "Please try again.")
-        }
-        .confirmationDialog("Discard changes?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
-            Button("Discard Changes", role: .destructive) { dismiss() }
-                .accessibilityIdentifier("discard-tag-button")
-            Button("Keep Editing", role: .cancel) {}
-                .accessibilityIdentifier("keep-editing-tag-button")
-        } message: {
-            Text("Your unsaved tag changes will be lost.")
-        }
-        .interactiveDismissDisabled(hasChanges)
-        .onChange(of: glyph) { _, newValue in
-            if case .emoji(let value) = newValue { fallbackEmoji = value }
-        }
-        .onAppear {
-            if let tag = tagToEdit {
-                name = tag.name
-                glyph = tag.glyph
-                fallbackEmoji = tag.emoji
-                color = Color(tag.uiColor)
-                hasBudget = tag.budget != nil
-                budgetText = tag.budget.map { AmountInput.text(for: $0) } ?? ""
-            }
-            initialDraft = currentDraft
-        }
+        .padding(.bottom)
     }
 
     private var currentDraft: TagDraft {

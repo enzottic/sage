@@ -298,11 +298,30 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [glyph picker](FinanceTracker/Views/SettingsView/Components/TagGlyphPickerSheet.swift),
   [tag picker](FinanceTracker/Views/Components/TagPicker.swift).
 
-- [ ] **Finish tag-editor control labels and hit areas.** Label the glyph launcher
-  and custom color picker; give preset colors meaningful names, selected semantics,
-  and at least 44-point targets. Add selected semantics to unknown-tag import choices.
+- [x] **Finish tag-editor control labels and hit areas.** (#61) The glyph launcher
+  announces its action and current icon/emoji; the native custom color picker is
+  labeled. Named presets expose selection and use 48-point minimum cells in an
+  adaptive grid, allowing for medium-sheet scaling. The form scrolls with Cancel
+  and Save kept outside it; the Settings add sheet can expand to large. Preset
+  matching uses UIColor equality so reopening a saved tag retains selection.
+  Unknown-tag import choices already expose conditional selected traits and were
+  left unchanged.
+  Evidence: both `TagEditorUITests` passed on iPhone 17 Pro and iPhone 17e
+  simulators (iOS 26.5), covering light/dark appearance, accessibility XL text,
+  all ten preset edge taps, minimum target dimensions, selection changes, native
+  picker presentation, glyph value, and save/reopen/cancel. Screenshots were
+  reviewed. The compact light test needed a test-only correction for the native
+  color picker's different dismissal label, then passed.
+  Results: `SageTagEditorVerified.xcresult` (2 passed),
+  `SageTagEditorCompact.xcresult` (dark passed), and
+  `SageTagEditorCompactRetry.xcresult` (light passed), under the local OpenCode
+  temporary directory. VoiceOver on device, the unknown-tag import interaction,
+  and full-motion/release verification remain unperformed. Existing budget-help
+  truncation at accessibility sizes and palette-dependent text contrast are not
+  addressed by this control-label/hit-area change.
   Sources: [tag editor](FinanceTracker/Views/SettingsView/Components/AddExpenseTagSheet.swift),
-  [import choices](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
+  [import choices](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift),
+  [UI tests](FinanceTrackerUITests/Settings/TagEditorUITests.swift).
 
 - [x] **Use a dark foreground on the onboarding primary action.** The action no
   longer uses white text on Sage. Full rendered contrast verification remains open.

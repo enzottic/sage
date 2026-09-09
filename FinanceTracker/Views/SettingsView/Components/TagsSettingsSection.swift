@@ -140,12 +140,13 @@ struct TagsSettingsSection: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Add new tag")
             }
         }
         .sheet(isPresented: $showAddTagSheet) {
             AddExpenseTagSheet()
                 .presentationBackground(.sageBackground)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
         .sheet(item: $tagToEdit) { tag in
             AddExpenseTagSheet(tagToEdit: tag)
