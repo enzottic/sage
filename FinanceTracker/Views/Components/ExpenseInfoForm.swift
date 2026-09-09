@@ -217,7 +217,7 @@ struct ExpenseInfoForm: View {
                     Spacer()
                     Text(Calendar.current.isDateInToday(date) ? "Today" : date.formatted(date: .abbreviated, time: .omitted))
                         .font(.subheadline)
-                        .foregroundStyle(showDatePicker ? .sage : .primary)
+                        .foregroundStyle(.primary)
                     Image(systemName: "chevron.down")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.tertiary)

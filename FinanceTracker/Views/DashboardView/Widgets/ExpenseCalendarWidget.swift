@@ -90,7 +90,7 @@ struct ExpenseCalendarWidget: View {
                 Text(dayNumber.formatted())
                     .font(.caption)
                     .fontWeight(isToday ? .bold : .medium)
-                    .foregroundStyle(isToday ? Color.sage : Color.primary)
+                    .foregroundStyle(.primary)
                 Text(calendarAmount(day.amount))
                     .font(.caption2)
                     .foregroundStyle(day.amount == 0 ? .secondary : .primary)

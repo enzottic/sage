@@ -7,7 +7,7 @@ final class FinanceTrackerUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
-
+    
     func testCompletesOnboarding() {
         let app = launchApp(showsOnboarding: true)
 

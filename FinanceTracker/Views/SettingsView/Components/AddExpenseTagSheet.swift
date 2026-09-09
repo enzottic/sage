@@ -79,6 +79,7 @@ struct AddExpenseTagSheet: View {
         VStack(spacing: 24) {
             HStack {
                 Button("Cancel") { requestDismissal() }
+                    .foregroundStyle(.primary)
                     .accessibilityIdentifier("cancel-tag-button")
                 Spacer()
             }
@@ -125,11 +126,12 @@ struct AddExpenseTagSheet: View {
             } label: {
                 Text(isEditing ? "Save Tag" : "Add Tag")
                     .font(.headline)
+                    .foregroundStyle(canSave ? Color.black : Color.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
             }
             .buttonStyle(.borderedProminent)
-            .tint(color)
+            .tint(.sage)
             .disabled(!canSave)
             .padding(.horizontal)
             .padding(.bottom, 8)
@@ -278,7 +280,7 @@ struct AddExpenseTagSheet: View {
                 Text(glyph: glyph, name: displayName)
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundStyle(name.isEmpty ? color.opacity(0.4) : color)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                     .background(Capsule().fill(color.quaternary))

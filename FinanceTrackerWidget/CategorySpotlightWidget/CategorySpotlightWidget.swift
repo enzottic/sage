@@ -26,7 +26,7 @@ struct CategorySpotlightEntryView: View {
                 Text(entry.category.rawValue.uppercased())
                     .font(.caption2)
                     .fontWeight(.semibold)
-                    .foregroundStyle(entry.category.color(in: categoryColors))
+                    .foregroundStyle(.primary)
                 Spacer()
                 Text(entry.budget > 0 ? entry.utilization.formatted(.percent.precision(.fractionLength(0))) : "No budget")
                     .font(.caption2)

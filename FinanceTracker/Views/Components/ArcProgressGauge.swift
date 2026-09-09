@@ -81,6 +81,8 @@ private struct ArcShape: Shape {
 }
 
 private struct ArcProgressMarker: View, Animatable {
+    @Environment(\.self) private var environment
+
     var progress: Double
     let tint: Color
     let diameter: CGFloat
@@ -95,7 +97,7 @@ private struct ArcProgressMarker: View, Animatable {
     var body: some View {
         Text(progress, format: .percent.precision(.fractionLength(0)))
             .font(.caption2.bold())
-            .foregroundStyle(.white)
+            .foregroundStyle(tint.legibleForeground(in: environment))
             .lineLimit(1)
             .minimumScaleFactor(0.65)
             .frame(width: diameter, height: diameter)

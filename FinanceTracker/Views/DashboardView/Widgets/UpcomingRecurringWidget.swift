@@ -155,7 +155,7 @@ private struct UpcomingRecurringCard: View {
                 Text(daysAway == 0 ? "today" : daysAway == 1 ? "1 day" : "\(daysAway)d")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(isImminent ? .white : .secondary)
+                    .foregroundStyle(isImminent ? .black : .secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(isImminent ? Color.orange : Color.secondary.opacity(0.15))

@@ -42,7 +42,7 @@ struct WhatsNewSheet: View {
             } label: {
                 Text("Continue")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.black)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(.sage)

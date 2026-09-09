@@ -75,7 +75,7 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
                             .font(.caption2.weight(.semibold))
                     }
                     .font(.subheadline)
-                    .foregroundStyle(isRefund ? Color.sageAccent : .secondary)
+                    .foregroundStyle(isRefund ? .primary : .secondary)
                     .frame(minHeight: 44)
                     .contentShape(Rectangle())
                 }

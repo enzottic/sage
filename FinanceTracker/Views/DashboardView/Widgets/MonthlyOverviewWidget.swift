@@ -91,11 +91,12 @@ struct MonthlyOverviewWidget: View {
         let trendColor: Color = isSpendingMore ? .red : .green
         return HStack(spacing: 4) {
             Image(systemName: isSpendingMore ? "arrow.up.right" : "arrow.down.right")
+                .foregroundStyle(trendColor)
             Text("\((abs(change)).formatted(.percent.precision(.fractionLength(0)))) vs last month")
         }
         .font(.caption)
         .fontWeight(.medium)
-        .foregroundStyle(trendColor)
+        .foregroundStyle(.primary)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(trendColor.opacity(0.12), in: .capsule)

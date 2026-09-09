@@ -68,7 +68,7 @@ struct TagPicker: View {
                     Text("Add")
                 }
                 .font(.subheadline)
-                .foregroundStyle(.white)
+                .foregroundStyle(.black)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Capsule().fill(Color.sageAccent))

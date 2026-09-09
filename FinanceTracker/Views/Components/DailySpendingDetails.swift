@@ -7,7 +7,6 @@ struct DailySpendingDetails: View {
         case allExpenses
     }
 
-    @Environment(\.categoryColors) private var categoryColors
     @Environment(AppConfiguration.self) private var config
 
     let date: Date
@@ -27,7 +26,7 @@ struct DailySpendingDetails: View {
                 if let category {
                     Text(category.rawValue)
                         .font(.caption)
-                        .foregroundStyle(category.color(in: categoryColors))
+                        .foregroundStyle(.primary)
                 }
                 Text("\(total.currencyString(code: config.ledgerCurrencyCode)) \(isFuture ? "expected this day" : "spent this day")")
                     .font(.headline)

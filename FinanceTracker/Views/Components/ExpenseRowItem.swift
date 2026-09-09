@@ -17,6 +17,7 @@ struct ExpenseRowItem: View {
     }
 
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(\.self) private var environment
     @Environment(AppConfiguration.self) private var config
     let expense: Expense
     var style: Style = .regular
@@ -62,7 +63,7 @@ struct ExpenseRowItem: View {
                 if tags.count > 1 {
                     Text("+\(tags.count - 1)")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(expense.category.color(in: categoryColors).legibleForeground(in: environment))
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
                         .background(Capsule().fill(expense.category.color(in: categoryColors)))

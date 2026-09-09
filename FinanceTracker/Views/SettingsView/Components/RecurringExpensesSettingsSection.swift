@@ -197,7 +197,8 @@ private struct RecurringRuleRow: View {
                             .foregroundStyle(.secondary)
                         Text(daysLabel(for: next))
                             .font(.caption)
-                            .foregroundStyle(isImminent(next) ? .orange : .secondary)
+                            .foregroundStyle(isImminent(next) ? .primary : .secondary)
+                            .fontWeight(isImminent(next) ? .semibold : .regular)
                     }
                     if let endDate = rule.endDate {
                         Text("· ends \(endDate.formatted(date: .abbreviated, time: .omitted))")

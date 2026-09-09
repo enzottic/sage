@@ -76,7 +76,7 @@ struct TagCapsule: View {
     var body: some View {
         if let tag, !tag.isDeleted {
             Text(glyph: tag.glyph, name: tag.name)
-                .foregroundStyle(isSelected ? tag.color : .primary)
+                .foregroundStyle(.primary)
                 .font(font)
                 .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, verticalPadding)

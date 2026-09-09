@@ -173,7 +173,7 @@ struct TagGlyphPickerSheet: View {
                 .background(RoundedRectangle(cornerRadius: 12).fill(tint.quaternary))
         }
         .buttonStyle(.plain)
-        .foregroundStyle(tint)
+        .foregroundStyle(.primary)
         .padding(.top, 8)
         // Hosts the emoji keyboard; the button above is the visible tap target. The field reports
         // exactly one emoji, so writing to this binding is the pick.

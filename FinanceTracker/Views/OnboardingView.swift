@@ -210,7 +210,8 @@ struct OnboardingView: View {
     private func heading(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.largeTitle.bold())
+                .font(.custom("MomoTrustDisplay-Regular", size: 32, relativeTo: .largeTitle))
+                .fontDesign(nil)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityFocused($headingFocused)
@@ -232,7 +233,7 @@ struct OnboardingView: View {
                 .scaledToFit()
                 .frame(width: 140, height: 140)
                 .accessibilityHidden(true)
-            heading("Welcome to Syl", subtitle: "A simple personal expense tracking app")
+            heading("welcome to syl", subtitle: "A simple personal expense tracking app")
         }
     }
 
@@ -297,8 +298,7 @@ struct OnboardingView: View {
 
     private var syncPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading(config.supportsCloudSync ? "Sync your expenses" : "Local-only dev build",
-                    subtitle: config.supportsCloudSync ? "Keep expenses up to date across your devices." : "Dev expenses and preferences stay separate from your main Syl install.")
+            heading("Sync your expenses", subtitle: "Keep expenses up to date across your devices.")
 
             HStack(spacing: 24) {
                 Image(systemName: "iphone")

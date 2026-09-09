@@ -26,6 +26,7 @@ struct StatsView: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .caption) private var tagFilterHeight = 15
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var allExpenses: [Expense]
     @State private var selectedMonth = Calendar.current.dateInterval(of: .month, for: Date())!.start
     @State private var timeframe: StatsTimeframe = .monthly
@@ -107,10 +108,17 @@ struct StatsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    if let tag = selectedTag, !tag.isDeleted {
-                        tagFilterButton(tag)
+                    VStack(alignment: .leading, spacing: 20) {
+                        ZStack(alignment: .bottomLeading) {
+                            Color.clear
+                            if let tag = selectedTag, !tag.isDeleted {
+                                tagFilterButton(tag)
+                            }
+                        }
+                        .frame(height: tagFilterHeight)
+
+                        monthlyChart(monthSummary)
                     }
-                    monthlyChart(monthSummary)
                     SpendingComparisonCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
                     if selectedTag == nil || selectedTag?.isDeleted == true {
                         topTags(monthSummary)
@@ -154,19 +162,19 @@ struct StatsView: View {
 
     private func tagFilterButton(_ tag: ExpenseTag) -> some View {
         Button { selectedTag = nil } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: 4) {
                 Text(glyph: tag.glyph, name: tag.name)
                     .lineLimit(1)
                 Image(systemName: "xmark")
-                    .font(.caption.weight(.semibold))
+                    .font(.caption2.weight(.semibold))
             }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(tag.color)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(tag.color.quaternary, in: Capsule())
-            .overlay { Capsule().strokeBorder(tag.color, lineWidth: 1.5) }
-            .frame(minHeight: 44)
+            .overlay { Capsule().strokeBorder(tag.color, lineWidth: 1) }
+            .frame(minWidth: 44, minHeight: 44, alignment: .bottomLeading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

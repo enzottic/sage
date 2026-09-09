@@ -28,7 +28,7 @@ struct AllocationSlider: View {
                 Text(percentage / 100, format: .percent.precision(.fractionLength(0)))
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundStyle(color)
+                    .foregroundStyle(.primary)
             }
 
             Slider(value: Binding(

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="25094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="25098" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="25068"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="25073"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -16,26 +16,39 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="obG-Y5-kRd">
-                                <rect key="frame" x="0.0" y="832" width="393" height="0.0"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchIconWhite" translatesAutoresizingMaskIntoConstraints="NO" id="YYz-oQ-3HE">
-                                <rect key="frame" x="132.66666666666666" y="362" width="127.99999999999997" height="128"/>
-                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Syl-Lock-Up1" userLabel="Syl Logo and Wordmark">
+                                <rect key="frame" x="98.666666666666686" y="388.66666666666669" width="196" height="75"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchIconWhite" translatesAutoresizingMaskIntoConstraints="NO" id="YYz-oQ-3HE">
+                                        <rect key="frame" x="0.0" y="0.0" width="64" height="75"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="64" id="WbL-yc-4pK"/>
+                                            <constraint firstAttribute="height" constant="75" id="fAP-9U-8kz"/>
+                                        </constraints>
+                                    </imageView>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchWordmark" translatesAutoresizingMaskIntoConstraints="NO" id="Syl-Word-Mark">
+                                        <rect key="frame" x="84" y="0.0" width="112" height="75"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="75" id="Syl-Word-Hgt"/>
+                                            <constraint firstAttribute="width" constant="112" id="Syl-Word-Wid"/>
+                                        </constraints>
+                                    </imageView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="75" id="Syl-Lock-Hgt"/>
+                                    <constraint firstAttribute="width" constant="196" id="Syl-Lock-Wid"/>
+                                    <constraint firstItem="YYz-oQ-3HE" firstAttribute="leading" secondItem="Syl-Lock-Up1" secondAttribute="leading" id="Syl-Logo-Lft"/>
+                                    <constraint firstItem="YYz-oQ-3HE" firstAttribute="centerY" secondItem="Syl-Lock-Up1" secondAttribute="centerY" id="Syl-Logo-Mid"/>
+                                    <constraint firstItem="Syl-Word-Mark" firstAttribute="leading" secondItem="YYz-oQ-3HE" secondAttribute="trailing" constant="20" id="Syl-Word-Gap"/>
+                                    <constraint firstItem="Syl-Word-Mark" firstAttribute="centerY" secondItem="YYz-oQ-3HE" secondAttribute="centerY" id="Syl-Word-Mid"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" name="Sage"/>
                         <constraints>
-                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="centerX" secondItem="obG-Y5-kRd" secondAttribute="centerX" id="5cz-MP-9tL"/>
-                            <constraint firstItem="YYz-oQ-3HE" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="JxX-ZZ-WoF"/>
-                            <constraint firstItem="YYz-oQ-3HE" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Qe8-N8-rGx"/>
-                            <constraint firstItem="obG-Y5-kRd" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" symbolic="YES" id="SfN-ll-jLj"/>
-                            <constraint firstItem="YYz-oQ-3HE" firstAttribute="width" constant="128" id="WbL-yc-4pK"/>
-                            <constraint firstAttribute="bottom" secondItem="obG-Y5-kRd" secondAttribute="bottom" constant="20" id="Y44-ml-fuU"/>
-                            <constraint firstItem="YYz-oQ-3HE" firstAttribute="height" constant="128" id="fAP-9U-8kz"/>
+                            <constraint firstItem="Syl-Lock-Up1" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="JxX-ZZ-WoF"/>
+                            <constraint firstItem="Syl-Lock-Up1" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Qe8-N8-rGx"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -45,7 +58,8 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchIconWhite" width="266.66665649414062" height="266.66665649414062"/>
+        <image name="LaunchIconWhite" width="133.33332824707031" height="155.33332824707031"/>
+        <image name="LaunchWordmark" width="112" height="75"/>
         <namedColor name="Sage">
             <color red="0.52941176470588236" green="0.66274509803921566" blue="0.41960784313725491" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

@@ -327,10 +327,22 @@ distribution, and App Store Connect checks remain open without execution evidenc
   longer uses white text on Sage. Full rendered contrast verification remains open.
   Source: [onboarding](FinanceTracker/Views/OnboardingView.swift).
 
-- [ ] **Fix remaining insufficient text contrast.** Explicit white-on-Sage combinations
-  measured approximately 2.65:1; white-on-SageAccent approximately 3.90:1. Review
-  the add-tag chip, gauge marker, import action, and What's New action in both appearances. Keep
-  the palette but use foreground/background pairs appropriate for the text size.
+- [ ] **Fix remaining insufficient text contrast.** (#62) Applied targeted foreground
+  changes without altering palette assets or stored colors. Add-tag and What's New
+  actions use black text; the import action already did. Gauge markers and multi-tag
+  counts choose black or white against their resolved opaque fill. Tag labels,
+  category headings, budget percentages, refund/date labels, and comparison text
+  use semantic foregrounds; imminent reminder badges use black on orange.
+  The tag editor uses primary Cancel text and black-on-Sage Add/Save actions.
+  Evidence: simulator build-for-testing succeeded on iPhone 17 Pro (iOS 26.5).
+  Existing tag-editor UI tests passed in light and dark/accessibility XL appearances,
+  with screenshots reviewed (`SageContrastVerified.xcresult` in the local OpenCode
+  temporary directory). No contrast tests were added. These checks preceded the
+  user's direction to skip automated tests for visual-only changes.
+  Remaining: rendered verification of the other changed surfaces, native tinted
+  controls, chart marks, tag-icon contrast, and full-motion/device verification.
+  Existing tag-editor truncation at accessibility sizes remains outside this change.
+  Keep this item open until the remaining visual review is complete.
   Sources: [tag picker](FinanceTracker/Views/Components/TagPicker.swift),
   [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift).
 

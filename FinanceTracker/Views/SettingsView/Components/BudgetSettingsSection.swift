@@ -82,7 +82,7 @@ struct BudgetSettingsSection: View {
                         Text(config.savingsPercent, format: .percent.precision(.fractionLength(0)))
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(.primary)
                     }
             } header: {
                 Text("Budget Allocation")
