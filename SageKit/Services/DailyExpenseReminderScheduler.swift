@@ -3,48 +3,6 @@ import Observation
 import UserNotifications
 
 @MainActor
-public protocol DailyExpenseReminderNotificationClient {
-    func authorizationStatus() async -> UNAuthorizationStatus
-    func pendingRequests() async -> [UNNotificationRequest]
-    func add(_ request: UNNotificationRequest) async throws
-    func removePending(_ identifiers: [String])
-    func removeDelivered(_ identifiers: [String])
-}
-
-@MainActor
-public final class UNDailyExpenseReminderNotificationClient: DailyExpenseReminderNotificationClient {
-    private let center: UNUserNotificationCenter
-
-    public init(center: UNUserNotificationCenter = .current()) {
-        self.center = center
-    }
-
-    public func authorizationStatus() async -> UNAuthorizationStatus {
-        await center.notificationSettings().authorizationStatus
-    }
-
-    public func pendingRequests() async -> [UNNotificationRequest] {
-        await center.pendingNotificationRequests()
-    }
-
-    public func add(_ request: UNNotificationRequest) async throws {
-        try await center.add(request)
-    }
-
-    public func removePending(_ identifiers: [String]) {
-        center.removePendingNotificationRequests(withIdentifiers: identifiers.filter {
-            $0 == DailyExpenseReminderScheduler.identifier
-        })
-    }
-
-    public func removeDelivered(_ identifiers: [String]) {
-        center.removeDeliveredNotifications(withIdentifiers: identifiers.filter {
-            $0 == DailyExpenseReminderScheduler.identifier
-        })
-    }
-}
-
-@MainActor
 @Observable
 public final class DailyExpenseReminderScheduler {
     public static let identifier = "sage.daily-expense-entry.v1"
@@ -58,16 +16,13 @@ public final class DailyExpenseReminderScheduler {
         let timeMinutes: Int
     }
 
-    private let client: any DailyExpenseReminderNotificationClient
+    private let client: any NotificationClient
     @ObservationIgnored private var inputs: Inputs?
     @ObservationIgnored private var revision: UInt64 = 0
     @ObservationIgnored private var worker: Task<Void, Never>?
 
-    public init(
-        center: UNUserNotificationCenter? = nil,
-        client: (any DailyExpenseReminderNotificationClient)? = nil
-    ) {
-        self.client = client ?? UNDailyExpenseReminderNotificationClient(center: center ?? .current())
+    public init(client: (any NotificationClient)? = nil) {
+        self.client = client ?? UNNotificationClient()
     }
 
     /// Reads permission without prompting and coalesces refreshes into one worker.

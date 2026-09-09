@@ -6,93 +6,6 @@ import UserNotifications
 @Suite("Daily expense reminder scheduler")
 @MainActor
 struct DailyExpenseReminderSchedulerTests {
-    private enum Failure: Error { case add }
-
-    @MainActor
-    private final class Client: DailyExpenseReminderNotificationClient {
-        var status: UNAuthorizationStatus = .authorized
-        var pending: [UNNotificationRequest] = []
-        var delivered: [String] = []
-        var added: [UNNotificationRequest] = []
-        var removed: [String] = []
-        var removedDelivered: [String] = []
-        var statusCalls = 0
-        var failAdd = false
-        var blockAdd = false
-        var addContinuation: CheckedContinuation<Void, Never>?
-        var addStarted: CheckedContinuation<Void, Never>?
-        var blockStatus = false
-        var statusContinuation: CheckedContinuation<Void, Never>?
-        var statusStarted: CheckedContinuation<Void, Never>?
-        var activeAdds = 0
-        var maximumActiveAdds = 0
-
-        func authorizationStatus() async -> UNAuthorizationStatus {
-            statusCalls += 1
-            let result = status
-            if blockStatus {
-                blockStatus = false
-                await withCheckedContinuation { continuation in
-                    statusContinuation = continuation
-                    statusStarted?.resume()
-                    statusStarted = nil
-                }
-            }
-            return result
-        }
-
-        func pendingRequests() async -> [UNNotificationRequest] { pending }
-
-        func add(_ request: UNNotificationRequest) async throws {
-            activeAdds += 1
-            maximumActiveAdds = max(maximumActiveAdds, activeAdds)
-            defer { activeAdds -= 1 }
-            added.append(request)
-            let shouldFail = failAdd
-            if blockAdd {
-                blockAdd = false
-                await withCheckedContinuation { continuation in
-                    addContinuation = continuation
-                    addStarted?.resume()
-                    addStarted = nil
-                }
-            }
-            if shouldFail { throw Failure.add }
-            pending.removeAll { $0.identifier == request.identifier }
-            pending.append(request)
-        }
-
-        func removePending(_ identifiers: [String]) {
-            removed += identifiers
-            pending.removeAll { identifiers.contains($0.identifier) }
-        }
-
-        func removeDelivered(_ identifiers: [String]) {
-            removedDelivered += identifiers
-            delivered.removeAll { identifiers.contains($0) }
-        }
-
-        func waitForAdd() async {
-            if addContinuation != nil { return }
-            await withCheckedContinuation { addStarted = $0 }
-        }
-
-        func resumeAdd() {
-            addContinuation?.resume()
-            addContinuation = nil
-        }
-
-        func waitForStatus() async {
-            if statusContinuation != nil { return }
-            await withCheckedContinuation { statusStarted = $0 }
-        }
-
-        func resumeStatus() {
-            statusContinuation?.resume()
-            statusContinuation = nil
-        }
-    }
-
     private let unrelated = ["other", "sage.recurring.v1.2090-08-10", "recurring-day-old", "recurring-added-old"]
 
     private func request(_ identifier: String) -> UNNotificationRequest {
@@ -101,10 +14,10 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test(arguments: [UNAuthorizationStatus.authorized, .provisional, .ephemeral])
     func stableRefreshUsesRepeatingFloatingLocalTrigger(status: UNAuthorizationStatus) async throws {
-        let client = Client()
+        let client = TestNotificationClient()
         client.status = status
         client.pending = unrelated.map { request($0) }
-        client.delivered = unrelated + [DailyExpenseReminderScheduler.identifier]
+        client.delivered = (unrelated + [DailyExpenseReminderScheduler.identifier]).map { request($0) }
         let scheduler = DailyExpenseReminderScheduler(client: client)
         #expect(scheduler.authorizationStatus == .notDetermined)
         scheduler.refresh(enabled: true)
@@ -134,7 +47,7 @@ struct DailyExpenseReminderSchedulerTests {
         await restarted.waitUntilIdle()
         #expect(client.added.count == 1)
         #expect(client.pending.map(\.identifier) == unrelated + [scheduled.identifier])
-        #expect(client.delivered == unrelated + [scheduled.identifier])
+        #expect(client.delivered.map(\.identifier) == unrelated + [scheduled.identifier])
         #expect(client.removed.isEmpty)
         #expect(client.removedDelivered.isEmpty)
         #expect(scheduler.authorizationStatus == status)
@@ -144,7 +57,7 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test(arguments: [0, 1439, -1, 1440, Int.min, Int.max])
     func customTimesAndInvalidFallback(minutes: Int) async throws {
-        let client = Client()
+        let client = TestNotificationClient()
         let scheduler = DailyExpenseReminderScheduler(client: client)
         scheduler.refresh(enabled: true, timeMinutes: minutes)
         await scheduler.waitUntilIdle()
@@ -157,16 +70,16 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test(arguments: [UNAuthorizationStatus.denied, .notDetermined, .authorized])
     func disabledOrUnauthorizedRemovesOnlyOwnedNotifications(status: UNAuthorizationStatus) async {
-        let client = Client()
+        let client = TestNotificationClient()
         client.status = status
         let identifier = DailyExpenseReminderScheduler.identifier
         client.pending = (unrelated + [identifier]).map { request($0) }
-        client.delivered = unrelated + [identifier]
+        client.delivered = (unrelated + [identifier]).map { request($0) }
         let scheduler = DailyExpenseReminderScheduler(client: client)
         scheduler.refresh(enabled: status != .authorized)
         await scheduler.waitUntilIdle()
         #expect(client.pending.map(\.identifier) == unrelated)
-        #expect(client.delivered == unrelated)
+        #expect(client.delivered.map(\.identifier) == unrelated)
         #expect(client.removed == [identifier])
         #expect(client.removedDelivered == [identifier])
         #expect(client.added.isEmpty)
@@ -178,7 +91,7 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test(arguments: [63, 64, 70])
     func capacityReportsFailureWithoutDisplacingOthers(count: Int) async {
-        let client = Client()
+        let client = TestNotificationClient()
         let identifiers = (0..<count).map { "other.\($0)" }
         client.pending = (identifiers + [DailyExpenseReminderScheduler.identifier]).map { request($0) }
         let scheduler = DailyExpenseReminderScheduler(client: client)
@@ -200,9 +113,9 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test(arguments: [false, true])
     func blockedAddCoalescesChangesAndCancelsObsoleteResult(disable: Bool) async throws {
-        let client = Client()
+        let client = TestNotificationClient()
         client.pending = unrelated.map { request($0) }
-        client.delivered = unrelated + [DailyExpenseReminderScheduler.identifier]
+        client.delivered = (unrelated + [DailyExpenseReminderScheduler.identifier]).map { request($0) }
         client.blockAdd = true
         let scheduler = DailyExpenseReminderScheduler(client: client)
         scheduler.refresh(enabled: true)
@@ -218,12 +131,12 @@ struct DailyExpenseReminderSchedulerTests {
         #expect(client.pending.filter { $0.identifier != DailyExpenseReminderScheduler.identifier }.map(\.identifier) == unrelated)
         if disable {
             #expect(client.pending.map(\.identifier) == unrelated)
-            #expect(client.delivered == unrelated)
+            #expect(client.delivered.map(\.identifier) == unrelated)
         } else {
             let scheduled = try #require(client.pending.last)
             let trigger = try #require(scheduled.trigger as? UNCalendarNotificationTrigger)
             #expect(trigger.dateComponents == DateComponents(hour: 23, minute: 59))
-            #expect(client.delivered == unrelated + [DailyExpenseReminderScheduler.identifier])
+            #expect(client.delivered.map(\.identifier) == unrelated + [DailyExpenseReminderScheduler.identifier])
         }
         #expect(scheduler.errorMessage == nil)
         #expect(!scheduler.isRefreshing)
@@ -231,7 +144,7 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test
     func redundantRefreshDuringAddDoesNotReAdd() async {
-        let client = Client()
+        let client = TestNotificationClient()
         client.blockAdd = true
         let scheduler = DailyExpenseReminderScheduler(client: client)
         scheduler.refresh(enabled: true)
@@ -246,7 +159,7 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test
     func obsoleteAuthorizationResultIsIgnored() async {
-        let client = Client()
+        let client = TestNotificationClient()
         client.blockStatus = true
         client.pending = [request(DailyExpenseReminderScheduler.identifier)]
         let scheduler = DailyExpenseReminderScheduler(client: client)
@@ -264,9 +177,9 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test
     func failedReplacementRemovesOldTimeAndRetriesOnlyOnRefresh() async throws {
-        let client = Client()
+        let client = TestNotificationClient()
         client.pending = unrelated.map { request($0) }
-        client.delivered = unrelated + [DailyExpenseReminderScheduler.identifier]
+        client.delivered = (unrelated + [DailyExpenseReminderScheduler.identifier]).map { request($0) }
         let scheduler = DailyExpenseReminderScheduler(client: client)
         scheduler.refresh(enabled: true)
         await scheduler.waitUntilIdle()
@@ -274,7 +187,7 @@ struct DailyExpenseReminderSchedulerTests {
         scheduler.refresh(enabled: true, timeMinutes: 0)
         await scheduler.waitUntilIdle()
         #expect(client.pending.map(\.identifier) == unrelated)
-        #expect(client.delivered == unrelated + [DailyExpenseReminderScheduler.identifier])
+        #expect(client.delivered.map(\.identifier) == unrelated + [DailyExpenseReminderScheduler.identifier])
         #expect(client.removed == [DailyExpenseReminderScheduler.identifier])
         #expect(client.added.count == 2)
         #expect(scheduler.errorMessage != nil)
@@ -292,7 +205,7 @@ struct DailyExpenseReminderSchedulerTests {
 
     @Test
     func obsoleteAddFailureDoesNotLeakIntoLatestRefresh() async throws {
-        let client = Client()
+        let client = TestNotificationClient()
         client.blockAdd = true
         client.failAdd = true
         let scheduler = DailyExpenseReminderScheduler(client: client)

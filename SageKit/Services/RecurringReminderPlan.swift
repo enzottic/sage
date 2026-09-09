@@ -20,7 +20,7 @@ public enum RecurringReminderPlan {
             || identifier.hasPrefix("recurring-added-")
     }
 
-    /// Plans today and the next 89 device-local fire days, without notification-capacity limits.
+    // Generates the next 89 days of recurring reminder summaries to schedule notifications for
     public static func summaries(
         rules: [RecurringExpenseRule],
         daysBefore: Int = 1,
@@ -32,11 +32,15 @@ public enum RecurringReminderPlan {
         locale: Locale = .current
     ) throws -> [Summary] {
         guard now.timeIntervalSince1970.isFinite else { throw PlanningError.invalidDate }
+        
         let lead = (1...7).contains(daysBefore) ? daysBefore : 1
         let time = (0..<1440).contains(timeMinutes) ? timeMinutes : 540
+        
         var localCalendar = Calendar(identifier: .gregorian)
         localCalendar.timeZone = calendar.timeZone
+        
         let today = localCalendar.startOfDay(for: now)
+        
         guard let firstTargetDay = localCalendar.date(byAdding: .day, value: lead, to: today),
               let targetEnd = localCalendar.date(byAdding: .day, value: 90 + lead, to: today) else {
             throw PlanningError.invalidDate
@@ -44,17 +48,20 @@ public enum RecurringReminderPlan {
 
         var groups: [Date: [(date: Date, rule: RecurringExpenseRule)]] = [:]
         var seen = Set<String>()
+        
         // Tie-break conflicting imported copies as well as ordinary rule ordering.
         let orderedRules = rules.sorted {
             if $0.id != $1.id { return $0.id.uuidString < $1.id.uuidString }
             if $0.name != $1.name { return $0.name < $1.name }
             return String($0.amount) < String($1.amount)
         }
+        
         for rule in orderedRules {
             guard [rule.startDate, rule.endDate, rule.lastGeneratedDate, rule.recurrenceEffectiveDate]
                 .compactMap({ $0 }).allSatisfy({ $0.timeIntervalSince1970.isFinite }) else {
                 throw PlanningError.invalidDate
             }
+            
             let schedule = RecurringExpenseSchedule(rule: rule, legacyCalendar: calendar)
             var advances = 0
 
@@ -62,15 +69,18 @@ public enum RecurringReminderPlan {
             // scan before invoking it, without changing the canonical schedule or its model.
             if rule.recurrenceTimeZoneIdentifier != nil, let boundary = rule.recurrenceEffectiveDate {
                 var cursor = rule.lastGeneratedDate
+                var candidate: Date?
+
                 if rule.frequency == .monthly, boundary >= rule.startDate {
                     cursor = max(cursor ?? boundary, boundary)
                 }
-                var candidate: Date?
+                
                 if let cursor {
                     candidate = schedule.nextOccurrence(after: cursor)
                 } else if rule.endDate.map({ rule.startDate <= $0 }) ?? true {
                     candidate = rule.startDate
                 }
+                
                 while let date = candidate, date <= boundary {
                     guard advances < 100_000 else {
                         throw PlanningError.advanceLimitExceeded(ruleID: rule.id)
@@ -98,10 +108,12 @@ public enum RecurringReminderPlan {
         }
 
         let code = LedgerCurrency.validatedCode(currencyCode)
+        
         let formatter = NumberFormatter()
         formatter.locale = locale
         formatter.numberStyle = .currency
         if let code { formatter.currencyCode = code }
+        
         let identifierFormatter = DateFormatter()
         identifierFormatter.locale = Locale(identifier: "en_US_POSIX")
         identifierFormatter.calendar = localCalendar

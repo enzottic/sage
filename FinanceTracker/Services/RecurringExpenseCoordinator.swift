@@ -105,6 +105,7 @@ final class RecurringExpenseCoordinator {
 
     private func runMaintenance() {
         hasAttemptedMaintenance = true
+        
         do {
             let result = try RecurringExpenseService(modelContext: modelContext)
                 .generateAllExpenses(through: .now)
@@ -117,12 +118,15 @@ final class RecurringExpenseCoordinator {
             if result.generatedCount > 0 || result.repair.removedCount > 0 {
                 WidgetCenter.shared.reloadAllTimelines()
             }
+            
             // Also handles rules becoming due while the app stays in the foreground.
             let now = Date.now
             let rules = try modelContext.fetch(FetchDescriptor<RecurringExpenseRule>())
             let nextDue = rules.compactMap { $0.nextOccurrence(after: now) }.min()
             let seconds = min(3_600, max(1, nextDue?.timeIntervalSince(now) ?? 3_600))
+            
             scheduleMaintenance(afterNanoseconds: UInt64(seconds * 1_000_000_000))
+            
         } catch {
             Self.logger.error(
                 "Recurring maintenance failed: \(error.localizedDescription, privacy: .private(mask: .hash))"

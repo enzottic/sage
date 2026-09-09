@@ -41,13 +41,19 @@ These instructions apply the prompting recommendations in the
 - Give brief progress updates for meaningful discoveries, edits, or blockers.
   Finish with the outcome, checks performed, and any unresolved limitations.
 
-## Delegation
+## Main Thread and Subagents
 
-- Delegate independent tasks when available collaboration tools can save time
-  or improve quality. Keep small, tightly coupled changes local.
-- Give each agent a clear scope, relevant context, and expected result. Avoid
-  overlapping edits or duplicating delegated work; review results before using
-  them. Write legible messages with proper spacing.
+- Keep work in the main agent thread whenever possible, including research,
+  planning, implementation, review, and verification.
+- Do not launch subagents or delegate work to other agents unless the user
+  explicitly requests their use in the prompt. Task complexity, potential time
+  savings, available tools, and skill recommendations are not authorization.
+- Without an explicit request for subagents, use tools directly in the main
+  thread. Independent tool calls may still run in parallel without subagents.
+- When subagents are explicitly requested, limit delegation to the requested
+  scope and keep other work in the main thread. Give each agent clear context
+  and an expected result, avoid overlapping edits or duplicated work, and review
+  its results before using them.
 
 ## Testing and Verification
 

@@ -99,6 +99,13 @@ struct RecurringExpensesSettingsSection: View {
                         RecurringRuleRow(rule: rule, nextOccurrence: rule.nextOccurrence())
                             .contentShape(Rectangle())
                             .onTapGesture { ruleToEdit = rule }
+                            .swipeActions {
+                                Button("Delete") {
+                                    ruleToDelete = rule
+                                    showDeleteConfirmation = true
+                                }
+                                .tint(.red)
+                            }
                             .contextMenu {
                                 Button("Edit") { ruleToEdit = rule }
                                 Button("Delete", role: .destructive) {
@@ -106,12 +113,6 @@ struct RecurringExpensesSettingsSection: View {
                                     showDeleteConfirmation = true
                                 }
                             }
-                    }
-                    .onDelete { indexSet in
-                        if let index = indexSet.first, sortedRules.indices.contains(index) {
-                            ruleToDelete = sortedRules[index]
-                            showDeleteConfirmation = true
-                        }
                     }
                 } header: {
                     Text("Recurring Expenses")
