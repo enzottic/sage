@@ -7,9 +7,18 @@ struct DashboardWidgetOrderTests {
     func repairsSavedOrderWithoutLosingUserPositions() {
         let saved = ["recentExpenses", "removedWidget", "needs", "recentExpenses", "savings"]
         let resolved = DashboardWidgetID.resolvedOrder(saved, defaultOrder: DashboardWidgetID.defaultOrder(isPad: false))
-        #expect(resolved == [.recentExpenses, .needs, .savings, .monthlyOverview,
-                             .wants, .expenseCalendar, .mostSpentTags, .upcomingRecurring])
+        #expect(resolved == [.recentExpenses, .categories, .monthlyOverview,
+                             .expenseCalendar, .mostSpentTags, .upcomingRecurring])
         #expect(Set(resolved) == Set(DashboardWidgetID.allCases))
+    }
+
+    @Test(arguments: ["needs", "wants", "savings"])
+    func mergesLegacyCategoriesAtTheirFirstPosition(first: String) {
+        let saved = ["expenseCalendar", first, "monthlyOverview", "needs", "wants", "savings", "categories"]
+        let resolved = DashboardWidgetID.resolvedOrder(saved)
+        #expect(Array(resolved.prefix(3)) == [.expenseCalendar, .categories, .monthlyOverview])
+        #expect(resolved.filter { $0 == .categories }.count == 1)
+        #expect(DashboardWidgetID.resolvedOrder(resolved.map(\.rawValue)) == resolved)
     }
 
     @Test(arguments: [false, true])

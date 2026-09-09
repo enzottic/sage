@@ -5,65 +5,33 @@
 //  Created by Tyler McCormick on 7/12/26.
 //
 import SwiftUI
-import SwiftData
 import SageKit
 
 struct CategoryUtilizationWidget: View {
-    @Environment(AppConfiguration.self) private var config
-    
-    @Query var monthlyExpenses: [Expense]
-    private let selectedMonth: Date
-
-    init(selectedMonth: Date) {
-        self.selectedMonth = selectedMonth
-        _monthlyExpenses = expenseQuery(for: selectedMonth)
-    }
-    
-    func utilization(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: config.wantsBudget == 0 ? 0 : monthlyExpenses.wantsUsed / config.wantsBudget
-        case .needs: config.needsBudget == 0 ? 0 : monthlyExpenses.needsUsed / config.needsBudget
-        case .savings: config.savingsBudget == 0 ? 0 : monthlyExpenses.savingsUsed / config.savingsBudget
-        @unknown default: 0
-        }
-    }
-
-    func spent(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: monthlyExpenses.wantsUsed
-        case .needs: monthlyExpenses.needsUsed
-        case .savings: monthlyExpenses.savingsUsed
-        @unknown default: 0
-        }
-    }
-
-    func budget(for category: ExpenseCategory) -> Double {
-        switch category {
-        case .wants: config.wantsBudget
-        case .needs: config.needsBudget
-        case .savings: config.savingsBudget
-        @unknown default: 0
-        }
-    }
+    let selectedMonth: Date
+    var usesCards = false
 
     var body: some View {
-        Section {
-            ForEach(ExpenseCategory.allCases, id: \.self) { category in
-                NavigationLink(value: AppRoute.categoryDetail(category, selectedMonth)) {
-                    CategoryUtilizationView(
-                        for: category,
-                        utilization(for: category),
-                        spent(for: category),
-                        budget(for: category),
-                    )
+        if usesCards {
+            VStack(spacing: 12) {
+                ForEach([ExpenseCategory.needs, .wants, .savings], id: \.self) { category in
+                    SingleCategoryUtilizationWidget(category: category, layout: .full, selectedMonth: selectedMonth)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            Color(.secondarySystemGroupedBackground),
+                            in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
+                        )
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("dashboard-category-\(category.rawValue)")
                 }
-                .tint(.primary)
-                .listRowSeparator(.hidden)
             }
-        } header: {
-            Text("Categories")
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        } else {
+            ForEach([ExpenseCategory.needs, .wants, .savings], id: \.self) { category in
+                Section {
+                    SingleCategoryUtilizationWidget(category: category, layout: .full, selectedMonth: selectedMonth)
+                }
+            }
         }
     }
 }

@@ -22,6 +22,7 @@ struct DashboardVisibleWidgets<Content: View>: View {
             switch $0 {
             case .mostSpentTags: hasTags
             case .upcomingRecurring: hasUpcoming
+            case .recentExpenses: !monthlyExpenses.isEmpty
             default: true
             }
         })

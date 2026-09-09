@@ -62,7 +62,7 @@ struct SingleCategoryUtilizationWidget: View {
     var body: some View {
         switch layout {
         case .full:
-            Section {
+            Group {
                 if isNavigable {
                     Button {
                         appRouter.push(.categoryDetail(category, selectedMonth))

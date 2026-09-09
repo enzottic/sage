@@ -68,35 +68,34 @@ struct DashboardView: View {
     @ViewBuilder
     private var dashboardContent: some View {
         DashboardVisibleWidgets(selectedMonth: selectedMonth, order: config.dashboardWidgetOrder) { widgets in
-            let rows = DashboardWidgetID.rows(for: widgets, isPad: isPad)
-            dashboardRows(rows)
+            dashboardWidgets(widgets)
         }
     }
 
     @ViewBuilder
-    private func dashboardRows(_ rows: [DashboardRowConfiguration]) -> some View {
+    private func dashboardWidgets(_ widgets: [DashboardWidgetID]) -> some View {
         if isPad {
             // Each card owns its corners; a grouped List clips the entire
             // two-column row and rounds only its outside corners.
             ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(rows, id: \.self) { row in
-                        composedWidgetRow(row)
+                DashboardGridLayout() {
+                    ForEach(widgets) { id in
+                        composedWidget(
+                            id.widget,
+                            presentation: id == .mostSpentTags || id == .upcomingRecurring ? .compact : .full
+                        )
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("dashboard-widget-\(id.rawValue)")
                     }
                 }
+                .buttonStyle(.borderless)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
             }
         } else {
             List {
-                ForEach(rows, id: \.self) { row in
-                    if let widget = row.standaloneWidget {
-                        widgetView(for: widget, layout: .full)
-                    } else {
-                        Section {
-                            composedWidgetRow(row)
-                        }
-                    }
+                ForEach(widgets) { id in
+                    widgetView(for: id.widget, layout: .full)
                 }
             }
             .listSectionSpacing(12)
@@ -110,37 +109,11 @@ struct DashboardView: View {
         case .expenseCalendar: ExpenseCalendarWidget(selectedMonth: selectedMonth)
         case .mostSpentTags:
             MostSpentTagsWidget(selectedMonth: selectedMonth, layout: layout)
-        case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth)
+        case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth, usesCards: isPad)
         case .upcomingRecurring: UpcomingRecurringWidget(layout: layout)
         case .recentExpenses(let rowStyle):
             RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle, embedsList: isPad)
-        case .singleCategoryUtilization(let category):
-            SingleCategoryUtilizationWidget(category: category, layout: layout, selectedMonth: selectedMonth)
         }
-    }
-
-    private func composedWidgetRow(_ row: DashboardRowConfiguration) -> some View {
-        AdaptiveEqualColumnsLayout(
-            minimumColumnWidth: 340,
-            horizontalSpacing: 16,
-            verticalSpacing: 16
-        ) {
-            ForEach(row.columns, id: \.self) { column in
-                VStack(spacing: 12) {
-                    ForEach(column.widgets, id: \.self) { widget in
-                        composedWidget(
-                            widget,
-                            presentation: column.presentation
-                        )
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            }
-        }
-        .buttonStyle(.borderless)
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
     }
 
     @ViewBuilder
@@ -148,27 +121,21 @@ struct DashboardView: View {
         _ widget: DashboardWidget,
         presentation: DashboardWidgetLayout
     ) -> some View {
-        if presentation == .compact && (widget == .mostSpentTags || widget == .upcomingRecurring) {
+        if widget == .categoryUtilization {
+            widgetView(for: widget, layout: presentation)
+        } else if presentation == .compact && (widget == .mostSpentTags || widget == .upcomingRecurring) {
             // These widgets own their cards so empty content has no background.
             widgetView(for: widget, layout: presentation)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        } else if presentation == .full {
+        } else {
             // Keep Section headers and rows in one card before applying sizing
             // and backgrounds; otherwise SwiftUI styles each child separately.
             VStack(alignment: .leading, spacing: 12) {
                 widgetView(for: widget, layout: presentation)
             }
                 .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(
-                    Color(.secondarySystemGroupedBackground),
-                    in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
-                )
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
-                widgetView(for: widget, layout: presentation)
-            }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity,
+                       alignment: widget == .monthlyOverview ? .center : .topLeading)
                 .background(
                     Color(.secondarySystemGroupedBackground),
                     in: .rect(cornerRadius: DashboardCardStyle.cornerRadius)
@@ -177,10 +144,9 @@ struct DashboardView: View {
     }
 }
 
-private struct AdaptiveEqualColumnsLayout: Layout {
-    let minimumColumnWidth: CGFloat
-    let horizontalSpacing: CGFloat
-    let verticalSpacing: CGFloat
+private struct DashboardGridLayout: Layout {
+    private let minimumColumnWidth: CGFloat = 340
+    private let spacing: CGFloat = 16
 
     func sizeThatFits(
         proposal: ProposedViewSize,
@@ -189,29 +155,9 @@ private struct AdaptiveEqualColumnsLayout: Layout {
     ) -> CGSize {
         guard !subviews.isEmpty else { return .zero }
 
-        let availableWidth = proposal.width ?? minimumWideWidth(for: subviews.count)
-
-        if usesColumns(width: availableWidth, count: subviews.count) {
-            let columnWidth = wideColumnWidth(
-                availableWidth: availableWidth,
-                count: subviews.count
-            )
-            let height = subviews
-                .map { $0.sizeThatFits(.init(width: columnWidth, height: nil)).height }
-                .max() ?? 0
-
-            return CGSize(width: availableWidth, height: height)
-        }
-
-        let heights = subviews.map {
-            $0.sizeThatFits(.init(width: availableWidth, height: nil)).height
-        }
-        let spacing = verticalSpacing * CGFloat(max(0, subviews.count - 1))
-
-        return CGSize(
-            width: availableWidth,
-            height: heights.reduce(0, +) + spacing
-        )
+        let width = proposal.width ?? minimumColumnWidth
+        let metrics = rowMetrics(width: width, subviews: subviews)
+        return CGSize(width: width, height: metrics.heights.reduce(0, +) + CGFloat(metrics.heights.count - 1) * spacing)
     }
 
     func placeSubviews(
@@ -222,50 +168,38 @@ private struct AdaptiveEqualColumnsLayout: Layout {
     ) {
         guard !subviews.isEmpty else { return }
 
-        if usesColumns(width: bounds.width, count: subviews.count) {
-            let columnWidth = wideColumnWidth(
-                availableWidth: bounds.width,
-                count: subviews.count
-            )
-
-            for (index, subview) in subviews.enumerated() {
-                let x = bounds.minX + CGFloat(index) * (columnWidth + horizontalSpacing)
-                subview.place(
-                    at: CGPoint(x: x, y: bounds.minY),
+        let columns = columnCount(for: bounds.width)
+        let metrics = rowMetrics(width: bounds.width, subviews: subviews)
+        var y = bounds.minY
+        for (row, height) in metrics.heights.enumerated() {
+            for column in 0..<columns {
+                let index = row * columns + column
+                guard index < subviews.count else { break }
+                subviews[index].place(
+                    at: CGPoint(x: bounds.minX + CGFloat(column) * (metrics.width + spacing), y: y),
                     anchor: .topLeading,
-                    proposal: .init(width: columnWidth, height: bounds.height)
+                    proposal: .init(width: metrics.width, height: height)
                 )
             }
-        } else {
-            var y = bounds.minY
-
-            for subview in subviews {
-                let size = subview.sizeThatFits(.init(width: bounds.width, height: nil))
-                subview.place(
-                    at: CGPoint(x: bounds.minX, y: y),
-                    anchor: .topLeading,
-                    proposal: .init(width: bounds.width, height: size.height)
-                )
-                y += size.height + verticalSpacing
-            }
+            y += height + spacing
         }
     }
 
-    private func usesColumns(width: CGFloat, count: Int) -> Bool {
-        width >= minimumWideWidth(for: count)
+    private func columnCount(for width: CGFloat) -> Int {
+        width >= minimumColumnWidth * 2 + spacing ? 2 : 1
     }
 
-    private func minimumWideWidth(for count: Int) -> CGFloat {
-        let columns = max(2, count)
-        return minimumColumnWidth * CGFloat(columns)
-            + horizontalSpacing * CGFloat(columns - 1)
-    }
-
-    private func wideColumnWidth(availableWidth: CGFloat, count: Int) -> CGFloat {
-        // An odd final widget keeps the left column's width in a wide layout.
-        let columns = max(2, count)
-        let spacing = horizontalSpacing * CGFloat(columns - 1)
-        return (availableWidth - spacing) / CGFloat(columns)
+    private func rowMetrics(width: CGFloat, subviews: Subviews) -> (width: CGFloat, heights: [CGFloat]) {
+        let columns = columnCount(for: width)
+        let cardWidth = max(0, (width - CGFloat(columns - 1) * spacing) / CGFloat(columns))
+        // Only neighbors share a height; taller content in another row must not
+        // add empty space to the overview or the category stack.
+        let heights = stride(from: 0, to: subviews.count, by: columns).map { start in
+            (start..<min(start + columns, subviews.count)).map {
+                subviews[$0].sizeThatFits(.init(width: cardWidth, height: nil)).height
+            }.max() ?? 0
+        }
+        return (cardWidth, heights)
     }
 }
 

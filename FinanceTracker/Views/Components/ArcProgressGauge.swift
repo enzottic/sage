@@ -36,7 +36,7 @@ struct ArcProgressGauge<Content: View>: View {
 
                 content()
                     .padding(.horizontal, lineWidth)
-                    .frame(width: proxy.size.width, height: proxy.size.height - lineWidth / 2, alignment: .center)
+                    .frame(width: proxy.size.width, height: max(0, proxy.size.height - lineWidth / 2), alignment: .center)
                     .offset(y: lineWidth / 4)
 
                 ArcProgressMarker(
