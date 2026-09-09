@@ -1,8 +1,9 @@
 import Foundation
+import SageKit
 import SwiftData
 import UIKit
 
-public struct ExpenseBackup: Codable, Equatable, Sendable {
+public nonisolated struct ExpenseBackup: Codable, Equatable, Sendable {
     public var format: String
     public var version: Int
     public var currency: String
@@ -215,7 +216,7 @@ public struct ExpenseBackup: Codable, Equatable, Sendable {
     }
 }
 
-public enum ExpenseBackupError: LocalizedError, Equatable {
+public nonisolated enum ExpenseBackupError: LocalizedError, Equatable {
     case invalid(String)
     case unsupportedVersion(Int)
 
@@ -227,7 +228,7 @@ public enum ExpenseBackupError: LocalizedError, Equatable {
     }
 }
 
-public enum ExpenseBackupCodec {
+public nonisolated enum ExpenseBackupCodec {
     public static func decode(_ data: Data) throws -> ExpenseBackup {
         struct Header: Decodable { let format: String; let version: Int }
         let header = try JSONDecoder().decode(Header.self, from: data)

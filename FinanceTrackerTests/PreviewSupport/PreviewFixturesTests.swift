@@ -30,7 +30,7 @@ struct PreviewFixturesTests {
             defaults.set(value, forKey: key)
         }
 
-        let container = try SageModelContainer.make(for: .preview)
+        let container = try SageModelContainer.makePreview()
 
         for (key, value) in sentinels {
             #expect(defaults.object(forKey: key) as? NSNumber == value, "Preview changed \(key)")

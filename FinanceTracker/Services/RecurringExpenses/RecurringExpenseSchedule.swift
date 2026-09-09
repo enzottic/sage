@@ -1,8 +1,40 @@
 import Foundation
+import SageKit
+
+public extension RecurrenceFrequency {
+    /// Legacy stepping. Fixed schedules use `RecurringExpenseSchedule` instead.
+    nonisolated func nextOccurrence(after date: Date, calendar: Calendar = .current) -> Date? {
+        switch self {
+        case .daily:    return calendar.date(byAdding: .day, value: 1, to: date)
+        case .weekly:   return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
+        case .biweekly: return calendar.date(byAdding: .weekOfYear, value: 2, to: date)
+        case .monthly:  return calendar.date(byAdding: .month, value: 1, to: date)
+        @unknown default: return nil
+        }
+    }
+}
+
+public extension RecurringExpenseRule {
+    /// The next date this rule will generate an expense, or nil once it has passed `endDate`.
+    ///
+    /// A rule that has generated before steps one interval from its last generation; one that
+    /// hasn't yet advances from `startDate` to the first occurrence on or after `date`. Shared
+    /// by the dashboard's upcoming list and the Settings rule list so both show the same date.
+    nonisolated func nextOccurrence(after date: Date = .now, calendar: Calendar = .current) -> Date? {
+        let schedule = RecurringExpenseSchedule(rule: self, legacyCalendar: calendar)
+        var next = schedule.firstPendingOccurrence()
+        if lastGeneratedDate == nil {
+            while let occurrence = next, occurrence < date {
+                next = schedule.nextOccurrence(after: occurrence)
+            }
+        }
+        return next
+    }
+}
 
 /// One schedule for generation and upcoming dates. Display calendars do not
 /// override a fixed rule's Gregorian calendar and persisted time zone.
-public struct RecurringExpenseSchedule {
+public nonisolated struct RecurringExpenseSchedule {
     private let rule: RecurringExpenseRule
     private let calendar: Calendar
     private let isFixed: Bool
@@ -58,6 +90,8 @@ public struct RecurringExpenseSchedule {
         case .daily, .weekly, .biweekly:
             let days = rule.frequency == .daily ? 1 : (rule.frequency == .weekly ? 7 : 14)
             targetDay = calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: date))
+        @unknown default:
+            return nil
         }
         guard let targetDay else { return nil }
         let time = calendar.dateComponents([.hour, .minute, .second], from: rule.startDate)
@@ -95,7 +129,7 @@ public struct RecurringExpenseSchedule {
     }
 }
 
-public enum RecurringScheduleEditError: LocalizedError {
+public nonisolated enum RecurringScheduleEditError: LocalizedError {
     case endBeforeStart
 
     public var errorDescription: String? {
@@ -110,7 +144,7 @@ public extension RecurringExpenseRule {
     /// resume in the following month; other frequencies follow the new start's cadence.
     /// A future start beyond the boundary is the first occurrence. An end before the
     /// next occurrence leaves the rule inactive. Editing opts legacy rules into a fixed zone.
-    func editSchedule(startDate: Date, frequency: RecurrenceFrequency, endDate: Date?,
+    nonisolated func editSchedule(startDate: Date, frequency: RecurrenceFrequency, endDate: Date?,
                       in timeZone: TimeZone, after date: Date, existingExpenses: [Expense]) throws {
         guard endDate.map({ $0 >= startDate }) ?? true else {
             throw RecurringScheduleEditError.endBeforeStart
@@ -125,7 +159,7 @@ public extension RecurringExpenseRule {
     }
 
     /// Call only after explicit confirmation. Does not rewrite expenses, keys or the cursor.
-    func enableFixedSchedule(in timeZone: TimeZone, after date: Date, existingExpenses: [Expense]) {
+    nonisolated func enableFixedSchedule(in timeZone: TimeZone, after date: Date, existingExpenses: [Expense]) {
         var boundary = max(date, lastGeneratedDate ?? date)
         boundary = max(boundary, recurrenceEffectiveDate ?? boundary)
         let prefix = "v1:\(id.uuidString.lowercased()):"

@@ -1,7 +1,8 @@
 import Foundation
+import SageKit
 import SwiftData
 
-public struct RecurringExpenseRepairResult: Equatable, Sendable {
+public nonisolated struct RecurringExpenseRepairResult: Equatable, Sendable {
     public let backfilledCount: Int
     public let removedCount: Int
 

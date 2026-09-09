@@ -1,6 +1,7 @@
 import Foundation
+import SageKit
 
-public protocol CloudPreferenceStore: AnyObject {
+public nonisolated protocol CloudPreferenceStore: AnyObject {
     func object(forKey key: String) -> Any?
     func set(_ value: Any?, forKey key: String)
     func removeObject(forKey key: String)

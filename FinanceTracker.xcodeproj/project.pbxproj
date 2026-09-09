@@ -124,6 +124,31 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C60908063000000100000001 /* App logic included in FinanceTrackerTests */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Analytics/SpendingCalendarMonth.swift,
+				Money/AmountInput.swift,
+				Money/CentsFirstAmountInput.swift,
+				PreviewSupport/MockDataSeeder.swift,
+				"PreviewSupport/SageModelContainer+Preview.swift",
+				Serialization/ExpenseBackupCodec.swift,
+				Serialization/ExpenseCSVCodec.swift,
+				Services/DataDeletionService.swift,
+				Services/ExpenseImportService.swift,
+				Services/PreferenceSyncService.swift,
+				Services/ReceiptImageImport.swift,
+				Services/RecurringExpenses/RecurringExpenseOccurrence.swift,
+				Services/RecurringExpenses/RecurringExpenseRepairService.swift,
+				Services/RecurringExpenses/RecurringExpenseSchedule.swift,
+				Services/RecurringExpenses/RecurringExpenseService.swift,
+				Services/Notifications/DailyExpenseReminderScheduler.swift,
+				Services/Notifications/NotificationClient.swift,
+				Services/Notifications/RecurringReminderPlan.swift,
+				Services/Notifications/RecurringReminderScheduler.swift,
+			);
+			target = C62400062FFF002400000006 /* FinanceTrackerTests */;
+		};
 		C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -178,6 +203,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */,
+				C60908063000000100000001 /* App logic included in FinanceTrackerTests */,
 			);
 			path = FinanceTracker;
 			sourceTree = "<group>";

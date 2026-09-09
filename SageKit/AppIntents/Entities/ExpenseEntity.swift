@@ -80,4 +80,3 @@ extension Expense {
         ExpenseEntity(id: self.id, name: self.name, amount: self.amount, category: self.category, date: self.date, tags: self.tags ?? [])
     }
 }
-

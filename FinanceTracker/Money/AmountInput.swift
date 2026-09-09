@@ -1,6 +1,7 @@
 import Foundation
+import SageKit
 
-public enum AmountInput {
+public nonisolated enum AmountInput {
     public static func parse(
         _ text: String,
         currencyCode: String,

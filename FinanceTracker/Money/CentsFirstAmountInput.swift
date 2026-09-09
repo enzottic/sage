@@ -1,6 +1,7 @@
 import Foundation
+import SageKit
 
-public enum CentsFirstAmountInput {
+public nonisolated enum CentsFirstAmountInput {
     /// Display-only prefill. Callers must not write the result back to the model during synchronization.
     public static func digits(for amount: Double?, currencyCode: String) -> String {
         guard let amount, MonetaryAmount.isValid(amount, currencyCode: currencyCode) else { return "" }

@@ -5,6 +5,7 @@
 
 #if DEBUG
 import Foundation
+import SageKit
 import SwiftData
 import UIKit
 
@@ -13,7 +14,7 @@ import UIKit
 //   Wants:   $1,500
 //   Savings: $1,000  ← never exceeded
 
-public enum MockDataSeeder {
+public nonisolated enum MockDataSeeder {
 
     public static func seed(into context: ModelContext, seedsAppConfiguration: Bool = true) {
         // Guards against re-seeding an already-populated store

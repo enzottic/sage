@@ -93,7 +93,7 @@ final public class ExpenseStore {
         )
         return try context.fetch(descriptor).first
     }
-    
+
     public func fetchExpenses(from startDate: Date, to endDate: Date) -> [Expense] {
         let fetchDescriptor = ExpenseFetchDescriptors.range(start: startDate, end: endDate)
         return (try? context.fetch(fetchDescriptor)) ?? []

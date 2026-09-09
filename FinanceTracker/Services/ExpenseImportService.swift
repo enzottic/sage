@@ -1,8 +1,9 @@
 import Foundation
+import SageKit
 import SwiftData
 import UIKit
 
-public enum ExpenseImportSource: Equatable, Sendable {
+public nonisolated enum ExpenseImportSource: Equatable, Sendable {
     case backup(ExpenseBackup)
     case csv([ExportableExpense])
 
@@ -18,7 +19,7 @@ public enum ExpenseImportSource: Equatable, Sendable {
     }
 }
 
-public struct ExpenseImportResult: Equatable, Sendable {
+public nonisolated struct ExpenseImportResult: Equatable, Sendable {
     public let inserted: Int
     public let skipped: Int
     public let newTags: Int
@@ -27,7 +28,7 @@ public struct ExpenseImportResult: Equatable, Sendable {
     public var totalInserted: Int { inserted + insertedRules }
 }
 
-public struct ExpenseImportPlan: Equatable {
+public nonisolated struct ExpenseImportPlan: Equatable {
     public let source: ExpenseImportSource
     public let currency: String
     public let creatingTagNames: [String]
@@ -41,7 +42,7 @@ public struct ExpenseImportPlan: Equatable {
     fileprivate let ruleMatches: [Int: PersistentIdentifier]
 }
 
-private struct ExpenseImportIdentity: Equatable {
+private nonisolated struct ExpenseImportIdentity: Equatable {
     let persistentID: PersistentIdentifier
     let id: UUID
     let rule: UUID?
@@ -49,7 +50,7 @@ private struct ExpenseImportIdentity: Equatable {
     let effectiveKey: String?
 }
 
-public enum ExpenseImportError: LocalizedError, Equatable {
+public nonisolated enum ExpenseImportError: LocalizedError, Equatable {
     case conflict
     case ambiguousTag(String)
     case changed

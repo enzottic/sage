@@ -76,20 +76,6 @@ public enum SageModelContainer {
             try backfillMultiTags(container)
         }
 
-        #if DEBUG
-        if case .test = purpose {
-            return container
-        }
-        
-        if case .previewEmpty = purpose {
-            return container
-        }
-
-        let seedContext = ModelContext(container)
-        MockDataSeeder.seed(into: seedContext, seedsAppConfiguration: purpose == .app)
-        try seedContext.save()
-        #endif
-
         return container
     }
 
@@ -97,54 +83,6 @@ public enum SageModelContainer {
     @MainActor
     public static let shared: Result<ModelContainer, any Swift.Error> = Result {
         try make(for: .app)
-    }
-
-    @MainActor
-    public static let preview: ModelContainer = {
-        do {
-            return try make(for: .preview)
-        } catch {
-            fatalError("Failed to create preview container: \(error)")
-        }
-    }()
-    
-    @MainActor
-    public static let previewEmpty: ModelContainer = {
-        do {
-            return try make(for: .previewEmpty)
-        } catch {
-            fatalError("Failed to create empty preview container: \(error)")
-        }
-    }()
-
-    /// Fresh, context-owned rules without invoking the debug app's sample-data seeder.
-    @MainActor
-    public static func makeRecurringPreview() throws -> ModelContainer {
-        let container = try make(for: .previewEmpty)
-        let calendar = Calendar.current
-        let now = Date.now
-        let bills = ExpenseTag.billsAndUtils
-        let subscriptions = ExpenseTag.subscriptions
-        container.mainContext.insert(bills)
-        container.mainContext.insert(subscriptions)
-
-        let rules = [
-            RecurringExpenseRule(
-                name: "Internet", amount: 55, note: "", category: .needs, tag: bills,
-                frequency: .monthly, startDate: calendar.date(byAdding: .day, value: 1, to: now)!
-            ),
-            RecurringExpenseRule(
-                name: "Music", amount: 10.99, note: "", category: .wants, tag: subscriptions,
-                frequency: .monthly, startDate: calendar.date(byAdding: .day, value: 3, to: now)!
-            ),
-            RecurringExpenseRule(
-                name: "Meal Delivery", amount: 65, note: "", category: .needs, tag: bills,
-                frequency: .weekly, startDate: calendar.date(byAdding: .day, value: 7, to: now)!
-            ),
-        ]
-        rules.forEach { container.mainContext.insert($0) }
-        try container.mainContext.save()
-        return container
     }
 
     private static nonisolated func configuration(

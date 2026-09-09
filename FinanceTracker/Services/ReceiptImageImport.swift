@@ -6,7 +6,7 @@
 import Foundation
 import ImageIO
 
-public enum ReceiptImageImport {
+public nonisolated enum ReceiptImageImport {
     public enum Error: LocalizedError {
         case unsupportedURL
         case invalidImage

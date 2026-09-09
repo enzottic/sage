@@ -42,7 +42,7 @@ distribution, and App Store Connect checks remain open without execution evidenc
   full restart, and previously queued iCloud activity can finish. The UI explains
   this distinction.
   Sources: [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift),
-  [preference sync](SageKit/Services/PreferenceSyncService.swift).
+  [preference sync](FinanceTracker/Services/PreferenceSyncService.swift).
 
 - [ ] **Verify the unified iCloud opt-out on release devices.** Check two-device
   behavior and network activity before and after opt-out/restart, including queued
@@ -72,8 +72,8 @@ distribution, and App Store Connect checks remain open without execution evidenc
   targets. File removal cannot be rolled back if a later model operation fails.
   Sources: [backup service](FinanceTracker/Services/ExpenseBackupService.swift),
   [reset](FinanceTracker/Views/SettingsView/SettingsView.swift),
-  [deletion service](SageKit/Services/DataDeletionService.swift),
-  [deletion tests](FinanceTrackerTests/DataDeletionServiceTests.swift).
+  [deletion service](FinanceTracker/Services/DataDeletionService.swift),
+  [deletion tests](FinanceTrackerTests/Services/DataDeletionServiceTests.swift).
 
 - [x] **Configure the required icon license notice as an app resource.** The full
   Feather/MIT notice is included in the FinanceTracker target's Resources phase.
@@ -92,14 +92,14 @@ distribution, and App Store Connect checks remain open without execution evidenc
   its tests; Release opens the App Group's `Sage.sqlite` directly. Old files
   are neither imported nor deleted. Database schema upgrades are a separate
   compatibility decision and remain supported for now.
-  Source: [SageModelContainer](SageKit/Services/SageModelContainer.swift).
+  Source: [SageModelContainer](SageKit/Persistence/SageModelContainer.swift).
 
 - [x] **Consume converted legacy tag relationships.** Startup backfill clears
   legacy single-tag fields in the same save as conversion and preserves nonempty
   modern selections. Disk-backed tests cover deliberate removal/reopen and
   simulated late legacy records.
-  Sources: [multi-tag backfill](SageKit/Services/SageModelContainer.swift),
-  [legacy safety tests](FinanceTrackerTests/SageLegacySafetyTests.swift).
+  Sources: [multi-tag backfill](SageKit/Persistence/SageModelContainer.swift),
+  [legacy safety tests](FinanceTrackerTests/Persistence/SageLegacySafetyTests.swift).
 
 - [ ] **Resolve legacy-tag synchronization edge cases.** Backfill runs at startup,
   and older clients can repopulate consumed fields. Define mixed-version behavior
@@ -114,9 +114,9 @@ distribution, and App Store Connect checks remain open without execution evidenc
   survive, and pending UI relationship edits remain unsaved on success or failure.
   Existing tests also cover later-save resurrection. This verifies local import
   isolation, not automatic-save timing, real disk exhaustion, or CloudKit atomicity.
-  Sources: [import service](SageKit/Services/ExpenseImportService.swift),
+  Sources: [import service](FinanceTracker/Services/ExpenseImportService.swift),
   [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift),
-  [import tests](FinanceTrackerTests/ExpenseImportServiceTests.swift).
+  [import tests](FinanceTrackerTests/Services/ExpenseImportServiceTests.swift).
 
 - [x] **Define backup restore versus append behavior (#48).** Implemented version-2
   JSON expense backups with precise saved amounts/dates, expense UUIDs and stored
@@ -145,10 +145,10 @@ distribution, and App Store Connect checks remain open without execution evidenc
   cancellation UI coverage, large-ledger performance, release-device behavior,
   and multi-device CloudKit safety remain unverified. Import is local sequential
   safety, not a distributed transaction.
-  Sources: [JSON codec](SageKit/Services/ExpenseBackupCodec.swift),
-  [import tests](FinanceTrackerTests/ExpenseBackupImportTests.swift),
-  [file tests](FinanceTrackerTests/ExpenseBackupFileTests.swift),
-  [UI tests](FinanceTrackerUITests/ExpenseBackupUITests.swift),
+  Sources: [JSON codec](FinanceTracker/Serialization/ExpenseBackupCodec.swift),
+  [import tests](FinanceTrackerTests/Services/ExpenseBackupImportTests.swift),
+  [file tests](FinanceTrackerTests/Services/ExpenseBackupFileTests.swift),
+  [UI tests](FinanceTrackerUITests/Settings/ExpenseBackupUITests.swift),
   [backup settings](FinanceTracker/Views/SettingsView/Components/ExpenseBackupSettingsSection.swift).
 
 - [x] **Make tag names and identities round-trip through backups (#49).** JSON
@@ -164,15 +164,15 @@ distribution, and App Store Connect checks remain open without execution evidenc
   the neutral fallback. Focused tests cover icon/emoji, opacity, wide-gamut and
   light/dark colors through persistence, local appearance edits, and invalid color
   components. Tag budgets remain excluded.
-  Sources: [JSON codec](SageKit/Services/ExpenseBackupCodec.swift),
-  [codec tests](FinanceTrackerTests/ExpenseBackupCodecTests.swift),
-  [import tests](FinanceTrackerTests/ExpenseBackupImportTests.swift).
+  Sources: [JSON codec](FinanceTracker/Serialization/ExpenseBackupCodec.swift),
+  [codec tests](FinanceTrackerTests/Serialization/ExpenseBackupCodecTests.swift),
+  [import tests](FinanceTrackerTests/Services/ExpenseBackupImportTests.swift).
 
 - [ ] **Expose conflicting recurring copies for resolution.** Exact duplicates
   are repaired, but differently edited copies of the same occurrence are retained
   and counted twice with only a log message. Preserve user edits while providing
   a visible conflict-resolution path and an explicit accounting policy.
-  Source: [recurring repair](SageKit/Services/RecurringExpenseRepairService.swift).
+  Source: [recurring repair](FinanceTracker/Services/RecurringExpenses/RecurringExpenseRepairService.swift).
 
 ## Priority 2: Correctness And Errors
 
@@ -188,8 +188,8 @@ distribution, and App Store Connect checks remain open without execution evidenc
 - [x] **Use half-open store month queries.** ExpenseStore month and range fetches,
   derived totals, and monthly snapshots exclude the end boundary. Month-boundary
   regression tests are present.
-  Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
-  [store tests](FinanceTrackerTests/ExpenseStoreTests.swift).
+  Sources: [ExpenseStore](SageKit/Persistence/ExpenseStore.swift),
+  [store tests](FinanceTrackerTests/Persistence/ExpenseStoreTests.swift).
 
 - [x] **Finish half-open filtering in category detail and Home comparisons (#52).**
   Category detail and Home share persisted queries with exclusive month-end bounds.
@@ -198,9 +198,9 @@ distribution, and App Store Connect checks remain open without execution evidenc
   cover both paths, fractional end-of-month timestamps, leap February, DST, and
   year rollover; summary tests also cover shorter-month comparison cutoffs.
   Device/distribution verification remains unperformed.
-  Sources: [shared queries](SageKit/Services/ExpenseFetchDescriptors.swift),
-  [query tests](FinanceTrackerTests/ExpenseFetchDescriptorTests.swift),
-  [summary tests](FinanceTrackerTests/SpendingMonthSummaryTests.swift),
+  Sources: [shared queries](SageKit/Persistence/ExpenseFetchDescriptors.swift),
+  [query tests](FinanceTrackerTests/Persistence/ExpenseFetchDescriptorTests.swift),
+  [summary tests](FinanceTrackerTests/Analytics/SpendingMonthSummaryTests.swift),
   [category detail](FinanceTracker/Views/HomeView/Components/CategoryDetailView.swift),
   [monthly overview](FinanceTracker/Views/DashboardView/Widgets/MonthlyOverviewWidget.swift).
 
@@ -208,7 +208,7 @@ distribution, and App Store Connect checks remain open without execution evidenc
   can suppress errors into an empty array, and Monthly Spending can fall back
   from a failed filtered request to a broader total. Propagate read failures;
   never silently change the user's query.
-  Sources: [ExpenseStore](SageKit/Services/ExpenseStore.swift),
+  Sources: [ExpenseStore](SageKit/Persistence/ExpenseStore.swift),
   [Find Expenses](SageKit/AppIntents/Intents/FindExpensesIntent.swift),
   [Monthly Spending](SageKit/AppIntents/Intents/GetMonthlySpendingIntent.swift).
 
@@ -275,8 +275,8 @@ distribution, and App Store Connect checks remain open without execution evidenc
   simulator UI test passed for confirmation, save/reopen, and removed time-zone
   controls.
   Source: [rule editor](FinanceTracker/Views/SettingsView/Components/EditRecurringRuleSheet.swift),
-  [schedule operation](SageKit/Services/RecurringExpenseSchedule.swift),
-  [tests](FinanceTrackerTests/RecurringExpenseServiceTests.swift).
+  [schedule operation](FinanceTracker/Services/RecurringExpenses/RecurringExpenseSchedule.swift),
+  [tests](FinanceTrackerTests/Services/RecurringExpenses/RecurringExpenseServiceTests.swift).
   Multi-device concurrent edits and older-client compatibility still require
   device validation; older clients do not honor the schedule boundary.
 
@@ -355,7 +355,7 @@ distribution, and App Store Connect checks remain open without execution evidenc
   without echo writes or a currency-conflict gate. Legacy conflict flags no longer
   block access or monetary edits. The former empty-ledger-only correction proposal
   and immutable lock/conflict requirement are superseded.
-  Sources: [currency](SageKit/Services/LedgerCurrency.swift),
+  Sources: [currency](SageKit/Money/LedgerCurrency.swift),
   [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift),
   [budget settings](FinanceTracker/Views/SettingsView/Components/BudgetSettingsSection.swift),
   [onboarding](FinanceTracker/Views/OnboardingView.swift).
@@ -376,14 +376,14 @@ distribution, and App Store Connect checks remain open without execution evidenc
 - [x] **Add jump-to-month and return-to-current-month navigation in Stats.** Choose
   Month and This Month controls are implemented, with a dedicated UI test.
   Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
-  [Stats UI tests](FinanceTrackerUITests/StatsViewUITests.swift).
+  [Stats UI tests](FinanceTrackerUITests/Stats/StatsViewUITests.swift).
 - [ ] **Add equivalent month navigation to Home and Expenses.** These still offer
   previous/next arrows only. Verify picker accessibility and presentation on device.
 - [x] **Paginate search beyond 100 matches.** Load more results reveals another
   100 matches without changing search terms; a new query resets the visible window.
   Sources: [Search](FinanceTracker/Views/ExpensesView/Components/SearchExpensesView.swift),
-  [search query tests](FinanceTrackerTests/ExpenseSearchPredicateTests.swift),
-  [pagination UI test](FinanceTrackerUITests/FinanceTrackerUITests.swift).
+  [search query tests](FinanceTrackerTests/Persistence/ExpenseSearchPredicateTests.swift),
+  [pagination UI test](FinanceTrackerUITests/AppFlows/FinanceTrackerUITests.swift).
 - [x] **Explain overlapping tag totals in Stats.** Stats explains that expenses
   with multiple tags count toward each tag.
   Source: [Stats top tags](FinanceTracker/Views/StatsView/StatsView.swift).
@@ -410,8 +410,8 @@ These checks still require runtime evidence. They are not established failures.
   SQLite fixture tests cover V1/V5 migration and V2 legacy-tag backfill/reopening;
   these are not released-store or interrupted-launch evidence. The migration plan
   still includes V1-V6 despite removal of old store-location relocation.
-  Sources: [migration tests](FinanceTrackerTests/SchemaMigrationTests.swift),
-  [legacy tests](FinanceTrackerTests/SageLegacySafetyTests.swift).
+  Sources: [migration tests](FinanceTrackerTests/Persistence/SchemaMigrationTests.swift),
+  [legacy tests](FinanceTrackerTests/Persistence/SageLegacySafetyTests.swift).
 - [ ] Test two-device CloudKit synchronization, offline edits, deletion
   propagation, and late-arriving records. Separately verify denomination preference
   propagation and convergence after concurrent/offline edits, opt-out/re-enable,

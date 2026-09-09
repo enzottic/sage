@@ -4,8 +4,9 @@
 //
 
 import Foundation
+import SageKit
 
-public struct ExportableExpense: Sendable, Equatable {
+public nonisolated struct ExportableExpense: Sendable, Equatable {
     public let name: String
     public let date: Date
     public let amount: Double
@@ -31,7 +32,7 @@ public struct ExportableExpense: Sendable, Equatable {
     }
 }
 
-public enum ExpenseCSVError: LocalizedError, Equatable {
+public nonisolated enum ExpenseCSVError: LocalizedError, Equatable {
     case invalidHeader(expected: [String], actual: [String])
     case malformedCSV(row: Int, reason: String)
     case invalidColumnCount(row: Int, expected: Int, actual: Int)
@@ -69,7 +70,7 @@ public enum ExpenseCSVError: LocalizedError, Equatable {
     }
 }
 
-public enum ExpenseCSVCodec {
+public nonisolated enum ExpenseCSVCodec {
     public static let legacyHeader = ["name", "date", "amount", "category", "tag", "note"]
     public static let header = legacyHeader + ["currency"]
 

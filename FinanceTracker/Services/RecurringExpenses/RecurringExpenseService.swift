@@ -4,9 +4,10 @@
 //
 
 import Foundation
+import SageKit
 import SwiftData
 
-public struct RecurringExpenseMaintenanceResult: Equatable, Sendable {
+public nonisolated struct RecurringExpenseMaintenanceResult: Equatable, Sendable {
     public let generatedCount: Int
     public let skippedCount: Int
     public let repair: RecurringExpenseRepairResult

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum RecurringExpenseOccurrence {
+public nonisolated enum RecurringExpenseOccurrence {
     // The exact conversion used by repair, without trapping on untrusted backup dates.
     public static func safeKey(ruleID: UUID, scheduledDate: Date) -> String? {
         guard let milliseconds = safeMilliseconds(scheduledDate) else { return nil }

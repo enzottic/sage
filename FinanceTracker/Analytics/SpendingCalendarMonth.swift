@@ -1,7 +1,8 @@
 import Foundation
+import SageKit
 
 /// A Sunday-first month of recorded spending and future recurring occurrences.
-public struct SpendingCalendarMonth {
+public nonisolated struct SpendingCalendarMonth {
     public struct UpcomingExpense: Identifiable {
         public let id: String
         public let name: String

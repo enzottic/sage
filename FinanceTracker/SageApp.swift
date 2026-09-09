@@ -70,7 +70,16 @@ struct SageApp: App {
                 return container
             }
         } else {
-            containerResult = SageModelContainer.shared
+            containerResult = SageModelContainer.shared.flatMap { container in
+                Result {
+                    #if DEBUG
+                    let context = ModelContext(container)
+                    MockDataSeeder.seed(into: context)
+                    try context.save()
+                    #endif
+                    return container
+                }
+            }
         }
         self.containerResult = containerResult
         if case let .success(container) = containerResult,

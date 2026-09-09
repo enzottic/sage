@@ -916,34 +916,3 @@ public typealias ExpenseTag = SageSchemaV6.ExpenseTag
 public typealias RecurringExpenseRule = SageSchemaV6.RecurringExpenseRule
 public typealias RecurrenceFrequency = SageSchemaV6.RecurrenceFrequency
 public typealias ExpenseAccount = SageSchemaV6.ExpenseAccount
-
-public extension RecurrenceFrequency {
-    /// The next occurrence date one interval after `date`, or nil if it can't be computed.
-    /// Legacy stepping. Fixed schedules use `RecurringExpenseSchedule` instead.
-    func nextOccurrence(after date: Date, calendar: Calendar = .current) -> Date? {
-        switch self {
-        case .daily:    return calendar.date(byAdding: .day, value: 1, to: date)
-        case .weekly:   return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
-        case .biweekly: return calendar.date(byAdding: .weekOfYear, value: 2, to: date)
-        case .monthly:  return calendar.date(byAdding: .month, value: 1, to: date)
-        }
-    }
-}
-
-public extension RecurringExpenseRule {
-    /// The next date this rule will generate an expense, or nil once it has passed `endDate`.
-    ///
-    /// A rule that has generated before steps one interval from its last generation; one that
-    /// hasn't yet advances from `startDate` to the first occurrence on or after `date`. Shared
-    /// by the dashboard's upcoming list and the Settings rule list so both show the same date.
-    func nextOccurrence(after date: Date = .now, calendar: Calendar = .current) -> Date? {
-        let schedule = RecurringExpenseSchedule(rule: self, legacyCalendar: calendar)
-        var next = schedule.firstPendingOccurrence()
-        if lastGeneratedDate == nil {
-            while let occurrence = next, occurrence < date {
-                next = schedule.nextOccurrence(after: occurrence)
-            }
-        }
-        return next
-    }
-}
