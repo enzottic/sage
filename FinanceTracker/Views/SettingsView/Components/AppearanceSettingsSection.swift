@@ -70,7 +70,7 @@ private struct ColorPalette: Identifiable {
 struct AppearanceSettingsSection: View {
     @Environment(AppConfiguration.self) private var config
 
-    func appearanceFill(_ appearance: Appearance) -> UIColor {
+    func appearanceFill(_ appearance: AppConfiguration.Appearance) -> UIColor {
         switch appearance {
         case .light:
             return UIColor(.sageBackground).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
@@ -84,7 +84,7 @@ struct AppearanceSettingsSection: View {
         @Bindable var config = config
         List {
             Section {
-                ForEach(Appearance.allCases, id: \.self) { appearance in
+                ForEach(AppConfiguration.Appearance.allCases, id: \.self) { appearance in
                     Button {
                         config.selectedAppearance = appearance
                     } label: {

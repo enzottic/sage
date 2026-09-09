@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C60609063000000300000001 /* DashboardWidgetID.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000300000003 /* DashboardWidgetID.swift */; };
 		C60609063000000100000001 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000100000003 /* AppConfiguration.swift */; };
 		C60609063000000100000002 /* UITestConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000100000004 /* UITestConfiguration.swift */; };
 		C60609063000000200000001 /* ExpenseBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000200000003 /* ExpenseBackupService.swift */; };
@@ -103,6 +104,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C60609063000000300000003 /* DashboardWidgetID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DashboardWidgetID.swift; path = FinanceTracker/Helpers/DashboardWidgetID.swift; sourceTree = SOURCE_ROOT; };
 		C60609063000000100000003 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppConfiguration.swift; path = FinanceTracker/Helpers/AppConfiguration.swift; sourceTree = SOURCE_ROOT; };
 		C60609063000000100000004 /* UITestConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UITestConfiguration.swift; path = FinanceTracker/Helpers/UITestConfiguration.swift; sourceTree = SOURCE_ROOT; };
 		C60609063000000200000003 /* ExpenseBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ExpenseBackupService.swift; path = FinanceTracker/Services/ExpenseBackupService.swift; sourceTree = SOURCE_ROOT; };
@@ -249,6 +251,7 @@
 			isa = PBXGroup;
 			children = (
 				C60609063000000100000003 /* AppConfiguration.swift */,
+				C60609063000000300000003 /* DashboardWidgetID.swift */,
 				C60609063000000200000003 /* ExpenseBackupService.swift */,
 				C60609063000000100000004 /* UITestConfiguration.swift */,
 			);
@@ -527,6 +530,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C60609063000000100000001 /* AppConfiguration.swift in Sources */,
+				C60609063000000300000001 /* DashboardWidgetID.swift in Sources */,
 				C60609063000000200000001 /* ExpenseBackupService.swift in Sources */,
 				C60609063000000100000002 /* UITestConfiguration.swift in Sources */,
 			);

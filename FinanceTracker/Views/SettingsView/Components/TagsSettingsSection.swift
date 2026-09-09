@@ -57,8 +57,8 @@ struct TagsSettingsSection: View {
         }
     }
 
-    private var availableTaggingModes: [SmartTaggingMode] {
-        SmartTaggingMode.allCases.filter { mode in
+    private var availableTaggingModes: [AppConfiguration.SmartTaggingMode] {
+        AppConfiguration.SmartTaggingMode.allCases.filter { mode in
             switch mode {
             case .ai, .both: return TagSuggestionService.isAIAvailable
             case .history, .none: return true

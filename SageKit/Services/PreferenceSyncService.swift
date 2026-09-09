@@ -164,7 +164,12 @@ public final class PreferenceSyncService {
         return snapshot
     }
 
-    // Only explicit local edits are sent. Startup never bulk-uploads local preferences.
+    // Publish values from the local app configuration to iCloud KVS
+    // 1. Require an active store and consent from the user
+    // 2. Skip uploading if iCloud quota is exceeded
+    // 3. Remove any attempted direct ledger-currency writes
+    // 4. Check currency safety for monetary values
+    // 5. Write the remaining values
     public func publish(
         _ values: [Key: Any],
         localCurrency: String?,

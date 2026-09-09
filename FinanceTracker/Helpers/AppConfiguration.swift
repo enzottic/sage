@@ -68,23 +68,20 @@ class AppConfiguration {
         localDefaults.bool(forKey: Keys.billRemindersEnabled)
     }
 
-    private enum Keys {
-        static let isCloudSyncEnabled = SageModelContainer.cloudKitPreferenceKey
-        static let needsColor = "categoryColorNeeds"
-        static let wantsColor = "categoryColorWants"
-        static let savingsColor = "categoryColorSavings"
-        static let billRemindersEnabled = "billRemindersEnabled"
-        static let billReminderDaysBefore = "billReminderDaysBefore"
-        static let hideBillReminderDetails = "hideBillReminderDetails"
-        static let billReminderTimeMinutes = "billReminderTimeMinutes"
-        static let dailyExpenseReminderEnabled = "dailyExpenseReminderEnabled"
-        static let dailyExpenseReminderTimeMinutes = "dailyExpenseReminderTimeMinutes"
+    // Deliberately excluded from PreferenceSyncService.Key and all cloud snapshots.
+    var dashboardWidgetOrder: [DashboardWidgetID] = DashboardWidgetID.defaultOrder {
+        didSet {
+            if !isPreview {
+                defaults.set(dashboardWidgetOrder.map(\.rawValue), forKey: Keys.dashboardWidgetOrder)
+            }
+        }
     }
 
-    var selectedAppearance: Appearance {
+    var selectedAppearance: Appearance = .system {
         didSet { persist(selectedAppearance.rawValue, key: .appearance) }
     }
-    var totalMonthlyIncome: Int {
+    
+    var totalMonthlyIncome: Int = 0 {
         didSet {
             guard !isRestoringValue else { return }
             guard totalMonthlyIncome >= 0 else {
@@ -96,7 +93,8 @@ class AppConfiguration {
             persist(totalMonthlyIncome, key: .totalMonthlyIncome)
         }
     }
-    var needsPercent: Double {
+    
+    var needsPercent: Double = 0.5 {
         didSet {
             guard !isRestoringValue else { return }
             guard needsPercent.isFinite, (0...1).contains(needsPercent) else {
@@ -108,7 +106,8 @@ class AppConfiguration {
             persist(needsPercent, key: .needsPercent)
         }
     }
-    var wantsPercent: Double {
+    
+    var wantsPercent: Double = 0.3 {
         didSet {
             guard !isRestoringValue else { return }
             guard wantsPercent.isFinite, (0...1).contains(wantsPercent) else {
@@ -120,7 +119,8 @@ class AppConfiguration {
             persist(wantsPercent, key: .wantsPercent)
         }
     }
-    var savingsPercent: Double {
+    
+    var savingsPercent: Double = 0.2 {
         didSet {
             guard !isRestoringValue else { return }
             guard savingsPercent.isFinite, (0...1).contains(savingsPercent) else {
@@ -132,11 +132,12 @@ class AppConfiguration {
             persist(savingsPercent, key: .savingsPercent)
         }
     }
-    var smartTaggingMode: SmartTaggingMode {
+    
+    var smartTaggingMode: SmartTaggingMode = .history {
         didSet { persist(smartTaggingMode.rawValue, key: .smartTaggingMode) }
     }
 
-    private(set) var isCloudSyncEnabled: Bool {
+    private(set) var isCloudSyncEnabled: Bool = false {
         didSet {
             guard supportsCloudSync, !isPreview, !isUITesting else { return }
             sharedDefaults?.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
@@ -159,35 +160,38 @@ class AppConfiguration {
         return sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == enabled
     }
 
-    var needsColor: Color {
+    var needsColor: Color = Color("NeedColor") {
         didSet {
             guard !isPreview else { return }
             defaults.setSageColor(needsColor, forKey: Keys.needsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
-    var wantsColor: Color {
+    
+    var wantsColor: Color = Color("WantColor") {
         didSet {
             guard !isPreview else { return }
             defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
-    var savingsColor: Color {
+    
+    var savingsColor: Color = Color("SavingColor") {
         didSet {
             guard !isPreview else { return }
             defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
-    var billRemindersEnabled: Bool {
+    
+    var billRemindersEnabled: Bool = false {
         didSet {
             guard !isPreview else { return }
             defaults.set(billRemindersEnabled, forKey: Keys.billRemindersEnabled)
         }
     }
 
-    var billReminderDaysBefore: Int {
+    var billReminderDaysBefore: Int = 1 {
         didSet {
             guard !isRestoringValue else { return }
             guard (1...7).contains(billReminderDaysBefore) else {
@@ -200,13 +204,13 @@ class AppConfiguration {
         }
     }
 
-    var hideBillReminderDetails: Bool {
+    var hideBillReminderDetails: Bool = true {
         didSet {
             if !isPreview { defaults.set(hideBillReminderDetails, forKey: Keys.hideBillReminderDetails) }
         }
     }
 
-    var billReminderTimeMinutes: Int {
+    var billReminderTimeMinutes: Int = 540 {
         didSet {
             guard !isRestoringValue else { return }
             guard (0..<1440).contains(billReminderTimeMinutes) else {
@@ -219,13 +223,13 @@ class AppConfiguration {
         }
     }
 
-    var dailyExpenseReminderEnabled: Bool {
+    var dailyExpenseReminderEnabled: Bool = false {
         didSet {
             if !isPreview { defaults.set(dailyExpenseReminderEnabled, forKey: Keys.dailyExpenseReminderEnabled) }
         }
     }
 
-    var dailyExpenseReminderTimeMinutes: Int {
+    var dailyExpenseReminderTimeMinutes: Int = 1200 {
         didSet {
             guard !isRestoringValue else { return }
             guard (0..<1440).contains(dailyExpenseReminderTimeMinutes) else {
@@ -238,22 +242,21 @@ class AppConfiguration {
         }
     }
 
-    var categoryColors: CategoryColors {
-        CategoryColors(needs: needsColor, wants: wantsColor, savings: savingsColor)
-    }
-    var needsBudget: Double { Double(totalMonthlyIncome) * needsPercent }
-    var wantsBudget: Double { Double(totalMonthlyIncome) * wantsPercent }
-    var savingsBudget: Double { Double(totalMonthlyIncome) * savingsPercent }
-
+    // Helper function to persist a configuration value locally, then then publish them to iCloud
     private func persist(_ value: Any, key: Key) {
         guard !isPreview else { return }
+        
         defaults.set(value, forKey: key.storageKey)
+        
+        // If we're applying a change from elsewhere already, then skip publishing
         guard !isApplyingRemote else { return }
+        
         var values = [key: value]
         if Key.allocation.contains(key) {
             guard abs(needsPercent + wantsPercent + savingsPercent - 1) < 0.000001 else { return }
             values = [.needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent]
         }
+        
         preferenceSync.publish(values, localCurrency: ledgerCurrencyCode, hasKnownCurrencyConflict: hasLedgerCurrencyConflict)
     }
 
@@ -275,6 +278,7 @@ class AppConfiguration {
         billReminderTimeMinutes = 540
         dailyExpenseReminderEnabled = false
         dailyExpenseReminderTimeMinutes = 1200
+        dashboardWidgetOrder = DashboardWidgetID.defaultOrder
         ledgerCurrencyCode = nil
         cloudLedgerCurrencyCode = nil
         hasLedgerCurrencyConflict = false
@@ -298,69 +302,106 @@ class AppConfiguration {
     convenience init() {
         if UITestConfiguration.isEnabled {
             self.init(defaults: UserDefaults(suiteName: "Sage.UITests.\(UUID().uuidString)")!, sharedDefaults: nil, isUITesting: true)
+        } else if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            self.init(preview: ())
         } else {
             self.init(
                 defaults: Self.localDefaults,
-                sharedDefaults: UserDefaults(suiteName: Self.suite),
-                isPreview: ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+                sharedDefaults: UserDefaults(suiteName: Self.suite)
             )
         }
     }
 
     static var preview: AppConfiguration {
-        AppConfiguration(defaults: .standard, sharedDefaults: nil, isPreview: true)
+        AppConfiguration(preview: ())
+    }
+
+    private init(preview: Void) {
+        isPreview = true
+        isUITesting = false
+        supportsCloudSync = SageModelContainer.supportsCloudSync
+        defaults = .standard
+        sharedDefaults = nil
+        preferenceSync = PreferenceSyncService(hasConsent: { false })
+
+        _ledgerCurrencyCode = "USD"
+        _totalMonthlyIncome = 5_000
+        _smartTaggingMode = .none
     }
 
     init(
         defaults: UserDefaults,
         sharedDefaults: UserDefaults?,
-        isPreview: Bool = false,
         isUITesting: Bool = false,
         supportsCloudSync: Bool = SageModelContainer.supportsCloudSync,
         makeCloudStore: (() -> any CloudPreferenceStore)? = nil,
         notificationCenter: NotificationCenter = .default
     ) {
-        self.isPreview = isPreview
+        self.isPreview = false
         self.isUITesting = isUITesting
         self.supportsCloudSync = supportsCloudSync
         self.defaults = defaults
         self.sharedDefaults = sharedDefaults
-        
         preferenceSync = PreferenceSyncService(
-            hasConsent: { supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true },
+            hasConsent: { supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true },
             makeStore: makeCloudStore,
             notificationCenter: notificationCenter
         )
-        ledgerCurrencyCode = isPreview || isUITesting ? "USD" : LedgerCurrency.persistedCode(defaults: sharedDefaults)
-        hasLedgerCurrencyConflict = supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
-        isCloudSyncEnabled = supportsCloudSync && !isPreview && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true
-        selectedAppearance = isPreview ? .system : Appearance(rawValue: defaults.string(forKey: Key.appearance.storageKey) ?? "") ?? .system
         
-        let income = Self.number(defaults.object(forKey: Key.totalMonthlyIncome.storageKey))
-        totalMonthlyIncome = isPreview ? 5_000 : income.flatMap { $0 >= 0 ? Int(exactly: $0) : nil } ?? 0
+        // Initialize @Observable storage directly so loading never invokes persistence observers.
+        _ledgerCurrencyCode = isUITesting ? "USD" : LedgerCurrency.persistedCode(defaults: sharedDefaults)
         
-        let needs = Self.number(defaults.object(forKey: Key.needsPercent.storageKey)) ?? 0.5
-        let wants = Self.number(defaults.object(forKey: Key.wantsPercent.storageKey)) ?? 0.3
-        let savings = Self.number(defaults.object(forKey: Key.savingsPercent.storageKey)) ?? 0.2
-        let validAllocation = [needs, wants, savings].allSatisfy { (0...1).contains($0) }
-            && abs(needs + wants + savings - 1) < 0.000001
+        _hasLedgerCurrencyConflict = supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
         
-        needsPercent = !isPreview && validAllocation ? needs : 0.5
-        wantsPercent = !isPreview && validAllocation ? wants : 0.3
-        savingsPercent = !isPreview && validAllocation ? savings : 0.2
-        smartTaggingMode = isPreview ? .none : SmartTaggingMode(rawValue: defaults.string(forKey: Key.smartTaggingMode.storageKey) ?? "") ?? .history
-        needsColor = isPreview ? Color("NeedColor") : defaults.sageColor(forKey: Keys.needsColor) ?? Color("NeedColor")
-        wantsColor = isPreview ? Color("WantColor") : defaults.sageColor(forKey: Keys.wantsColor) ?? Color("WantColor")
-        savingsColor = isPreview ? Color("SavingColor") : defaults.sageColor(forKey: Keys.savingsColor) ?? Color("SavingColor")
-        billRemindersEnabled = !isPreview && defaults.bool(forKey: Keys.billRemindersEnabled)
+        _isCloudSyncEnabled = supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true
+
+        _dashboardWidgetOrder = DashboardWidgetID.resolvedOrder(
+            defaults.stringArray(forKey: Keys.dashboardWidgetOrder) ?? []
+        )
+        
+        if let raw = defaults.string(forKey: Key.appearance.storageKey), let appearance = Appearance(rawValue: raw) {
+            _selectedAppearance = appearance
+        }
+        
+        if let number = Self.number(defaults.object(forKey: Key.totalMonthlyIncome.storageKey)),
+           number >= 0, let income = Int(exactly: number) {
+            _totalMonthlyIncome = income
+        }
+        
+        let needs = Self.number(defaults.object(forKey: Key.needsPercent.storageKey)) ?? _needsPercent
+        let wants = Self.number(defaults.object(forKey: Key.wantsPercent.storageKey)) ?? _wantsPercent
+        let savings = Self.number(defaults.object(forKey: Key.savingsPercent.storageKey)) ?? _savingsPercent
+        if [needs, wants, savings].allSatisfy({ (0...1).contains($0) }),
+           abs(needs + wants + savings - 1) < 0.000001 {
+            _needsPercent = needs
+            _wantsPercent = wants
+            _savingsPercent = savings
+        }
+        
+        if let raw = defaults.string(forKey: Key.smartTaggingMode.storageKey), let mode = SmartTaggingMode(rawValue: raw) {
+            _smartTaggingMode = mode
+        }
+        
+        _needsColor = defaults.sageColor(forKey: Keys.needsColor) ?? _needsColor
+        _wantsColor = defaults.sageColor(forKey: Keys.wantsColor) ?? _wantsColor
+        _savingsColor = defaults.sageColor(forKey: Keys.savingsColor) ?? _savingsColor
+        
+        _billRemindersEnabled = defaults.bool(forKey: Keys.billRemindersEnabled)
+        
         let reminderDays = defaults.integer(forKey: Keys.billReminderDaysBefore)
-        billReminderDaysBefore = !isPreview && (1...7).contains(reminderDays) ? reminderDays : 1
-        hideBillReminderDetails = isPreview || (defaults.object(forKey: Keys.hideBillReminderDetails) as? Bool ?? true)
-        let reminderTime = defaults.object(forKey: Keys.billReminderTimeMinutes) as? Int ?? 540
-        billReminderTimeMinutes = !isPreview && (0..<1440).contains(reminderTime) ? reminderTime : 540
-        dailyExpenseReminderEnabled = !isPreview && defaults.bool(forKey: Keys.dailyExpenseReminderEnabled)
-        let dailyTime = defaults.object(forKey: Keys.dailyExpenseReminderTimeMinutes) as? Int ?? 1200
-        dailyExpenseReminderTimeMinutes = !isPreview && (0..<1440).contains(dailyTime) ? dailyTime : 1200
+        if (1...7).contains(reminderDays) { _billReminderDaysBefore = reminderDays }
+        
+        _hideBillReminderDetails = defaults.object(forKey: Keys.hideBillReminderDetails) as? Bool ?? _hideBillReminderDetails
+        
+        if let minutes = defaults.object(forKey: Keys.billReminderTimeMinutes) as? Int, (0..<1440).contains(minutes) {
+            _billReminderTimeMinutes = minutes
+        }
+        
+        _dailyExpenseReminderEnabled = defaults.bool(forKey: Keys.dailyExpenseReminderEnabled)
+        
+        if let minutes = defaults.object(forKey: Keys.dailyExpenseReminderTimeMinutes) as? Int, (0..<1440).contains(minutes) {
+            _dailyExpenseReminderTimeMinutes = minutes
+        }
 
         // All observable fields must exist before a synchronous startup snapshot is delivered.
         preferenceSync.onChange = { [weak self] in self?.applyRemote($0) }
@@ -369,19 +410,20 @@ class AppConfiguration {
             if status == .accountChanged { self.updateCloudSyncEnabled(false) }
             self.cloudSyncStatus = status
         }
+        
         if isCloudSyncEnabled { preferenceSync.start() }
+        
         // Keep widget-facing defaults populated without sending fallback values to iCloud.
-        if !isPreview {
-            let localValues: [Key: Any] = [
-                .appearance: selectedAppearance.rawValue, .totalMonthlyIncome: totalMonthlyIncome,
-                .needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent,
-                .smartTaggingMode: smartTaggingMode.rawValue,
-            ]
-            for (key, value) in localValues { defaults.set(value, forKey: key.storageKey) }
-            defaults.setSageColor(needsColor, forKey: Keys.needsColor)
-            defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
-            defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
-        }
+        defaults.set(dashboardWidgetOrder.map(\.rawValue), forKey: Keys.dashboardWidgetOrder)
+        let localValues: [Key: Any] = [
+            .appearance: selectedAppearance.rawValue, .totalMonthlyIncome: totalMonthlyIncome,
+            .needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent,
+            .smartTaggingMode: smartTaggingMode.rawValue,
+        ]
+        for (key, value) in localValues { defaults.set(value, forKey: key.storageKey) }
+        defaults.setSageColor(needsColor, forKey: Keys.needsColor)
+        defaults.setSageColor(wantsColor, forKey: Keys.wantsColor)
+        defaults.setSageColor(savingsColor, forKey: Keys.savingsColor)
     }
 
     private static func number(_ value: Any?) -> Double? {
@@ -461,23 +503,51 @@ class AppConfiguration {
     }
 }
 
-enum Appearance: String, CaseIterable {
-    case system = "System"
-    case light = "Light"
-    case dark = "Dark"
-
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return nil
-        }
+// Computed properties
+extension AppConfiguration {
+    var categoryColors: CategoryColors {
+        CategoryColors(needs: needsColor, wants: wantsColor, savings: savingsColor)
     }
+    
+    var needsBudget: Double { Double(totalMonthlyIncome) * needsPercent }
+    var wantsBudget: Double { Double(totalMonthlyIncome) * wantsPercent }
+    var savingsBudget: Double { Double(totalMonthlyIncome) * savingsPercent }
 }
 
-enum SmartTaggingMode: String, CaseIterable {
-    case history = "History"
-    case ai = "AI"
-    case both = "History + AI"
-    case none = "None"
+// Enums
+extension AppConfiguration {
+    enum Keys {
+        static let dashboardWidgetOrder = "dashboardWidgetOrder"
+        static let isCloudSyncEnabled = SageModelContainer.cloudKitPreferenceKey
+        static let needsColor = "categoryColorNeeds"
+        static let wantsColor = "categoryColorWants"
+        static let savingsColor = "categoryColorSavings"
+        static let billRemindersEnabled = "billRemindersEnabled"
+        static let billReminderDaysBefore = "billReminderDaysBefore"
+        static let hideBillReminderDetails = "hideBillReminderDetails"
+        static let billReminderTimeMinutes = "billReminderTimeMinutes"
+        static let dailyExpenseReminderEnabled = "dailyExpenseReminderEnabled"
+        static let dailyExpenseReminderTimeMinutes = "dailyExpenseReminderTimeMinutes"
+    }
+    
+    enum Appearance: String, CaseIterable {
+        case system = "System"
+        case light = "Light"
+        case dark = "Dark"
+
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .light: return .light
+            case .dark: return .dark
+            case .system: return nil
+            }
+        }
+    }
+
+    enum SmartTaggingMode: String, CaseIterable {
+        case history = "History"
+        case ai = "AI"
+        case both = "History + AI"
+        case none = "None"
+    }
 }

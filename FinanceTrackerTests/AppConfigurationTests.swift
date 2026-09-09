@@ -10,6 +10,135 @@ struct AppConfigurationTests {
     private typealias Key = PreferenceSyncService.Key
 
     @Test
+    func previewUsesSampleValuesAndDoesNotPersistEditsOrReset() throws {
+        let storedValues = UserDefaults.standard.dictionaryRepresentation() as NSDictionary
+        let config = AppConfiguration.preview
+
+        #expect(config.dashboardWidgetOrder == DashboardWidgetID.defaultOrder)
+        #expect(config.selectedAppearance == .system)
+        #expect(config.totalMonthlyIncome == 5_000)
+        #expect(config.needsPercent == 0.5)
+        #expect(config.wantsPercent == 0.3)
+        #expect(config.savingsPercent == 0.2)
+        #expect(config.smartTaggingMode == .none)
+        #expect(config.needsColor == Color("NeedColor"))
+        #expect(config.wantsColor == Color("WantColor"))
+        #expect(config.savingsColor == Color("SavingColor"))
+        #expect(!config.billRemindersEnabled)
+        #expect(config.billReminderDaysBefore == 1)
+        #expect(config.hideBillReminderDetails)
+        #expect(config.billReminderTimeMinutes == 540)
+        #expect(!config.dailyExpenseReminderEnabled)
+        #expect(config.dailyExpenseReminderTimeMinutes == 1200)
+        #expect(config.ledgerCurrencyCode == "USD")
+        #expect(!config.hasLedgerCurrencyConflict)
+        #expect(!config.isCloudSyncEnabled)
+        #expect(config.cloudSyncStatus == .stopped)
+        #expect(storedValues.isEqual(to: UserDefaults.standard.dictionaryRepresentation()))
+
+        config.totalMonthlyIncome = 9000
+        config.selectedAppearance = .dark
+        config.smartTaggingMode = .both
+        config.updateNeeds(0.6)
+        config.updateWants(0.2)
+        config.dashboardWidgetOrder.reverse()
+        config.needsColor = .red
+        config.wantsColor = .green
+        config.savingsColor = .blue
+        config.billRemindersEnabled = true
+        config.billReminderDaysBefore = 7
+        config.hideBillReminderDetails = false
+        config.billReminderTimeMinutes = 0
+        config.dailyExpenseReminderEnabled = true
+        config.dailyExpenseReminderTimeMinutes = 1439
+        config.updateCloudSyncEnabled(true)
+        config.recheckLedgerCurrency()
+        config.markSetupComplete()
+        try config.establishLedgerCurrency("EUR")
+        #expect(config.ledgerCurrencyCode == "EUR")
+        #expect(config.cloudSyncStatus == .stopped)
+        #expect(storedValues.isEqual(to: UserDefaults.standard.dictionaryRepresentation()))
+
+        let freshPreview = AppConfiguration.preview
+        #expect(freshPreview.totalMonthlyIncome == 5_000)
+        #expect(freshPreview.ledgerCurrencyCode == "USD")
+        config.resetAllSettings()
+        #expect(config.totalMonthlyIncome == 0)
+        #expect(config.smartTaggingMode == .history)
+        #expect(config.ledgerCurrencyCode == nil)
+        #expect(storedValues.isEqual(to: UserDefaults.standard.dictionaryRepresentation()))
+    }
+
+    @Test
+    func uiTestingLoadsLocalSettingsWithoutPreviewValuesOrCloudAccess() throws {
+        let fixture = try Fixture(enabled: true, currency: "EUR")
+        fixture.shared.set(true, forKey: LedgerCurrency.cloudConflictKey)
+        fixture.defaults.set(3200, forKey: Key.totalMonthlyIncome.storageKey)
+        fixture.defaults.set("Dark", forKey: Key.appearance.storageKey)
+        let sharedValues = fixture.shared.dictionaryRepresentation() as NSDictionary
+        let config = AppConfiguration(
+            defaults: fixture.defaults,
+            sharedDefaults: fixture.shared,
+            isUITesting: true,
+            supportsCloudSync: true,
+            makeCloudStore: {
+                Issue.record("UI tests must never acquire an iCloud store")
+                return fixture.cloud
+            }
+        )
+
+        #expect(config.totalMonthlyIncome == 3200)
+        #expect(config.selectedAppearance == .dark)
+        #expect(config.smartTaggingMode == .history)
+        #expect(config.ledgerCurrencyCode == "USD")
+        #expect(!config.hasLedgerCurrencyConflict)
+        #expect(!config.isCloudSyncEnabled)
+        config.totalMonthlyIncome = 4200
+        #expect(fixture.defaults.integer(forKey: Key.totalMonthlyIncome.storageKey) == 4200)
+        config.updateCloudSyncEnabled(true)
+        config.recheckLedgerCurrency()
+        try config.establishLedgerCurrency("GBP")
+        config.resetAllSettings()
+        #expect(sharedValues.isEqual(to: fixture.shared.dictionaryRepresentation()))
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(config.cloudSyncStatus == .stopped)
+    }
+
+    @Test
+    func dashboardOrderPersistsLocallyAndIgnoresCloudChanges() async throws {
+        let fixture = try Fixture(enabled: true, currency: "USD")
+        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
+        let config = fixture.config
+        #expect(fixture.defaults.stringArray(forKey: "dashboardWidgetOrder") == DashboardWidgetID.defaultOrder.map(\.rawValue))
+        let order = Array(DashboardWidgetID.defaultOrder(isPad: false).reversed())
+        fixture.cloud.operations.removeAll()
+        config.dashboardWidgetOrder = order
+        #expect(fixture.cloud.operations.isEmpty)
+        #expect(fixture.defaults.stringArray(forKey: "dashboardWidgetOrder") == order.map(\.rawValue))
+        #expect(fixture.makeConfiguration().dashboardWidgetOrder == order)
+
+        fixture.cloud.values["dashboardWidgetOrder"] = ["needs", "savings"]
+        fixture.post(keys: ["dashboardWidgetOrder"])
+        await drainNotifications()
+        #expect(config.dashboardWidgetOrder == order)
+        #expect(!fixture.cloud.writtenKeys.contains("dashboardWidgetOrder"))
+
+        let otherDevice = try Fixture()
+        #expect(otherDevice.config.dashboardWidgetOrder == DashboardWidgetID.defaultOrder)
+        otherDevice.defaults.set([], forKey: "dashboardWidgetOrder")
+        #expect(otherDevice.makeConfiguration().dashboardWidgetOrder == DashboardWidgetID.defaultOrder)
+        #expect(otherDevice.defaults.stringArray(forKey: "dashboardWidgetOrder") == DashboardWidgetID.defaultOrder.map(\.rawValue))
+        config.dashboardWidgetOrder = DashboardWidgetID.defaultOrder
+        #expect(fixture.makeConfiguration().dashboardWidgetOrder == DashboardWidgetID.defaultOrder)
+        #expect(!fixture.cloud.writtenKeys.contains("dashboardWidgetOrder"))
+
+        config.dashboardWidgetOrder = order
+        config.resetAllSettings()
+        #expect(config.dashboardWidgetOrder == DashboardWidgetID.defaultOrder)
+        #expect(fixture.defaults.stringArray(forKey: "dashboardWidgetOrder") == DashboardWidgetID.defaultOrder.map(\.rawValue))
+    }
+
+    @Test
     func localOnlyConfigurationRejectsOptInWithoutCloudAccessOrChangingConsent() async throws {
         let fixture = try Fixture(enabled: true, currency: "USD")
         fixture.shared.set(true, forKey: LedgerCurrency.cloudConflictKey)

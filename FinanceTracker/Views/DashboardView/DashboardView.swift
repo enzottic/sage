@@ -14,53 +14,7 @@ struct DashboardView: View {
     
     @State private var selectedMonth: Date
 
-    private var rows: [DashboardRowConfiguration] {
-        let overviewRows: [DashboardRowConfiguration]
-
-        if isPad {
-            overviewRows = [
-                .init(columns: [
-                    .init(widgets: [.monthlyOverview]),
-                    .init(widgets: [
-                        .singleCategoryUtilization(.needs),
-                        .singleCategoryUtilization(.wants),
-                        .singleCategoryUtilization(.savings),
-                    ]),
-                ]),
-                .init(columns: [
-                    .init(
-                        widgets: [.expenseCalendar]
-                    ),
-                    .init(
-                        widgets: [.recentExpenses(.regular)]
-                    )
-                ]),
-                .init(columns: [
-                    .init(
-                        widgets: [.mostSpentTags],
-                        presentation: .compact
-                    ),
-                    .init(
-                        widgets: [.upcomingRecurring],
-                        presentation: .compact
-                    ),
-                ]),
-            ]
-        } else {
-            overviewRows = [
-                .init(widgets: [.monthlyOverview]),
-                .init(widgets: [.singleCategoryUtilization(.needs)]),
-                .init(widgets: [.singleCategoryUtilization(.wants)]),
-                .init(widgets: [.singleCategoryUtilization(.savings)]),
-                .init(widgets: [.expenseCalendar]),
-                .init(widgets: [.mostSpentTags]),
-                .init(widgets: [.upcomingRecurring]),
-                .init(widgets: [.recentExpenses(.regular)]),
-            ]
-        }
-
-        return overviewRows
-    }
+    @State private var isShowingWidgetOrder = false
 
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
@@ -83,6 +37,16 @@ struct DashboardView: View {
             .background(.sageBackground)
             .gradientBackground()
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("Reorder Widgets", systemImage: "arrow.up.arrow.down") {
+                            isShowingWidgetOrder = true
+                        }
+                    } label: {
+                        Label("Dashboard Options", systemImage: "ellipsis")
+                    }
+                    .accessibilityIdentifier("dashboard-options")
+                }
                 SageToolbar(
                     onPrevious: {
                         selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
@@ -94,12 +58,23 @@ struct DashboardView: View {
                     isNextDisabled: isCurrentMonth
                 )
             }
+            .sheet(isPresented: $isShowingWidgetOrder) {
+                DashboardWidgetOrderSheet()
+            }
             .appRouteDestinations()
         }
     }
 
     @ViewBuilder
     private var dashboardContent: some View {
+        DashboardVisibleWidgets(selectedMonth: selectedMonth, order: config.dashboardWidgetOrder) { widgets in
+            let rows = DashboardWidgetID.rows(for: widgets, isPad: isPad)
+            dashboardRows(rows)
+        }
+    }
+
+    @ViewBuilder
+    private func dashboardRows(_ rows: [DashboardRowConfiguration]) -> some View {
         if isPad {
             // Each card owns its corners; a grouped List clips the entire
             // two-column row and rounds only its outside corners.
@@ -281,13 +256,16 @@ private struct AdaptiveEqualColumnsLayout: Layout {
     }
 
     private func minimumWideWidth(for count: Int) -> CGFloat {
-        minimumColumnWidth * CGFloat(count)
-            + horizontalSpacing * CGFloat(max(0, count - 1))
+        let columns = max(2, count)
+        return minimumColumnWidth * CGFloat(columns)
+            + horizontalSpacing * CGFloat(columns - 1)
     }
 
     private func wideColumnWidth(availableWidth: CGFloat, count: Int) -> CGFloat {
-        let spacing = horizontalSpacing * CGFloat(max(0, count - 1))
-        return (availableWidth - spacing) / CGFloat(count)
+        // An odd final widget keeps the left column's width in a wide layout.
+        let columns = max(2, count)
+        let spacing = horizontalSpacing * CGFloat(columns - 1)
+        return (availableWidth - spacing) / CGFloat(columns)
     }
 }
 

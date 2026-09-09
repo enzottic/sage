@@ -40,7 +40,7 @@ class TagSuggestionService {
         for expenseName: String,
         existingExpenses: [(name: String, tagName: String?)],
         tagNames: [String],
-        smartTaggingMode: SmartTaggingMode
+        smartTaggingMode: AppConfiguration.SmartTaggingMode
     ) async -> (tagName: String, source: SuggestionSource)? {
         let trimmed = expenseName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !tagNames.isEmpty else { return nil }
