@@ -41,24 +41,24 @@ public enum SageModelContainer {
     // The CloudKit setting used by every process that opens the shared store.
     public nonisolated static var isCloudKitEnabled: Bool {
         guard supportsCloudSync else { return false }
-        let defaults = UserDefaults(suiteName: appGroupIdentifier)
-        if defaults?.object(forKey: activeCloudKitPreferenceKey) != nil {
-            return defaults?.bool(forKey: activeCloudKitPreferenceKey) ?? false
+        let defaults = SagePreferences.defaults
+        if defaults.object(forKey: activeCloudKitPreferenceKey) != nil {
+            return defaults.bool(forKey: activeCloudKitPreferenceKey)
         }
-        return defaults?.bool(forKey: cloudKitPreferenceKey) ?? false
+        return defaults.bool(forKey: cloudKitPreferenceKey)
     }
 
     public nonisolated static func setCloudKitPreference(_ enabled: Bool) {
         guard supportsCloudSync else { return }
-        UserDefaults(suiteName: appGroupIdentifier)?.set(enabled, forKey: cloudKitPreferenceKey)
+        SagePreferences.defaults.set(enabled, forKey: cloudKitPreferenceKey)
     }
 
     /// Applies the requested setting before the main app opens the store.
     public nonisolated static func activateCloudKitPreference() {
         guard supportsCloudSync else { return }
-        let defaults = UserDefaults(suiteName: appGroupIdentifier)
-        let requestedValue = defaults?.bool(forKey: cloudKitPreferenceKey) ?? false
-        defaults?.set(requestedValue, forKey: activeCloudKitPreferenceKey)
+        let defaults = SagePreferences.defaults
+        let requestedValue = defaults.bool(forKey: cloudKitPreferenceKey)
+        defaults.set(requestedValue, forKey: activeCloudKitPreferenceKey)
     }
 
     public static nonisolated func make(for purpose: Purpose = .app) throws -> ModelContainer {

@@ -8,6 +8,7 @@ struct DailySpendingDetails: View {
     }
 
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(AppConfiguration.self) private var config
 
     let date: Date
     let total: Double
@@ -28,7 +29,7 @@ struct DailySpendingDetails: View {
                         .font(.caption)
                         .foregroundStyle(category.color(in: categoryColors))
                 }
-                Text("\(total.currencyString) \(isFuture ? "expected this day" : "spent this day")")
+                Text("\(total.currencyString(code: config.ledgerCurrencyCode)) \(isFuture ? "expected this day" : "spent this day")")
                     .font(.headline)
                     .monospacedDigit()
                     .accessibilityIdentifier("\(accessibilityPrefix)-total")

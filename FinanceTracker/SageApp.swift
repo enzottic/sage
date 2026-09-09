@@ -114,7 +114,7 @@ struct SageApp: App {
         WindowGroup {
             switch containerResult {
             case let .success(container):
-                mainContent(container: container)
+                mainContent
                     .modelContainer(container)
             case let .failure(error):
                 DataStoreRecoveryView(error: error)
@@ -126,7 +126,7 @@ struct SageApp: App {
     }
 
     @ViewBuilder
-    private func mainContent(container: ModelContainer) -> some View {
+    private var mainContent: some View {
         Group {
             if UITestConfiguration.isEnabled {
                 if UITestConfiguration.showsOnboarding, !didCompleteUITestOnboarding {
@@ -136,12 +136,6 @@ struct SageApp: App {
                 } else {
                     RootTabView()
                 }
-            } else if let message = appConfiguration.ledgerCurrencyConflictMessage {
-                LedgerCurrencyConflictView(message: message)
-            } else if appConfiguration.ledgerCurrencyCode == nil,
-                      hasOpenedAppOnce || appConfiguration.totalMonthlyIncome != 0
-                        || ((try? LedgerCurrency.hasMonetaryRecords(in: container.mainContext)) ?? true) {
-                LedgerCurrencyConfirmationView()
             } else if !hasOpenedAppOnce {
                 OnboardingView()
             } else {
@@ -166,7 +160,6 @@ struct SageApp: App {
         .onChange(of: appConfiguration.dailyExpenseReminderTimeMinutes) { recurringReminders?.refresh() }
         .onChange(of: appConfiguration.hideBillReminderDetails) { recurringReminders?.refresh() }
         .onChange(of: appConfiguration.ledgerCurrencyCode) { recurringReminders?.refresh() }
-        .onChange(of: appConfiguration.hasLedgerCurrencyConflict) { recurringReminders?.refresh() }
         .onChange(of: appConfiguration.hasCompletedSetupOnAnotherDevice, initial: true) { _, completed in
             if !UITestConfiguration.isEnabled,
                !hasOpenedAppOnce,

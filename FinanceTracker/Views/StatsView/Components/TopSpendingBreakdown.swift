@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct TopSpendingBreakdown: View {
+    @Environment(AppConfiguration.self) private var config
     let expenses: [Expense]
     let accentColor: Color
     var maximumRows: Int = 5
@@ -97,12 +98,12 @@ struct TopSpendingBreakdown: View {
 
             Spacer(minLength: 8)
 
-            Text(row.amount.currencyString)
+            Text(row.amount.currencyString(code: config.ledgerCurrencyCode))
                 .font(.subheadline)
                 .fontWeight(.medium)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.label)
-        .accessibilityValue(row.amount.currencyString)
+        .accessibilityValue(row.amount.currencyString(code: config.ledgerCurrencyCode))
     }
 }

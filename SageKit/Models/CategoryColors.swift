@@ -23,7 +23,7 @@ public struct CategoryColors: Equatable {
     )
 
     public static func load() -> CategoryColors {
-        let defaults = UserDefaults(suiteName: "group.me.enzottic.SageAppGroup") ?? .standard
+        let defaults = SagePreferences.defaults
         return CategoryColors(
             needs: defaults.sageColor(forKey: "categoryColorNeeds") ?? Color("NeedColor"),
             wants: defaults.sageColor(forKey: "categoryColorWants") ?? Color("WantColor"),

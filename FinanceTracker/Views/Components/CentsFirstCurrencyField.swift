@@ -2,6 +2,7 @@ import SwiftUI
 import SageKit
 
 struct CentsFirstCurrencyField<Field: Hashable>: View {
+    @Environment(AppConfiguration.self) private var config
     @Binding var amount: Double?
     var focus: FocusState<Field?>.Binding
     var focusValue: Field
@@ -13,7 +14,7 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
     @State private var selection: TextSelection?
     @State private var rejectedNonDigitInput = false
 
-    private var currencyCode: String { LedgerCurrency.currentCode ?? "XXX" }
+    private var currencyCode: String { config.ledgerCurrencyCode }
     private var fractionDigits: Int { LedgerCurrency.fractionDigits(for: currencyCode) }
     private var isFocused: Bool { focus.wrappedValue == focusValue }
     private var hasInvalidAmount: Bool {
@@ -26,10 +27,10 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
             if !MonetaryAmount.isValid(amount, currencyCode: currencyCode) {
                 return "\(amount.formatted(.number.precision(.fractionLength(0...16)))) \(currencyCode)"
             }
-            return amount.currencyString
+            return amount.currencyString(code: currencyCode)
         }
         let value = (Double(digits) ?? 0) / pow(10, Double(fractionDigits))
-        return value.isFinite ? (value * (isRefund ? -1 : 1)).currencyString : "Amount too large"
+        return value.isFinite ? (value * (isRefund ? -1 : 1)).currencyString(code: currencyCode) : "Amount too large"
     }
 
     private var input: Binding<String> {
@@ -119,7 +120,7 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
             if rejectedNonDigitInput || hasInvalidAmount {
                 Text(rejectedNonDigitInput
                      ? "Use digits only. To enter a refund, choose Refund above."
-                     : "Clear and re-enter this amount. " + MonetaryAmount.validationMessage(currencyCode: currencyCode))
+                     : "To change this amount, clear and re-enter it. " + MonetaryAmount.validationMessage(currencyCode: currencyCode))
                     .font(.caption)
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
@@ -142,6 +143,11 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
             digits = CentsFirstAmountInput.digits(for: value, currencyCode: currencyCode)
             if let value { isRefund = value < 0 }
         }
+        .onChange(of: currencyCode) {
+            // Rebuild the register from the amount, never reinterpret old minor-unit digits.
+            digits = CentsFirstAmountInput.digits(for: amount, currencyCode: currencyCode)
+            selection = TextSelection(insertionPoint: digits.endIndex)
+        }
         .onChange(of: isRefund) { _, refund in
             if let amount, (amount < 0) != refund {
                 self.amount = refund ? -abs(amount) : abs(amount)
@@ -155,4 +161,5 @@ struct CentsFirstCurrencyField<Field: Hashable>: View {
     @Previewable @FocusState var focus: Bool?
     CentsFirstCurrencyField(amount: $amount, focus: $focus, focusValue: true)
         .padding()
+        .environment(AppConfiguration.preview)
 }

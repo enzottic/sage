@@ -8,6 +8,7 @@ import WidgetKit
 import SageKit
 
 struct EditRecurringRuleSheet: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -153,16 +154,9 @@ struct EditRecurringRuleSheet: View {
             showError = true
             return
         }
-        let currencyCode: String
-        do {
-            currencyCode = try LedgerCurrency.requireCode()
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-            return
-        }
+        let currencyCode = config.ledgerCurrencyCode
         guard let expenseAmount = amount,
-              MonetaryAmount.isValid(expenseAmount, currencyCode: currencyCode, requiresPositive: true) else {
+              expenseAmount == rule.amount || MonetaryAmount.isValid(expenseAmount, currencyCode: currencyCode, requiresPositive: true) else {
             errorMessage = MonetaryAmount.validationMessage(currencyCode: currencyCode, requiresPositive: true)
             showError = true
             return

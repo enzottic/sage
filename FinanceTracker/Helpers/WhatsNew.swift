@@ -66,8 +66,7 @@ enum WhatsNewCatalog {
 enum WhatsNewStore {
     private static let lastSeenVersionKey = "lastSeenWhatsNewVersion"
 
-    /// Matches where the other local-only flags live (see `AppConfiguration.localDefaults`).
-    private static var defaults: UserDefaults { AppConfiguration.localDefaults }
+    private static var defaults: UserDefaults { SagePreferences.defaults }
 
     static var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""

@@ -21,7 +21,6 @@ public final class PreferenceSyncService {
         }
 
         public static let allocation: Set<Key> = [.needsPercent, .wantsPercent, .savingsPercent]
-        public static let monetary: Set<Key> = allocation.union([.totalMonthlyIncome, .ledgerCurrency])
     }
 
     public struct Snapshot {
@@ -133,11 +132,9 @@ public final class PreferenceSyncService {
             status = .quotaExceeded
         case NSUbiquitousKeyValueStoreInitialSyncChange, NSUbiquitousKeyValueStoreServerChange:
             status = .running
-            var keys = changedKeys.map { names in
+            let keys = changedKeys.map { names in
                 Set(Key.allCases.filter { names.contains($0.storageKey) })
             } ?? Set(Key.allCases)
-            // A newly safe denomination makes previously withheld remote money eligible again.
-            if keys.contains(.ledgerCurrency) { keys.formUnion(Key.monetary) }
             read(keys)
         default:
             break
@@ -152,7 +149,6 @@ public final class PreferenceSyncService {
         
         // Allocation is one coherent value, even though its existing KVS format is three keys.
         if !keys.isDisjoint(with: Key.allocation) { keys.formUnion(Key.allocation) }
-        if !keys.isDisjoint(with: Key.monetary) { keys.insert(.ledgerCurrency) }
         
         var values: [Key: Any] = [:]
         for key in keys {
@@ -164,48 +160,14 @@ public final class PreferenceSyncService {
         return snapshot
     }
 
-    // Publish values from the local app configuration to iCloud KVS
-    // 1. Require an active store and consent from the user
-    // 2. Skip uploading if iCloud quota is exceeded
-    // 3. Remove any attempted direct ledger-currency writes
-    // 4. Check currency safety for monetary values
-    // 5. Write the remaining values
-    public func publish(
-        _ values: [Key: Any],
-        localCurrency: String?,
-        hasKnownCurrencyConflict: Bool
-    ) {
+    // Validation belongs to the configuration; transport only requires consent and available quota.
+    public func publish(_ values: [Key: Any]) {
         guard let store = activeStore, status != .quotaExceeded else { return }
-        
-        var values = values
-        values.removeValue(forKey: .ledgerCurrency)
-        
-        if !Set(values.keys).isDisjoint(with: Key.monetary) {
-            let snapshot = read([.ledgerCurrency])
-            let remote = LedgerCurrency.validatedCode(snapshot?[.ledgerCurrency] as? String)
-            if hasKnownCurrencyConflict || localCurrency == nil || remote != localCurrency {
-                values = values.filter { !Key.monetary.contains($0.key) }
-            }
-        }
-        
-        guard activeStore != nil else { return }
         for (key, value) in values { store.set(value, forKey: key.storageKey) }
     }
 
-    // Absence is not the same as an invalid or conflicting currency. Never overwrite either.
-    public func publishCurrencyIfAbsent(_ code: String?, hasKnownConflict: Bool) {
-        guard let store = activeStore, status != .quotaExceeded,
-              !hasKnownConflict, let code = LedgerCurrency.validatedCode(code) else { return }
-        
-        guard let snapshot = read([.ledgerCurrency]), snapshot[.ledgerCurrency] == nil,
-              activeStore != nil else { return }
-        
-        store.set(code, forKey: Key.ledgerCurrency.storageKey)
-        // Do not report a local write as an observed remote currency.
-    }
-
     public func markSetupComplete() {
-        publish([.hasCompletedSetup: true], localCurrency: nil, hasKnownCurrencyConflict: false)
+        publish([.hasCompletedSetup: true])
     }
 
     // Call before revoking consent. Off means no acquisition, even for deletion.

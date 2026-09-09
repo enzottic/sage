@@ -13,6 +13,7 @@ import FoundationModels
 import SageKit
 
 struct AddExpenseView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -281,7 +282,7 @@ struct AddExpenseView: View {
 
                         Spacer()
 
-                        Text(expense.amount.currencyString)
+                        Text(expense.amount.currencyString(code: config.ledgerCurrencyCode))
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
@@ -423,12 +424,7 @@ struct AddExpenseView: View {
 
     func saveItem() async {
         guard !isSaving else { return }
-        let currencyCode: String
-        do { currencyCode = try LedgerCurrency.requireCode() } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-            return
-        }
+        let currencyCode = config.ledgerCurrencyCode
 
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Please enter an expense name"

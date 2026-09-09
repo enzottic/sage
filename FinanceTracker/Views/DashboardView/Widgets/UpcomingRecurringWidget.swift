@@ -108,6 +108,7 @@ struct UpcomingRecurringWidget: View {
 }
 
 private struct UpcomingRecurringCard: View {
+    @Environment(AppConfiguration.self) private var config
     let rule: RecurringExpenseRule
     let nextDate: Date
 
@@ -133,7 +134,7 @@ private struct UpcomingRecurringCard: View {
         [
             rule.name,
             tag?.name,
-            rule.amount.currencyString,
+            rule.amount.currencyString(code: config.ledgerCurrencyCode),
             relativeDateDescription
         ]
         .compactMap { $0 }
@@ -166,7 +167,7 @@ private struct UpcomingRecurringCard: View {
                 .fontWeight(.medium)
                 .lineLimit(1)
 
-            Text(rule.amount.currencyString)
+            Text(rule.amount.currencyString(code: config.ledgerCurrencyCode))
                 .font(.headline)
                 .fontWeight(.bold)
         }

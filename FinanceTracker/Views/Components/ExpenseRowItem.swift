@@ -17,6 +17,7 @@ struct ExpenseRowItem: View {
     }
 
     @Environment(\.categoryColors) private var categoryColors
+    @Environment(AppConfiguration.self) private var config
     let expense: Expense
     var style: Style = .regular
 
@@ -25,7 +26,7 @@ struct ExpenseRowItem: View {
     private var accessibilityDescription: String {
         var parts = [
             expense.name,
-            expense.amount.currencyString,
+            expense.amount.currencyString(code: config.ledgerCurrencyCode),
             expense.category.rawValue,
             expense.date.relative()
         ]
@@ -91,7 +92,7 @@ struct ExpenseRowItem: View {
 
             Spacer()
 
-            Text(expense.amount.currencyString)
+            Text(expense.amount.currencyString(code: config.ledgerCurrencyCode))
                 .font(.body)
                 .fontWeight(.medium)
         }
@@ -131,7 +132,7 @@ struct ExpenseRowItem: View {
                 .foregroundStyle(.secondary)
                 .fixedSize()
 
-            Text(expense.amount.currencyString)
+            Text(expense.amount.currencyString(code: config.ledgerCurrencyCode))
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .fixedSize()
@@ -146,4 +147,5 @@ struct ExpenseRowItem: View {
         ExpenseRowItem(expense: Expense.example)
         ExpenseRowItem(expense: Expense.recurringExample)
     }
+    .environment(AppConfiguration.preview)
 }

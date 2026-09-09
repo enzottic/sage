@@ -89,6 +89,26 @@ struct CentsFirstAmountInputTests {
         #expect(CentsFirstAmountInput.digits(for: -amount, currencyCode: "USD") == "30")
     }
 
+    @Test(arguments: [12.0, -12.0, 12.34, -12.34])
+    func currencySwitchRebuildsMinorUnitsWithoutRoundingHistory(amount: Double) {
+        let usdDigits = CentsFirstAmountInput.digits(for: amount, currencyCode: "USD")
+        let jpyDigits = CentsFirstAmountInput.digits(for: amount, currencyCode: "JPY")
+        let kwdDigits = CentsFirstAmountInput.digits(for: amount, currencyCode: "KWD")
+
+        #expect(usdDigits == (abs(amount) == 12 ? "1200" : "1234"))
+        if abs(amount) == 12 {
+            #expect(jpyDigits == "12")
+            #expect(CentsFirstAmountInput.amount(for: jpyDigits, currencyCode: "JPY", isRefund: amount < 0) == amount)
+        } else {
+            // An incompatible historical amount has no editable register, not a rounded one.
+            #expect(jpyDigits.isEmpty)
+            #expect(CentsFirstAmountInput.amount(for: jpyDigits, currencyCode: "JPY", isRefund: amount < 0) == nil)
+        }
+        #expect(kwdDigits == (abs(amount) == 12 ? "12000" : "12340"))
+        #expect(CentsFirstAmountInput.amount(for: kwdDigits, currencyCode: "KWD", isRefund: amount < 0) == amount)
+        #expect(CentsFirstAmountInput.digits(for: amount, currencyCode: "USD") == usdDigits)
+    }
+
     @Test(arguments: ["", "usd", "ZZZ", " USD "])
     func unsupportedCurrencyIsRejected(currencyCode: String) {
         #expect(CentsFirstAmountInput.digits(for: 12, currencyCode: currencyCode).isEmpty)

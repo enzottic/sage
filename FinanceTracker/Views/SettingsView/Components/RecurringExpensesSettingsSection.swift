@@ -171,6 +171,7 @@ struct RecurringExpensesSettingsSection: View {
 }
 
 private struct RecurringRuleRow: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     let rule: RecurringExpenseRule
     let nextOccurrence: Date?
@@ -207,7 +208,7 @@ private struct RecurringRuleRow: View {
 
             Spacer()
 
-            Text(rule.amount.currencyString)
+            Text(rule.amount.currencyString(code: config.ledgerCurrencyCode))
                 .font(.subheadline)
                 .fontWeight(.semibold)
 

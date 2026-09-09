@@ -17,7 +17,6 @@ struct ExpenseBackupSettingsSection: View {
     @Environment(AppRouter.self) var appRouter
     
     @State private var showFileImporter: Bool = false
-    @State private var showCloudCurrencyConfirmation = false
     @State private var showImportConfirmation: Bool = false
     @State private var pendingSource: ExpenseImportSource?
     @State private var importPlan: ExpenseImportPlan?
@@ -63,13 +62,6 @@ struct ExpenseBackupSettingsSection: View {
                     }
                 }
                 .disabled(isWorking || !config.supportsCloudSync)
-                if config.isCloudSyncEnabled, config.cloudLedgerCurrencyCode == nil,
-                   config.ledgerCurrencyCode != nil, !config.hasLedgerCurrencyConflict {
-                    Button("Confirm Currency for iCloud") {
-                        showCloudCurrencyConfirmation = true
-                    }
-                    .disabled(isWorking)
-                }
             } header: {
                 Text("iCloud Sync")
             } footer: {
@@ -122,21 +114,6 @@ struct ExpenseBackupSettingsSection: View {
         .settingsBackground()
         .navigationTitle("Backup")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Confirm iCloud Currency", isPresented: $showCloudCurrencyConfirmation) {
-            Button("Confirm") {
-                guard let code = config.ledgerCurrencyCode else { return }
-                do {
-                    try config.establishLedgerCurrency(code)
-                    config.recheckLedgerCurrency()
-                    appRouter.showToast(SageToast(message: "Currency checked. No amounts were converted.", kind: .success))
-                } catch {
-                    appRouter.showToast(SageToast(message: error.localizedDescription, kind: .error))
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This device uses \(config.ledgerCurrencyCode ?? "an unconfirmed currency"). Syl has not received an iCloud currency. Before confirming, check that any existing Syl data on your other devices uses the same currency. No conversion will occur.")
-        }
         .safeAreaInset(edge: .bottom) {
             if isWorking {
                 operationProgress
@@ -238,7 +215,7 @@ struct ExpenseBackupSettingsSection: View {
         do {
             let urls = try filePickerResult.get()
             guard let url = urls.first else { return }
-            let currency = try LedgerCurrency.requireCode()
+            let currency = config.ledgerCurrencyCode
             let scoped = url.startAccessingSecurityScopedResource()
             isReadingImport = true
             Task {
@@ -280,7 +257,7 @@ struct ExpenseBackupSettingsSection: View {
         Task {
             defer { isExporting = false }
             do {
-                let currency = try LedgerCurrency.requireCode()
+                let currency = config.ledgerCurrencyCode
                 if csv {
                     exportedURL = try await expenseExporter.exportCSV(modelContainer: modelContext.container, currencyCode: currency)
                 } else {
@@ -382,7 +359,7 @@ struct ExpenseBackupSettingsSection: View {
         do {
             let result = try await ExpenseImportService(modelContainer: modelContext.container).execute(
                 importPlan, allowLegacy: legacyCurrencyConsent,
-                currencyGate: { try LedgerCurrency.requireCode() },
+                currencyGate: { config.ledgerCurrencyCode },
                 progress: { importedExpenseCount = $0 }
             )
             if result.totalInserted > 0 { WidgetCenter.shared.reloadAllTimelines() }

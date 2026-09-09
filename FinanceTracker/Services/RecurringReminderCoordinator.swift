@@ -14,7 +14,7 @@ final class RecurringReminderCoordinator {
 
     init(container: ModelContainer) {
         self.container = container
-        scheduler = RecurringReminderScheduler(defaults: AppConfiguration.localDefaults)
+        scheduler = RecurringReminderScheduler(defaults: SagePreferences.defaults)
     }
 
     func start(configuration: AppConfiguration) {
@@ -62,8 +62,8 @@ final class RecurringReminderCoordinator {
         let enabled = configuration.billRemindersEnabled
         let days = configuration.billReminderDaysBefore
         let time = configuration.billReminderTimeMinutes
-        let hideDetails = configuration.hideBillReminderDetails || configuration.hasLedgerCurrencyConflict
-        let currency = configuration.hasLedgerCurrencyConflict ? nil : configuration.ledgerCurrencyCode
+        let hideDetails = configuration.hideBillReminderDetails
+        let currency = configuration.ledgerCurrencyCode
         
         dailyScheduler.refresh(
             enabled: configuration.dailyExpenseReminderEnabled,

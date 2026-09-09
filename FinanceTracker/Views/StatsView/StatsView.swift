@@ -212,7 +212,7 @@ struct StatsView: View {
 
         return VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(displayedTotal.currencyString)
+                Text(displayedTotal.currencyString(code: config.ledgerCurrencyCode))
                     .font(.largeTitle.bold()).monospacedDigit().textSelection(.enabled)
                     .accessibilityIdentifier("stats-month-total")
                 Text(isCurrentMonth ? "Spent so far" : "Total spent")
@@ -220,7 +220,7 @@ struct StatsView: View {
             }
             DailySpendingChart(series: visibleSeries,
                                averageDays: isolatedLine == nil ? summary.averageDays : [],
-                               daysInMonth: daysInMonth, currencyCode: LedgerCurrency.currentCode,
+                               daysInMonth: daysInMonth, currencyCode: config.ledgerCurrencyCode,
                                selectedDay: selectedDay)
                 .chartYScale(domain: 0...Double(max(config.totalMonthlyIncome, 1)))
                 .chartPlotStyle { plot in plot.clipped() }
@@ -439,7 +439,7 @@ struct StatsView: View {
                     .foregroundStyle(timeframe == .weekly || item.periodStart == selectedMonth ? accentColor : accentColor.opacity(0.35))
                     .cornerRadius(4)
                     .accessibilityLabel(timeframe == .monthly ? item.periodStart.formatted(.dateTime.month(.wide).year()) : "Days \(item.label)")
-                    .accessibilityValue(item.total.currencyString)
+                    .accessibilityValue(item.total.currencyString(code: config.ledgerCurrencyCode))
             }
             .chartXSelection(value: $selectedBar)
             .chartGesture { proxy in
@@ -451,7 +451,7 @@ struct StatsView: View {
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisGridLine()
-                    AxisValueLabel { if let amount = value.as(Double.self) { Text(amount.currencyStringRounded).font(.caption2) } }
+                    AxisValueLabel { if let amount = value.as(Double.self) { Text(amount.currencyStringRounded(code: config.ledgerCurrencyCode)).font(.caption2) } }
                 }
             }
             .frame(height: 180)
@@ -459,10 +459,10 @@ struct StatsView: View {
                 ForEach(periods) { item in
                     if timeframe == .monthly {
                         Button { selectedMonth = item.periodStart } label: {
-                            Text("\(item.periodStart.formatted(.dateTime.month(.wide).year())), \(item.total.currencyString)")
+                            Text("\(item.periodStart.formatted(.dateTime.month(.wide).year())), \(item.total.currencyString(code: config.ledgerCurrencyCode))")
                         }
                     } else {
-                        Text("Days \(item.label), \(item.total.currencyString)")
+                        Text("Days \(item.label), \(item.total.currencyString(code: config.ledgerCurrencyCode))")
                     }
                 }
             }

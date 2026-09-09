@@ -8,6 +8,7 @@ import SwiftUI
 import SageKit
 
 struct CategoryUtilizationView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     let category: ExpenseCategory
     let utilization: Double
@@ -35,10 +36,10 @@ struct CategoryUtilizationView: View {
                     .fontWeight(.bold)
 
                 HStack(spacing: 5) {
-                    Text(used.currencyString)
+                    Text(used.currencyString(code: config.ledgerCurrencyCode))
                         .fontWeight(.semibold)
                         .foregroundStyle(isOverBudget ? .red : .primary)
-                    Text("of \(total.currencyString)")
+                    Text("of \(total.currencyString(code: config.ledgerCurrencyCode))")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -46,7 +47,7 @@ struct CategoryUtilizationView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(isOverBudget ? "-\((used - total).currencyString)" : "\(remaining.currencyString) left")
+                Text(isOverBudget ? "-\((used - total).currencyString(code: config.ledgerCurrencyCode))" : "\(remaining.currencyString(code: config.ledgerCurrencyCode)) left")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(isOverBudget ? .red : .secondary)
@@ -57,4 +58,5 @@ struct CategoryUtilizationView: View {
 
 #Preview {
     CategoryUtilizationView(for: .wants, 0.3, 100, 300)
+        .environment(AppConfiguration.preview)
 }

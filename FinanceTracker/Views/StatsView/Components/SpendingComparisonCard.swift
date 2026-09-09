@@ -3,6 +3,7 @@ import SageKit
 
 /// Observations about recorded spending, with equal visual weight and no forecasts.
 struct SpendingComparisonCard: View {
+    @Environment(AppConfiguration.self) private var config
     let summary: SpendingMonthSummary
     let isCurrentMonth: Bool
 
@@ -20,9 +21,9 @@ struct SpendingComparisonCard: View {
             }
             if !summary.expenses.isEmpty {
                 let average = summary.total / Double(max(1, summary.days.count))
-                insight(icon: "chart.bar", text: "You spent \(average.currencyString) per day on average\(isCurrentMonth ? " so far" : "").")
+                insight(icon: "chart.bar", text: "You spent \(average.currencyString(code: config.ledgerCurrencyCode)) per day on average\(isCurrentMonth ? " so far" : "").")
                 if let largest = summary.expenses.max(by: { $0.amount < $1.amount }), largest.amount > 0 {
-                    insight(icon: "receipt", text: "Your largest expense was \(largest.name), at \(largest.amount.currencyString).")
+                    insight(icon: "receipt", text: "Your largest expense was \(largest.name), at \(largest.amount.currencyString(code: config.ledgerCurrencyCode)).")
                 }
             } else {
                 insight(icon: "receipt", text: "Add expenses to see patterns in your spending.")

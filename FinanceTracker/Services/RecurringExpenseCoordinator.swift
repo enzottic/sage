@@ -106,8 +106,6 @@ final class RecurringExpenseCoordinator {
     private func runMaintenance() {
         hasAttemptedMaintenance = true
         do {
-            // Do not create monetary records before confirmation or during a known conflict.
-            _ = try LedgerCurrency.requireCode()
             let result = try RecurringExpenseService(modelContext: modelContext)
                 .generateAllExpenses(through: .now)
             retryDelay = 5_000_000_000

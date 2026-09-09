@@ -118,16 +118,16 @@ struct SingleCategoryUtilizationWidget: View {
 
             HStack {
                 HStack(spacing: 5) {
-                    Text(spent.currencyString)
+                    Text(spent.currencyString(code: config.ledgerCurrencyCode))
                         .fontWeight(.semibold)
                         .foregroundStyle(isOverBudget ? .red : .primary)
-                    Text("of \(budget.currencyString)")
+                    Text("of \(budget.currencyString(code: config.ledgerCurrencyCode))")
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Text(isOverBudget ? "\((spent - budget).currencyString) over" : "\(remaining.currencyString) left")
+                Text(isOverBudget ? "\((spent - budget).currencyString(code: config.ledgerCurrencyCode)) over" : "\(remaining.currencyString(code: config.ledgerCurrencyCode)) left")
                     .font(.caption)
                     .foregroundStyle(isOverBudget ? .red : .secondary)
             }
@@ -143,7 +143,7 @@ struct SingleCategoryUtilizationWidget: View {
             CircularProgressBar(progress: utilization, tint: tint, lineWidth: 10)
                 .frame(width: 64, height: 64)
 
-            Text("\(spent.currencyString) of \(budget.currencyString)")
+            Text("\(spent.currencyString(code: config.ledgerCurrencyCode)) of \(budget.currencyString(code: config.ledgerCurrencyCode))")
                 .font(.subheadline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

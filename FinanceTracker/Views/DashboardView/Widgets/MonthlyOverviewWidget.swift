@@ -55,8 +55,8 @@ struct MonthlyOverviewWidget: View {
 
                 HStack {
                     Text(isOverBudget
-                         ? "\((totalSpent - totalBudget).currencyString) over"
-                         : "\(remaining.currencyString) remaining")
+                         ? "\((totalSpent - totalBudget).currencyString(code: config.ledgerCurrencyCode)) over"
+                         : "\(remaining.currencyString(code: config.ledgerCurrencyCode)) remaining")
                         .font(.subheadline)
                         .foregroundStyle(isOverBudget ? .red : .secondary)
 
@@ -78,7 +78,7 @@ struct MonthlyOverviewWidget: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             
-            Text(totalSpent.currencyString)
+            Text(totalSpent.currencyString(code: config.ledgerCurrencyCode))
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .lineLimit(1)

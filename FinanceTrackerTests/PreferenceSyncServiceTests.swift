@@ -63,7 +63,6 @@ struct PreferenceSyncServiceTests {
     @Test
     func localChangesPublishWithoutSynchronizingAndNeverBulkUpload() {
         let fixture = Fixture(enabled: true)
-        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "USD"
         fixture.service.start()
         fixture.cloud.operations.removeAll()
         fixture.exerciseOutbound()
@@ -71,7 +70,8 @@ struct PreferenceSyncServiceTests {
         #expect(fixture.cloud.values["totalMonthlyIncome"] as? Int == 2500)
         #expect(fixture.cloud.values["hasCompletedSetup"] as? Bool == true)
         #expect(!fixture.cloud.operations.contains(.synchronize))
-        #expect(!fixture.cloud.operations.contains(.write(Key.ledgerCurrency.storageKey)))
+        #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == "USD")
+        #expect(!fixture.cloud.operations.contains { if case .read = $0 { return true }; return false })
         #expect(!fixture.cloud.operations.contains(.write("isCloudSyncEnabled")))
     }
 
@@ -90,12 +90,12 @@ struct PreferenceSyncServiceTests {
         fixture.cloud.operations.removeAll()
         fixture.post(reason: reason, keys: ["needsPercent"])
         await drainNotifications()
-        #expect(fixture.snapshots.last?.keys == Key.allocation.union([.ledgerCurrency]))
-        #expect(Set(fixture.cloud.operations) == Set((Key.allocation.union([.ledgerCurrency])).map { .read($0.storageKey) }))
+        #expect(fixture.snapshots.last?.keys == Key.allocation)
+        #expect(Set(fixture.cloud.operations) == Set(Key.allocation.map { .read($0.storageKey) }))
         #expect(fixture.snapshots.last?[.wantsPercent] as? Double == 0.2)
         fixture.post(reason: reason, keys: [Key.ledgerCurrency.storageKey])
         await drainNotifications()
-        #expect(fixture.snapshots.last?.keys == Key.monetary)
+        #expect(fixture.snapshots.last?.keys == [.ledgerCurrency])
         fixture.cloud.operations.removeAll()
         fixture.post(reason: reason, keys: [])
         fixture.post(reason: reason, keys: ["unrelated"])
@@ -200,46 +200,40 @@ struct PreferenceSyncServiceTests {
     }
 
     @Test
-    func absentCurrencyMayBePublishedButNotReportedAsRemoteConfirmation() {
+    func currencyPublishesWithoutReadingOrDeliveringARemoteSnapshot() {
         let fixture = Fixture(enabled: true)
         fixture.service.start()
         fixture.cloud.operations.removeAll()
         fixture.snapshots.removeAll()
-        fixture.service.publishCurrencyIfAbsent("USD", hasKnownConflict: false)
+        fixture.service.publish([.ledgerCurrency: "USD"])
         #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == "USD")
-        #expect(fixture.snapshots.last?[.ledgerCurrency] == nil)
-        #expect(fixture.cloud.operations.last == .write(Key.ledgerCurrency.storageKey))
-        #expect(!fixture.cloud.operations.contains(.synchronize))
+        #expect(fixture.snapshots.isEmpty)
+        #expect(fixture.cloud.operations == [.write(Key.ledgerCurrency.storageKey)])
     }
 
     @Test(arguments: ["EUR", "USD", "invalid", ""])
-    func existingCurrencyIsNeverOverwritten(remote: String) {
+    func existingCurrencyCanBeReplaced(remote: String) {
         let fixture = Fixture(enabled: true)
         fixture.cloud.values[Key.ledgerCurrency.storageKey] = remote
         fixture.service.start()
         fixture.cloud.operations.removeAll()
-        fixture.service.publishCurrencyIfAbsent("USD", hasKnownConflict: false)
-        #expect(!fixture.cloud.operations.contains(.write(Key.ledgerCurrency.storageKey)))
-        #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == remote)
+        fixture.service.publish([.ledgerCurrency: "JPY"])
+        #expect(fixture.cloud.operations == [.write(Key.ledgerCurrency.storageKey)])
+        #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == "JPY")
     }
 
     @Test
-    func knownConflictAndUnknownCurrencyBlockMoneyButNotAppearance() {
+    func incomePublishesIndependentlyOfCurrency() {
         let fixture = Fixture(enabled: true)
         fixture.service.start()
         for remote in [nil, "EUR", "invalid", "USD"] as [String?] {
             fixture.cloud.values[Key.ledgerCurrency.storageKey] = remote
             fixture.cloud.operations.removeAll()
-            fixture.service.publishCurrencyIfAbsent("USD", hasKnownConflict: true)
-            fixture.service.publish([.totalMonthlyIncome: 100, .appearance: "Dark"], localCurrency: "USD", hasKnownCurrencyConflict: true)
-            #expect(!fixture.cloud.operations.contains(.write("totalMonthlyIncome")))
-            #expect(!fixture.cloud.operations.contains(.write(Key.ledgerCurrency.storageKey)))
-            #expect(fixture.cloud.operations.contains(.write("appearance")))
+            fixture.service.publish([.totalMonthlyIncome: 100, .appearance: "Dark"])
+            #expect(Set(fixture.cloud.operations) == [.write("totalMonthlyIncome"), .write("appearance")])
+            #expect(fixture.cloud.values["totalMonthlyIncome"] as? Int == 100)
+            #expect(fixture.cloud.values[Key.ledgerCurrency.storageKey] as? String == remote)
         }
-        fixture.cloud.values[Key.ledgerCurrency.storageKey] = "EUR"
-        fixture.cloud.operations.removeAll()
-        fixture.service.publish([.totalMonthlyIncome: 100], localCurrency: "USD", hasKnownCurrencyConflict: false)
-        #expect(!fixture.cloud.operations.contains(.write("totalMonthlyIncome")))
     }
 
     @Test
@@ -292,8 +286,7 @@ struct PreferenceSyncServiceTests {
         }
 
         func exerciseOutbound() {
-            service.publish([.appearance: "Light", .totalMonthlyIncome: 2500], localCurrency: "USD", hasKnownCurrencyConflict: false)
-            service.publishCurrencyIfAbsent("USD", hasKnownConflict: false)
+            service.publish([.appearance: "Light", .totalMonthlyIncome: 2500, .ledgerCurrency: "USD"])
             service.markSetupComplete()
         }
     }

@@ -7,24 +7,37 @@
 
 import SwiftUI
 import WidgetKit
+import SageKit
 
 struct BudgetSettingsSection: View {
     @Environment(AppConfiguration.self) private var config
 
     @FocusState private var needsFocus: Bool
+    @State private var pendingCurrencyCode: String?
 
     var body: some View {
         @Bindable var config = config
         List {
             Section {
-                LabeledContent("Ledger Currency", value: config.ledgerCurrencyCode ?? "Not confirmed")
-                if let message = config.ledgerCurrencyConflictMessage {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                Picker("Ledger Currency", selection: Binding(
+                    get: { config.ledgerCurrencyCode },
+                    set: { code in
+                        guard code != config.ledgerCurrencyCode else { return }
+                        needsFocus = false
+                        pendingCurrencyCode = code
+                    }
+                )) {
+                    ForEach(LedgerCurrency.supportedCodes, id: \.self) { code in
+                        Text("\(code) - \(Locale.current.localizedString(forCurrencyCode: code) ?? code)")
+                            .tag(code)
+                            .accessibilityIdentifier("ledger-currency-\(code)")
+                    }
                 }
+                .pickerStyle(.menu)
+                .accessibilityIdentifier("ledger-currency-picker")
+                .accessibilityValue(config.ledgerCurrencyCode)
             } footer: {
-                Text("All expenses and budgets use this currency, even when your device region changes. Syl does not convert currencies.")
+                Text("This currency is used for existing and future expenses, income, budgets, and recurring expenses. Changing it leaves all amounts unchanged, with no conversion, and applies to your other synced devices.")
             }
             Section {
                 WholeNumberCurrencyField(amount: $config.totalMonthlyIncome, isFocused: $needsFocus)
@@ -78,6 +91,20 @@ struct BudgetSettingsSection: View {
         .settingsBackground()
         .navigationTitle("Budget and Allocation")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Change Ledger Currency?", isPresented: Binding(
+            get: { pendingCurrencyCode != nil },
+            set: { if !$0 { pendingCurrencyCode = nil } }
+        ), presenting: pendingCurrencyCode) { code in
+            Button("Change Currency") {
+                config.ledgerCurrencyCode = code
+                pendingCurrencyCode = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingCurrencyCode = nil
+            }
+        } message: { code in
+            Text("Use \(code) for existing and future expenses, income, budgets, and recurring expenses? All amounts stay unchanged. No currency conversion is performed.")
+        }
         .toolbar {
             ToolbarItem(placement: .keyboard) {
                 Button("Done") {

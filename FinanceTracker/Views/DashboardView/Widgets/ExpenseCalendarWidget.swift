@@ -3,6 +3,7 @@ import SwiftData
 import SageKit
 
 struct ExpenseCalendarWidget: View {
+    @Environment(AppConfiguration.self) private var config
     private let selectedMonth: Date
     @Query private var expenses: [Expense]
     @Query(filter: #Predicate<Expense> { $0.recurringExpenseId != nil })
@@ -132,10 +133,10 @@ struct ExpenseCalendarWidget: View {
         if isFuture {
             let recorded = day.amount - day.upcomingAmount
             return recorded == 0
-                ? "\(day.upcomingAmount.currencyString) upcoming"
-                : "\(recorded.currencyString) recorded, \(day.upcomingAmount.currencyString) upcoming"
+                ? "\(day.upcomingAmount.currencyString(code: config.ledgerCurrencyCode)) upcoming"
+                : "\(recorded.currencyString(code: config.ledgerCurrencyCode)) recorded, \(day.upcomingAmount.currencyString(code: config.ledgerCurrencyCode)) upcoming"
         }
-        return "\(day.amount.currencyString) spent\(isToday ? ", Today" : "")"
+        return "\(day.amount.currencyString(code: config.ledgerCurrencyCode)) spent\(isToday ? ", Today" : "")"
     }
 
     private func dayDetails(_ day: SpendingCalendarMonth.Day, isFuture: Bool) -> some View {
@@ -149,9 +150,7 @@ struct ExpenseCalendarWidget: View {
 
     private func calendarAmount(_ amount: Double) -> String {
         let rounded = amount.rounded(.up)
-        guard let code = LedgerCurrency.currentCode else {
-            return rounded.currencyStringRounded
-        }
+        let code = config.ledgerCurrencyCode
         if abs(rounded) >= 1_000 {
             return rounded.formatted(
                 .currency(code: code)

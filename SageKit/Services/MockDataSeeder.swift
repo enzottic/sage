@@ -331,17 +331,17 @@ public enum MockDataSeeder {
         }
     }
 
-    // Seeds budget configuration into shared UserDefaults so the app shows
-    // correct budget meters without requiring manual onboarding in DEBUG.
-    // Writes to UserDefaults.standard (isolated per bundle ID) so the debug
-    // build's config never touches the shared app group used by the production app.
+    // Seed missing dev preferences without overwriting existing settings.
     private static func seedAppConfiguration() {
-        let defaults = UserDefaults.standard
-        defaults.set(5000, forKey: "totalMonthlyIncome")
-        defaults.set(0.5,  forKey: "needsPercent")
-        defaults.set(0.3,  forKey: "wantsPercent")
-        defaults.set(0.2,  forKey: "savingsPercent")
-        defaults.set(true, forKey: "hasOpenedAppOnce")
+        let defaults = SagePreferences.defaults
+        let values: [String: Any] = [
+            "totalMonthlyIncome": 5000, "needsPercent": 0.5,
+            "wantsPercent": 0.3, "savingsPercent": 0.2,
+        ]
+        for (key, value) in values where defaults.object(forKey: key) == nil {
+            defaults.set(value, forKey: key)
+        }
+        UserDefaults.standard.set(true, forKey: "hasOpenedAppOnce")
     }
 }
 #endif

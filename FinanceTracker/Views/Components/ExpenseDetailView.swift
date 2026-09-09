@@ -10,6 +10,7 @@ import WidgetKit
 import SageKit
 
 struct ExpenseDetailView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Environment(AppRouter.self) private var appRouter
@@ -147,11 +148,7 @@ struct ExpenseDetailView: View {
     
     private func saveItem(updateRecurringRule: Bool? = nil) async {
         guard !isSaving else { return }
-        let currencyCode: String
-        do { currencyCode = try LedgerCurrency.requireCode() } catch {
-            saveErrorMessage = error.localizedDescription
-            return
-        }
+        let currencyCode = config.ledgerCurrencyCode
 
         let trimmedName = workingExpense.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
@@ -160,8 +157,8 @@ struct ExpenseDetailView: View {
         }
 
         guard let amount = workingExpense.amount,
-              MonetaryAmount.isValid(amount, currencyCode: currencyCode) else {
-            saveErrorMessage = "Correct the amount before saving any changes, including notes. "
+              amount == expense.amount || MonetaryAmount.isValid(amount, currencyCode: currencyCode) else {
+            saveErrorMessage = "Correct the changed amount before saving. "
                 + MonetaryAmount.validationMessage(currencyCode: currencyCode)
             return
         }
@@ -172,7 +169,7 @@ struct ExpenseDetailView: View {
         }
 
         let ruleToUpdate = updateRecurringRule == true ? recurringRule : nil
-        if ruleToUpdate != nil,
+        if let ruleToUpdate, amount != ruleToUpdate.amount,
            !MonetaryAmount.isValid(amount, currencyCode: currencyCode, requiresPositive: true) {
             saveErrorMessage = MonetaryAmount.validationMessage(currencyCode: currencyCode, requiresPositive: true)
             return

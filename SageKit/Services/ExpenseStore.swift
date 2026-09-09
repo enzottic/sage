@@ -114,7 +114,7 @@ final public class ExpenseStore {
     // MARK: - Budget
 
     public func budget(for category: ExpenseCategory) -> Double {
-        let defaults = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier) ?? .standard
+        let defaults = SagePreferences.defaults
         let income = Double(defaults.integer(forKey: "totalMonthlyIncome"))
         switch category {
         case .needs:
@@ -139,7 +139,7 @@ final public class ExpenseStore {
     }
 
     public var totalMonthlyIncome: Int {
-        let defaults = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier) ?? .standard
+        let defaults = SagePreferences.defaults
         return defaults.integer(forKey: "totalMonthlyIncome")
     }
 

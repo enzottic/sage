@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct CategoryDetailView: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     
     let category: ExpenseCategory
@@ -36,7 +37,7 @@ struct CategoryDetailView: View {
                     Text("Spending")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text(expenses.total.currencyString)
+                    Text(expenses.total.currencyString(code: config.ledgerCurrencyCode))
                         .font(.largeTitle.bold())
                 }
                 .frame(maxWidth: .infinity, alignment: .center)

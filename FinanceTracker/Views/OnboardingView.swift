@@ -26,7 +26,6 @@ struct OnboardingView: View {
     @State private var incomeText = ""
     @State private var selectedCurrencyCode = LedgerCurrency.suggestedCode()
     @State private var didLoadCurrency = false
-    @State private var showExistingCurrencyConfirmation = false
     @State private var needsPercent: Double = 50
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled = false
@@ -41,10 +40,7 @@ struct OnboardingView: View {
     @AccessibilityFocusState private var headingFocused: Bool
 
     private let onCompletion: (() -> Void)?
-    private var currencyCode: String {
-        if !UITestConfiguration.isEnabled, let code = config.ledgerCurrencyCode { return code }
-        return selectedCurrencyCode
-    }
+    private var currencyCode: String { selectedCurrencyCode }
 
     enum OnboardingStep: Int, CaseIterable, Hashable {
         case welcome, budget, allocation, sync, tags, reminders, complete
@@ -140,22 +136,13 @@ struct OnboardingView: View {
         }
         .fontDesign(.rounded)
         .tint(.sage)
-        .sheet(isPresented: $showExistingCurrencyConfirmation) {
-            LedgerCurrencyConfirmationView()
-        }
-        .onChange(of: config.ledgerCurrencyCode) { _, code in
-            if let code {
-                selectedCurrencyCode = code
-                showExistingCurrencyConfirmation = false
-            }
-        }
         .onAppear {
             guard !didLoadCurrency else { return }
             didLoadCurrency = true
             recurringRemindersEnabled = config.billRemindersEnabled
             dailyReminderEnabled = config.dailyExpenseReminderEnabled
             if !UITestConfiguration.isEnabled {
-                selectedCurrencyCode = config.ledgerCurrencyCode ?? config.cloudLedgerCurrencyCode ?? LedgerCurrency.suggestedCode()
+                selectedCurrencyCode = config.ledgerCurrencyCode
             }
         }
     }
@@ -286,11 +273,8 @@ struct OnboardingView: View {
                 .frame(minHeight: 44)
                 .accessibilityIdentifier("onboarding-currency-picker")
                 .accessibilityValue(currencyCode)
-                .disabled(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil)
                 .onChange(of: selectedCurrencyCode) { incomeFocused = false }
-                Text(!UITestConfiguration.isEnabled && config.ledgerCurrencyCode != nil
-                     ? "Your existing expenses and budgets use this currency. Syl does not convert amounts."
-                     : "Used for all expenses and budgets. You can change it here before finishing setup; it stays fixed afterward.")
+                Text("Used for existing and future expenses, income, budgets, and recurring expenses. You can change it later in Settings. Amounts stay unchanged, with no conversion. Currency changes also apply to your other synced devices.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -488,30 +472,17 @@ struct OnboardingView: View {
             return
         }
         do {
-            // Cloud data may have arrived since the initial routing decision.
-            if !UITestConfiguration.isEnabled, config.ledgerCurrencyCode == nil,
-               try (config.totalMonthlyIncome != 0 || LedgerCurrency.hasMonetaryRecords(in: modelContext)) {
-                showExistingCurrencyConfirmation = true
-                return
+            for tag in tagTemplates where selectedTagNames.contains(tag.name) {
+                modelContext.insert(tag)
             }
-            let saveTags = {
-                for tag in tagTemplates where selectedTagNames.contains(tag.name) {
-                    modelContext.insert(tag)
-                }
-                try modelContext.save()
-            }
-            if UITestConfiguration.isEnabled {
-                try saveTags()
-            } else {
-                // Validate currency before writing tags; lock it only after the save succeeds.
-                try config.establishLedgerCurrency(currencyCode, savingSetup: saveTags)
-            }
+            try modelContext.save()
         } catch {
             modelContext.rollback()
             completionErrorMessage = "Syl could not finish setup. \(error.localizedDescription)"
             return
         }
 
+        config.ledgerCurrencyCode = currencyCode
         config.totalMonthlyIncome = monthlyIncome ?? 0
         config.needsPercent = needsPercent / 100
         config.wantsPercent = wantsPercent / 100

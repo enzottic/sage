@@ -7,6 +7,7 @@
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.me.enzottic.SageAppGroup</string>
+		<string>group.me.enzottic.SageAppGroup.dev</string>
 	</array>
 </dict>
 </plist>

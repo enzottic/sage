@@ -40,16 +40,16 @@ struct TagsSettingsSection: View {
             .frame(height: 5)
 
             HStack(spacing: 4) {
-                Text("\(spent.currencyString) of \(budget.currencyString)")
+                Text("\(spent.currencyString(code: config.ledgerCurrencyCode)) of \(budget.currencyString(code: config.ledgerCurrencyCode))")
                     .font(.caption2)
                     .foregroundStyle(isOver ? .red : .secondary)
                 Spacer()
                 if isOver {
-                    Text("Over by \((spent - budget).currencyString)")
+                    Text("Over by \((spent - budget).currencyString(code: config.ledgerCurrencyCode))")
                         .font(.caption2)
                         .foregroundStyle(.red)
                 } else {
-                    Text("\((budget - spent).currencyString) left")
+                    Text("\((budget - spent).currencyString(code: config.ledgerCurrencyCode)) left")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

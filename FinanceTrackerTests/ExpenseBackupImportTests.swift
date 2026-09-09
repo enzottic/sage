@@ -323,7 +323,7 @@ struct ExpenseBackupImportTests {
         #expect(try await service.execute(review, currencyGate: { "USD" }).inserted == 1)
     }
 
-    @Test(arguments: ["newExpense", "newKey", "replaceExpense", "deleteExpense", "newTag", "replaceTag", "deleteTag", "duplicateTag", "currency", "currencyConflict"])
+    @Test(arguments: ["newExpense", "newKey", "replaceExpense", "deleteExpense", "newTag", "replaceTag", "deleteTag", "duplicateTag", "currency"])
     func freshReaderRejectsInterleavedChanges(kind: String) async throws {
         let container = try SageModelContainer.make(for: .test)
         let writer = ModelContext(container)
@@ -340,12 +340,8 @@ struct ExpenseBackupImportTests {
         let service = ExpenseImportService(modelContainer: container)
         let review = try service.plan(.backup(backup), ledgerCurrencyCode: "USD")
         var currency = "USD"
-        var conflicted = false
         do {
-            _ = try await service.execute(review, currencyGate: {
-                if conflicted { throw LedgerCurrency.Error.cloudConflict }
-                return currency
-            }, progress: { _ in
+            _ = try await service.execute(review, currencyGate: { currency }, progress: { _ in
                 do {
                     switch kind {
                     case "newExpense": _ = local(added, context: writer)
@@ -363,13 +359,13 @@ struct ExpenseBackupImportTests {
                     case "deleteTag": writer.delete(tag)
                     case "duplicateTag": writer.insert(ExpenseTag(id: tagID, name: "Other", uiColor: .blue, emoji: ""))
                     case "currency": currency = "EUR"
-                    default: conflicted = true
+                    default: break
                     }
                     try writer.save()
                 } catch { Issue.record(error) }
             }, save: { _ in Issue.record("A changed plan must not save") })
             Issue.record("Interleaved change was accepted")
-        } catch is ExpenseImportError {} catch LedgerCurrency.Error.cloudConflict {}
+        } catch is ExpenseImportError {}
         let reader = ModelContext(container)
         let expenses = try reader.fetch(FetchDescriptor<Expense>())
         #expect(expenses.count == (["newExpense", "newKey"].contains(kind) ? 2 : (kind == "deleteExpense" ? 0 : 1)))

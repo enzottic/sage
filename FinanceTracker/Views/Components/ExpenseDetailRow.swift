@@ -2,6 +2,7 @@ import SwiftUI
 import SageKit
 
 struct ExpenseDetailRow: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
 
     let name: String
@@ -22,7 +23,7 @@ struct ExpenseDetailRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
-            Text(amount.currencyString)
+            Text(amount.currencyString(code: config.ledgerCurrencyCode))
                 .monospacedDigit().fixedSize()
         }
         .font(.subheadline)

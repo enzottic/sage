@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 
 /// One denomination for all expenses, recurring rules, and budgets. Never converts amounts.
 public enum LedgerCurrency {
@@ -10,22 +9,17 @@ public enum LedgerCurrency {
     #endif
 
     public static let supportedCodes = Locale.commonISOCurrencyCodes.sorted()
-    public static var cloudConflictKey: String { storageKey + ".conflict" }
 
     public enum Error: LocalizedError, Equatable {
         case invalidCode(String)
         case notEstablished
-        case alreadyEstablished(String)
         case storageUnavailable
-        case cloudConflict
 
         public var errorDescription: String? {
             switch self {
             case .invalidCode(let code): "Choose a supported ISO currency code instead of '\(code)'."
             case .notEstablished: "Open Syl and confirm the currency for your expenses and budgets first."
-            case .alreadyEstablished(let code): "This ledger already uses \(code). Syl does not convert currencies."
             case .storageUnavailable: "Syl could not access the shared currency setting. Try opening the app again."
-            case .cloudConflict: "Your devices disagree about the ledger currency. Resolve the currency conflict before saving monetary changes. Syl does not convert currencies."
             }
         }
     }
@@ -39,64 +33,39 @@ public enum LedgerCurrency {
         validatedCode(locale.currency?.identifier) ?? "USD"
     }
 
-    public static func hasMonetaryRecords(in context: ModelContext) throws -> Bool {
-        var expenses = FetchDescriptor<Expense>()
-        expenses.fetchLimit = 1
-        if try !context.fetch(expenses).isEmpty { return true }
-        var rules = FetchDescriptor<RecurringExpenseRule>()
-        rules.fetchLimit = 1
-        if try !context.fetch(rules).isEmpty { return true }
-        var budgets = FetchDescriptor<ExpenseTag>(predicate: #Predicate { $0.budget != nil })
-        budgets.fetchLimit = 1
-        return try !context.fetch(budgets).isEmpty
-    }
-
     public static var currentCode: String? {
-        // Previews and UI tests use USD without changing the real shared setting.
-        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-            || ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] == "1" { return "USD" }
-        return persistedCode()
+        // UI-test consumers share the isolated configuration store, never real preferences.
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" { return "USD" }
+        if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] == "1" { return persistedCode() ?? "USD" }
+        return persistedCode() ?? suggestedCode()
     }
 
     public static func persistedCode(
-        defaults: UserDefaults? = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)
+        defaults: UserDefaults? = SagePreferences.defaults
     ) -> String? {
         validatedCode(defaults?.string(forKey: storageKey))
     }
 
     public static func requireCode() throws -> String {
-        // Local-only dev ledgers can retain conflict flags from older cloud-enabled builds.
-        #if !DEBUG
-        if ProcessInfo.processInfo.environment["SAGE_UI_TESTING"] != "1",
-           ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
-           UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)?.bool(forKey: cloudConflictKey) == true {
-            throw Error.cloudConflict
-        }
-        #endif
         guard let code = currentCode else { throw Error.notEstablished }
         return code
     }
 
-    public static func establish(
+    public static func setCode(
         _ code: String,
-        defaults: UserDefaults? = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier),
-        beforeSaving: () throws -> Void = {}
+        defaults: UserDefaults? = SagePreferences.defaults
     ) throws {
         guard validatedCode(code) != nil else { throw Error.invalidCode(code) }
         guard let defaults else { throw Error.storageUnavailable }
-        if let existing = persistedCode(defaults: defaults), existing != code {
-            throw Error.alreadyEstablished(existing)
-        }
-        try beforeSaving()
         defaults.set(code, forKey: storageKey)
     }
 
-    /// Call only after successfully deleting all monetary data and settings.
+    /// Remove the saved denomination so future reads use the locale suggestion.
     public static func reset(
-        defaults: UserDefaults? = UserDefaults(suiteName: SageModelContainer.appGroupIdentifier)
+        defaults: UserDefaults? = SagePreferences.defaults
     ) {
         defaults?.removeObject(forKey: storageKey)
-        defaults?.removeObject(forKey: cloudConflictKey)
+        defaults?.removeObject(forKey: storageKey + ".conflict")
     }
 
     public static func fractionDigits(for code: String) -> Int {

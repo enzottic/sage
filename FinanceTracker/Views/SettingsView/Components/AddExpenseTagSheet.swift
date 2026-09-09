@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct AddExpenseTagSheet: View {
+    @Environment(AppConfiguration.self) private var config
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
 
@@ -58,13 +59,16 @@ struct AddExpenseTagSheet: View {
 
     /// Invalid text never clears an existing budget; only turning the toggle off does.
     private var parsedBudget: Double? {
-        guard hasBudget, let code = LedgerCurrency.currentCode else { return nil }
-        return AmountInput.parse(budgetText, currencyCode: code, requiresPositive: true)
+        guard hasBudget else { return nil }
+        // Preserve historical precision when only other tag details change.
+        if budgetText == initialDraft?.budgetText, let originalBudget = tagToEdit?.budget {
+            return originalBudget
+        }
+        return AmountInput.parse(budgetText, currencyCode: config.ledgerCurrencyCode, requiresPositive: true)
     }
 
     private var budgetValidationMessage: String {
-        guard let code = LedgerCurrency.currentCode else { return "Confirm your ledger currency first." }
-        return MonetaryAmount.validationMessage(currencyCode: code, requiresPositive: true)
+        return MonetaryAmount.validationMessage(currencyCode: config.ledgerCurrencyCode, requiresPositive: true)
             + " Turn off Monthly Budget to remove the limit."
     }
     
@@ -146,7 +150,7 @@ struct AddExpenseTagSheet: View {
                             Text("Limit")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
-                            Text(LedgerCurrency.currentCode ?? "Currency not confirmed")
+                            Text(config.ledgerCurrencyCode)
                                 .foregroundStyle(.secondary)
                             // Fills the row so the whole right side is a tap target.
                             TextField("0.00", text: $budgetText)
@@ -188,16 +192,12 @@ struct AddExpenseTagSheet: View {
             // Add / Save button
             Button {
                 guard canSave else { return }
-                let currencyCode: String
-                do { currencyCode = try LedgerCurrency.requireCode() } catch {
-                    saveErrorMessage = error.localizedDescription
-                    return
-                }
+                let currencyCode = config.ledgerCurrencyCode
                 // Only turning the toggle off clears a previously set cap.
                 let resolvedBudget = parsedBudget
                 if hasBudget {
                     guard let resolvedBudget,
-                          MonetaryAmount.isValid(resolvedBudget, currencyCode: currencyCode, requiresPositive: true) else {
+                          resolvedBudget == tagToEdit?.budget || MonetaryAmount.isValid(resolvedBudget, currencyCode: currencyCode, requiresPositive: true) else {
                         saveErrorMessage = budgetValidationMessage
                         return
                     }
@@ -302,4 +302,5 @@ private struct TagDraft: Equatable {
 
     AddExpenseTagSheet()
         .modelContainer(container)
+        .environment(AppConfiguration.preview)
 }

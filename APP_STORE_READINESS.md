@@ -1,7 +1,9 @@
 # Sage App Store Readiness
 
-Updated: September 6, 2026. Source audit: `2f8b8d7` plus current working-tree
-privacy-manifest and import-test changes. Original audit baseline: `806beb0`.
+Updated: September 8, 2026 (currency-policy documentation only). September 6
+source audit: `2f8b8d7` plus then-current working-tree privacy-manifest and
+import-test changes. Original audit baseline: `806beb0`. The currency update
+reflects the current working-tree diff; unrelated audit status is unchanged.
 
 This is the remaining backlog from the App Store audit, adjusted for the fixes
 already implemented. Sage still needs privacy/compliance corrections, data-integrity
@@ -33,8 +35,9 @@ distribution, and App Store Connect checks remain open without execution evidenc
 - [x] **Implement consent-controlled preference sync.** Implemented a
   consent-controlled preference sync service: device-local/default-off consent,
   no KVS acquisition or operations while off, no remote echo writes, and guarded
-  startup, incoming notifications, currency confirmation, and reset. Standard
-  unit tests cover the service and production AppConfiguration source. Preference
+  startup, incoming notifications, preference edits, and reset. The original
+  currency-confirmation handshake is superseded by editable denomination sync.
+  Unit tests cover the service and production AppConfiguration source. Preference
   access stops immediately; the existing SwiftData store changes only after a
   full restart, and previously queued iCloud activity can finish. The UI explains
   this distinction.
@@ -122,8 +125,8 @@ distribution, and App Store Connect checks remain open without execution evidenc
   readable. Missing rules are added by UUID; existing rules stay unchanged, and
   rule-only backups are supported. Add-missing import preserves local edits, rejects relevant
   ambiguous/crossed identities, and does not save all-skipped batches. A read-only
-  summary is replanned at execution; a fresh-reader check, currency gate and
-  cancellation check precede the isolated commit. Six/seven-column CSV stays
+  summary is replanned at execution; a fresh-reader check, import currency
+  compatibility check and cancellation check precede the isolated commit. Six/seven-column CSV stays
   append-only with explicit duplicate warnings and separate six-column currency
   consent. Exports snapshot persisted data without saving UI drafts, write unique
   atomic staging files, then open the native save picker directly for JSON and CSV.
@@ -343,11 +346,28 @@ distribution, and App Store Connect checks remain open without execution evidenc
 
 ## Priority 3: Quality Of Life
 
-- [ ] **Allow currency correction for genuinely empty onboarding ledgers.**
-  Currently a previously established currency disables the picker even if no
-  financial data remains. Consider allowing changes during onboarding only after
-  checking expenses, rules, tag budgets, income, and cloud currency. Do not
-  silently relabel an existing ledger or overwrite a conflicting cloud setting.
+- [x] **Replace immutable currency with a freely editable synced denomination.**
+  The current working tree allows currency selection during onboarding and later
+  in Settings, including populated ledgers. Settings confirms the change and
+  explains that it applies to existing and future expenses, recurring rules,
+  income, and budgets without converting or changing stored amounts. Currency
+  edits sync when consent is enabled; valid remote denominations are adopted
+  without echo writes or a currency-conflict gate. Legacy conflict flags no longer
+  block access or monetary edits. The former empty-ledger-only correction proposal
+  and immutable lock/conflict requirement are superseded.
+  Sources: [currency](SageKit/Services/LedgerCurrency.swift),
+  [AppConfiguration](FinanceTracker/Helpers/AppConfiguration.swift),
+  [budget settings](FinanceTracker/Views/SettingsView/Components/BudgetSettingsSection.swift),
+  [onboarding](FinanceTracker/Views/OnboardingView.swift).
+- [ ] **Verify denomination changes without conversion.** Check confirm/cancel,
+  populated and empty ledgers, relaunch and region changes, and immediate refresh
+  across app screens, widgets, reminders, and shortcuts. Confirm stored expenses,
+  recurring amounts, income, and tag budgets retain their numeric values. Exercise
+  USD/EUR, JPY, and KWD changes with open drafts and historical fractional amounts;
+  unchanged amounts must not be rounded on save, while new or changed amounts
+  follow the selected currency's precision rules. Verify JSON/CSV export and
+  import currency validation, including a denomination change during import review.
+  Changed unit tests and a new UI test are present in the diff, not run in this audit.
 - [ ] **Copy the note when duplicating an expense**, unless deliberately excluded
   and explained. Resetting date or recurrence is a separate product decision.
 - [ ] **Improve expense deletion feedback.** Generic success/error feedback exists;
@@ -393,9 +413,13 @@ These checks still require runtime evidence. They are not established failures.
   Sources: [migration tests](FinanceTrackerTests/SchemaMigrationTests.swift),
   [legacy tests](FinanceTrackerTests/SageLegacySafetyTests.swift).
 - [ ] Test two-device CloudKit synchronization, offline edits, deletion
-  propagation, currency conflicts, and late-arriving records. A currency conflict
-  gate does not stop an already-open CloudKit store from synchronizing, and
-  currency-less historical mixed data cannot be reconstructed automatically.
+  propagation, and late-arriving records. Separately verify denomination preference
+  propagation and convergence after concurrent/offline edits, opt-out/re-enable,
+  and missing or invalid remote values, without blocking monetary access or
+  converting amounts. Preference sync and CloudKit records are not one atomic
+  transaction. Define mixed-version behavior for older clients that still enforce
+  the superseded currency lock/conflict policy; historical per-record currencies
+  cannot be reconstructed automatically.
 - [ ] Define the supported mixed-version behavior before converting legacy
   recurring rules. Older clients do not honor fixed time zones or conversion
   boundaries. Current confirmation warns users to update all devices first.
@@ -413,8 +437,9 @@ These checks still require runtime evidence. They are not established failures.
   requirements and privacy-sensitive widget redaction; an app-wide biometric
   lock is not automatically required.
 - [ ] Test fresh onboarding, regional currency selection, back navigation,
-  failed completion, and legacy confirmation without relying only on UI-test
-  bypasses. Confirm selected currency persists across relaunch.
+  failed completion, and upgrades with missing currency or legacy conflict flags
+  without relying only on UI-test bypasses. Confirm no legacy confirmation or
+  conflict screen blocks access, and selected currency persists across relaunch.
 - [ ] Test amount entry and immediate Save in USD, EUR/comma-decimal locales,
   JPY, and KWD; include refunds, invalid replacement text, and pasted grouping.
 - [ ] Exercise all editors on small iPhones and at the largest accessibility
@@ -446,14 +471,15 @@ These checks still require runtime evidence. They are not established failures.
   trader-status requirements where applicable.
 - [ ] Use accurate iPhone/iPad screenshots with fictional financial data. Do not
   claim unsupported notifications, languages, platforms, or conversion features.
-- [ ] Provide review notes covering optional iCloud/restart behavior, currency
-  setup, Apple Intelligence availability, widgets, shortcuts, and no account
-  requirement.
+- [ ] Provide review notes covering optional iCloud/restart behavior, freely
+  editable synced denomination without conversion, Apple Intelligence availability,
+  widgets, shortcuts, and no account requirement.
 
 ## Implemented In Source
 
-These items are implemented in checked-in source. Regression tests cover many,
-but not all, changes; targeted coverage was not found for Settings persistence-failure
+These items record implementations in checked-in source; superseded policies are
+labeled below rather than treated as current requirements. Regression tests cover
+many, but not all, changes; targeted coverage was not found for Settings persistence-failure
 handling or recurring-coordinator retry/due scheduling. Relevant runtime checks
 above remain open. Do not reopen these items as entirely unimplemented.
 
@@ -462,14 +488,19 @@ above remain open. Do not reopen these items as entirely unimplemented.
   success (`e28cf61`).
 - [x] Isolated shortcut writes and propagated persistence errors (`3f93604`).
 - [x] Persistent ledger currency, legacy confirmation, and currency-aware CSV
-  compatibility/validation (`defea81`).
+  compatibility/validation (`defea81`). The immutable lock, legacy confirmation,
+  and currency-conflict policy are superseded by freely editable synced denomination
+  in the current working tree. Persistence and import currency validation remain.
 - [x] Fixed-zone anchored recurrence for new/explicitly converted rules and
   shared generation/upcoming-date stepping (`c223aa6`). Legacy rules intentionally
   keep their old schedule until confirmed.
 - [x] Shared entry-time monetary precision/range validation, refunds, and immediate
   amount binding updates (`35b5981`). Invalid amounts require correction when saved
   through validated editors; existing records are not migrated or rounded. CSV
-  backups intentionally preserve historical fractional precision.
+  backups intentionally preserve historical fractional precision. The requirement
+  to correct an unchanged amount before saving unrelated edits is superseded in
+  the current expense and recurring-rule editors; denomination changes do not
+  rewrite historical amounts. New or changed amounts still require validation.
 - [x] Recurring-maintenance retries and foreground due scheduling (`a477a2c`).
 - [x] Malformed grouping rejection and localized refund signs (`c2e6f31`).
 - [x] Regional currency default and picker on the onboarding income screen,

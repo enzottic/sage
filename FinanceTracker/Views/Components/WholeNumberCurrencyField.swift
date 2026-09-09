@@ -9,6 +9,7 @@ import SwiftUI
 import SageKit
 
 struct WholeNumberCurrencyField: View {
+    @Environment(AppConfiguration.self) private var config
     @Binding var amount: Int
     var isFocused: FocusState<Bool>.Binding
     @State private var rawValue: String = "0"
@@ -16,7 +17,7 @@ struct WholeNumberCurrencyField: View {
     private var displayValue: String {
         let value = Int(rawValue) ?? 0
 
-        return value.currencyString
+        return value.currencyString(code: config.ledgerCurrencyCode)
     }
 
     var body: some View {
@@ -72,4 +73,5 @@ struct WholeNumberCurrencyField: View {
         }
     }
     .padding()
+    .environment(AppConfiguration.preview)
 }

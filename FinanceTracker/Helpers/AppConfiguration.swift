@@ -10,62 +10,37 @@ import SageKit
 @MainActor @Observable
 class AppConfiguration {
     private typealias Key = PreferenceSyncService.Key
-    private static let suite = "group.me.enzottic.SageAppGroup"
+    
     private let isPreview: Bool
     private let isUITesting: Bool
     let supportsCloudSync: Bool
     private let defaults: UserDefaults
-    private let sharedDefaults: UserDefaults?
     private let preferenceSync: PreferenceSyncService
+    
+    // Locks for cloud sync
     private var isApplyingRemote = false
     private var isRestoringValue = false
 
-    private(set) var ledgerCurrencyCode: String?
-    private(set) var cloudLedgerCurrencyCode: String?
-    private(set) var hasLedgerCurrencyConflict = false
+    var ledgerCurrencyCode: String {
+        didSet {
+            guard !isRestoringValue else { return }
+            guard LedgerCurrency.validatedCode(ledgerCurrencyCode) != nil else {
+                isRestoringValue = true
+                ledgerCurrencyCode = oldValue
+                isRestoringValue = false
+                return
+            }
+            persist(ledgerCurrencyCode, key: .ledgerCurrency)
+            if !isPreview { WidgetCenter.shared.reloadAllTimelines() }
+        }
+    }
     private(set) var hasCompletedSetupOnAnotherDevice = false
     private(set) var cloudSyncStatus: PreferenceSyncService.Status = .stopped
 
-    var ledgerCurrencyConflictMessage: String? {
-        guard hasLedgerCurrencyConflict else { return nil }
-        if let local = ledgerCurrencyCode, let cloud = cloudLedgerCurrencyCode {
-            return "This device uses \(local), but iCloud reports \(cloud). Monetary screens are blocked because these currencies do not match. Syl has not changed your currency or converted any amounts."
-        }
-        return "A currency conflict was previously detected, and Syl cannot currently verify the iCloud currency. Monetary screens remain blocked. No currency has been changed and no amounts have been converted."
-    }
-
-    func establishLedgerCurrency(_ code: String, savingSetup: () throws -> Void = {}) throws {
-        guard LedgerCurrency.validatedCode(code) != nil else { throw LedgerCurrency.Error.invalidCode(code) }
-        if isPreview || isUITesting {
-            try savingSetup()
-            ledgerCurrencyCode = code
-            return
-        }
-        preferenceSync.recheck()
-        guard !hasLedgerCurrencyConflict,
-              cloudLedgerCurrencyCode == nil || cloudLedgerCurrencyCode == code else {
-            throw LedgerCurrency.Error.cloudConflict
-        }
-        try LedgerCurrency.establish(code, defaults: sharedDefaults, beforeSaving: savingSetup)
-        ledgerCurrencyCode = code
-        preferenceSync.recheck()
-        preferenceSync.publishCurrencyIfAbsent(code, hasKnownConflict: hasLedgerCurrencyConflict)
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    func recheckLedgerCurrency() { preferenceSync.recheck() }
-
-    /// Local-only flags use the same store as init, including the DEBUG sandbox.
-    static var localDefaults: UserDefaults {
-        #if DEBUG
-        .standard
-        #else
-        UserDefaults(suiteName: suite) ?? .standard
-        #endif
-    }
+    func recheckPreferences() { preferenceSync.recheck() }
 
     static var isBillRemindersEnabled: Bool {
-        localDefaults.bool(forKey: Keys.billRemindersEnabled)
+        SagePreferences.defaults.bool(forKey: Keys.billRemindersEnabled)
     }
 
     // Deliberately excluded from PreferenceSyncService.Key and all cloud snapshots.
@@ -140,13 +115,12 @@ class AppConfiguration {
     private(set) var isCloudSyncEnabled: Bool = false {
         didSet {
             guard supportsCloudSync, !isPreview, !isUITesting else { return }
-            sharedDefaults?.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
+            defaults.set(isCloudSyncEnabled, forKey: Keys.isCloudSyncEnabled)
             if isCloudSyncEnabled {
                 preferenceSync.start()
             } else {
                 preferenceSync.stop()
                 hasCompletedSetupOnAnotherDevice = false
-                cloudLedgerCurrencyCode = nil
             }
         }
     }
@@ -157,7 +131,7 @@ class AppConfiguration {
         guard supportsCloudSync else { return !enabled }
         isCloudSyncEnabled = enabled
         guard !isPreview, !isUITesting else { return true }
-        return sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == enabled
+        return defaults.bool(forKey: Keys.isCloudSyncEnabled) == enabled
     }
 
     var needsColor: Color = Color("NeedColor") {
@@ -242,24 +216,6 @@ class AppConfiguration {
         }
     }
 
-    // Helper function to persist a configuration value locally, then then publish them to iCloud
-    private func persist(_ value: Any, key: Key) {
-        guard !isPreview else { return }
-        
-        defaults.set(value, forKey: key.storageKey)
-        
-        // If we're applying a change from elsewhere already, then skip publishing
-        guard !isApplyingRemote else { return }
-        
-        var values = [key: value]
-        if Key.allocation.contains(key) {
-            guard abs(needsPercent + wantsPercent + savingsPercent - 1) < 0.000001 else { return }
-            values = [.needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent]
-        }
-        
-        preferenceSync.publish(values, localCurrency: ledgerCurrencyCode, hasKnownCurrencyConflict: hasLedgerCurrencyConflict)
-    }
-
     func resetAllSettings() {
         preferenceSync.reset() // Removal is authorized only before disabling consent.
         isCloudSyncEnabled = false
@@ -279,14 +235,12 @@ class AppConfiguration {
         dailyExpenseReminderEnabled = false
         dailyExpenseReminderTimeMinutes = 1200
         dashboardWidgetOrder = DashboardWidgetID.defaultOrder
-        ledgerCurrencyCode = nil
-        cloudLedgerCurrencyCode = nil
-        hasLedgerCurrencyConflict = false
+        ledgerCurrencyCode = isPreview || isUITesting ? "USD" : LedgerCurrency.suggestedCode()
         hasCompletedSetupOnAnotherDevice = false
         
         guard !isPreview else { return }
         
-        if !isUITesting { LedgerCurrency.reset(defaults: sharedDefaults) }
+        LedgerCurrency.reset(defaults: defaults)
         let localKeys = Key.allCases.filter { $0 != .ledgerCurrency }.map(\.storageKey) + [
             Keys.isCloudSyncEnabled, Keys.needsColor, Keys.wantsColor, Keys.savingsColor, Keys.billRemindersEnabled,
             Keys.billReminderDaysBefore, Keys.hideBillReminderDetails,
@@ -295,20 +249,17 @@ class AppConfiguration {
         
         for key in localKeys { defaults.removeObject(forKey: key) }
         
-        if supportsCloudSync, !isUITesting { sharedDefaults?.set(false, forKey: Keys.isCloudSyncEnabled) }
+        if supportsCloudSync, !isUITesting { defaults.set(false, forKey: Keys.isCloudSyncEnabled) }
         WidgetCenter.shared.reloadAllTimelines()
     }
 
     convenience init() {
         if UITestConfiguration.isEnabled {
-            self.init(defaults: UserDefaults(suiteName: "Sage.UITests.\(UUID().uuidString)")!, sharedDefaults: nil, isUITesting: true)
+            self.init(defaults: SagePreferences.defaults, isUITesting: true)
         } else if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             self.init(preview: ())
         } else {
-            self.init(
-                defaults: Self.localDefaults,
-                sharedDefaults: UserDefaults(suiteName: Self.suite)
-            )
+            self.init(defaults: SagePreferences.defaults)
         }
     }
 
@@ -321,7 +272,6 @@ class AppConfiguration {
         isUITesting = false
         supportsCloudSync = SageModelContainer.supportsCloudSync
         defaults = .standard
-        sharedDefaults = nil
         preferenceSync = PreferenceSyncService(hasConsent: { false })
 
         _ledgerCurrencyCode = "USD"
@@ -331,7 +281,6 @@ class AppConfiguration {
 
     init(
         defaults: UserDefaults,
-        sharedDefaults: UserDefaults?,
         isUITesting: Bool = false,
         supportsCloudSync: Bool = SageModelContainer.supportsCloudSync,
         makeCloudStore: (() -> any CloudPreferenceStore)? = nil,
@@ -341,19 +290,17 @@ class AppConfiguration {
         self.isUITesting = isUITesting
         self.supportsCloudSync = supportsCloudSync
         self.defaults = defaults
-        self.sharedDefaults = sharedDefaults
         preferenceSync = PreferenceSyncService(
-            hasConsent: { supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true },
+            hasConsent: { supportsCloudSync && !isUITesting && defaults.bool(forKey: Keys.isCloudSyncEnabled) },
             makeStore: makeCloudStore,
             notificationCenter: notificationCenter
         )
         
         // Initialize @Observable storage directly so loading never invokes persistence observers.
-        _ledgerCurrencyCode = isUITesting ? "USD" : LedgerCurrency.persistedCode(defaults: sharedDefaults)
+        _ledgerCurrencyCode = LedgerCurrency.persistedCode(defaults: defaults)
+            ?? (isUITesting ? "USD" : LedgerCurrency.suggestedCode())
         
-        _hasLedgerCurrencyConflict = supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
-        
-        _isCloudSyncEnabled = supportsCloudSync && !isUITesting && sharedDefaults?.bool(forKey: Keys.isCloudSyncEnabled) == true
+        _isCloudSyncEnabled = supportsCloudSync && !isUITesting && defaults.bool(forKey: Keys.isCloudSyncEnabled)
 
         _dashboardWidgetOrder = DashboardWidgetID.resolvedOrder(
             defaults.stringArray(forKey: Keys.dashboardWidgetOrder) ?? []
@@ -416,6 +363,7 @@ class AppConfiguration {
         // Keep widget-facing defaults populated without sending fallback values to iCloud.
         defaults.set(dashboardWidgetOrder.map(\.rawValue), forKey: Keys.dashboardWidgetOrder)
         let localValues: [Key: Any] = [
+            .ledgerCurrency: ledgerCurrencyCode,
             .appearance: selectedAppearance.rawValue, .totalMonthlyIncome: totalMonthlyIncome,
             .needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent,
             .smartTaggingMode: smartTaggingMode.rawValue,
@@ -432,54 +380,16 @@ class AppConfiguration {
         return number.doubleValue
     }
 
-    private func applyRemote(_ snapshot: PreferenceSyncService.Snapshot) {
-        isApplyingRemote = true
-        defer { isApplyingRemote = false }
-        if snapshot.keys.contains(.ledgerCurrency) {
-            cloudLedgerCurrencyCode = LedgerCurrency.validatedCode(snapshot[.ledgerCurrency] as? String)
-            let previousConflict = hasLedgerCurrencyConflict
-                || sharedDefaults?.bool(forKey: LedgerCurrency.cloudConflictKey) == true
-            if let local = ledgerCurrencyCode, let remote = cloudLedgerCurrencyCode {
-                hasLedgerCurrencyConflict = local != remote
-            } else {
-                hasLedgerCurrencyConflict = previousConflict
-            }
-            sharedDefaults?.set(hasLedgerCurrencyConflict, forKey: LedgerCurrency.cloudConflictKey)
-        }
-        if let raw = snapshot[.appearance] as? String, let value = Appearance(rawValue: raw) {
-            selectedAppearance = value
-        }
-        if let raw = snapshot[.smartTaggingMode] as? String, let value = SmartTaggingMode(rawValue: raw) {
-            smartTaggingMode = value
-        }
-        if snapshot.keys.contains(.hasCompletedSetup) {
-            let value = snapshot[.hasCompletedSetup] as? NSNumber
-            hasCompletedSetupOnAnotherDevice = value.map { CFGetTypeID($0) == CFBooleanGetTypeID() && $0.boolValue } ?? false
-        }
-        // Never adopt a remote denomination or apply money whose denomination is unknown.
-        if !hasLedgerCurrencyConflict, let local = ledgerCurrencyCode, local == cloudLedgerCurrencyCode {
-            if let number = Self.number(snapshot[.totalMonthlyIncome]), number >= 0, let income = Int(exactly: number) {
-                totalMonthlyIncome = income
-            }
-            if let needs = Self.number(snapshot[.needsPercent]), let wants = Self.number(snapshot[.wantsPercent]),
-               let savings = Self.number(snapshot[.savingsPercent]),
-               [needs, wants, savings].allSatisfy({ (0...1).contains($0) }),
-               abs(needs + wants + savings - 1) < 0.000001 {
-                needsPercent = needs
-                wantsPercent = wants
-                savingsPercent = savings
-            }
-        }
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
     func markSetupComplete() { preferenceSync.markSetupComplete() }
 
     func resetRemoteSetup() {
-        preferenceSync.publish([.hasCompletedSetup: false], localCurrency: nil, hasKnownCurrencyConflict: false)
+        preferenceSync.publish([.hasCompletedSetup: false])
         hasCompletedSetupOnAnotherDevice = false
     }
+}
 
+// Wants/Needs updating clamping logic
+extension AppConfiguration {
     func updateNeeds(_ newNeeds: Double) {
         guard newNeeds.isFinite else { return }
         let needs = min(max(newNeeds, 0), 1)
@@ -500,6 +410,59 @@ class AppConfiguration {
         wantsPercent = wants
         savingsPercent = max(1 - needs - wants, 0)
         if !isPreview { WidgetCenter.shared.reloadAllTimelines() }
+    }
+}
+
+// Sync helper functions
+extension AppConfiguration {
+    
+    // Persist locally before publishing.
+    private func persist(_ value: Any, key: Key) {
+        guard !isPreview else { return }
+        
+        defaults.set(value, forKey: key.storageKey)
+        
+        // If we're applying a change from elsewhere already, then skip publishing
+        guard !isApplyingRemote else { return }
+        
+        var values = [key: value]
+        if Key.allocation.contains(key) {
+            guard abs(needsPercent + wantsPercent + savingsPercent - 1) < 0.000001 else { return }
+            values = [.needsPercent: needsPercent, .wantsPercent: wantsPercent, .savingsPercent: savingsPercent]
+        }
+        
+        preferenceSync.publish(values)
+    }
+
+    // Apply changes from remote to the local config
+    private func applyRemote(_ snapshot: PreferenceSyncService.Snapshot) {
+        isApplyingRemote = true
+        defer { isApplyingRemote = false }
+        if let code = LedgerCurrency.validatedCode(snapshot[.ledgerCurrency] as? String) {
+            ledgerCurrencyCode = code
+        }
+        if let raw = snapshot[.appearance] as? String, let value = Appearance(rawValue: raw) {
+            selectedAppearance = value
+        }
+        if let raw = snapshot[.smartTaggingMode] as? String, let value = SmartTaggingMode(rawValue: raw) {
+            smartTaggingMode = value
+        }
+        if snapshot.keys.contains(.hasCompletedSetup) {
+            let value = snapshot[.hasCompletedSetup] as? NSNumber
+            hasCompletedSetupOnAnotherDevice = value.map { CFGetTypeID($0) == CFBooleanGetTypeID() && $0.boolValue } ?? false
+        }
+        if let number = Self.number(snapshot[.totalMonthlyIncome]), number >= 0, let income = Int(exactly: number) {
+            totalMonthlyIncome = income
+        }
+        if let needs = Self.number(snapshot[.needsPercent]), let wants = Self.number(snapshot[.wantsPercent]),
+           let savings = Self.number(snapshot[.savingsPercent]),
+           [needs, wants, savings].allSatisfy({ (0...1).contains($0) }),
+           abs(needs + wants + savings - 1) < 0.000001 {
+            needsPercent = needs
+            wantsPercent = wants
+            savingsPercent = savings
+        }
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
