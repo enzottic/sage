@@ -18,14 +18,20 @@ final class ExpenseBackupUITests: XCTestCase {
         settings.tap()
         let backup = app.buttons["Backup"].firstMatch
         XCTAssertTrue(backup.waitForExistence(timeout: 10))
+        XCTAssertTrue(backup.waitForHittability(timeout: 10))
         backup.tap()
+        if !app.navigationBars["Backup"].waitForExistence(timeout: 5) {
+            XCTAssertTrue(backup.waitForHittability(timeout: 10))
+            backup.tap()
+        }
+        XCTAssertTrue(app.navigationBars["Backup"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["Create Expense Backup"].waitForExistence(timeout: 10))
         capture("Backup settings", app: app)
         app.buttons["Create Expense Backup"].tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["Share or Save Export"].exists)
         dismissSavePicker(app)
-        XCTAssertTrue(app.buttons["Create Expense Backup"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Create Expense Backup"].waitForHittability(timeout: 10))
         XCTAssertFalse(app.staticTexts["Could Not Complete"].exists)
         app.buttons["Create Expense Backup"].tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 10))
@@ -43,6 +49,9 @@ final class ExpenseBackupUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Could Not Complete"].exists)
         app.buttons["Import File"].tap()
         let file = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", caption)).firstMatch
+        if !file.waitForExistence(timeout: 3) {
+            openSavedFilesFolder(in: app)
+        }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
         file.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
         XCTAssertTrue(app.navigationBars["Review Import"].waitForExistence(timeout: 10))
@@ -55,13 +64,39 @@ final class ExpenseBackupUITests: XCTestCase {
         app.buttons["Export CSV"].tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 10))
         dismissSavePicker(app)
-        XCTAssertTrue(app.buttons["Export CSV"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Export CSV"].waitForHittability(timeout: 10))
         XCTAssertFalse(app.staticTexts["Could Not Complete"].exists)
     }
 
     private func dismissSavePicker(_ app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08))
-            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+            .press(
+                forDuration: 0.05,
+                thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            )
+    }
+
+    private func openSavedFilesFolder(in app: XCUIApplication) {
+        let browse = app.buttons["Browse"]
+        XCTAssertTrue(browse.waitForExistence(timeout: 10), app.debugDescription)
+        browse.tap()
+
+        let currentFolder = app.buttons
+            .matching(NSPredicate(format: "label == %@", "Syl, Actions Menu"))
+            .firstMatch
+        if currentFolder.waitForExistence(timeout: 3) { return }
+
+        let onMyIPhone = app.cells
+            .matching(NSPredicate(format: "label CONTAINS %@", "On My iPhone"))
+            .firstMatch
+        XCTAssertTrue(onMyIPhone.waitForExistence(timeout: 10), app.debugDescription)
+        onMyIPhone.tap()
+
+        let appFolder = app.cells
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Syl"))
+            .firstMatch
+        XCTAssertTrue(appFolder.waitForExistence(timeout: 10), app.debugDescription)
+        appFolder.tap()
     }
 
     private func capture(_ name: String, app: XCUIApplication) {
@@ -69,5 +104,15 @@ final class ExpenseBackupUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+}
+
+private extension XCUIElement {
+    func waitForHittability(timeout: TimeInterval) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "hittable == true"),
+            object: self
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
     }
 }

@@ -13,8 +13,7 @@ struct DashboardView: View {
     @Environment(AppConfiguration.self) var config
     
     @State private var selectedMonth: Date
-
-    @State private var isShowingWidgetOrder = false
+    @State private var showingWidgetOrderSheet = false
 
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
@@ -40,7 +39,7 @@ struct DashboardView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button("Reorder Widgets", systemImage: "arrow.up.arrow.down") {
-                            isShowingWidgetOrder = true
+                            showingWidgetOrderSheet = true
                         }
                     } label: {
                         Label("Dashboard Options", systemImage: "ellipsis")
@@ -58,10 +57,10 @@ struct DashboardView: View {
                     isNextDisabled: isCurrentMonth
                 )
             }
-            .sheet(isPresented: $isShowingWidgetOrder) {
+            .sheet(isPresented: $showingWidgetOrderSheet) {
                 DashboardWidgetOrderSheet()
             }
-            .appRouteDestinations()
+            .detailRouteDestinations()
         }
     }
 

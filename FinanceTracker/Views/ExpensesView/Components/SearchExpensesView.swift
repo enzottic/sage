@@ -56,7 +56,7 @@ struct SearchExpensesView: View {
                     // Task.sleep only throws when SwiftUI cancels this task.
                 }
             }
-            .appRouteDestinations()
+            .detailRouteDestinations()
             .gradientBackground()
         }
     }

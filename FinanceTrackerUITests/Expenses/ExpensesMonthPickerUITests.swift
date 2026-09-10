@@ -58,7 +58,12 @@ final class ExpensesMonthPickerUITests: XCTestCase {
         openPicker(in: app)
         assertPickerMonth(currentMonth, in: app)
         selectMonth(olderMonth, in: app)
-        app.navigationBars["Choose Month"].swipeDown()
+        let navigationBar = app.navigationBars["Choose Month"]
+        navigationBar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(
+                forDuration: 0.05,
+                thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            )
         assertMonth(currentMonth, in: app)
 
         openPicker(in: app)

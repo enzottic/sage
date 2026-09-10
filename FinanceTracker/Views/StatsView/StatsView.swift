@@ -3,46 +3,33 @@ import SwiftData
 import Charts
 import SageKit
 
-enum StatsTimeframe: String, CaseIterable, Identifiable {
-    case monthly = "Monthly"
-    case weekly = "Weekly"
-    var id: String { rawValue }
-}
 
-private struct SpendingPeriodData: Identifiable {
-    let periodStart: Date
-    let label: String
-    let total: Double
-    var id: Date { periodStart }
-}
 
 struct StatsView: View {
-    private struct ChartSelection {
-        let day: Int
-        let location: CGPoint
-        let highestLineY: CGFloat
-    }
-
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    @AppStorage("statsShowsNeedsLine") private var showsNeedsLine = true
+    @AppStorage("statsShowsWantsLine") private var showsWantsLine = true
+    @AppStorage("statsShowsSavingsLine") private var showsSavingsLine = true
+
     @ScaledMetric(relativeTo: .caption) private var tagFilterHeight = 15
+    
     @Query(sort: [SortDescriptor(\Expense.date, order: .reverse)]) private var allExpenses: [Expense]
+    
     @State private var selectedMonth = Calendar.current.dateInterval(of: .month, for: Date())!.start
     @State private var timeframe: StatsTimeframe = .monthly
     @State private var selectedCategory: ExpenseCategory?
     @State private var selectedTag: ExpenseTag?
     @State private var selectedBar: String?
     @State private var showsMonthPicker = false
-    @GestureState private var chartTouch: ChartSelection?
     @State private var chartHover: ChartSelection?
     @State private var dailyOverviewHeight: CGFloat = 220
     @State private var statsViewport: CGRect = .zero
     @State private var isolatedLine: String?
-    @AppStorage("statsShowsNeedsLine") private var showsNeedsLine = true
-    @AppStorage("statsShowsWantsLine") private var showsWantsLine = true
-    @AppStorage("statsShowsSavingsLine") private var showsSavingsLine = true
-
+    @GestureState private var chartTouch: ChartSelection?
+    
     private var chartSelection: ChartSelection? { chartTouch ?? chartHover }
     private var selectedDay: Int? { chartSelection?.day }
     private var visibleCategories: [ExpenseCategory] {
@@ -64,19 +51,23 @@ struct StatsView: View {
         if let tag = selectedTag, !tag.isDeleted { return tag.color }
         return .sage
     }
+    
     private var filteredExpenses: [Expense] {
         allExpenses.filter { expense in
             (selectedCategory == nil || expense.category == selectedCategory) &&
             (selectedTag == nil || selectedTag?.isDeleted == true || (expense.tags ?? []).contains { $0.id == selectedTag?.id })
         }
     }
+    
     private var summary: SpendingMonthSummary {
         SpendingMonthSummary(month: selectedMonth, expenses: filteredExpenses)
     }
+    
     private var daysInMonth: Int { calendar.range(of: .day, in: .month, for: selectedMonth)!.count }
 
     private var chartData: [SpendingPeriodData] {
         let now = Date()
+        
         if timeframe == .monthly {
             // Keep the recent window stable when selecting its bars. Older months get their own window.
             let earliestRecent = calendar.date(byAdding: .month, value: -5, to: currentMonth)!
@@ -88,6 +79,7 @@ struct StatsView: View {
                 return SpendingPeriodData(periodStart: start, label: start.formatted(.dateTime.month(.abbreviated)), total: total)
             }
         }
+        
         let month = calendar.dateInterval(of: .month, for: selectedMonth)!
         var start = month.start
         var result: [SpendingPeriodData] = []
@@ -105,9 +97,11 @@ struct StatsView: View {
 
     var body: some View {
         let monthSummary = summary
+        
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    
                     VStack(alignment: .leading, spacing: 20) {
                         ZStack(alignment: .bottomLeading) {
                             Color.clear
@@ -119,10 +113,13 @@ struct StatsView: View {
 
                         monthlyChart(monthSummary)
                     }
+                    
                     SpendingComparisonCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
+                    
                     if selectedTag == nil || selectedTag?.isDeleted == true {
                         topTags(monthSummary)
                     }
+                    
                     historyChart
                 }
                 .padding()
@@ -479,6 +476,27 @@ struct StatsView: View {
         }
         .padding(16)
         .background(.cardBackground, in: .rect(cornerRadius: 15))
+    }
+}
+
+extension StatsView {
+    struct ChartSelection {
+        let day: Int
+        let location: CGPoint
+        let highestLineY: CGFloat
+    }
+    
+    enum StatsTimeframe: String, CaseIterable, Identifiable {
+        case monthly = "Monthly"
+        case weekly = "Weekly"
+        var id: String { rawValue }
+    }
+
+    private struct SpendingPeriodData: Identifiable {
+        let periodStart: Date
+        let label: String
+        let total: Double
+        var id: Date { periodStart }
     }
 }
 

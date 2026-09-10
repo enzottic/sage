@@ -7,8 +7,6 @@
 import SwiftUI
 import SageKit
 
-// MARK: - Tabs
-
 enum SageTab: Equatable, Hashable {
     case home
     case expenses
@@ -18,16 +16,12 @@ enum SageTab: Equatable, Hashable {
     case addExpense
 }
 
-// MARK: - Navigation routes (push)
-
 /// Destinations pushed onto a tab's navigation stack. Shared across tabs because
 /// pushes originate from shared components (e.g. `ExpenseList`).
 enum AppRoute: Hashable {
     case expenseDetail(Expense)                     // drill-down / edit
     case categoryDetail(ExpenseCategory, Date)      // category budget breakdown, for the given month
 }
-
-// MARK: - Sheets (modal)
 
 /// Modally presented flows, hosted once at `RootTabView` so they appear above any tab.
 enum SageSheet: Identifiable, Hashable {
@@ -44,8 +38,6 @@ enum SageSheet: Identifiable, Hashable {
     }
 }
 
-// MARK: - Deep links
-
 /// External URLs the app can open. Unknown hosts return `nil`.
 enum SageDeepLink {
     case addExpense
@@ -60,20 +52,16 @@ enum SageDeepLink {
     }
 }
 
-// MARK: - Toast
-
 struct SageToast {
     enum Kind: Equatable { case progress, success, error }
     let message: String
     let kind: Kind
 }
 
-// MARK: - Route destinations
-
 extension View {
     /// Registers every `AppRoute` destination once. Applied at each navigation stack root
     /// in place of duplicated `.navigationDestination` blocks.
-    func appRouteDestinations() -> some View {
+    func detailRouteDestinations() -> some View {
         navigationDestination(for: AppRoute.self) { route in
             switch route {
             case .expenseDetail(let expense):

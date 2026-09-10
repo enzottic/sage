@@ -57,7 +57,7 @@ final class TagEditorUITests: XCTestCase {
         }
         screenshot("Tag editor - named palette selected", in: app)
 
-        let custom = app.buttons["Custom color"]
+        let custom = app.descendants(matching: .any)["Custom color"].firstMatch
         reveal(custom, in: app)
         tap(custom)
         let closeColorPicker = app.buttons.matching(NSPredicate(format: "label ==[c] %@ OR label == %@", "close", "Done")).firstMatch

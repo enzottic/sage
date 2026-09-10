@@ -32,7 +32,7 @@ final class WidgetGalleryUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [sageIsHittable], timeout: 10), .completed, springboard.debugDescription)
         guard let sage else { return }
         sage.tap()
-        XCTAssertTrue(springboard.staticTexts["Daily Spending"].firstMatch.waitForExistence(timeout: 10), springboard.debugDescription)
+        assertWidgetPreview(named: "Daily Spending", in: springboard)
         let screenshot = XCTAttachment(screenshot: springboard.screenshot())
         screenshot.name = "Daily Spending widget gallery"
         screenshot.lifetime = .keepAlways
@@ -41,12 +41,20 @@ final class WidgetGalleryUITests: XCTestCase {
                               "Monthly Summary", "Monthly Summary", "Monthly Summary"]
         for (index, title) in remainingPages.enumerated() {
             springboard.swipeLeft()
-            XCTAssertTrue(springboard.staticTexts[title].firstMatch.waitForExistence(timeout: 5))
+            assertWidgetPreview(named: title, in: springboard)
             let screenshot = XCTAttachment(screenshot: springboard.screenshot())
             screenshot.name = "Widget gallery page \(index + 1)"
             screenshot.lifetime = .keepAlways
             add(screenshot)
         }
         XCUIDevice.shared.press(.home)
+    }
+
+    private func assertWidgetPreview(named title: String, in springboard: XCUIApplication) {
+        let preview = springboard.buttons
+            .matching(NSPredicate(format: "label CONTAINS %@", title))
+            .firstMatch
+        XCTAssertTrue(preview.waitForExistence(timeout: 5), springboard.debugDescription)
+        XCTAssertTrue(preview.isHittable, "The \(title) widget preview is not on the current gallery page.")
     }
 }

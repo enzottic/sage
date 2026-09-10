@@ -35,7 +35,7 @@ struct ExpensesView: View {
                 .navigationTitle(formatter.string(from: selectedMonth))
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $searchText, prompt: "Search expenses")
-                .appRouteDestinations()
+                .detailRouteDestinations()
                 .toolbar {
                     ToolbarItem(placement: .title) {
                         monthTitle

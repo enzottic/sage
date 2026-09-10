@@ -900,17 +900,20 @@ final class FinanceTrackerUITests: XCTestCase {
         field.tap()
         field.typeText("Needle")
 
+        let results = app.collectionViews.firstMatch
+        XCTAssertTrue(results.waitForExistence(timeout: timeout))
+        dismissSearchKeyboard(in: app)
         let more = app.buttons["search-load-more"]
         for _ in 0..<40 {
             if more.exists && more.isHittable { break }
-            app.swipeUp()
+            results.swipeUp()
         }
         XCTAssertTrue(more.isHittable)
         more.tap()
         let older = expenseRow(named: "Search Needle 100", in: app)
         for _ in 0..<5 {
             if older.exists && older.isHittable { break }
-            app.swipeUp()
+            results.swipeUp()
         }
         XCTAssertTrue(older.isHittable, "The oldest match should become reachable after loading more.")
         XCTAssertFalse(more.exists, "The final page should not offer more results.")
@@ -924,9 +927,10 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(older.waitForExistence(timeout: timeout))
         field.buttons["Clear text"].tap()
         field.typeText("Needle")
+        dismissSearchKeyboard(in: app)
         for _ in 0..<40 {
             if more.exists && more.isHittable { break }
-            app.swipeUp()
+            results.swipeUp()
         }
         XCTAssertTrue(more.isHittable, "Changing the query must reset pagination to 100 results.")
     }
@@ -1019,7 +1023,7 @@ final class FinanceTrackerUITests: XCTestCase {
         let nameField = app.textFields["expense-name-field"]
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
         app.typeText(name)
-        tap("expense-keyboard-continue-button", in: app)
+        tap(app.buttons["expense-keyboard-continue-button"], named: "expense-keyboard-continue-button")
 
         let amountField = app.textFields["expense-amount-field"]
         XCTAssertTrue(amountField.waitForExistence(timeout: timeout), "The amount field did not appear.")
@@ -1030,7 +1034,7 @@ final class FinanceTrackerUITests: XCTestCase {
         }
         app.typeText(NSDecimalNumber(decimal: value * 100).stringValue)
         assertExpenseAmount(NSDecimalNumber(decimal: value).doubleValue, in: app)
-        tap("expense-keyboard-continue-button", in: app)
+        tap(app.buttons["expense-keyboard-continue-button"], named: "expense-keyboard-continue-button")
 
         tap("save-expense-button", in: app)
         XCTAssertTrue(
@@ -1057,6 +1061,17 @@ final class FinanceTrackerUITests: XCTestCase {
 
     private func expenseRow(named name: String, in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: "expense-row-\(name)").firstMatch
+    }
+
+    private func dismissSearchKeyboard(in app: XCUIApplication) {
+        let keyboard = app.keyboards.firstMatch
+        guard keyboard.exists else { return }
+        let search = keyboard.buttons
+            .matching(NSPredicate(format: "label ==[c] %@", "search"))
+            .firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: timeout), "The keyboard Search button did not appear.")
+        search.tap()
+        XCTAssertTrue(keyboard.waitForNonExistence(timeout: timeout), "The search keyboard did not dismiss.")
     }
 
     private func scrollToVisibility(of element: XCUIElement, in app: XCUIApplication) -> Bool {
