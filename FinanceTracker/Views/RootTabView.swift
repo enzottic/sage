@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct RootTabView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var appRouter = AppRouter()
     @State private var whatsNewRelease: WhatsNewRelease?
@@ -82,24 +83,29 @@ struct RootTabView: View {
             }
         }
         .overlay(alignment: .top) {
-            if let toast = appRouter.toast {
-                ToastPill(toast: toast)
-                    .padding(.top, 60)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .task {
-                        try? await Task.sleep(for: .milliseconds(700))
-                        let prefix: String
-                        switch toast.kind {
-                        case .progress: prefix = "In progress"
-                        case .success: prefix = "Success"
-                        case .error: prefix = "Error"
+            ZStack {
+                if let toast = appRouter.toast {
+                    ToastPill(toast: toast)
+                        .padding(.top, 60)
+                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                        .task {
+                            try? await Task.sleep(for: .milliseconds(700))
+                            let prefix: String
+                            switch toast.kind {
+                            case .progress: prefix = "In progress"
+                            case .success: prefix = "Success"
+                            case .error: prefix = "Error"
+                            }
+                            AccessibilityNotification.Announcement("\(prefix): \(toast.message)").post()
                         }
-                        AccessibilityNotification.Announcement("\(prefix): \(toast.message)").post()
-                    }
+                }
             }
+            .animation(
+                reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.4),
+                value: appRouter.toast == nil
+            )
         }
         .sensoryFeedback(.success, trigger: appRouter.toast?.kind == .success) { _, isSuccess in isSuccess }
-        .animation(.spring(duration: 0.4), value: appRouter.toast == nil)
         .environment(appRouter)
         .background(.background)
         .tint(.sage)

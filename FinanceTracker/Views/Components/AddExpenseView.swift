@@ -351,7 +351,7 @@ struct AddExpenseView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .transition(reduceMotion ? .identity : .opacity.combined(with: .move(edge: .top)))
             }
 
         }

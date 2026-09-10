@@ -360,10 +360,16 @@ distribution, and App Store Connect checks remain open without execution evidenc
   [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift),
   [circular gauge](FinanceTracker/Views/Components/CircularProgressBar.swift).
 
-- [ ] **Complete Reduce Motion support.** Audit explicit toast, budget-toggle,
-  recurring-option, and end-date animations. Keep native behavior and replace
-  unnecessary custom movement when Reduce Motion is enabled. Existing progress,
-  tag-selection, expense-date, and Stats month guards are already implemented.
+- [x] **Complete Reduce Motion support.** (#65) Audited the four remaining
+  surfaces against Apple's guidance. Toast presentation uses an opacity fade
+  under Reduce Motion; animation is owned by the overlay instead of the router.
+  Budget and end-date fields update without custom layout animation. Recurring
+  options retain their existing guard and explicitly remove the moving transition.
+  Native controls and existing progress, tag-selection, expense-date, and Stats
+  month guards are preserved. Evidence: source/diff review and the
+  [research, implementation decisions, and pending device checks](research/reduce-motion.md).
+  No local build or tests were run as requested; automated verification is
+  deferred to PR CI. Visual/device and release verification remain pending.
 
 - [ ] **Finish regional date and income input handling.** Older relative dates
   still use US ordering, and onboarding filters out non-ASCII digits. Use
