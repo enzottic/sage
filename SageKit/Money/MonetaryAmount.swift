@@ -5,9 +5,7 @@ public enum MonetaryAmount {
     public static let maximumMagnitude: Double = 1_000_000_000
 
     public static func validationMessage(currencyCode: String, requiresPositive: Bool = false) -> String {
-        let sign = requiresPositive ? "positive" : "nonzero (negative for refunds)"
-        let digits = LedgerCurrency.fractionDigits(for: currencyCode)
-        return "Enter a finite, \(sign) amount in \(currencyCode), no more than 1 billion in magnitude and with at most \(digits) decimal places. Amounts are not rounded."
+        return "Please enter a valid amount"
     }
 
     /// Expenses may be negative (refunds); budgets and recurrences require positive amounts.

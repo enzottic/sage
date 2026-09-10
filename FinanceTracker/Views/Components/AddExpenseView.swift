@@ -316,9 +316,11 @@ struct AddExpenseView: View {
                     .font(.system(size: 15))
                     .foregroundStyle(.secondary)
                     .frame(width: 24)
+                    .accessibilityHidden(true)
                 Text("Recurring")
                     .font(.subheadline)
                     .foregroundStyle(.primary)
+                    .accessibilityHidden(true)
                 Spacer()
                 Toggle("", isOn: $isRecurring)
                     .labelsHidden()
@@ -336,9 +338,11 @@ struct AddExpenseView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                         .frame(width: 24)
+                        .accessibilityHidden(true)
                     Text("Frequency")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
                     Spacer()
                     Picker("", selection: $recurrenceFrequency) {
                         ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in

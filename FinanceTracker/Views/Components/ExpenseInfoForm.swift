@@ -246,12 +246,15 @@ struct ExpenseInfoForm: View {
 
             HStack(spacing: 12) {
                 rowIcon("text.alignleft")
+                    .accessibilityHidden(true)
                 Text("Note")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 Spacer()
                 TextField("Optional", text: $note, axis: .vertical)
                     .accessibilityIdentifier("expense-note-field")
+                    .accessibilityLabel("Note")
                     .font(.subheadline)
                     .multilineTextAlignment(.trailing)
                     .focused($focusedField, equals: .note)
