@@ -1,0 +1,56 @@
+{
+  "configurations" : [
+    {
+      "id" : "9D7113E1-65EA-4D88-A703-66C119C61F40",
+      "name" : "Pull Request",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:FinanceTracker.xcodeproj",
+      "identifier" : "C66031C52E8073C60078DD15",
+      "name" : "FinanceTracker"
+    },
+    "testInteropMode" : "complete"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FinanceTracker.xcodeproj",
+        "identifier" : "C62400062FFF002400000006",
+        "name" : "FinanceTrackerTests"
+      }
+    },
+    {
+      "selectedTests" : [
+        "ExpenseBackupUITests\/testBackupExportAndFilesCancellation()",
+        "ExpensesMonthPickerUITests\/testTitlePickerFiltersExpensesAndSupportsFutureYears()",
+        "FinanceTrackerUITests\/testCompletesOnboarding()",
+        "FinanceTrackerUITests\/testDeletesExpense()",
+        "FinanceTrackerUITests\/testDuplicatesExpense()",
+        "FinanceTrackerUITests\/testEditsExpense()",
+        "FinanceTrackerUITests\/testNewExpenseAutofocusesNameAndRetainsMinorUnitAmount()",
+        "FinanceTrackerUITests\/testNewExpenseReturnNextFocusesAmount()",
+        "FinanceTrackerUITests\/testRecurringScheduleEditRequiresConfirmationAndPersists()",
+        "FinanceTrackerUITests\/testRefundAmountPersistsAfterSavingAndReopening()",
+        "FinanceTrackerUITests\/testSearchesExpenses()",
+        "FinanceTrackerUITests\/testShowAllRestoresMonthAndClearsDetail()",
+        "LedgerCurrencyUITests\/testChangingAndCancellingCurrencyPreservesExpenseAmount()",
+        "StatsViewUITests\/testCategoryFilterExcludesExpenseAndAllCategoriesRestoresTotal()",
+        "StatsViewUITests\/testTappingMonthlyHistorySelectsTheMonthEvenWithNoSpending()",
+        "TagEditorUITests\/testTagControlsAndSavedSelection()"
+      ],
+      "target" : {
+        "containerPath" : "container:FinanceTracker.xcodeproj",
+        "identifier" : "C655B3AB2EF8E4B300E1F50E",
+        "name" : "FinanceTrackerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

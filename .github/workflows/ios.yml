@@ -7,6 +7,8 @@ on:
       - "**/*.md"
       - "LICENSE"
   workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -16,7 +18,9 @@ jobs:
   build-and-test:
     name: Build and test
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 30 || 60 }}
+    env:
+      TEST_PLAN: ${{ github.event_name == 'pull_request' && 'FinanceTracker-PR' || 'FinanceTracker' }}
 
     steps:
       - name: Checkout
@@ -44,6 +48,7 @@ jobs:
           xcodebuild build-for-testing \
             -project FinanceTracker.xcodeproj \
             -scheme FinanceTracker \
+            -testPlan "$TEST_PLAN" \
             -destination "platform=iOS Simulator,id=$simulator_id"
 
       - name: Run tests
@@ -52,5 +57,16 @@ jobs:
           xcodebuild test-without-building \
             -project FinanceTracker.xcodeproj \
             -scheme FinanceTracker \
+            -testPlan "$TEST_PLAN" \
             -destination "platform=iOS Simulator,id=$simulator_id" \
+            -resultBundlePath "$RUNNER_TEMP/TestResults.xcresult" \
             -parallel-testing-enabled NO
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ env.TEST_PLAN }}
+          path: ${{ runner.temp }}/TestResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 14

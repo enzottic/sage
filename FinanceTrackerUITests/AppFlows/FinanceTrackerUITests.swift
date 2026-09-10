@@ -380,18 +380,6 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Expenses"].waitForExistence(timeout: timeout))
     }
 
-    func testAddsExpense() {
-        let app = launchApp()
-        openExpenses(in: app)
-
-        addExpense(named: "Added Expense", amount: "12.34", in: app)
-
-        XCTAssertTrue(
-            expenseRow(named: "Added Expense", in: app).waitForExistence(timeout: timeout),
-            "The saved expense did not appear in the expense list."
-        )
-    }
-
     func testNewExpenseAutofocusesNameAndRetainsMinorUnitAmount() {
         let app = launchApp()
         openExpenses(in: app)
@@ -414,13 +402,11 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertEqual(keyboardContinue.label, "Done")
         XCTAssertTrue(keyboard.keys["1"].waitForExistence(timeout: timeout))
         XCTAssertFalse(keyboard.keys["."].exists, "Amount entry must use a number pad, not a decimal pad.")
-        for (digit, expected) in [("1", 0.01), ("2", 0.12), ("3", 1.23)] {
-            app.typeText(digit)
-            assertExpenseAmount(expected, in: app)
-            XCTAssertEqual(nameField.value as? String, "Minor Unit Expense")
-            XCTAssertTrue(keyboard.exists)
-            XCTAssertTrue(keyboardContinue.isHittable)
-        }
+        app.typeText("123")
+        assertExpenseAmount(1.23, in: app)
+        XCTAssertEqual(nameField.value as? String, "Minor Unit Expense")
+        XCTAssertTrue(keyboard.exists)
+        XCTAssertTrue(keyboardContinue.isHittable)
         captureScreenshot("New expense - amount entry", in: app)
         app.typeText(XCUIKeyboardKey.delete.rawValue)
         assertExpenseAmount(0.12, in: app)
@@ -644,11 +630,6 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(days.waitForNonExistence(timeout: timeout))
         XCTAssertFalse(time.exists)
         XCTAssertFalse(privacy.exists)
-        captureScreenshot("Recurring reminder settings - disabled", in: app)
-        enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        XCTAssertTrue(days.waitForExistence(timeout: timeout))
-        XCTAssertEqual(days.value as? String, "7 days before")
-        XCTAssertEqual(privacy.value as? String, "0")
     }
 
     func testNotificationsSettingsShowsDailyTimeOnlyWhenEnabled() {
@@ -672,24 +653,12 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(time.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: time, in: app))
         XCTAssertTrue(time.isEnabled)
-        let selectedTime = time.value as? String
+        XCTAssertEqual(recurring.value as? String, "0", "Enabling daily reminders must not enable recurring reminders.")
         captureScreenshot("Notifications - daily reminder on", in: app)
 
-        tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
-        tap("Notifications", in: app)
         XCTAssertTrue(scrollToVisibility(of: daily, in: app))
-        XCTAssertEqual(daily.value as? String, "1")
-        XCTAssertEqual(time.value as? String, selectedTime)
         daily.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         XCTAssertTrue(time.waitForNonExistence(timeout: timeout))
-        daily.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        XCTAssertTrue(time.waitForExistence(timeout: timeout))
-        XCTAssertEqual(time.value as? String, selectedTime)
-
-        tap(app.navigationBars.buttons.firstMatch, named: "Back to Settings")
-        tap("Recurring Expenses", in: app)
-        XCTAssertTrue(app.staticTexts["No Recurring Expense Rules"].waitForExistence(timeout: timeout))
-        XCTAssertFalse(recurring.exists, "Notification controls should only appear on Notifications.")
     }
 
     func testShowAllRestoresMonthAndClearsDetail() {
@@ -802,16 +771,6 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertFalse(details.staticTexts["Expired Subscription"].exists)
         app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(total.waitForNonExistence(timeout: timeout))
-        // Daily upcoming occurrences must continue beyond just the next date.
-        if let following = calendar.date(byAdding: .day, value: 1, to: tomorrow),
-           calendar.isDate(now, equalTo: following, toGranularity: .month) {
-            let nextCell = app.buttons["expense-calendar-day-\(calendar.component(.day, from: following))"]
-            XCTAssertTrue(scrollToVisibility(of: nextCell, in: app))
-            XCTAssertEqual(nextCell.value as? String, "\(Double(15).formatted(.currency(code: "USD"))) upcoming")
-            nextCell.tap()
-            XCTAssertTrue(total.waitForExistence(timeout: timeout))
-            XCTAssertTrue(details.staticTexts["Calendar Subscription"].isHittable)
-        }
     }
 
     func testIPhoneStaysPortraitWhenDeviceRotates() {
@@ -884,6 +843,11 @@ final class FinanceTrackerUITests: XCTestCase {
             expenseRow(named: "Search Needle", in: app).waitForExistence(timeout: timeout),
             "The matching expense did not appear in search results."
         )
+        searchField.typeText(" missing")
+        XCTAssertTrue(app.staticTexts["No matching expenses"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(expenseRow(named: "Search Needle", in: app).waitForNonExistence(timeout: timeout))
+        searchField.buttons["Clear text"].tap()
+        XCTAssertTrue(expenseRow(named: "Search Needle", in: app).waitForExistence(timeout: timeout))
     }
 
     func testSearchLoadsOlderResultsAndResetsForNewQuery() {

@@ -121,6 +121,7 @@
 		C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-Dev.xctestplan"; sourceTree = "<group>"; };
 		C6CFDF373050F36B00621C78 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 		C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FinanceTracker.xctestplan; sourceTree = "<group>"; };
+		C60909063000000100000001 /* FinanceTracker-PR.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-PR.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -292,6 +293,7 @@
 				C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */,
 				C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */,
 				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
+				C60909063000000100000001 /* FinanceTracker-PR.xctestplan */,
 				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
 				C62400042FFF002400000004 /* FinanceTrackerTests */,

@@ -53,7 +53,8 @@ final class DashboardWidgetOrderUITests: XCTestCase {
         XCTAssertLessThan(overview.frame.minY, categories.frame.minY)
         app.buttons["Undo Reset"].tap()
         XCTAssertLessThan(categories.frame.minY, overview.frame.minY)
-        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        // Use the header for both floating iPad forms and full-height iPhone sheets.
+        app.navigationBars["Reorder Widgets"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         XCTAssertTrue(app.navigationBars["Reorder Widgets"].waitForNonExistence(timeout: 10))
 

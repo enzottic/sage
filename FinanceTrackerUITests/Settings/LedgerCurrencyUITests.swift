@@ -9,26 +9,7 @@ final class LedgerCurrencyUITests: XCTestCase {
     }
 
     func testChangingAndCancellingCurrencyPreservesExpenseAmount() {
-        checkCurrencyChange(dark: false)
-    }
-
-    func testCurrencyChangeInDarkModeWithLargeText() {
-        checkCurrencyChange(dark: true)
-    }
-
-    private func checkCurrencyChange(dark: Bool) {
-        let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        if dark { app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXL"] }
-        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
-        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
-        app.launchEnvironment["SAGE_UI_TEST_SEED_EXPENSE"] = "Currency Seed"
-        app.launch()
-
-        tap(app.tabBars.buttons["Settings"])
-        tap(app.buttons["Appearance"])
-        tap(app.buttons.containing(.staticText, identifier: dark ? "Dark" : "Light").firstMatch)
-        tap(app.navigationBars.buttons.firstMatch)
+        let app = launchApp(dark: false)
         assertSeedAmount(currency: "USD", in: app)
         tap(app.tabBars.buttons["Settings"])
         tap(app.buttons["Budget and Allocation"])
@@ -62,6 +43,40 @@ final class LedgerCurrencyUITests: XCTestCase {
         tap(app.buttons["Budget and Allocation"])
         XCTAssertEqual(picker.value as? String, "EUR", "Reopening Settings must retain the confirmed currency.")
         attachScreenshot("Updated currency settings", in: app)
+    }
+
+    func testCurrencyConfirmationIsReachableInDarkModeWithLargeText() {
+        let app = launchApp(dark: true)
+        tap(app.buttons["Budget and Allocation"])
+        let picker = app.buttons["ledger-currency-picker"]
+        tap(picker)
+        selectEuro(in: app)
+        let confirmation = app.alerts["Change Ledger Currency?"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: timeout))
+        for title in ["Cancel", "Change Currency"] {
+            let action = confirmation.buttons[title]
+            XCTAssertTrue(action.isHittable)
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(action.frame))
+        }
+        attachScreenshot("Currency confirmation - dark large text", in: app)
+        tap(confirmation.buttons["Cancel"])
+        XCTAssertTrue(confirmation.waitForNonExistence(timeout: timeout))
+        XCTAssertEqual(picker.value as? String, "USD")
+    }
+
+    private func launchApp(dark: Bool) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        if dark { app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"] }
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
+        app.launchEnvironment["SAGE_UI_TEST_SEED_EXPENSE"] = "Currency Seed"
+        app.launch()
+        tap(app.tabBars.buttons["Settings"])
+        tap(app.buttons["Appearance"])
+        tap(app.buttons.containing(.staticText, identifier: dark ? "Dark" : "Light").firstMatch)
+        tap(app.navigationBars.buttons.firstMatch)
+        return app
     }
 
     private func selectEuro(in app: XCUIApplication) {
@@ -99,11 +114,10 @@ final class LedgerCurrencyUITests: XCTestCase {
     }
 
     private func tap(_ element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: timeout))
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "hittable == true"), object: element
-        )
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed)
+        // Most controls are already ready after XCTest's preceding action settles.
+        if !element.exists || !element.isHittable {
+            XCTAssertTrue(element.wait(for: \.isHittable, toEqual: true, timeout: timeout))
+        }
         element.tap()
     }
 }

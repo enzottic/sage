@@ -33,6 +33,9 @@
             reference = "container:FinanceTracker.xctestplan"
             default = "YES">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:FinanceTracker-PR.xctestplan">
+         </TestPlanReference>
       </TestPlans>
       <Testables>
          <TestableReference

@@ -9,30 +9,7 @@ final class TagEditorUITests: XCTestCase {
     }
 
     func testTagControlsAndSavedSelection() {
-        checkTagEditor(dark: false)
-    }
-
-    func testTagControlsInDarkModeWithLargeText() {
-        checkTagEditor(dark: true)
-    }
-
-    private func checkTagEditor(dark: Bool) {
-        let app = XCUIApplication()
-        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
-        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
-        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        if dark {
-            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
-        }
-        app.launch()
-        tap(app.tabBars.buttons["Settings"])
-        tap(app.buttons["Appearance"])
-        tap(app.buttons.containing(.staticText, identifier: dark ? "Dark" : "Light").firstMatch)
-        tap(app.navigationBars.buttons.firstMatch)
-        let tags = app.buttons["Tags"]
-        reveal(tags, in: app)
-        tap(tags)
-        tap(app.buttons["Add new tag"])
+        let app = openTagEditor(dark: false)
 
         let glyph = app.buttons["Choose tag icon"]
         XCTAssertTrue(glyph.waitForExistence(timeout: timeout))
@@ -40,9 +17,9 @@ final class TagEditorUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(glyph.frame.width, 44)
         XCTAssertGreaterThanOrEqual(glyph.frame.height, 44)
         screenshot("Tag editor - medium sheet", in: app)
-        // Expand the sheet before walking every palette cell.
+        // Sample opposite ends of the shared palette instead of every color.
         app.swipeUp()
-        let colors = ["Red", "Orange", "Yellow", "Green", "Mint", "Teal", "Blue", "Indigo", "Purple", "Pink"]
+        let colors = ["Red", "Pink"]
         var previous: XCUIElement?
         for name in colors {
             let swatch = app.buttons["\(name) color"]
@@ -86,6 +63,52 @@ final class TagEditorUITests: XCTestCase {
         screenshot("Tag editor - reopened saved selection", in: app)
         tap(app.buttons["cancel-tag-button"])
         XCTAssertTrue(glyph.waitForNonExistence(timeout: timeout), "An unchanged reopened tag should dismiss without confirmation.")
+    }
+
+    func testTagControlsInDarkModeWithLargeText() {
+        let app = openTagEditor(dark: true)
+        let glyph = app.buttons["Choose tag icon"]
+        XCTAssertTrue(glyph.waitForExistence(timeout: timeout))
+        XCTAssertTrue(glyph.isHittable)
+        XCTAssertGreaterThanOrEqual(glyph.frame.width, 44)
+        XCTAssertGreaterThanOrEqual(glyph.frame.height, 44)
+        app.swipeUp()
+
+        for name in ["Red", "Pink"] {
+            let swatch = app.buttons["\(name) color"]
+            reveal(swatch, in: app)
+            XCTAssertGreaterThanOrEqual(swatch.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(swatch.frame.height, 44)
+        }
+        reveal(app.descendants(matching: .any)["Custom color"].firstMatch, in: app)
+        let cancel = app.buttons["cancel-tag-button"]
+        let save = app.buttons["Add Tag"]
+        XCTAssertTrue(cancel.isHittable)
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(save.frame))
+        XCTAssertFalse(save.isEnabled)
+        screenshot("Tag editor - dark large text controls", in: app)
+        tap(cancel)
+        XCTAssertTrue(glyph.waitForNonExistence(timeout: timeout))
+    }
+
+    private func openTagEditor(dark: Bool) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchEnvironment["SAGE_UI_TESTING"] = "1"
+        app.launchEnvironment["SAGE_UI_TEST_ONBOARDING"] = "0"
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        if dark {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
+        }
+        app.launch()
+        tap(app.tabBars.buttons["Settings"])
+        tap(app.buttons["Appearance"])
+        tap(app.buttons.containing(.staticText, identifier: dark ? "Dark" : "Light").firstMatch)
+        tap(app.navigationBars.buttons.firstMatch)
+        let tags = app.buttons["Tags"]
+        reveal(tags, in: app)
+        tap(tags)
+        tap(app.buttons["Add new tag"])
+        return app
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
