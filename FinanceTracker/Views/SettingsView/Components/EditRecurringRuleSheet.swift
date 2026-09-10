@@ -11,6 +11,7 @@ struct EditRecurringRuleSheet: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let rule: RecurringExpenseRule
 
@@ -78,7 +79,7 @@ struct EditRecurringRuleSheet: View {
                             .tint(.primary)
                         }
 
-                        Toggle(isOn: $hasEndDate.animation()) {
+                        Toggle(isOn: $hasEndDate) {
                             Text("End Date")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -96,6 +97,7 @@ struct EditRecurringRuleSheet: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 8)
+                    .animation(reduceMotion ? nil : .default, value: hasEndDate)
                 }
             }
             .toolbar {

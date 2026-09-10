@@ -13,6 +13,7 @@ struct AddExpenseTagSheet: View {
     @Environment(AppConfiguration.self) private var config
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var tagToEdit: ExpenseTag? = nil
     var onTagAdded: ((ExpenseTag) -> Void)? = nil
@@ -233,7 +234,7 @@ struct AddExpenseTagSheet: View {
 
                 // Optional monthly budget
                 VStack(spacing: 10) {
-                    Toggle(isOn: $hasBudget.animation(.easeInOut(duration: 0.2))) {
+                    Toggle(isOn: $hasBudget) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Monthly Budget")
                                 .font(.subheadline)
@@ -262,7 +263,7 @@ struct AddExpenseTagSheet: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(RoundedRectangle(cornerRadius: 10).fill(.cardBackground))
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .transition(reduceMotion ? .identity : .opacity.combined(with: .move(edge: .top)))
                         if parsedBudget == nil {
                             Text(budgetValidationMessage)
                                 .font(.caption)
@@ -289,6 +290,7 @@ struct AddExpenseTagSheet: View {
             .animation(.easeInOut(duration: 0.2), value: glyph)
         }
         .padding(.bottom)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: hasBudget)
     }
 
     private var currentDraft: TagDraft {

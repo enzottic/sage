@@ -86,14 +86,15 @@ final class AppRouter {
 
     func showToast(_ toast: SageToast) {
         dismissTask?.cancel()
-        withAnimation(.spring(duration: 0.4)) { self.toast = toast }
+        // The presenting view owns animation so it can honor Reduce Motion.
+        self.toast = toast
 
         guard toast.kind != .progress else { return }
 
         dismissTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
-            withAnimation(.spring(duration: 0.4)) { self.toast = nil }
+            self.toast = nil
         }
     }
 }
