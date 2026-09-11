@@ -6,6 +6,37 @@ import Testing
 @Suite("Category detail and Home month queries")
 @MainActor
 struct ExpenseFetchDescriptorTests {
+    @Test(arguments: [3, 11])
+    func recurringQueryUsesScheduledMonthRatherThanEditedDate(month: Int) throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+        let selected = try #require(calendar.date(from: DateComponents(year: 2026, month: month, day: 15)))
+        let interval = try #require(calendar.dateInterval(of: .month, for: selected))
+        let container = try SageModelContainer.make(for: .test)
+        let context = ModelContext(container)
+        let ruleID = UUID()
+        for (name, scheduled, recorded) in [
+            ("Before month", interval.start.addingTimeInterval(-1), selected),
+            ("Moved start", interval.start, interval.end),
+            ("Moved end", interval.end.addingTimeInterval(-0.001), interval.start.addingTimeInterval(-1)),
+            ("Next month", interval.end, selected)
+        ] {
+            context.insert(Expense(name: name, amount: 10, date: recorded, recurringExpenseId: ruleID,
+                                   recurringOccurrenceKey: RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: scheduled)))
+        }
+        context.insert(Expense(name: "Manual", amount: 10, date: selected))
+        let missing = Expense(name: "Not backfilled", amount: 10, date: selected, recurringExpenseId: ruleID)
+        missing.recurringScheduledDate = nil
+        context.insert(missing)
+        try context.save()
+
+        let reader = ModelContext(container)
+        let matches = try reader.fetch(ExpenseFetchDescriptors.recurringScheduled(in: selected, calendar: calendar))
+        #expect(Set(matches.map(\.name)) == ["Moved start", "Moved end"])
+        let nextMonth = try reader.fetch(ExpenseFetchDescriptors.recurringScheduled(in: interval.end, calendar: calendar))
+        #expect(nextMonth.map(\.name) == ["Next month"])
+    }
+
     @Test(arguments: [2, 3, 8, 12])
     func categoryDetailExcludesNextMonth(month: Int) throws {
         var calendar = Calendar(identifier: .gregorian)

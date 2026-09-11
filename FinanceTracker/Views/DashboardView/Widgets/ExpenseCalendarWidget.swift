@@ -6,8 +6,7 @@ struct ExpenseCalendarWidget: View {
     @Environment(AppConfiguration.self) private var config
     private let selectedMonth: Date
     @Query private var expenses: [Expense]
-    @Query(filter: #Predicate<Expense> { $0.recurringExpenseId != nil })
-    private var existingRecurringExpenses: [Expense]
+    @Query private var existingRecurringExpenses: [Expense]
     @Query private var recurringRules: [RecurringExpenseRule]
     @State private var selectedDate: Date?
     @ScaledMetric(relativeTo: .caption2) private var minimumDayWidth = 40.0
@@ -17,6 +16,7 @@ struct ExpenseCalendarWidget: View {
     init(selectedMonth: Date) {
         self.selectedMonth = selectedMonth
         _expenses = expenseQuery(for: selectedMonth)
+        _existingRecurringExpenses = Query(ExpenseFetchDescriptors.recurringScheduled(in: selectedMonth))
     }
 
     var body: some View {

@@ -22,6 +22,12 @@ public nonisolated enum RecurringExpenseOccurrence {
         return key == prefix + String(milliseconds)
     }
 
+    public static func scheduledDate(forKey key: String, ruleID: UUID) -> Date? {
+        guard isValidKey(key, ruleID: ruleID),
+              let milliseconds = key.split(separator: ":").last.flatMap({ Int64($0) }) else { return nil }
+        return Date(timeIntervalSince1970: Double(milliseconds) / 1_000)
+    }
+
     // Returns one stable identity for a rule occurrence on all devices.
     // CloudKit stores dates with millisecond precision, so the scheduled date uses the same scale.
     public static func key(ruleID: UUID, scheduledDate: Date) -> String {

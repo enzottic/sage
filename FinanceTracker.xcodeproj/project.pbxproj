@@ -183,7 +183,6 @@
 				Services/Notifications/RecurringReminderScheduler.swift,
 				Services/PreferenceSyncService.swift,
 				Services/ReceiptImageImport.swift,
-				Services/RecurringExpenses/RecurringExpenseOccurrence.swift,
 				Services/RecurringExpenses/RecurringExpenseRepairService.swift,
 				Services/RecurringExpenses/RecurringExpenseSchedule.swift,
 				Services/RecurringExpenses/RecurringExpenseService.swift,

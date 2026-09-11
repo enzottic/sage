@@ -43,7 +43,7 @@ public nonisolated struct SpendingCalendarMonth {
         let existingKeys = Set((expenses + existingRecurringExpenses).compactMap { expense -> String? in
             if let key = expense.recurringOccurrenceKey { return key }
             guard let ruleID = expense.recurringExpenseId else { return nil }
-            return RecurringExpenseOccurrence.safeKey(ruleID: ruleID, scheduledDate: expense.date)
+            return RecurringExpenseOccurrence.safeKey(ruleID: ruleID, scheduledDate: expense.recurringScheduledDate ?? expense.date)
         })
         var upcoming: [Date: [UpcomingExpense]] = [:]
         let today = calendar.startOfDay(for: now)

@@ -103,7 +103,7 @@ public struct ExpenseImportService {
                 ExpenseImportIdentity(persistentID: expense.persistentModelID, id: expense.id,
                                       rule: expense.recurringExpenseId, storedKey: expense.recurringOccurrenceKey,
                                       effectiveKey: expense.recurringOccurrenceKey ?? expense.recurringExpenseId.flatMap {
-                    RecurringExpenseOccurrence.safeKey(ruleID: $0, scheduledDate: expense.date)
+                    RecurringExpenseOccurrence.safeKey(ruleID: $0, scheduledDate: expense.recurringScheduledDate ?? expense.date)
                 })
             }
             let byID = Dictionary(grouping: locals, by: \.id)

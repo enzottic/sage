@@ -32,6 +32,7 @@ struct RecurringExpenseServiceTests {
         let secondOccurrence = try #require(calendar.date(byAdding: .day, value: 1, to: start))
         #expect(expenses.count == 3)
         #expect(expenses.map(\.date) == [start, secondOccurrence, end])
+        #expect(expenses.map(\.recurringScheduledDate) == [start, secondOccurrence, end])
         #expect(rule.lastGeneratedDate == end)
         #expect(expenses.allSatisfy { $0.recurringExpenseId == rule.id })
     }
@@ -61,6 +62,30 @@ struct RecurringExpenseServiceTests {
         let expenses = try context.fetch(FetchDescriptor<Expense>())
         #expect(expenses.map(\.date).sorted() == [start, end])
         #expect(rule.lastGeneratedDate == end)
+    }
+
+    @Test @MainActor
+    func repairsScheduledDatesFromOlderClientsWithoutFollowingDateEdits() throws {
+        let container = try SageModelContainer.make(for: .test)
+        let context = container.mainContext
+        let date = Date(timeIntervalSince1970: 1_786_368_000)
+        let ruleID = UUID()
+        let keyed = Expense(name: "Moved", amount: 10, date: date.addingTimeInterval(40 * 86_400),
+                            recurringExpenseId: ruleID,
+                            recurringOccurrenceKey: RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: date))
+        let legacy = Expense(name: "Legacy", amount: 10, date: date.addingTimeInterval(86_400), recurringExpenseId: ruleID)
+        for expense in [keyed, legacy] {
+            expense.recurringScheduledDate = nil
+            context.insert(expense)
+        }
+        let service = RecurringExpenseRepairService(modelContext: context)
+        _ = try service.repair()
+        #expect(keyed.recurringScheduledDate == date)
+        #expect(legacy.recurringScheduledDate == date.addingTimeInterval(86_400))
+        legacy.date = date.addingTimeInterval(50 * 86_400)
+        _ = try service.repair()
+        #expect(legacy.recurringScheduledDate == date.addingTimeInterval(86_400))
+        try context.save()
     }
 
     @Test @MainActor

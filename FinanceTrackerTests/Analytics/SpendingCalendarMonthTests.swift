@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import Testing
 @testable import SageKit
 
@@ -100,8 +101,12 @@ extension SpendingCalendarMonthTests {
 
         // A moved expense still fulfills its original occurrence, even outside this month.
         generated.date = calendar.date(byAdding: .month, value: -1, to: tomorrow)!
+        let container = try SageModelContainer.make(for: .test)
+        container.mainContext.insert(generated)
+        try container.mainContext.save()
+        let existing = try ModelContext(container).fetch(ExpenseFetchDescriptors.recurringScheduled(in: today, calendar: calendar))
         let moved = SpendingCalendarMonth(month: today, expenses: [other], recurringRules: [rule], now: today,
-                                          existingRecurringExpenses: [generated], calendar: calendar)
+                                          existingRecurringExpenses: existing, calendar: calendar)
         #expect(moved.days[10].amount == 3)
         #expect(moved.days[10].upcomingExpenses.isEmpty)
 

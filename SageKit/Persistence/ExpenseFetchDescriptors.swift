@@ -26,6 +26,18 @@ public enum ExpenseFetchDescriptors {
         return range(start: interval?.start ?? month, end: interval?.end ?? month)
     }
 
+    public static func recurringScheduled(in month: Date, calendar: Calendar = .current) -> FetchDescriptor<Expense> {
+        let interval = calendar.dateInterval(of: .month, for: month)
+        let start = interval?.start ?? month
+        let end = interval?.end ?? month
+        return FetchDescriptor<Expense>(predicate: #Predicate { expense in
+            expense.recurringExpenseId != nil
+                && expense.recurringScheduledDate != nil
+                && expense.recurringScheduledDate! >= start
+                && expense.recurringScheduledDate! < end
+        })
+    }
+
     /// The end boundary is exclusive; inclusive as-of cutoffs are applied separately.
     public static func range(start: Date, end: Date) -> FetchDescriptor<Expense> {
         FetchDescriptor<Expense>(

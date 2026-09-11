@@ -169,7 +169,7 @@ public extension RecurringExpenseRule {
                 guard key.hasPrefix(prefix), let milliseconds = Int64(key.dropFirst(prefix.count)) else { continue }
                 scheduledDate = Date(timeIntervalSince1970: Double(milliseconds) / 1_000)
             } else {
-                scheduledDate = expense.date
+                scheduledDate = expense.recurringScheduledDate ?? expense.date
             }
             boundary = max(boundary, scheduledDate)
         }

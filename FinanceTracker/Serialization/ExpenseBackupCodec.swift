@@ -362,11 +362,17 @@ public nonisolated enum ExpenseBackupCodec {
                 guard persistedTags[tag.id]?.count == 1 else { throw ExpenseBackupError.invalid("duplicate or missing persisted tag ID.") }
                 tags[tag.id] = try .init(tag: tag)
             }
+            // Preserve moved, keyless legacy occurrences using the existing backup format.
+            var occurrenceKey = expense.recurringOccurrenceKey
+            if occurrenceKey == nil, let ruleID = expense.recurringExpenseId,
+               let scheduledDate = expense.recurringScheduledDate, scheduledDate != expense.date {
+                occurrenceKey = RecurringExpenseOccurrence.safeKey(ruleID: ruleID, scheduledDate: scheduledDate)
+            }
             return ExpenseBackup.Record(
                 id: expense.id.uuidString.lowercased(), name: expense.name,
                 dateSecondsSince2001: expense.date.timeIntervalSinceReferenceDate, amount: String(expense.amount),
                 category: expense.category.rawValue, note: expense.note, tagIDs: selected.map { $0.id.uuidString.lowercased() },
-                recurringExpenseID: expense.recurringExpenseId?.uuidString.lowercased(), recurringOccurrenceKey: expense.recurringOccurrenceKey
+                recurringExpenseID: expense.recurringExpenseId?.uuidString.lowercased(), recurringOccurrenceKey: occurrenceKey
             )
         }
         let rules = try context.fetch(FetchDescriptor<RecurringExpenseRule>()).map { rule in

@@ -30,8 +30,11 @@ public final class RecurringExpenseRepairService {
         for expense in expenses {
             guard let ruleID = expense.recurringExpenseId else { continue }
 
+            // Older clients can sync records without the scheduled-date field after migration.
+            expense.backfillRecurringScheduledDate()
+
             let key = expense.recurringOccurrenceKey
-                ?? RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: expense.date)
+                ?? RecurringExpenseOccurrence.key(ruleID: ruleID, scheduledDate: expense.recurringScheduledDate ?? expense.date)
 
             if expense.recurringOccurrenceKey == nil {
                 expense.recurringOccurrenceKey = key

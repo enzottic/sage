@@ -123,8 +123,8 @@ struct ExpenseBackupImportTests {
         #expect(try check.fetchCount(FetchDescriptor<ExpenseTag>()) == 0)
     }
 
-    @Test(arguments: [false, true])
-    func restoredRulesContinueWithoutRegeneratingHistory(staleCursor: Bool) async throws {
+    @Test(arguments: [false, true], [false, true])
+    func restoredRulesContinueWithoutRegeneratingHistory(staleCursor: Bool, keyless: Bool) async throws {
         let source = try SageModelContainer.make(for: .test)
         let start = try Date("2026-08-01T12:00:00Z", strategy: .iso8601)
         let rule = RecurringExpenseRule(name: "Daily", amount: 10, note: "", category: .needs, frequency: .daily,
@@ -132,11 +132,19 @@ struct ExpenseBackupImportTests {
         source.mainContext.insert(rule)
         try source.mainContext.save()
         _ = try RecurringExpenseService(modelContext: source.mainContext).generateAllExpenses(through: start)
+        let generated = try #require(source.mainContext.fetch(FetchDescriptor<Expense>()).first)
+        if keyless { generated.recurringOccurrenceKey = nil }
+        generated.date = start.addingTimeInterval(40 * 86_400)
+        try source.mainContext.save()
         if staleCursor { rule.lastGeneratedDate = nil; try source.mainContext.save() }
         let backup = try ExpenseBackupCodec.snapshot(modelContainer: source, currency: "USD")
+        #expect(backup.expenses.first?.recurringOccurrenceKey == RecurringExpenseOccurrence.key(ruleID: rule.id, scheduledDate: start))
         let destination = try SageModelContainer.make(for: .test)
         let importer = ExpenseImportService(modelContainer: destination)
         _ = try await importer.execute(importer.plan(.backup(backup), ledgerCurrencyCode: "USD"), currencyGate: { "USD" })
+        let imported = try #require(ModelContext(destination).fetch(FetchDescriptor<Expense>()).first)
+        #expect(imported.recurringScheduledDate == start)
+        #expect(imported.date == generated.date)
         let maintenance = RecurringExpenseService(modelContext: ModelContext(destination))
         #expect(try maintenance.generateAllExpenses(through: start.addingTimeInterval(86_400)).generatedCount == 1)
         #expect(try maintenance.generateAllExpenses(through: start.addingTimeInterval(86_400)).generatedCount == 0)
@@ -495,7 +503,7 @@ struct ExpenseBackupImportTests {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
         defer { try? FileManager.default.removeItem(at: directory) }
         let url = directory.appendingPathComponent("Sage.sqlite")
-        let schema = Schema(versionedSchema: SageSchemaV6.self)
+        let schema = Schema(versionedSchema: SageSchemaV8.self)
         func open() throws -> ModelContainer {
             try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)])
         }
@@ -521,6 +529,7 @@ struct ExpenseBackupImportTests {
         let saved = try #require(reader.fetch(FetchDescriptor<Expense>()).first)
         #expect(saved.date == row.date && saved.amount == 48.695 && saved.id == UUID(uuidString: row.id))
         #expect(saved.recurringOccurrenceKey == nil)
+        #expect(saved.recurringScheduledDate == row.date)
         let result = try RecurringExpenseService(modelContext: reader).generateAllExpenses(through: row.date)
         #expect(result.generatedCount == 0 && result.skippedCount == 1 && result.repair.backfilledCount == 1)
         #expect(try reader.fetchCount(FetchDescriptor<Expense>()) == 1)
