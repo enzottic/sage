@@ -11,6 +11,7 @@
 		C60609063000000100000002 /* UITestConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000100000004 /* UITestConfiguration.swift */; };
 		C60609063000000200000001 /* ExpenseBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000200000003 /* ExpenseBackupService.swift */; };
 		C60609063000000300000001 /* DashboardWidgetID.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60609063000000300000003 /* DashboardWidgetID.swift */; };
+		C61109060000000000000001 /* FinanceTrackerWatchWidget.appex in Embed Watch App Extensions */ = {isa = PBXBuildFile; fileRef = C61109060000000000000002 /* FinanceTrackerWatchWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C62200012FFD000100000022 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C62400012FFF002400000001 /* SageKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */; platformFilter = ios; };
 		C62509062FFF002400000001 /* THIRD_PARTY_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */; };
@@ -21,9 +22,17 @@
 		C6B09FD32E92CF5200899162 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD22E92CF5200899162 /* WidgetKit.framework */; };
 		C6B09FD52E92CF5200899162 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6B09FD42E92CF5200899162 /* SwiftUI.framework */; };
 		C6B09FE42E92CF5400899162 /* FinanceTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C6ED82C23053ADE4004DE5F2 /* FinanceTrackerWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C6ED82B83053ADE3004DE5F2 /* FinanceTrackerWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		C61109060000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C61109060000000000000004;
+			remoteInfo = FinanceTrackerWatchWidget;
+		};
 		C62200022FFD000100000022 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
@@ -66,9 +75,27 @@
 			remoteGlobalIDString = C6B09FCF2E92CF5200899162;
 			remoteInfo = FinanceTrackerWidgetExtension;
 		};
+		C6ED82C03053ADE4004DE5F2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C66031BE2E8073C60078DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C6ED82B73053ADE3004DE5F2;
+			remoteInfo = "FinanceTrackerWatch Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		C61109060000000000000005 /* Embed Watch App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C61109060000000000000001 /* FinanceTrackerWatchWidget.appex in Embed Watch App Extensions */,
+			);
+			name = "Embed Watch App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C68EEE1A2FD7C7E8003C4FD6 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -101,6 +128,17 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6ED82C63053ADE4004DE5F2 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				C6ED82C23053ADE4004DE5F2 /* FinanceTrackerWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -108,6 +146,8 @@
 		C60609063000000100000004 /* UITestConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UITestConfiguration.swift; path = FinanceTracker/Helpers/UITestConfiguration.swift; sourceTree = SOURCE_ROOT; };
 		C60609063000000200000003 /* ExpenseBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ExpenseBackupService.swift; path = FinanceTracker/Services/ExpenseBackupService.swift; sourceTree = SOURCE_ROOT; };
 		C60609063000000300000003 /* DashboardWidgetID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DashboardWidgetID.swift; path = FinanceTracker/Helpers/DashboardWidgetID.swift; sourceTree = SOURCE_ROOT; };
+		C60909063000000100000001 /* FinanceTracker-PR.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-PR.xctestplan"; sourceTree = "<group>"; };
+		C61109060000000000000002 /* FinanceTrackerWatchWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinanceTrackerWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C62400032FFF002400000003 /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
 		C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -121,7 +161,7 @@
 		C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-Dev.xctestplan"; sourceTree = "<group>"; };
 		C6CFDF373050F36B00621C78 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 		C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FinanceTracker.xctestplan; sourceTree = "<group>"; };
-		C60909063000000100000001 /* FinanceTracker-PR.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "FinanceTracker-PR.xctestplan"; sourceTree = "<group>"; };
+		C6ED82B83053ADE3004DE5F2 /* FinanceTrackerWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "FinanceTrackerWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -150,6 +190,28 @@
 				Views/Components/FlowLayout.swift,
 			);
 			target = C62400062FFF002400000006 /* FinanceTrackerTests */;
+		};
+		C61009063000000100000001 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Resources/FinanceApp-Dev.icon",
+				Resources/FinanceApp.icon,
+			);
+			target = C6ED82B73053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */;
+		};
+		C61109060000000000000006 /* Exceptions for "SageKit" folder in "FinanceTrackerWatchWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/WatchSnapshot.swift,
+			);
+			target = C61109060000000000000004 /* FinanceTrackerWatchWidget */;
+		};
+		C61109060000000000000007 /* Exceptions for "FinanceTrackerWatchWidget" folder in "FinanceTrackerWatchWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C61109060000000000000004 /* FinanceTrackerWatchWidget */;
 		};
 		C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -180,6 +242,13 @@
 			);
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 		};
+		C6ED84A43053BCE7004DE5F2 /* Exceptions for "SageKit" folder in "FinanceTrackerWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/WatchSnapshot.swift,
+			);
+			target = C6ED82B73053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */;
+		};
 		C6F7DA3D2E9B5F4500A20A67 /* Exceptions for "FinanceTrackerWidget" folder in "FinanceTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -191,6 +260,19 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C6110906000000000000000A /* FinanceTrackerWatchWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C61109060000000000000007 /* Exceptions for "FinanceTrackerWatchWidget" folder in "FinanceTrackerWatchWidget" target */,
+			);
+			path = FinanceTrackerWatchWidget;
+			sourceTree = "<group>";
+		};
+		C6110906000000000000000B /* WatchShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WatchShared;
+			sourceTree = "<group>";
+		};
 		C62400042FFF002400000004 /* FinanceTrackerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FinanceTrackerTests;
@@ -206,6 +288,7 @@
 			exceptions = (
 				C61F44AA2F00D5360033F8B6 /* Exceptions for "FinanceTracker" folder in "FinanceTracker" target */,
 				C60908063000000100000001 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerTests" target */,
+				C61009063000000100000001 /* Exceptions for "FinanceTracker" folder in "FinanceTrackerWatch Watch App" target */,
 			);
 			path = FinanceTracker;
 			sourceTree = "<group>";
@@ -215,6 +298,8 @@
 			exceptions = (
 				C68EEE1C2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTracker" target */,
 				C68EEE1D2FD7C7FC003C4FD6 /* Exceptions for "SageKit" folder in "FinanceTrackerWidgetExtension" target */,
+				C6ED84A43053BCE7004DE5F2 /* Exceptions for "SageKit" folder in "FinanceTrackerWatch Watch App" target */,
+				C61109060000000000000006 /* Exceptions for "SageKit" folder in "FinanceTrackerWatchWidget" target */,
 			);
 			path = SageKit;
 			sourceTree = "<group>";
@@ -228,9 +313,21 @@
 			path = FinanceTrackerWidget;
 			sourceTree = "<group>";
 		};
+		C6ED82B93053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "FinanceTrackerWatch Watch App";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C6110906000000000000000C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C62400052FFF002400000005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -273,6 +370,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6ED82B53053ADE3004DE5F2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -290,20 +394,23 @@
 		C66031BD2E8073C60078DD15 = {
 			isa = PBXGroup;
 			children = (
+				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
 				C6CFDF373050F36B00621C78 /* AGENTS.md */,
 				C62509062FFF002400000002 /* THIRD_PARTY_NOTICES.md */,
 				C6C7FEC530366B730069EF5D /* FinanceTracker-Dev.xctestplan */,
-				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
 				C60909063000000100000001 /* FinanceTracker-PR.xctestplan */,
-				C6B09FEB2E92CFDF00899162 /* FinanceTrackerWidgetExtension.entitlements */,
-				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
-				C62400042FFF002400000004 /* FinanceTrackerTests */,
-				C60609063000000100000005 /* Production Test Sources */,
-				C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */,
-				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
-				C6B09FD12E92CF5200899162 /* Frameworks */,
-				C66031C72E8073C60078DD15 /* Products */,
+				C6E6BEEF302E3A40000C3CE7 /* FinanceTracker.xctestplan */,
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
+				C62400042FFF002400000004 /* FinanceTrackerTests */,
+				C655B3AD2EF8E4B300E1F50E /* FinanceTrackerUITests */,
+				C6ED82B93053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */,
+				C6110906000000000000000A /* FinanceTrackerWatchWidget */,
+				C6B09FD62E92CF5200899162 /* FinanceTrackerWidget */,
+				C6B09FD12E92CF5200899162 /* Frameworks */,
+				C60609063000000100000005 /* Production Test Sources */,
+				C66031C72E8073C60078DD15 /* Products */,
+				C68EEE102FD7C7E8003C4FD6 /* SageKit */,
+				C6110906000000000000000B /* WatchShared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -315,6 +422,8 @@
 				C62400032FFF002400000003 /* FinanceTrackerTests.xctest */,
 				C655B3AC2EF8E4B300E1F50E /* FinanceTrackerUITests.xctest */,
 				C68EEE0F2FD7C7E8003C4FD6 /* SageKit.framework */,
+				C6ED82B83053ADE3004DE5F2 /* FinanceTrackerWatch Watch App.app */,
+				C61109060000000000000002 /* FinanceTrackerWatchWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -342,6 +451,27 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		C61109060000000000000004 /* FinanceTrackerWatchWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C6110906000000000000000D /* Build configuration list for PBXNativeTarget "FinanceTrackerWatchWidget" */;
+			buildPhases = (
+				C6110906000000000000000E /* Sources */,
+				C6110906000000000000000C /* Frameworks */,
+				C6110906000000000000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C6110906000000000000000A /* FinanceTrackerWatchWidget */,
+				C6110906000000000000000B /* WatchShared */,
+			);
+			name = FinanceTrackerWatchWidget;
+			productName = FinanceTrackerWatchWidget;
+			productReference = C61109060000000000000002 /* FinanceTrackerWatchWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		C62400062FFF002400000006 /* FinanceTrackerTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C624000C2FFF00240000000C /* Build configuration list for PBXNativeTarget "FinanceTrackerTests" */;
@@ -398,12 +528,14 @@
 				C66031C42E8073C60078DD15 /* Resources */,
 				C6B09FE92E92CF5400899162 /* Embed Foundation Extensions */,
 				C68EEE1A2FD7C7E8003C4FD6 /* Embed Frameworks */,
+				C6ED82C63053ADE4004DE5F2 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				C6B09FE32E92CF5400899162 /* PBXTargetDependency */,
 				C68EEE142FD7C7E8003C4FD6 /* PBXTargetDependency */,
+				C6ED82C13053ADE4004DE5F2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C66031C82E8073C60078DD15 /* FinanceTracker */,
@@ -462,6 +594,31 @@
 			productReference = C6B09FD02E92CF5200899162 /* FinanceTrackerWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		C6ED82B73053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C6ED82C33053ADE4004DE5F2 /* Build configuration list for PBXNativeTarget "FinanceTrackerWatch Watch App" */;
+			buildPhases = (
+				C6ED82B43053ADE3004DE5F2 /* Sources */,
+				C6ED82B53053ADE3004DE5F2 /* Frameworks */,
+				C6ED82B63053ADE3004DE5F2 /* Resources */,
+				C61109060000000000000005 /* Embed Watch App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C61109060000000000000010 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C6110906000000000000000B /* WatchShared */,
+				C6ED82B93053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */,
+			);
+			name = "FinanceTrackerWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "FinanceTrackerWatch Watch App";
+			productReference = C6ED82B83053ADE3004DE5F2 /* FinanceTrackerWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -488,6 +645,9 @@
 					C6B09FCF2E92CF5200899162 = {
 						CreatedOnToolsVersion = 26.0;
 					};
+					C6ED82B73053ADE3004DE5F2 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = C66031C12E8073C60078DD15 /* Build configuration list for PBXProject "FinanceTracker" */;
@@ -512,11 +672,20 @@
 				C62400062FFF002400000006 /* FinanceTrackerTests */,
 				C655B3AB2EF8E4B300E1F50E /* FinanceTrackerUITests */,
 				C68EEE0E2FD7C7E8003C4FD6 /* SageKit */,
+				C6ED82B73053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */,
+				C61109060000000000000004 /* FinanceTrackerWatchWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C6110906000000000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C62400072FFF002400000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -553,9 +722,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6ED82B63053ADE3004DE5F2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C6110906000000000000000E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C62400082FFF002400000008 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -595,9 +778,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C6ED82B43053ADE3004DE5F2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C61109060000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C61109060000000000000004 /* FinanceTrackerWatchWidget */;
+			targetProxy = C61109060000000000000003 /* PBXContainerItemProxy */;
+		};
 		C62200032FFD000100000022 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilter = ios;
@@ -631,9 +826,72 @@
 			target = C6B09FCF2E92CF5200899162 /* FinanceTrackerWidgetExtension */;
 			targetProxy = C6B09FE22E92CF5400899162 /* PBXContainerItemProxy */;
 		};
+		C6ED82C13053ADE4004DE5F2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C6ED82B73053ADE3004DE5F2 /* FinanceTrackerWatch Watch App */;
+			targetProxy = C6ED82C03053ADE4004DE5F2 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C61109060000000000000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WatchShared/Watch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTrackerWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Syl Monthly Spending";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "me.enzottic.FinanceTracker-debug.watchkitapp.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+				WATCH_APP_GROUP = group.me.enzottic.SageAppGroup.dev;
+			};
+			name = Debug;
+		};
+		C61109060000000000000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WatchShared/Watch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinanceTrackerWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Syl Monthly Spending";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+				WATCH_APP_GROUP = group.me.enzottic.SageAppGroup;
+			};
+			name = Release;
+		};
 		C624000A2FFF00240000000A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1132,9 +1390,90 @@
 			};
 			name = Release;
 		};
+		C6ED82C43053ADE4004DE5F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "FinanceApp-Dev";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WatchShared/Watch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Syl;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "me.enzottic.FinanceTracker-debug";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "me.enzottic.FinanceTracker-debug.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+				WATCH_APP_GROUP = group.me.enzottic.SageAppGroup.dev;
+			};
+			name = Debug;
+		};
+		C6ED82C53053ADE4004DE5F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = FinanceApp;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WatchShared/Watch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2XM9FQAP3J;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Syl;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.enzottic.FinanceTracker;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.enzottic.FinanceTracker.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+				WATCH_APP_GROUP = group.me.enzottic.SageAppGroup;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C6110906000000000000000D /* Build configuration list for PBXNativeTarget "FinanceTrackerWatchWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C61109060000000000000011 /* Debug */,
+				C61109060000000000000012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C624000C2FFF00240000000C /* Build configuration list for PBXNativeTarget "FinanceTrackerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1185,6 +1524,15 @@
 			buildConfigurations = (
 				C6B09FE72E92CF5400899162 /* Debug */,
 				C6B09FE82E92CF5400899162 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C6ED82C33053ADE4004DE5F2 /* Build configuration list for PBXNativeTarget "FinanceTrackerWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C6ED82C43053ADE4004DE5F2 /* Debug */,
+				C6ED82C53053ADE4004DE5F2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
