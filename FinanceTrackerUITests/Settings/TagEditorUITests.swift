@@ -91,6 +91,49 @@ final class TagEditorUITests: XCTestCase {
         XCTAssertTrue(glyph.waitForNonExistence(timeout: timeout))
     }
 
+    func testLongTagFitsPickerAndCanBeSelected() {
+        verifyLongTagPicker(dark: false)
+    }
+
+    func testLongTagFitsPickerWithAccessibilityText() {
+        verifyLongTagPicker(dark: true)
+    }
+
+    private func verifyLongTagPicker(dark: Bool) {
+        let app = openTagEditor(dark: dark)
+        let name = "Weekend groceries and household supplies for the whole family"
+        let nameField = app.textFields["Tag Name"]
+        tap(nameField)
+        nameField.typeText(name)
+        tap(app.buttons["Add Tag"])
+        XCTAssertTrue(nameField.waitForNonExistence(timeout: timeout))
+        tap(app.navigationBars.buttons.firstMatch)
+        tap(app.tabBars.buttons["Expenses"])
+        tap(app.descendants(matching: .any)["add-expense-button"].firstMatch)
+        XCTAssertTrue(app.textFields["expense-name-field"].waitForExistence(timeout: timeout))
+        tap(app.buttons["expense-keyboard-continue-button"])
+        tap(app.buttons["expense-keyboard-continue-button"])
+
+        let chip = app.buttons["Tag: \(name)"]
+        reveal(chip, in: app)
+        let screen = app.windows.firstMatch.frame
+        XCTAssertGreaterThanOrEqual(chip.frame.minX, screen.minX)
+        XCTAssertLessThanOrEqual(chip.frame.maxX, screen.maxX)
+        XCTAssertGreaterThan(chip.frame.height, dark ? 80 : 40, "The long tag should wrap, not truncate.")
+        let addTag = app.buttons.containing(.staticText, identifier: "Add new tag").firstMatch
+        reveal(addTag, in: app)
+        XCTAssertGreaterThanOrEqual(addTag.frame.minY, chip.frame.maxY)
+        screenshot(dark ? "Long tag - dark accessibility XL" : "Long tag - light default text", in: app)
+
+        reveal(chip, in: app)
+        tap(chip)
+        XCTAssertEqual(chip.value as? String, "Selected")
+        tap(chip)
+        XCTAssertEqual(chip.value as? String, "Not selected")
+        tap(app.buttons["cancel-expense-button"])
+        XCTAssertTrue(app.textFields["expense-name-field"].waitForNonExistence(timeout: timeout))
+    }
+
     private func openTagEditor(dark: Bool) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["SAGE_UI_TESTING"] = "1"
