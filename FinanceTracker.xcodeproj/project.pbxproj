@@ -147,6 +147,7 @@
 				Services/RecurringExpenses/RecurringExpenseRepairService.swift,
 				Services/RecurringExpenses/RecurringExpenseSchedule.swift,
 				Services/RecurringExpenses/RecurringExpenseService.swift,
+				Views/Components/FlowLayout.swift,
 			);
 			target = C62400062FFF002400000006 /* FinanceTrackerTests */;
 		};

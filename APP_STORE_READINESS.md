@@ -346,11 +346,19 @@ distribution, and App Store Connect checks remain open without execution evidenc
   Sources: [tag picker](FinanceTracker/Views/Components/TagPicker.swift),
   [gauge](FinanceTracker/Views/Components/ArcProgressGauge.swift).
 
-- [ ] **Constrain oversized tag chips.** Flow layout measures children at
-  unconstrained intrinsic width. Long names or accessibility text sizes can
-  overflow the available width. Measure oversized children with a width bound
-  and account for their resulting height.
-  Source: [FlowLayout](FinanceTracker/Views/Components/FlowLayout.swift).
+- [x] **Constrain oversized tag chips.** (#63) Oversized children are remeasured
+  with the available width and unrestricted height. Row sizing and placement use
+  those constrained sizes and proposals, preserving wrapped text and spacing.
+  Unspecified or infinite widths use the natural content width.
+  Evidence: simulator build succeeded; four focused layout tests and two picker
+  UI tests passed on iPhone 17 Pro (iOS 26.5). Coverage includes long names,
+  normal and accessibility XL text, leading/center alignment, exact-fit rows,
+  empty content, and selecting/deselecting the real tag capsule. Light/dark
+  screenshots and sampled recording frames were reviewed. Verification is
+  simulator-only; physical-device and distribution checks remain outstanding.
+  Sources: [FlowLayout](FinanceTracker/Views/Components/FlowLayout.swift),
+  [layout tests](FinanceTrackerTests/Views/FlowLayoutTests.swift),
+  [picker UI tests](FinanceTrackerUITests/Settings/TagEditorUITests.swift).
 
 - [ ] **Represent zero budgets and over-budget values accurately.** Positive
   spending against zero allocation or income should not say 0% used. Arc-gauge
