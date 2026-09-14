@@ -30,7 +30,7 @@ struct OnboardingView: View {
     @State private var wantsPercent: Double = 30
     @State private var cloudSyncEnabled = false
     @State private var tagTemplates = ExpenseTag.suggestedTags
-    @State private var selectedTagNames: Set<String> = []
+    @State private var selectedTagNames: Set<String> = Set(ExpenseTag.suggestedTags.map(\.name))
     @State private var recurringRemindersEnabled = false
     @State private var dailyReminderEnabled = false
     @State private var requestingNotificationPermission = false
@@ -239,7 +239,7 @@ struct OnboardingView: View {
 
     private var budgetPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Monthly income", subtitle: "How much do you take home each month?")
+            heading("monthly income", subtitle: "How much do you take home each month?")
 
             VStack(spacing: 12) {
                 TextField("0", text: $incomeText)
@@ -262,30 +262,24 @@ struct OnboardingView: View {
             }
             .padding(.vertical, 16)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Picker("Currency", selection: $selectedCurrencyCode) {
-                    ForEach(LedgerCurrency.supportedCodes, id: \.self) { code in
-                        Text("\(code) - \(Locale.current.localizedString(forCurrencyCode: code) ?? code)")
-                            .tag(code)
-                            .accessibilityIdentifier("onboarding-currency-\(code)")
-                    }
+            Picker("Currency", selection: $selectedCurrencyCode) {
+                ForEach(LedgerCurrency.supportedCodes, id: \.self) { code in
+                    Text("\(code) - \(Locale.current.localizedString(forCurrencyCode: code) ?? code)")
+                        .tag(code)
+                        .accessibilityIdentifier("onboarding-currency-\(code)")
                 }
-                .pickerStyle(.menu)
-                .frame(minHeight: 44)
-                .accessibilityIdentifier("onboarding-currency-picker")
-                .accessibilityValue(currencyCode)
-                .onChange(of: selectedCurrencyCode) { incomeFocused = false }
-                Text("Used for existing and future expenses, income, budgets, and recurring expenses. You can change it later in Settings. Amounts stay unchanged, with no conversion. Currency changes also apply to your other synced devices.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+            .pickerStyle(.menu)
+            .frame(minHeight: 44)
+            .accessibilityIdentifier("onboarding-currency-picker")
+            .accessibilityValue(currencyCode)
+            .onChange(of: selectedCurrencyCode) { incomeFocused = false }
         }
     }
 
     private var allocationPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Set your budget", subtitle: "Drag the dividers to adjust your budget.")
+            heading("set your budget", subtitle: "Drag the dividers to adjust your budget.")
 
             VStack(alignment: .leading, spacing: 24) {
                 BudgetAllocationBar(needsPercent: $needsPercent, wantsPercent: $wantsPercent)
@@ -298,7 +292,7 @@ struct OnboardingView: View {
 
     private var syncPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Sync your expenses", subtitle: "Keep expenses up to date across your devices.")
+            heading("sync your expenses", subtitle: "Keep expenses up to date across your devices.")
 
             HStack(spacing: 24) {
                 Image(systemName: "iphone")
@@ -330,7 +324,7 @@ struct OnboardingView: View {
 
     private var tagsPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Choose your tags", subtitle: "Organize your expenses. You can add more later.")
+            heading("choose your tags", subtitle: "Organize your expenses. You can add more later.")
 
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
@@ -353,7 +347,7 @@ struct OnboardingView: View {
 
     private var remindersPage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Enable Reminders?", subtitle: "Get reminded when recurring expenses are due, and a daily reminder to add expenses from the day.")
+            heading("enable reminders?", subtitle: "Get reminded when recurring expenses are due, and a daily reminder to add expenses from the day.")
 
             VStack(alignment: .leading, spacing: 24) {
                 Toggle(isOn: Binding(
@@ -403,7 +397,7 @@ struct OnboardingView: View {
 
     private var completePage: some View {
         VStack(alignment: .leading, spacing: 28) {
-            heading("Your budget is ready", subtitle: "Here's your monthly breakdown.")
+            heading("your budget is ready", subtitle: "Here's your monthly breakdown.")
             budgetCard
         }
     }

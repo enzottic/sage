@@ -77,11 +77,11 @@ struct SageApp: App {
         } else {
             containerResult = SageModelContainer.shared.flatMap { container in
                 Result {
-                    #if DEBUG
-                    let context = ModelContext(container)
-                    MockDataSeeder.seed(into: context)
-                    try context.save()
-                    #endif
+//                    #if DEBUG
+//                    let context = ModelContext(container)
+//                    MockDataSeeder.seed(into: context)
+//                    try context.save()
+//                    #endif
                     return container
                 }
             }
@@ -269,12 +269,14 @@ struct SageApp: App {
     }
     
     private static func configureNavigationBarAppearance() {
-        if let largeDescriptor = UIFont.systemFont(ofSize: 34, weight: .bold).fontDescriptor.withDesign(.rounded) {
-            UINavigationBar.appearance().largeTitleTextAttributes = [.font: UIFont(descriptor: largeDescriptor, size: 34)]
-        }
-        if let inlineDescriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
-            UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(descriptor: inlineDescriptor, size: 17)]
-        }
+        let appearance = UINavigationBarAppearance()
+        
+        appearance.largeTitleTextAttributes = [
+            .font: UIFont(name: "MomoTrustDisplay-Regular", size: 34) ?? UIFont.systemFont(ofSize: 34)
+        ]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 

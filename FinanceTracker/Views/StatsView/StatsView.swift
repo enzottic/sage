@@ -102,19 +102,9 @@ struct StatsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     
-                    VStack(alignment: .leading, spacing: 20) {
-                        ZStack(alignment: .bottomLeading) {
-                            Color.clear
-                            if let tag = selectedTag, !tag.isDeleted {
-                                tagFilterButton(tag)
-                            }
-                        }
-                        .frame(height: tagFilterHeight)
-
-                        monthlyChart(monthSummary)
-                    }
+                    monthlyChart(monthSummary)
                     
-                    SpendingComparisonCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
+                    InsightsCard(summary: monthSummary, isCurrentMonth: isCurrentMonth)
                     
                     if selectedTag == nil || selectedTag?.isDeleted == true {
                         topTags(monthSummary)
@@ -189,6 +179,7 @@ struct StatsView: View {
                 .disabled(isCurrentMonth)
                 .accessibilityIdentifier("stats-next-month")
         }
+        
         ToolbarItemGroup(placement: .topBarTrailing) {
             StatsFilterMenu(selectedCategory: $selectedCategory, selectedTag: $selectedTag,
                             showsMonthPicker: $showsMonthPicker)
@@ -223,6 +214,7 @@ struct StatsView: View {
                 Text(isCurrentMonth ? "Spent so far" : "Total spent")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
+            
             DailySpendingChart(series: visibleSeries,
                                averageDays: isolatedLine == nil ? summary.averageDays : [],
                                daysInMonth: daysInMonth, currencyCode: config.ledgerCurrencyCode,
@@ -235,6 +227,7 @@ struct StatsView: View {
                 }
                 .frame(height: 200)
                 .accessibilityIdentifier("stats-daily-chart")
+            
             HStack(spacing: 8) {
                 ForEach(series) { line in
                     Button {
@@ -256,6 +249,7 @@ struct StatsView: View {
                     .accessibilityAddTraits(isolatedLine == line.id ? .isSelected : [])
                     .accessibilityHint(isolatedLine == line.id ? "Show all lines" : "Isolate this line")
                 }
+                
                 if isolatedLine == nil, summary.historicalMonthCount > 0 {
                     HStack(spacing: 4) {
                         HStack(spacing: 2) {
@@ -272,14 +266,6 @@ struct StatsView: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityHint("Average cumulative spending by calendar day. Shorter months carry their final total forward.")
                 }
-            }
-            if summary.expenses.isEmpty {
-                Text("No expenses recorded for this month\(selectedCategory != nil || selectedTag != nil ? " with these filters" : "").")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
-            if summary.historicalMonthCount == 0 {
-                Text("Your average will appear once you have a previous month of spending.")
-                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)
@@ -418,10 +404,8 @@ struct StatsView: View {
             if summary.expenses.contains(where: { ($0.tags ?? []).contains { !$0.isDeleted } }) {
                 TopSpendingBreakdown(expenses: summary.expenses, accentColor: accentColor,
                                      includesUntaggedExpenses: false, showsCardBackground: false)
-                Text("Expenses with multiple tags count toward each tag.")
-                    .font(.caption).foregroundStyle(.secondary)
             } else {
-                Text("Tagged expenses for this month will appear here.")
+                Text("Add some expenses to see your top used tags")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
         }
@@ -431,14 +415,16 @@ struct StatsView: View {
 
     private var historyChart: some View {
         let periods = chartData
+        
         return VStack(alignment: .leading, spacing: 16) {
+            
             Text("Spending History").font(.headline)
+            
             Picker("Breakdown", selection: $timeframe) {
                 ForEach(StatsTimeframe.allCases) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented)
-            Text(timeframe == .monthly ? "Tap a bar to explore that month." : "Weekly totals within the selected month.")
-                .font(.caption).foregroundStyle(.secondary)
+            
             Chart(periods) { item in
                 BarMark(x: .value("Period", item.label), y: .value("Spent", item.total))
                     .foregroundStyle(timeframe == .weekly || item.periodStart == selectedMonth ? accentColor : accentColor.opacity(0.35))
@@ -473,6 +459,7 @@ struct StatsView: View {
             }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("stats-history-chart")
+            
         }
         .padding(16)
         .background(.cardBackground, in: .rect(cornerRadius: 15))
