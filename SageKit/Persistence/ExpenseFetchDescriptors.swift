@@ -31,10 +31,11 @@ public enum ExpenseFetchDescriptors {
         let start = interval?.start ?? month
         let end = interval?.end ?? month
         return FetchDescriptor<Expense>(predicate: #Predicate { expense in
+            // SwiftData cannot translate ForcedUnwrap, even behind a nil check.
+            // The exclusive end is outside the interval, so nil dates never match.
             expense.recurringExpenseId != nil
-                && expense.recurringScheduledDate != nil
-                && expense.recurringScheduledDate! >= start
-                && expense.recurringScheduledDate! < end
+                && (expense.recurringScheduledDate ?? end) >= start
+                && (expense.recurringScheduledDate ?? end) < end
         })
     }
 

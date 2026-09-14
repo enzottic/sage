@@ -95,6 +95,7 @@ struct TagsSettingsSection: View {
                         Text("Create a tag to organize expenses and see where your money goes.")
                     } actions: {
                         Button("Add Tag") { showAddTagSheet = true }
+                            .accessibilityIdentifier("tags-empty-add")
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
                             .tint(.sage)

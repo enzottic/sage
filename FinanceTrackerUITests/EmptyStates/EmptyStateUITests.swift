@@ -64,7 +64,7 @@ final class EmptyStateUITests: XCTestCase {
         let app = launch()
         app.tabBars.buttons["Settings"].tap()
         app.buttons["Tags"].tap()
-        let addTag = app.buttons["Add Tag"]
+        let addTag = app.buttons["tags-empty-add"]
         XCTAssertTrue(addTag.waitForExistence(timeout: timeout))
         capture("Empty tags", app)
         addTag.tap()

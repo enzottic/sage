@@ -53,7 +53,7 @@ final class TagEditorUITests: XCTestCase {
         let nameField = app.textFields["Tag Name"]
         tap(nameField)
         nameField.typeText("Accessible Tag")
-        tap(app.buttons["Add Tag"])
+        tap(app.buttons["save-tag-button"])
         let savedTag = app.buttons.containing(.staticText, identifier: "Accessible Tag").firstMatch
         reveal(savedTag, in: app)
         tap(savedTag)
@@ -82,7 +82,7 @@ final class TagEditorUITests: XCTestCase {
         }
         reveal(app.descendants(matching: .any)["Custom color"].firstMatch, in: app)
         let cancel = app.buttons["cancel-tag-button"]
-        let save = app.buttons["Add Tag"]
+        let save = app.buttons["save-tag-button"]
         XCTAssertTrue(cancel.isHittable)
         XCTAssertTrue(app.windows.firstMatch.frame.contains(save.frame))
         XCTAssertFalse(save.isEnabled)
@@ -105,7 +105,7 @@ final class TagEditorUITests: XCTestCase {
         let nameField = app.textFields["Tag Name"]
         tap(nameField)
         nameField.typeText(name)
-        tap(app.buttons["Add Tag"])
+        tap(app.buttons["save-tag-button"])
         XCTAssertTrue(nameField.waitForNonExistence(timeout: timeout))
         tap(app.navigationBars.buttons.firstMatch)
         tap(app.tabBars.buttons["Expenses"])

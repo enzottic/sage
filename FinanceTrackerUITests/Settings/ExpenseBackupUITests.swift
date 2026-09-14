@@ -53,8 +53,12 @@ final class ExpenseBackupUITests: XCTestCase {
             openSavedFilesFolder(in: app)
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
-        file.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
-        XCTAssertTrue(app.navigationBars["Review Import"].waitForExistence(timeout: 10))
+        // Files can publish the destination cell before its folder transition ends.
+        // Let XCTest choose a hittable point instead of tapping a stale thumbnail coordinate.
+        XCTAssertTrue(file.waitForHittability(timeout: 10), app.debugDescription)
+        capture("Saved backup ready to import", app: app)
+        file.tap()
+        XCTAssertTrue(app.navigationBars["Review Import"].waitForExistence(timeout: 10), app.debugDescription)
         let noChanges = app.staticTexts["All expenses are already present. Nothing will be saved."]
         for _ in 0..<5 where !noChanges.exists { app.swipeUp() }
         XCTAssertTrue(noChanges.exists)

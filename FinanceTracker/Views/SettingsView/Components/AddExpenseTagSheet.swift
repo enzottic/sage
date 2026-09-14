@@ -134,6 +134,7 @@ struct AddExpenseTagSheet: View {
             .buttonStyle(.borderedProminent)
             .tint(.sage)
             .disabled(!canSave)
+            .accessibilityIdentifier("save-tag-button")
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
