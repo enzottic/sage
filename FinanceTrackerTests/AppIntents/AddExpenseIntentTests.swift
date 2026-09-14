@@ -15,7 +15,7 @@ struct AddExpenseIntentTests {
         intent.expenseStore = store
         intent.currencyCodeProvider = { "USD" }
         intent.name = "  Groceries  "
-        intent.amount = 24.50
+        intent.amount = IntentCurrencyAmount(amount: Decimal(string: "24.50")!, currencyCode: "USD")
         intent.category = .needs
         intent.date = Date(timeIntervalSince1970: 1_700_000_000)
 
@@ -28,19 +28,20 @@ struct AddExpenseIntentTests {
         #expect(expense.date == intent.date)
     }
 
-    @Test @MainActor
-    func defaultsToWants() async throws {
+    @Test(arguments: ExpenseCategory.allCases) @MainActor
+    func savesRequestedCategory(category: ExpenseCategory) async throws {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         var intent = AddExpenseAppIntent()
         intent.expenseStore = store
         intent.currencyCodeProvider = { "USD" }
         intent.name = "Coffee"
-        intent.amount = 4
+        intent.amount = IntentCurrencyAmount(amount: 4, currencyCode: "USD")
+        intent.category = category
 
         _ = try await intent.perform()
 
-        #expect(try store.fetchExpenses().first?.category == .wants)
+        #expect(try store.fetchExpenses().first?.category == category)
     }
 
     @Test @MainActor
@@ -54,8 +55,9 @@ struct AddExpenseIntentTests {
         intent.expenseStore = store
         intent.currencyCodeProvider = { "USD" }
         intent.name = "Coffee"
-        intent.amount = 4
+        intent.amount = IntentCurrencyAmount(amount: 4, currencyCode: "USD")
         intent.tag = tag.entity
+        intent.category = .wants
 
         _ = try await intent.perform()
 
@@ -68,14 +70,16 @@ struct AddExpenseIntentTests {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         for (name, amount) in [
-            ("  ", 5.0), ("Coffee", 0), ("Coffee", 0.004), ("Coffee", -0.004),
-            ("Coffee", 1_000_000_001), ("Coffee", Double.infinity), ("Coffee", Double.nan)
+            ("  ", Decimal(5)), ("Coffee", .zero),
+            ("Coffee", Decimal(string: "0.004")!), ("Coffee", Decimal(string: "-0.004")!),
+            ("Coffee", Decimal(1_000_000_001)), ("Coffee", .greatestFiniteMagnitude), ("Coffee", .nan)
         ] {
             var intent = AddExpenseAppIntent()
             intent.expenseStore = store
             intent.currencyCodeProvider = { "USD" }
             intent.name = name
-            intent.amount = amount
+            intent.amount = IntentCurrencyAmount(amount: amount, currencyCode: "USD")
+            intent.category = .wants
             do {
                 _ = try await intent.perform()
                 Issue.record("Invalid shortcut values were accepted.")
@@ -93,7 +97,8 @@ struct AddExpenseIntentTests {
         intent.expenseStore = store
         intent.currencyCodeProvider = { currencyCode }
         intent.name = "Refund"
-        intent.amount = amount
+        intent.category = .wants
+        intent.amount = IntentCurrencyAmount(amount: Decimal(string: String(amount))!, currencyCode: currencyCode)
 
         _ = try await intent.perform()
 
@@ -106,10 +111,11 @@ struct AddExpenseIntentTests {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         var intent = AddExpenseAppIntent()
+        intent.category = .wants
         intent.expenseStore = store
         intent.currencyCodeProvider = { currencyCode }
         intent.name = "Coffee"
-        intent.amount = amount
+        intent.amount = IntentCurrencyAmount(amount: Decimal(string: String(amount))!, currencyCode: currencyCode)
 
         do {
             _ = try await intent.perform()
@@ -124,15 +130,68 @@ struct AddExpenseIntentTests {
         let container = try SageModelContainer.make(for: .test)
         let store = ExpenseStore(modelContainer: container)
         var intent = AddExpenseAppIntent()
+        intent.category = .wants
         intent.expenseStore = store
         intent.currencyCodeProvider = { throw LedgerCurrency.Error.notEstablished }
         intent.name = "Coffee"
-        intent.amount = 4
+        intent.amount = IntentCurrencyAmount(amount: 4, currencyCode: "USD")
         do {
             _ = try await intent.perform()
             Issue.record("An expense was accepted before currency confirmation.")
         } catch LedgerCurrency.Error.notEstablished {
             #expect(try store.fetchExpenses().isEmpty)
         }
+    }
+
+    @Test(arguments: ["USD", "EUR", "CAD", ""]) @MainActor
+    func usesLedgerCurrencyWithoutConvertingAmount(inputCurrency: String) async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.category = .wants
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { "USD" }
+        intent.name = "Coffee"
+        intent.amount = IntentCurrencyAmount(amount: 25, currencyCode: inputCurrency)
+
+        _ = try await intent.perform()
+
+        let expense = try #require(store.fetchExpenses().first)
+        #expect(expense.amount == 25)
+        #expect(expense.category == .wants)
+    }
+
+    @Test @MainActor
+    func validatesPrecisionUsingLedgerRatherThanSpokenCurrency() async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.category = .wants
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { "JPY" }
+        intent.name = "Coffee"
+        intent.amount = IntentCurrencyAmount(amount: Decimal(string: "25.50")!, currencyCode: "USD")
+
+        await #expect(throws: (any Error).self) {
+            try await intent.perform()
+        }
+        #expect(try store.fetchExpenses().isEmpty)
+    }
+
+    @Test @MainActor
+    func rejectsPrecisionThatDoubleConversionWouldHide() async throws {
+        let container = try SageModelContainer.make(for: .test)
+        let store = ExpenseStore(modelContainer: container)
+        var intent = AddExpenseAppIntent()
+        intent.category = .wants
+        intent.expenseStore = store
+        intent.currencyCodeProvider = { "USD" }
+        intent.name = "Coffee"
+        intent.amount = IntentCurrencyAmount(amount: Decimal(string: "25.000000000000000001")!, currencyCode: "USD")
+
+        await #expect(throws: (any Error).self) {
+            try await intent.perform()
+        }
+        #expect(try store.fetchExpenses().isEmpty)
     }
 }

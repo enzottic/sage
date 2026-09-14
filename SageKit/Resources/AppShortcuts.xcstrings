@@ -1,0 +1,74 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Get my monthly total in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Get my monthly total in ${applicationName}",
+              "${applicationName} monthly total",
+              "Get my monthly total for ${category} in ${applicationName}",
+              "Get my monthly total for ${tag} in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Add a new expense to ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Add a new expense to ${applicationName}",
+              "Add an expense to ${applicationName}",
+              "Create a new ${applicationName} expense",
+              "Add expense in ${applicationName}",
+              "Create a new expense in ${applicationName}",
+              "Ask ${applicationName} to add a new expense",
+              "Ask ${applicationName} to add an expense"
+            ]
+          }
+        }
+      }
+    },
+    "Get my remaining budget in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Get my remaining budget in ${applicationName}",
+              "${applicationName} remaining budget",
+              "Get my ${category} budget in ${applicationName}",
+              "Get my remaining budget for ${category} in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Get my expense total in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Get my expense total in ${applicationName}",
+              "${applicationName} expense total",
+              "Get my expense total for ${timePeriod} in ${applicationName}",
+              "Get my expense total for ${category} in ${applicationName}",
+              "Get my expense total for ${tag} in ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

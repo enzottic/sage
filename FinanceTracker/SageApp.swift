@@ -119,7 +119,8 @@ struct SageApp: App {
 
         recurringExpenseCoordinator?.start()
 
-        // Register App Shortcuts phrases with Siri
+        // Refresh dynamic shortcut parameter values after registering dependencies.
+        // App Shortcut phrases are extracted at build time and discovered by the system.
         SageShortcutsProvider.updateAppShortcutParameters()
 
     }

@@ -17,6 +17,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C6ED82B73053ADE3004DE5F2"
                BuildableName = "FinanceTrackerWatch Watch App.app"
+               BlueprintName = "FinanceTrackerWatch Watch App"
                ReferencedContainer = "container:FinanceTracker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
