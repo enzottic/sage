@@ -9,6 +9,7 @@ import SwiftData
 import SageKit
 
 struct MonthlyOverviewWidget: View {
+    @Environment(AppRouter.self) private var appRouter
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
 
@@ -62,9 +63,22 @@ struct MonthlyOverviewWidget: View {
 
                     Spacer()
 
-                    if summary.previousTotal > 0 {
+                    if !summary.expenses.isEmpty, summary.previousTotal > 0 {
                         trendPill(change: (summary.total - summary.previousTotal) / summary.previousTotal)
                     }
+                }
+                if monthlyExpenses.isEmpty {
+                    Text("No expenses for this month. Add one to see your recent expenses and spending patterns.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Add Expense") {
+                        appRouter.presentSheet(.addExpense(nil, defaults: .forMonth(selectedMonth)))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.sage)
+                    .accessibilityIdentifier("dashboard-empty-add")
                 }
             }
         }

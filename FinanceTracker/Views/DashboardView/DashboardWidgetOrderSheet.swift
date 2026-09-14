@@ -41,6 +41,8 @@ struct DashboardWidgetOrderSheet: View {
                         config.dashboardWidgetOrder = updated
                         orderBeforeReset = nil
                     }
+                } footer: {
+                    Text("Recent Expenses appears when the selected month has expenses. Top Tags appears when those expenses have tags. Upcoming Expenses appears when a recurring expense has a next occurrence. These widgets keep their positions while hidden.")
                 }
                 Section {
                     Button("Reset to Default") {

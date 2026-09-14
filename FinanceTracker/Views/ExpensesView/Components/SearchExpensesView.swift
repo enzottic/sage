@@ -91,7 +91,8 @@ private struct ExpenseSearchResults: View {
             if expenses.isEmpty {
                 ContentUnavailableView(
                     "No matching expenses",
-                    systemImage: "magnifyingglass"
+                    systemImage: "magnifyingglass",
+                    description: Text("Try a different name, note, or tag.")
                 )
             } else {
                 List {

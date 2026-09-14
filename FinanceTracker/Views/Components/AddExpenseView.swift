@@ -43,15 +43,19 @@ struct AddExpenseView: View {
     @State private var showPhotoLibrary = false
     @State private var receiptPhotoItem: PhotosPickerItem?
     private let initialReceiptData: Data?
+    private let defaults: ExpenseDraftDefaults
 
     @Query private var allTags: [ExpenseTag]
     @Query(sort: \Expense.date, order: .reverse) private var pastExpenses: [Expense]
     
-    init(expense: Expense?, receiptData: Data? = nil) {
+    init(expense: Expense?, receiptData: Data? = nil, defaults: ExpenseDraftDefaults = ExpenseDraftDefaults()) {
+        self.defaults = defaults
         initialReceiptData = receiptData
-        let initialDate = expense?.date ?? .now
+        let initialDate = expense?.date ?? defaults.date
         _date = State(initialValue: initialDate)
         _initialDate = State(initialValue: initialDate)
+        _category = State(initialValue: defaults.category)
+        _isRecurring = State(initialValue: defaults.isRecurring)
         if let expense = expense {
             _name = State(initialValue: expense.name)
             _amount = State(initialValue: expense.amount)
@@ -222,7 +226,7 @@ struct AddExpenseView: View {
     }
 
     private var hasChanges: Bool {
-        !name.isEmpty || amount != nil || !tags.isEmpty || !note.isEmpty || isRecurring || category != .needs || date != initialDate
+        !name.isEmpty || amount != nil || !tags.isEmpty || !note.isEmpty || isRecurring != defaults.isRecurring || category != defaults.category || date != initialDate
     }
 
     private func requestDismissal() {

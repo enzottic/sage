@@ -10,14 +10,20 @@ struct SpendingComparisonCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Insights").font(.headline)
-            if summary.previousTotal > 0 {
+            if summary.previousExpenseCount == 0 {
+                insight(icon: "calendar", text: "No expenses recorded for the previous comparison period.")
+            } else if summary.expenses.isEmpty {
+                insight(icon: "receipt", text: "No expenses recorded for the selected month. Add an expense to compare periods.")
+            } else if summary.previousTotal > 0 {
                 let change = (summary.total - summary.previousTotal) / summary.previousTotal
                 let percent = abs(change).formatted(.percent.precision(.fractionLength(0)))
                 let comparison = isCurrentMonth ? "at this point last month" : "the previous month"
                 insight(icon: change == 0 ? "equal" : "arrow.left.arrow.right",
                         text: change == 0 ? "You spent the same amount as \(comparison)." : "You spent \(percent) \(change > 0 ? "more" : "less") than \(comparison).")
             } else {
-                insight(icon: "calendar", text: "No spending recorded for the previous comparison period.")
+                let previous = summary.previousTotal.currencyString(code: config.ledgerCurrencyCode)
+                insight(icon: "arrow.left.arrow.right",
+                        text: "Net spending for the previous comparison period was \(previous). A percentage comparison isn’t available when the previous total is zero or negative.")
             }
             if !summary.expenses.isEmpty {
                 let average = summary.total / Double(max(1, summary.days.count))

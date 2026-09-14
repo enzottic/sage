@@ -67,7 +67,7 @@ final class StatsViewUITests: XCTestCase {
         assertMonth(previousMonth, total: "0.00", in: app)
     }
 
-    func testCategoryFilterExcludesExpenseAndAllCategoriesRestoresTotal() {
+    func testCategoryFilterExcludesExpenseAndClearFiltersRestoresTotal() {
         let app = launchStats()
         let currentMonth = calendar.dateInterval(of: .month, for: Date())!.start
 
@@ -76,8 +76,13 @@ final class StatsViewUITests: XCTestCase {
         selectCategory("needs", in: app)
         assertMonth(currentMonth, total: "0.00", in: app)
 
-        selectCategory("all", in: app)
+        let clearFilters = app.buttons["stats-clear-filters"]
+        XCTAssertTrue(clearFilters.waitForExistence(timeout: timeout))
+        if !clearFilters.isHittable { app.swipeUp() }
+        attachScreenshot(named: "Stats – empty filter result", in: app)
+        clearFilters.tap()
         assertMonth(currentMonth, total: "42.50", in: app)
+        XCTAssertFalse(clearFilters.exists)
     }
 
     private func openMonthChooser(in app: XCUIApplication) {

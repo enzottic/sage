@@ -76,9 +76,9 @@ struct RootTabView: View {
         }
         .sheet(item: $appRouter.presentedSheet) { sheet in
             switch sheet {
-            case .addExpense(let expense, let receiptData, _):
+            case .addExpense(let expense, let receiptData, _, let defaults):
                 NavigationStack {
-                    AddExpenseView(expense: expense, receiptData: receiptData)
+                    AddExpenseView(expense: expense, receiptData: receiptData, defaults: defaults)
                 }
             }
         }

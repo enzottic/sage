@@ -88,6 +88,18 @@ struct TagsSettingsSection: View {
             }
 
             Section("Tags") {
+                if expenseTags.allSatisfy({ $0.isDeleted }) {
+                    ContentUnavailableView {
+                        Label("No Tags", systemImage: "tag")
+                    } description: {
+                        Text("Create a tag to organize expenses and see where your money goes.")
+                    } actions: {
+                        Button("Add Tag") { showAddTagSheet = true }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .tint(.sage)
+                    }
+                }
                 ForEach(expenseTags.filter { !$0.isDeleted }) { tag in
                     Button {
                         tagToEdit = tag

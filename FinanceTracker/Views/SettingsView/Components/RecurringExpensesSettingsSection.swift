@@ -21,6 +21,7 @@ struct RecurringExpensesSettingsSection: View {
         }
     }
 
+    @State private var showsAddExpense = false
     @State private var ruleToEdit: RecurringExpenseRule? = nil
     @State private var ruleToDelete: RecurringExpenseRule? = nil
     @State private var showDeleteConfirmation = false
@@ -28,11 +29,18 @@ struct RecurringExpensesSettingsSection: View {
     var body: some View {
         List {
             if rules.isEmpty {
-                ContentUnavailableView(
-                    "No Recurring Expense Rules",
-                    systemImage: "arrow.trianglehead.clockwise",
-                    description: Text("When you create a recurring expense, you can manage them here.")
-                )
+                ContentUnavailableView {
+                    Label("No Recurring Expenses", systemImage: "arrow.trianglehead.clockwise")
+                } description: {
+                    Text("Add a repeating expense to track subscriptions and bills. Manage its schedule here.")
+                } actions: {
+                    Button("Add Recurring Expense") {
+                        showsAddExpense = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.sage)
+                }
             } else {
                 Section {
                     ForEach(sortedRules) { rule in
@@ -60,6 +68,11 @@ struct RecurringExpensesSettingsSection: View {
             }
         }
         .settingsBackground()
+        .sheet(isPresented: $showsAddExpense) {
+            NavigationStack {
+                AddExpenseView(expense: nil, defaults: ExpenseDraftDefaults(isRecurring: true))
+            }
+        }
         .sheet(item: $ruleToEdit) { rule in
             EditRecurringRuleSheet(rule: rule)
                 .presentationBackground(.sageBackground)

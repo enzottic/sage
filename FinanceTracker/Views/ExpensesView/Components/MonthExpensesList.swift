@@ -9,12 +9,15 @@ import SwiftData
 import SageKit
 
 struct MonthExpensesList: View {
+    @Environment(AppRouter.self) private var appRouter
+    let month: Date
     @Query private var expenses: [Expense]
     var searchText: String
 
     init(month: Date, searchText: String = "") {
         _expenses = Query(ExpenseFetchDescriptors.month(month))
         self.searchText = searchText
+        self.month = month
     }
     
     var filteredExpenses: [Expense] {
@@ -39,10 +42,23 @@ struct MonthExpensesList: View {
     var body: some View {
         VStack {
             if (filteredExpenses.isEmpty) {
-                ContentUnavailableView(
-                    searchText.isEmpty ? "No expenses for this month" : "No matching expenses",
-                    systemImage: searchText.isEmpty ? "receipt" : "magnifyingglass",
-                )
+                ContentUnavailableView {
+                    Label(searchText.isEmpty ? "No expenses for this month" : "No matching expenses",
+                          systemImage: searchText.isEmpty ? "receipt" : "magnifyingglass")
+                } description: {
+                    Text(searchText.isEmpty
+                         ? "Add an expense for this month to start tracking your spending."
+                         : "Try a different name, note, or tag, or choose another month.")
+                } actions: {
+                    if searchText.isEmpty {
+                        Button("Add Expense") {
+                            appRouter.presentSheet(.addExpense(nil, defaults: .forMonth(month)))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .tint(.sage)
+                    }
+                }
             } else {
                 List {
                     ForEach(sortedDates, id: \.self) { date in

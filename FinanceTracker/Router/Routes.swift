@@ -23,17 +23,31 @@ enum AppRoute: Hashable {
     case categoryDetail(ExpenseCategory, Date)      // category budget breakdown, for the given month
 }
 
+/// Starting values for a new expense opened from a contextual empty state.
+struct ExpenseDraftDefaults: Hashable {
+    var category: ExpenseCategory = .needs
+    var date: Date = .now
+    var isRecurring = false
+
+    static func forMonth(_ month: Date, category: ExpenseCategory = .needs) -> Self {
+        let calendar = Calendar.current
+        return Self(category: category, date: calendar.isDate(month, equalTo: .now, toGranularity: .month)
+                    ? .now : calendar.dateInterval(of: .month, for: month)?.start ?? month)
+    }
+}
+
 /// Modally presented flows, hosted once at `RootTabView` so they appear above any tab.
 enum SageSheet: Identifiable, Hashable {
     case addExpense(
         Expense?,
         receiptData: Data? = nil,
-        presentationID: UUID = UUID()
+        presentationID: UUID = UUID(),
+        defaults: ExpenseDraftDefaults = ExpenseDraftDefaults()
     )
 
     var id: UUID {
         switch self {
-        case .addExpense(_, _, let presentationID): presentationID
+        case .addExpense(_, _, let presentationID, _): presentationID
         }
     }
 }

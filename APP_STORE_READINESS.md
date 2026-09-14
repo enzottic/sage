@@ -438,10 +438,13 @@ distribution, and App Store Connect checks remain open without execution evidenc
   absent tags, and missing comparison baselines have explanatory messages.
   Sources: [Stats](FinanceTracker/Views/StatsView/StatsView.swift),
   [comparison card](FinanceTracker/Views/StatsView/Components/SpendingComparisonCard.swift).
-- [ ] **Finish uneven empty states.** Category detail and hidden dashboard sections
-  still need clear explanations and useful actions. Stats' comparison fallback must
-  distinguish missing records from zero/negative net totals rather than label both
-  "No spending recorded."
+- [x] **Finish uneven empty states (#73).** Category detail, empty dashboard/month
+  views, Tags, and recurring settings now explain the state and offer useful actions.
+  Stats offers Clear Filters and distinguishes missing comparison records from
+  zero/negative net totals. Optional dashboard cards intentionally stay hidden until
+  populated; Reorder Widgets explains their visibility rules. The current-code scan,
+  targeted tests, simulator evidence, and remaining device/release limitations are
+  recorded in the [empty-state audit](research/empty-states.md).
 - [ ] **Clean up What's New.** Fix "improvments," remove inappropriate beta
   wording, and avoid referring to a Settings tab on layouts without one.
   Source: [What's New](FinanceTracker/Views/WhatsNewSheet.swift).

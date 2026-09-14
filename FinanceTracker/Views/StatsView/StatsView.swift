@@ -6,6 +6,7 @@ import SageKit
 
 
 struct StatsView: View {
+    @Environment(AppRouter.self) private var appRouter
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -274,8 +275,22 @@ struct StatsView: View {
                 }
             }
             if summary.expenses.isEmpty {
-                Text("No expenses recorded for this month\(selectedCategory != nil || selectedTag != nil ? " with these filters" : "").")
+                let hasFilters = selectedCategory != nil || (selectedTag != nil && selectedTag?.isDeleted == false)
+                Text(hasFilters ? "No expenses match these filters for this month." : "No expenses recorded for this month.")
                     .font(.subheadline).foregroundStyle(.secondary)
+                if hasFilters {
+                    Button("Clear Filters") {
+                        selectedCategory = nil
+                        selectedTag = nil
+                    }
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("stats-clear-filters")
+                } else {
+                    Button("Add Expense") {
+                        appRouter.presentSheet(.addExpense(nil, defaults: .forMonth(selectedMonth)))
+                    }
+                    .frame(minHeight: 44)
+                }
             }
             if summary.historicalMonthCount == 0 {
                 Text("Your average will appear once you have a previous month of spending.")

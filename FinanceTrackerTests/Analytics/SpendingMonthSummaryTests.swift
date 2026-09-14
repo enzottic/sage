@@ -74,6 +74,7 @@ struct SpendingMonthSummaryTests {
 
         let result = SpendingMonthSummary(month: now, expenses: expenses, now: now, calendar: calendar)
 
+        #expect(result.previousExpenseCount == 3)
         #expect(result.previousTotal == 35)
         #expect(result.total == 42)
     }
@@ -91,6 +92,7 @@ struct SpendingMonthSummaryTests {
         let result = SpendingMonthSummary(month: start, expenses: expenses,
                                           now: try date(2026, 9, 1), calendar: calendar)
 
+        #expect(result.previousExpenseCount == 2)
         #expect(result.previousTotal == 30)
         #expect(result.total == 40)
     }
@@ -108,6 +110,7 @@ struct SpendingMonthSummaryTests {
 
         let result = SpendingMonthSummary(month: now, expenses: expenses, now: now, calendar: calendar)
 
+        #expect(result.previousExpenseCount == 2)
         #expect(result.previousTotal == 30)
         #expect(result.total == 90)
     }
@@ -132,6 +135,20 @@ struct SpendingMonthSummaryTests {
         #expect(result.previousTotal == -12)
         #expect(result.historicalMonthCount == 1)
         #expect(result.averageDays.map(\.total) == [8] + Array(repeating: -12.0, count: 30))
+    }
+
+    @Test(arguments: [[], [0.0], [20.0, -20.0], [-12.0], [20.0]])
+    func comparisonPresenceDoesNotDependOnNetTotal(amounts: [Double]) throws {
+        let now = try date(2026, 8, 5, hour: 12)
+        let previousDate = try date(2026, 7, 1)
+        var expenses = amounts.map { Expense(name: "Previous record", amount: $0, date: previousDate) }
+        // Neither a record beyond the comparison cutoff nor an older month is a baseline.
+        expenses.append(Expense(name: "After cutoff", amount: 99, date: try date(2026, 7, 6)))
+        expenses.append(Expense(name: "Older record", amount: 99, date: try date(2026, 6, 1)))
+        let result = SpendingMonthSummary(month: now, expenses: expenses, now: now, calendar: calendar)
+        #expect(result.previousExpenseCount == amounts.count)
+        #expect(result.previousTotal == amounts.reduce(0, +))
+        #expect(result.expenses.isEmpty)
     }
 
     @Test

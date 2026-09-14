@@ -16,6 +16,7 @@ public struct SpendingMonthSummary {
 
     public let expenses: [Expense]
     public let total: Double
+    public let previousExpenseCount: Int
     public let previousTotal: Double
     public let days: [Point]
     public let categoryDays: [ExpenseCategory: [Point]]
@@ -28,6 +29,7 @@ public struct SpendingMonthSummary {
               interval.start <= now else {
             self.expenses = []
             total = 0
+            previousExpenseCount = 0
             previousTotal = 0
             days = []
             categoryDays = [:]
@@ -62,10 +64,13 @@ public struct SpendingMonthSummary {
                 previousComponents.nanosecond = components.nanosecond
                 cutoff = calendar.date(from: previousComponents) ?? interval.start
             }
-            previousTotal = recorded.filter {
+            let previousExpenses = recorded.filter {
                 $0.date >= previousStart && $0.date < interval.start && $0.date <= cutoff
-            }.reduce(0) { $0 + $1.amount }
+            }
+            previousExpenseCount = previousExpenses.count
+            previousTotal = previousExpenses.reduce(0) { $0 + $1.amount }
         } else {
+            previousExpenseCount = 0
             previousTotal = 0
         }
 

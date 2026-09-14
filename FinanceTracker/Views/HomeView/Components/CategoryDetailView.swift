@@ -10,6 +10,7 @@ import SwiftData
 import SageKit
 
 struct CategoryDetailView: View {
+    @Environment(AppRouter.self) private var appRouter
     @Environment(AppConfiguration.self) private var config
     @Environment(\.categoryColors) private var categoryColors
     
@@ -57,11 +58,28 @@ struct CategoryDetailView: View {
                 }
             }
 
-            Section {
-                ExpenseList(expenses: expenses)
-            } header: {
-                Text("Recent Purchases")
-                    .font(.subheadline)
+            if expenses.isEmpty {
+                ContentUnavailableView {
+                    Label("No expenses in \(category.rawValue)", systemImage: "receipt")
+                } description: {
+                    Text("Expenses in this category for \(month.formatted(.dateTime.month(.wide).year())) will appear here.")
+                } actions: {
+                    Button("Add Expense") {
+                        appRouter.presentSheet(.addExpense(nil, defaults: .forMonth(month, category: category)))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.sage)
+                    .accessibilityIdentifier("category-empty-add")
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                Section {
+                    ExpenseList(expenses: expenses)
+                } header: {
+                    Text("Recent Purchases")
+                        .font(.subheadline)
+                }
             }
         }
         .navigationTitle(category.rawValue)
