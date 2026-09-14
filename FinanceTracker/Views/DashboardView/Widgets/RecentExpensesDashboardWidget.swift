@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 import SageKit
 
-struct RecentExpensesWidget: View {
+struct RecentExpensesDashboardWidget: View {
     @Environment(AppConfiguration.self) var config
     @Environment(AppRouter.self) var appRouter
     
@@ -80,7 +80,7 @@ struct RecentExpensesWidget: View {
 
 #Preview {
     List {
-        RecentExpensesWidget(selectedMonth: .now)
+        RecentExpensesDashboardWidget(selectedMonth: .now)
             .environmentInjection()
     }
 }

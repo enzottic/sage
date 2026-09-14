@@ -30,7 +30,29 @@ struct DashboardView: View {
     var body: some View {
         @Bindable var appRouter = appRouter
         NavigationStack(path: $appRouter.homePath) {
-            dashboardContent
+            DashboardVisibleWidgets(selectedMonth: selectedMonth, order: config.dashboardWidgetOrder) { widgets in
+                if isPad {
+                    ScrollView {
+                        DashboardGridLayout() {
+                            ForEach(widgets) { id in
+                                composedWidget(id.widget, presentation: .full)
+                                    .accessibilityElement(children: .contain)
+                                    .accessibilityIdentifier("dashboard-widget-\(id.rawValue)")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                    }
+                } else {
+                    List {
+                        ForEach(widgets) { id in
+                            widgetView(for: id.widget, layout: .full)
+                        }
+                    }
+                    .listSectionSpacing(12)
+                }
+            }
             .navigationTitle(selectedMonth.formatted(.dateTime.month(.wide).year()))
             .scrollContentBackground(.hidden)
             .background(.sageBackground)
@@ -65,43 +87,6 @@ struct DashboardView: View {
     }
 
     @ViewBuilder
-    private var dashboardContent: some View {
-        DashboardVisibleWidgets(selectedMonth: selectedMonth, order: config.dashboardWidgetOrder) { widgets in
-            dashboardWidgets(widgets)
-        }
-    }
-
-    @ViewBuilder
-    private func dashboardWidgets(_ widgets: [DashboardWidgetID]) -> some View {
-        if isPad {
-            // Each card owns its corners; a grouped List clips the entire
-            // two-column row and rounds only its outside corners.
-            ScrollView {
-                DashboardGridLayout() {
-                    ForEach(widgets) { id in
-                        composedWidget(
-                            id.widget,
-                            presentation: id == .mostSpentTags || id == .upcomingRecurring ? .compact : .full
-                        )
-                        .accessibilityElement(children: .contain)
-                        .accessibilityIdentifier("dashboard-widget-\(id.rawValue)")
-                    }
-                }
-                .buttonStyle(.borderless)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-            }
-        } else {
-            List {
-                ForEach(widgets) { id in
-                    widgetView(for: id.widget, layout: .full)
-                }
-            }
-            .listSectionSpacing(12)
-        }
-    }
-
-    @ViewBuilder
     func widgetView(for widget: DashboardWidget, layout: DashboardWidgetLayout) -> some View {
         switch widget {
         case .monthlyOverview: MonthlyOverviewWidget(selectedMonth: selectedMonth)
@@ -111,7 +96,7 @@ struct DashboardView: View {
         case .categoryUtilization: CategoryUtilizationWidget(selectedMonth: selectedMonth, usesCards: isPad)
         case .upcomingRecurring: UpcomingRecurringWidget(layout: layout)
         case .recentExpenses(let rowStyle):
-            RecentExpensesWidget(selectedMonth: selectedMonth, rowStyle: rowStyle, embedsList: isPad)
+            RecentExpensesDashboardWidget(selectedMonth: selectedMonth, rowStyle: rowStyle, embedsList: isPad)
         }
     }
 
