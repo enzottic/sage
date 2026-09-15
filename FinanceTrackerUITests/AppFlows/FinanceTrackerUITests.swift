@@ -225,9 +225,9 @@ final class FinanceTrackerUITests: XCTestCase {
         let shoppingTag = app.buttons["onboarding-tag-Shopping"]
         XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
         XCTAssertTrue(scrollToVisibility(of: shoppingTag, in: app))
-        XCTAssertFalse(shoppingTag.isSelected)
+        XCTAssertTrue(shoppingTag.isSelected, "Suggested tags are selected by default.")
         tap(shoppingTag, named: "onboarding-tag-Shopping")
-        XCTAssertTrue(shoppingTag.isSelected)
+        XCTAssertFalse(shoppingTag.isSelected)
         tap("onboarding-tags-continue-button", in: app)
         tap("onboarding-reminders-continue-button", in: app)
         XCTAssertTrue(app.buttons["onboarding-start-tracking-button"].waitForExistence(timeout: timeout))
@@ -236,7 +236,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["onboarding-reminders-continue-button"].waitForExistence(timeout: timeout))
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
-        XCTAssertTrue(shoppingTag.isSelected, "Tag selection must survive returning from the summary.")
+        XCTAssertFalse(shoppingTag.isSelected, "Tag deselection must survive returning from the summary.")
         tap("onboarding-back-button", in: app)
         XCTAssertTrue(syncToggle.waitForExistence(timeout: timeout))
         XCTAssertEqual(syncToggle.value as? String, expectedSyncValue, "Sync selection must survive going back.")
@@ -255,7 +255,7 @@ final class FinanceTrackerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["onboarding-tags-continue-button"].waitForExistence(timeout: timeout),
                       "Continue did not leave the sync step.")
         XCTAssertTrue(shoppingTag.waitForExistence(timeout: timeout))
-        XCTAssertTrue(shoppingTag.isSelected, "Tag selection must also survive returning from earlier steps.")
+        XCTAssertFalse(shoppingTag.isSelected, "Tag deselection must also survive returning from earlier steps.")
     }
 
     func testOnboardingAllocationDividersSnapAndRetainBreakdown() {
@@ -503,7 +503,7 @@ final class FinanceTrackerUITests: XCTestCase {
         let nameField = app.textFields["expense-name-field"]
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
         app.typeText("Returned Purchase")
-        tap("expense-keyboard-continue-button", in: app)
+        tap(app.keyboards.buttons["next"], named: "Keyboard return Next")
         app.typeText("1234")
         assertExpenseAmount(12.34, in: app)
         tap("expense-keyboard-continue-button", in: app)
@@ -538,7 +538,7 @@ final class FinanceTrackerUITests: XCTestCase {
         app.typeText(longName)
         XCTAssertEqual(nameField.value as? String, longName)
         captureScreenshot("New expense largest text - long name", in: app)
-        tap("expense-keyboard-continue-button", in: app)
+        tap(app.keyboards.buttons["next"], named: "Keyboard return Next")
         app.typeText("123456")
         assertExpenseAmount(1234.56, in: app)
         XCTAssertTrue(amountField.isHittable)
@@ -986,8 +986,14 @@ final class FinanceTrackerUITests: XCTestCase {
         openNewExpense(in: app)
         let nameField = app.textFields["expense-name-field"]
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        // A fresh simulator can cover the keyboard with Apple's typing tutorial.
+        let typingTutorial = app.staticTexts["Speed up your typing by sliding your finger across the letters to compose a word."]
+        if typingTutorial.exists {
+            tap("Continue", in: app)
+            XCTAssertTrue(typingTutorial.waitForNonExistence(timeout: timeout))
+        }
         app.typeText(name)
-        tap(app.buttons["expense-keyboard-continue-button"], named: "expense-keyboard-continue-button")
+        tap(app.keyboards.buttons["next"], named: "Keyboard return Next")
 
         let amountField = app.textFields["expense-amount-field"]
         XCTAssertTrue(amountField.waitForExistence(timeout: timeout), "The amount field did not appear.")

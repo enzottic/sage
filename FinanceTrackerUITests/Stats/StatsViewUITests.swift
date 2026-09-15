@@ -73,10 +73,10 @@ final class StatsViewUITests: XCTestCase {
 
         assertMonth(currentMonth, total: "42.50", in: app)
 
-        selectCategory("needs", in: app)
+        selectCategory("Needs", in: app)
         assertMonth(currentMonth, total: "0.00", in: app)
 
-        selectCategory("all", in: app)
+        selectCategory("All Categories", in: app)
         assertMonth(currentMonth, total: "42.50", in: app)
     }
 
@@ -93,7 +93,10 @@ final class StatsViewUITests: XCTestCase {
         let submenu = app.buttons["Category"]
         XCTAssertTrue(submenu.waitForExistence(timeout: timeout))
         submenu.tap()
-        let option = app.buttons["stats-category-\(category)"]
+        // Nested native pickers can drop identifiers from their Text options.
+        // Scope to the menu so "Needs" cannot match the chart legend behind it.
+        let menu = app.collectionViews.containing(.button, identifier: "All Categories").firstMatch
+        let option = menu.buttons[category]
         XCTAssertTrue(option.waitForExistence(timeout: timeout))
         option.tap()
         XCTAssertTrue(option.waitForNonExistence(timeout: timeout))

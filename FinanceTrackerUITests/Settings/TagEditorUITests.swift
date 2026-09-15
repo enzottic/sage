@@ -34,14 +34,6 @@ final class TagEditorUITests: XCTestCase {
         }
         screenshot("Tag editor - named palette selected", in: app)
 
-        let custom = app.descendants(matching: .any)["Custom color"].firstMatch
-        reveal(custom, in: app)
-        tap(custom)
-        let closeColorPicker = app.buttons.matching(NSPredicate(format: "label ==[c] %@ OR label == %@", "close", "Done")).firstMatch
-        XCTAssertTrue(closeColorPicker.waitForExistence(timeout: timeout), app.debugDescription)
-        screenshot("Tag editor - native custom color picker", in: app)
-        tap(closeColorPicker)
-
         // Return to the top if larger text required scrolling through the palette.
         app.scrollViews.firstMatch.swipeDown()
         tap(glyph)
@@ -91,6 +83,27 @@ final class TagEditorUITests: XCTestCase {
         XCTAssertTrue(glyph.waitForNonExistence(timeout: timeout))
     }
 
+    func testCustomColorPickerOpensAndDismisses() {
+        let app = openTagEditor(dark: false)
+        app.swipeUp()
+        for name in ["Red", "Pink"] {
+            let swatch = app.buttons["\(name) color"]
+            reveal(swatch, in: app)
+            tap(swatch)
+        }
+        let custom = app.buttons["Custom color"]
+        reveal(custom, in: app)
+        custom.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let close = app.buttons.matching(
+            NSPredicate(format: "label ==[c] %@ OR label == %@", "close", "Done")
+        ).firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: timeout),
+                      "The native color picker did not open after tapping its visible color well.\n\(app.debugDescription)")
+        screenshot("Tag editor - native custom color picker", in: app)
+        tap(close)
+        XCTAssertTrue(app.buttons["Choose tag icon"].wait(for: \.isHittable, toEqual: true, timeout: timeout))
+    }
+
     func testLongTagFitsPickerAndCanBeSelected() {
         verifyLongTagPicker(dark: false)
     }
@@ -111,7 +124,8 @@ final class TagEditorUITests: XCTestCase {
         tap(app.tabBars.buttons["Expenses"])
         tap(app.descendants(matching: .any)["add-expense-button"].firstMatch)
         XCTAssertTrue(app.textFields["expense-name-field"].waitForExistence(timeout: timeout))
-        tap(app.buttons["expense-keyboard-continue-button"])
+        // Tag layout does not depend on the custom name-field keyboard toolbar.
+        tap(app.keyboards.buttons["next"])
         tap(app.buttons["expense-keyboard-continue-button"])
 
         let chip = app.buttons["Tag: \(name)"]

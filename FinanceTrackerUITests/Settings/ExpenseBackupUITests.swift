@@ -81,22 +81,23 @@ final class ExpenseBackupUITests: XCTestCase {
         XCTAssertTrue(browse.waitForExistence(timeout: 10), app.debugDescription)
         browse.tap()
 
-        let currentFolder = app.buttons
-            .matching(NSPredicate(format: "label == %@", "Syl, Actions Menu"))
-            .firstMatch
-        if currentFolder.waitForExistence(timeout: 3) { return }
+        let navigation = app.navigationBars["FullDocumentManagerViewControllerNavigationBar"]
+        if navigation.staticTexts["Syl"].exists || app.buttons["Syl, Actions Menu"].exists { return }
 
         let onMyIPhone = app.cells
             .matching(NSPredicate(format: "label CONTAINS %@", "On My iPhone"))
             .firstMatch
-        XCTAssertTrue(onMyIPhone.waitForExistence(timeout: 10), app.debugDescription)
-        onMyIPhone.tap()
+        // Browse may restore the local storage root rather than Locations.
+        if !navigation.staticTexts["On My iPhone"].exists {
+            XCTAssertTrue(onMyIPhone.waitForExistence(timeout: 10), app.debugDescription)
+            onMyIPhone.tap()
+        }
 
         let appFolder = app.cells
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Syl"))
             .firstMatch
         XCTAssertTrue(appFolder.waitForExistence(timeout: 10), app.debugDescription)
-        appFolder.tap()
+        appFolder.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
     }
 
     private func capture(_ name: String, app: XCUIApplication) {
