@@ -1,52 +1,84 @@
 # Syl Privacy Policy
 
-Last updated: September 6, 2026
+Last updated: September 14, 2026
 
-Syl does not collect personal information, track users, show advertisements,
-or sell data.
+Syl keeps your financial data on your devices and, if you choose, in your private
+iCloud storage. Your expenses are never sent to the developer. Syl does not
+sell your data, show advertisements, or use your financial data for advertising
+or profiling.
 
-## Expense data
+## Your expense data
 
-Syl stores expenses, budgets, tags, recurring-expense rules, and app settings
-on the user's device. Receipt reading uses supported Apple Intelligence features
-on the device. Syl does not send receipt images to the developer or to a
-third-party service.
+Expenses, budgets, tags, recurring rules, and settings are stored on
+your device. Syl can also send spending summaries to your paired Apple Watch
+for display in the Watch app and its widgets, independently of iCloud Sync.
 
-If the user turns on iCloud Sync on a device, Syl synchronizes expense data
-through the user's private iCloud database and supported preferences through
-iCloud key-value storage. The sync choice is stored only on that device and is
-off by default; another device cannot turn it on remotely. Apple operates iCloud
-and applies its iCloud terms and privacy policy. The developer does not use this
-data for advertising, analytics, or profiling.
+Receipt scanning uses Apple's on-device text recognition and Apple Intelligence
+features. Receipt images and recognized text are not uploaded to the developer
+or an external receipt-processing service. Information you save from a receipt
+is treated like any other expense.
+
+## iCloud Sync
+
+iCloud Sync is optional and off by default on each device. When enabled, Syl
+syncs your financial records through your private iCloud database and supported
+settings through Apple's iCloud preference storage. Apple operates iCloud under
+its own terms and [privacy policy](https://www.apple.com/legal/privacy/).
+
+You can turn sync off in *Settings → Backup → Enable iCloud Sync*. Settings
+sync stops immediately; fully close and reopen Syl to apply the change to expense
+sync. Previously queued activity may still finish. Turning sync off does not
+delete existing local or iCloud data.
 
 ## Retention and deletion
 
-Data stays on the device until the user deletes it in Syl, removes the app, or
-erases the device. Data stored in iCloud stays there until the user deletes it
-through Syl or through the user's iCloud data controls.
+Your saved data remains until you delete it. In Syl's Settings:
 
-Syl includes these deletion controls in Settings:
+- *Delete Expense Data* removes expenses, with an option to also remove recurring expense rules.
+- *Delete All Data* removes expenses, recurring rules, tags, and preferences.
 
-- Delete Expense Data deletes expenses and can also delete recurring-expense
-  rules.
-- Delete All Data deletes expenses, recurring-expense rules, tags, and Syl
-  settings.
+Data in iCloud is deleted when you delete an expense with sync still enabled. If sync is off,
+cloud copies will remain in iCloud until removed through a device with sync enabled, or
+if data is deleted manually in your Apple Account settings. Other devices, such as your
+Apple Watch, may retain older data until they receive an update. Removing the iPhone app
+does not delete iCloud data or copies on other devices.
 
-Deletion can sync to iCloud when iCloud Sync is on and the device is connected.
-Turning off iCloud Sync immediately stops Syl's new preference-store reads,
-writes, and synchronization requests. Fully close and reopen Syl to apply the
-change to expense synchronization. Previously queued iCloud activity may still
-finish. Turning sync off does not delete local data or existing iCloud copies.
-While opted out, resetting settings does not contact iCloud to remove cloud
-preferences; those copies remain until removed through an opted-in device or
-the user's iCloud data controls.
+## Imports and exports
+
+Syl can import files you select and export JSON backups or CSV files to a
+location you choose. Exported files contain readable expense data and are not
+encrypted by Syl. Files saved or shared outside Syl, including original import
+files, must be deleted separately. Deleting data in Syl cannot recall those copies.
 
 ## Permissions
 
-Syl asks for camera access only when the user chooses to photograph a receipt.
-Syl asks for notification access only when the user turns on recurring-expense
-notifications. The user can change these permissions in iOS Settings.
+Syl requests camera access for receipt scanning and notification permission for
+optional reminders. You can change these permissions in iOS Settings and turn
+reminders off in Syl's notification settings.
+
+## Feedback and support
+
+If you email the developer, your email address, message, and any attachments are
+used to respond and help resolve your request. Syl's feedback email includes
+your app version, iOS version, and device model. You can edit or cancel the
+message before sending it; your expense database is not automatically attached.
+
+You can request deletion of support correspondence by emailing hi@enzottic.me.
+
+## This website
+
+The website displaying this policy, including when opened inside Syl, uses
+Cloudflare Web Analytics to measure page visits and loading performance.
+Cloudflare states that this service does not collect or use visitors' personal
+data. Its documentation describes seven days of unsampled analytics data and
+access to historical analytics for six months. See
+[Cloudflare's documentation](https://developers.cloudflare.com/web-analytics/faq/).
+These website metrics do not include your Syl expense records.
+
+The page also loads fonts from Adobe, which involves requests to Adobe's servers.
+See [Adobe's privacy policy](https://www.adobe.com/privacy/policy.html) for its
+data-handling practices.
 
 ## Contact
 
-For privacy questions, contact hi@enzottic.me.
+For privacy questions or requests, send an email to [hi@enzottic.me](mailto:hi@enzottic.me)
