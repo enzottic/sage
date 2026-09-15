@@ -31,10 +31,13 @@ public enum ExpenseFetchDescriptors {
         let start = interval?.start ?? month
         let end = interval?.end ?? month
         return FetchDescriptor<Expense>(predicate: #Predicate { expense in
-            expense.recurringExpenseId != nil
-                && expense.recurringScheduledDate != nil
-                && expense.recurringScheduledDate! >= start
-                && expense.recurringScheduledDate! < end
+            if let scheduledDate = expense.recurringScheduledDate {
+                expense.recurringExpenseId != nil
+                    && scheduledDate >= start
+                    && scheduledDate < end
+            } else {
+                false
+            }
         })
     }
 
