@@ -315,7 +315,7 @@ private struct PrivacyWebView: View {
     @State private var isLoading = true
     @State private var loadError: String?
     @State private var reloadID = UUID()
-    private let privacyURL = URL(string: "https://enzottic.me/sage/privacy")
+    private let privacyURL = URL(string: "https://enzottic.me/syl/privacy")
 
     var body: some View {
         Group {
